@@ -1,0 +1,199 @@
+import { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { useAuth } from './AuthContext';
+
+const AppContext = createContext(null);
+
+/* =============================================
+   INITIAL STATE
+   ============================================= */
+const initialState = {
+  user: {
+    name: '',
+    email: '',
+    country: 'EG',
+    level: 'beginner',
+    avatar: '',
+    interests: [],
+    loggedIn: false,
+  },
+  niche: '',
+  subNiche: '',
+  exactTitle: '',
+  brandName: '',
+  brandCategory: '',
+  brandStyle: '',
+  brandCatalogs: [],
+  market: 'global',
+  currency: 'USD',
+  skills: [],
+  apiKey: '',
+  tone: 'expert',
+  proposalLang: 'ar',
+  projects: [],
+  completedSteps: [],
+  currentView: 'onboarding',
+  language: 'ar',
+  isLoadedFromCloud: false,
+  toolResults: {},
+};
+
+/* =============================================
+   REDUCER
+   ============================================= */
+function appReducer(state, action) {
+  switch (action.type) {
+    case 'SET_USER':
+      return { ...state, user: { ...state.user, ...action.payload } };
+    case 'SET_FIELD':
+      return { ...state, [action.field]: action.value };
+    case 'LOGIN':
+      return { ...state, user: { ...state.user, ...action.payload, loggedIn: true } };
+    case 'LOGOUT':
+      return { ...initialState };
+    case 'COMPLETE_STEP': {
+      const stepId = action.step || action.payload;
+      const steps = state.completedSteps.includes(stepId)
+        ? state.completedSteps.filter(s => s !== stepId)
+        : [...state.completedSteps, stepId];
+      return { ...state, completedSteps: steps };
+    }
+    case 'ADD_SKILL': {
+      if (state.skills.some(s => s.id === action.skill.id)) return state;
+      return { ...state, skills: [...state.skills, action.skill] };
+    }
+    case 'REMOVE_SKILL':
+      return { ...state, skills: state.skills.filter(s => s.id !== action.id) };
+    case 'ADD_PROJECT':
+      return { ...state, projects: [action.project, ...state.projects] };
+    case 'DELETE_PROJECT':
+      return { ...state, projects: state.projects.filter((_, i) => i !== action.index) };
+    case 'SET_LANGUAGE':
+      return { ...state, language: action.payload };
+    case 'SAVE_TOOL_RESULT':
+      return { ...state, toolResults: { ...state.toolResults, [action.toolId]: action.data } };
+    case 'LOAD_SAVED':
+      return { ...state, ...action.payload, isLoadedFromCloud: true };
+    default:
+      return state;
+  }
+}
+
+/* =============================================
+   PROVIDER
+   ============================================= */
+export function AppProvider({ children }) {
+  const { userData } = useAuth();
+
+  const [state, dispatch] = useReducer(appReducer, initialState, (init) => {
+    // Initial load from localStorage (fallback)
+    try {
+      const savedUser = JSON.parse(localStorage.getItem('app_user') || '{}');
+      const savedSteps = JSON.parse(localStorage.getItem('app_steps') || '[]');
+      const savedProjects = JSON.parse(localStorage.getItem('app_projects') || '[]');
+      const savedToolResults = JSON.parse(localStorage.getItem('app_tool_results') || '{}');
+      const savedApiKey = localStorage.getItem('app_api_key') || '';
+      const savedLanguage = localStorage.getItem('app_language') || 'ar';
+      return {
+        ...init,
+        user: { ...init.user, ...savedUser },
+        completedSteps: savedSteps,
+        projects: savedProjects,
+        toolResults: savedToolResults,
+        apiKey: savedApiKey,
+        language: savedLanguage,
+      };
+    } catch {
+      return init;
+    }
+  });
+
+  // ═══════════════ FIREBASE SYNC ═══════════════
+
+  // Load from Firestore when user logs in
+  useEffect(() => {
+    if (!userData?.uid) return;
+
+    const loadFromFirestore = async () => {
+      try {
+        const docRef = doc(db, 'users', userData.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const cloudData = docSnap.data();
+          if (cloudData.appState) {
+            dispatch({ type: 'LOAD_SAVED', payload: cloudData.appState });
+          } else {
+            // Document exists but no state yet (first login)
+            dispatch({ type: 'SET_FIELD', field: 'isLoadedFromCloud', value: true });
+          }
+        } else {
+          // New user, no document yet
+          dispatch({ type: 'SET_FIELD', field: 'isLoadedFromCloud', value: true });
+        }
+      } catch (err) {
+        console.error("Error loading app state from Firestore:", err);
+      }
+    };
+
+    loadFromFirestore();
+  }, [userData?.uid]);
+
+  // Save to Firestore on every state change
+  useEffect(() => {
+    if (!userData?.uid || !state.isLoadedFromCloud) return;
+
+    const saveToFirestore = async () => {
+      try {
+        // We save the entire state (excluding the user object and meta flags)
+        const { user, isLoadedFromCloud, ...stateToSave } = state;
+        const docRef = doc(db, 'users', userData.uid);
+        await setDoc(docRef, { appState: stateToSave }, { merge: true });
+      } catch (err) {
+        console.error("Error saving app state to Firestore:", err);
+      }
+    };
+
+    // Debounce saving slightly if needed, but for now simple useEffect
+    const timer = setTimeout(saveToFirestore, 1000);
+    return () => clearTimeout(timer);
+  }, [state, userData?.uid]);
+
+  // Persist state changes to localStorage (legacy fallback)
+  useEffect(() => {
+    localStorage.setItem('app_user', JSON.stringify(state.user));
+    localStorage.setItem('app_steps', JSON.stringify(state.completedSteps));
+    localStorage.setItem('app_projects', JSON.stringify(state.projects));
+    localStorage.setItem('app_tool_results', JSON.stringify(state.toolResults));
+    localStorage.setItem('app_api_key', state.apiKey);
+    localStorage.setItem('app_language', state.language);
+  }, [state]);
+
+  useEffect(() => {
+    localStorage.setItem('app_steps', JSON.stringify(state.completedSteps));
+  }, [state.completedSteps]);
+
+  useEffect(() => {
+    localStorage.setItem('app_projects', JSON.stringify(state.projects));
+  }, [state.projects]);
+
+  useEffect(() => {
+    if (state.apiKey) localStorage.setItem('app_api_key', state.apiKey);
+  }, [state.apiKey]);
+
+  useEffect(() => {
+    localStorage.setItem('app_language', state.language);
+  }, [state.language]);
+
+  return (
+    <AppContext.Provider value={{ state, dispatch }}>
+      {children}
+    </AppContext.Provider>
+  );
+}
+
+export function useApp() {
+  const ctx = useContext(AppContext);
+  if (!ctx) throw new Error('useApp must be used within AppProvider');
+  return ctx;
+}

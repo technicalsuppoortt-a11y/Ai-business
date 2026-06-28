@@ -1,0 +1,178 @@
+.niche-picker-wrapper {
+  margin-top: 1rem;
+}
+
+.niche-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+.niche-card {
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.niche-card:hover {
+  transform: translateY(-8px);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.niche-card.active {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: #10b981;
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.2);
+}
+
+.niche-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.niche-card h3 {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+.niche-card p {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+/* Details Section */
+.niche-details-container {
+  background: rgba(2, 6, 23, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+
+.details-header h2 {
+  font-size: 1.5rem;
+  color: #10b981;
+  margin-bottom: 2rem;
+  text-align: center;
+  font-weight: 900;
+}
+
+.details-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+}
+
+.advantages-section h4, .ideas-section h4 {
+  font-size: 1rem;
+  color: #fff;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.advantages-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+.advantages-section li {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.advantages-section li span {
+  color: #10b981;
+  font-weight: bold;
+}
+
+.ideas-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+.sub-niche-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: #cbd5e1;
+  padding: 1rem;
+  border-radius: 1rem;
+  text-align: right;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.sub-niche-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #10b981;
+  color: #fff;
+  padding-right: 1.5rem;
+}
+
+.sub-niche-btn.selected {
+  background: #10b981;
+  color: #000;
+  border-color: #10b981;
+  padding-right: 1.5rem;
+}
+
+.selection-summary {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  text-align: center;
+}
+
+.summary-text {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.summary-text strong {
+  color: #10b981;
+}
+
+.niche-loading {
+  text-align: center;
+  padding: 3rem;
+  color: #10b981;
+  font-weight: bold;
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (max-width: 768px) {
+  .niche-grid { grid-template-columns: 1fr; gap: 8px; }
+  .details-content { grid-template-columns: 1fr; gap: 1.5rem; }
+  .niche-card { padding: 1.25rem; }
+  .niche-icon { font-size: 2.2rem; margin-bottom: 0.5rem; }
+  .niche-details-container { padding: 1.25rem; border-radius: 1.25rem; }
+  .details-header h2 { margin-bottom: 1.25rem; font-size: 1.25rem; }
+}

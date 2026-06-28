@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>اختبار الـ iframe</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #0a0f1e; color: #fff; }
+    .header {
+      background: rgba(59,130,246,0.1);
+      border-bottom: 1px solid rgba(59,130,246,0.2);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .header h1 { font-size: 14px; color: #94a3b8; }
+    .header input {
+      flex: 1;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 13px;
+      direction: ltr;
+    }
+    .header button {
+      padding: 8px 16px;
+      background: #3b82f6;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .header button:hover { background: #2563eb; }
+    .note {
+      padding: 10px 24px;
+      background: rgba(234,179,8,0.08);
+      border-bottom: 1px solid rgba(234,179,8,0.15);
+      font-size: 11px;
+      color: #fbbf24;
+      direction: rtl;
+    }
+    iframe {
+      width: 100%;
+      height: calc(100vh - 90px);
+      border: none;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>محاكاة الـ iframe — موقع العميل:</h1>
+  <input
+    type="text"
+    id="clientUrl"
+    placeholder="https://upklick.co/ai-brand-vision-page"
+    value="https://upklick.co/ai-brand-vision-page"
+  />
+  <button onclick="loadIframe()">تحميل</button>
+</div>
+<div class="note">
+  💡 هذه الصفحة تحاكي موقع العميل. الـ brandUrl المكتوب بالأعلى يُرسَل للـ iframe عبر postMessage ليعرض الباقات الصحيحة.
+</div>
+
+<iframe id="theIframe" src="http://localhost:5173/"></iframe>
+
+<script>
+  // Listen for REQUEST_PARENT_URL from the iframe and respond with the client URL
+  window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'REQUEST_PARENT_URL' && event.source) {
+      var clientUrl = document.getElementById('clientUrl').value.trim();
+      console.log('[TestPage] iframe requested URL, sending:', clientUrl);
+      event.source.postMessage(
+        { type: 'PARENT_URL', url: clientUrl },
+        '*'
+      );
+    }
+  });
+
+  function loadIframe() {
+    // Reload the iframe to re-trigger the detection
+    var iframe = document.getElementById('theIframe');
+    iframe.src = 'http://localhost:5173/';
+  }
+</script>
+
+</body>
+</html>

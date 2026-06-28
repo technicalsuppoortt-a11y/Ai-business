@@ -1,0 +1,205 @@
+/* 
+  InteractiveTools.css 
+  Ultra-Premium CSS for "أدوات الـ 24 ساعة" (The 24-Hour Tools)
+  Provides standalone, high-fidelity UI components avoiding global CSS conflicts.
+*/
+
+:root {
+  --it-primary: #10B981; /* Emerald 500 */
+  --it-primary-glow: rgba(16, 185, 129, 0.4);
+  --it-secondary: #8B5CF6; /* Violet 500 */
+  --it-bg-glass: rgba(15, 23, 42, 0.85);
+  --it-border: rgba(255, 255, 255, 0.1);
+  --it-border-focus: rgba(16, 185, 129, 0.5);
+  --it-text-main: #f8fafc;
+  --it-text-muted: #94a3b8;
+}
+
+/* Base Tool Container */
+.it-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto 3rem;
+  padding-right: 3.5rem;
+  padding-left: 1rem;
+  font-family: 'Cairo', 'Tajawal', sans-serif;
+  direction: rtl;
+  position: relative;
+}
+
+/* Glassmorphism Main Card */
+.it-main-card {
+  background: var(--it-bg-glass);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid var(--it-border);
+  box-shadow: 
+    0 40px 80px -12px rgba(0, 0, 0, 0.7),
+    inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  border-radius: 3rem; /* Rounder corners for premium look */
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+@media (min-width: 1280px) {
+  .it-main-card {
+    flex-direction: row;
+    min-height: 750px;
+    display: grid;
+    grid-template-columns: 450px 1fr; /* Fixed width for input to ensure no crowding */
+  }
+}
+
+/* Columns with more breathing room */
+.it-col-input {
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem !important;
+  background: rgba(15, 23, 42, 0.3);
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.it-col-output {
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem !important;
+}
+
+/* Premium Inputs with comfortable height */
+.it-input-group {
+  margin-bottom: 2rem;
+  width: 100%;
+}
+
+.it-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--it-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 1rem;
+}
+
+.it-input {
+  width: 100% !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+  border-radius: 1.5rem !important;
+  padding: 1.5rem 1.75rem !important;
+  font-size: 1rem !important;
+  transition: all 0.3s ease !important;
+  outline: none !important;
+  line-height: 1.6 !important;
+}
+
+/* Typography with safe scales */
+.it-title {
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.3;
+  margin-bottom: 1rem;
+}
+
+.it-subtitle {
+  font-size: 0.95rem;
+  color: var(--it-text-muted);
+  line-height: 1.8;
+  margin-bottom: 2rem;
+}
+
+/* Step Circle Positioning */
+.it-step-circle {
+  position: absolute;
+  right: -26px;
+  top: 40px; /* Moved down a bit from the very top */
+  width: 52px;
+  height: 52px;
+  background: #0f172a;
+  border: 4px solid var(--it-primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--it-primary);
+  z-index: 50;
+  box-shadow: 0 0 40px rgba(16, 185, 129, 0.5);
+}
+
+.it-step-connector {
+  position: absolute;
+  right: 0px;
+  top: 92px; /* Starts after circle */
+  bottom: -80px;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--it-primary), transparent);
+  opacity: 0.4;
+}
+
+@media (max-width: 1280px) {
+  .it-container {
+    padding: 1rem 0.5rem;
+    max-width: 100%;
+  }
+  .it-col-input, .it-col-output {
+    padding: 1.25rem !important;
+  }
+  .it-step-circle {
+    right: 15px;
+    top: -15px;
+    width: 44px;
+    height: 44px;
+    font-size: 1.25rem;
+  }
+  .it-step-connector {
+    display: none;
+  }
+}
+
+/* Chips */
+.it-chip {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: var(--it-text-muted) !important;
+  padding: 0.6rem 1.25rem !important;
+  border-radius: 1rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer;
+}
+
+.it-chip:hover {
+  border-color: var(--it-primary) !important;
+  color: #fff !important;
+  background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+.it-chip-active {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+  border-color: var(--it-primary) !important;
+  color: #fff !important;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.2) !important;
+}
+
+/* Animation */
+@keyframes it-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: it-fade-in 0.5s ease-out forwards;
+}

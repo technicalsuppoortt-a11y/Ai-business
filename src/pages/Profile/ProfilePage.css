@@ -1,0 +1,272 @@
+.profile-page {
+  padding: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+  color: #fff;
+  padding-bottom: 100px;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 40px;
+  border-radius: 30px;
+  margin-bottom: 40px;
+}
+
+.profile-user-info {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+
+.profile-avatar {
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  border-radius: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  font-weight: 900;
+  box-shadow: 0 10px 30px rgba(37, 99, 235, 0.3);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.avatar-edit-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.profile-avatar-wrapper:hover .avatar-edit-overlay {
+  opacity: 1;
+}
+
+.avatar-spinner {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  z-index: 2;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.profile-name {
+  font-size: 32px;
+  font-weight: 900;
+  margin: 0 0 5px 0;
+  letter-spacing: -1px;
+}
+
+.profile-email {
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 15px 0;
+}
+
+.profile-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #3B82F6;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.profile-stats {
+  display: flex;
+  gap: 40px;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 36px;
+  font-weight: 900;
+  color: #3B82F6;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 600;
+}
+
+.profile-content {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 40px;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 900;
+  margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.roadmap-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.roadmap-item {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 20px 25px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  transition: all 0.3s ease;
+}
+
+.roadmap-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  transform: translateX(10px);
+}
+
+.roadmap-item.done {
+  border-color: rgba(16, 185, 129, 0.2);
+  background: rgba(16, 185, 129, 0.03);
+}
+
+.roadmap-icon {
+  font-size: 24px;
+}
+
+.roadmap-info {
+  flex: 1;
+}
+
+.roadmap-step-name {
+  font-weight: 800;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.roadmap-step-value {
+  font-size: 13px;
+  color: #10B981;
+  font-weight: 600;
+}
+
+.roadmap-step-value span {
+  color: rgba(255, 255, 255, 0.4);
+  margin-right: 5px;
+}
+
+.roadmap-status {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.5;
+}
+
+.roadmap-item.done .roadmap-status {
+  color: #10B981;
+  opacity: 1;
+}
+
+.profile-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 30px;
+  border-radius: 25px;
+  position: sticky;
+  top: 40px;
+}
+
+.profile-card h3 {
+  font-size: 18px;
+  font-weight: 900;
+  margin-bottom: 25px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.detail-row span {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.detail-row strong {
+  font-weight: 800;
+}
+
+/* RTL Support */
+[dir="rtl"] .roadmap-item:hover {
+  transform: translateX(-10px);
+}
+[dir="rtl"] .roadmap-step-value span {
+  margin-right: 0;
+  margin-left: 5px;
+}
+
+@media (max-width: 1100px) {
+  .profile-content {
+    grid-template-columns: 1fr;
+  }
+  .profile-sidebar {
+    order: -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-page {
+    padding: 10px 4px;
+  }
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+    padding: 20px 10px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+  }
+  .profile-user-info {
+    flex-direction: column;
+    gap: 15px;
+  }
+  .profile-stats {
+    width: 100%;
+    justify-content: space-around;
+    gap: 10px;
+  }
+  .roadmap-item {
+    padding: 15px 12px;
+    gap: 12px;
+  }
+  .profile-card {
+    padding: 20px 15px;
+  }
+}

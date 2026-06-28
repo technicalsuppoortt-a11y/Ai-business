@@ -1,0 +1,219 @@
+.platform-explanation-section {
+    padding: 80px 24px;
+    background: var(--bg);
+    position: relative;
+    overflow: hidden;
+    border-top: 1px solid var(--line);
+}
+
+.pe-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.pe-header {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.pe-badge {
+    display: inline-block;
+    padding: 6px 16px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 50px;
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.pe-title {
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--text);
+    margin-bottom: 24px;
+    letter-spacing: -1px;
+}
+
+.pe-line {
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    margin: 0 auto;
+    border-radius: 2px;
+}
+
+/* Video Section */
+.pe-video-container {
+    position: relative;
+    margin-bottom: 80px;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.pe-video-wrapper {
+    position: relative;
+    z-index: 2;
+    border-radius: 24px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+.pe-video-player {
+    width: 100%;
+    border-radius: 16px;
+    display: block;
+}
+
+.pe-video-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Grid Section */
+.pe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+    margin-bottom: 60px;
+}
+
+.pe-card {
+    padding: 40px 30px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+}
+
+.pe-card:hover {
+    transform: translateY(-10px);
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(59, 130, 246, 0.3);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.pe-card-icon {
+    font-size: 40px;
+    margin-bottom: 24px;
+}
+
+.pe-card-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 16px;
+}
+
+.pe-card-desc {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text2);
+    margin-bottom: 24px;
+}
+
+.pe-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pe-tag {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    background: var(--bg3);
+    border: 1px solid var(--line);
+    color: var(--text3);
+    border-radius: 50px;
+    transition: all 0.3s;
+}
+
+.pe-card:hover .pe-tag {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* Footer Section */
+.pe-footer {
+    text-align: center;
+}
+
+.pe-footer-card {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 40px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(16, 185, 129, 0.05));
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.pe-footer-card h4 {
+    font-size: 22px;
+    font-weight: 900;
+    margin-bottom: 10px;
+    color: #fff;
+}
+
+.pe-footer-card p {
+    font-size: 15px;
+    color: var(--text2);
+    line-height: 1.6;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    .platform-explanation-section {
+        padding: 60px 16px;
+    }
+
+    .pe-title {
+        font-size: 28px;
+    }
+
+    .pe-video-container {
+        margin-bottom: 40px;
+    }
+
+    .pe-grid {
+        gap: 20px;
+    }
+
+    .pe-card {
+        padding: 30px 20px;
+    }
+}

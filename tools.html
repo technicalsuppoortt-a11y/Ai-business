@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحدي الـ 24 ساعة - انطلاق البراند الاحترافي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --primary-green: #10B981; 
+            --upklick-orange: #F97316;
+            --kanz-red: #EF4444;
+            --heygen-purple: #8B5CF6;
+            --midnight-blue: #020617;
+            --card-bg: #0f172a;
+            --gold: #FFD700;
+        }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--midnight-blue);
+            color: #e2e8f0;
+            scroll-behavior: smooth;
+        }
+        .text-primary { color: var(--primary-green); }
+        .bg-primary { background-color: var(--primary-green); }
+        
+        .card-gradient { 
+            background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%); 
+            transition: all 0.3s ease;
+        }
+        .card-gradient:hover {
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .step-connector {
+            position: absolute;
+            top: 2.5rem;
+            bottom: -2.5rem;
+            right: 1.5rem; 
+            width: 3px;
+            background-color: #334155;
+            z-index: 0;
+        }
+        @media (max-width: 768px) {
+            .step-connector {
+                right: 1rem;
+            }
+        }
+
+        .step-completed .step-connector {
+            background-color: var(--primary-green);
+            box-shadow: 0 0 10px var(--primary-green);
+        }
+        .step-circle {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .niche-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .niche-card.selected {
+            border-color: var(--primary-green);
+            background-color: rgba(16, 185, 129, 0.1);
+            transform: translateY(-5px);
+        }
+
+        .micro-niche-btn {
+            transition: all 0.2s;
+        }
+        .micro-niche-btn:hover {
+            transform: translateX(-5px);
+            background-color: rgba(255,255,255,0.1);
+            border-color: var(--primary-green);
+        }
+        
+        /* Video Container */
+        .video-wrapper {
+            position: relative;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: #000;
+        }
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 */
+            height: 0;
+            overflow: hidden;
+        }
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .expand-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 20;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .expand-btn:hover { opacity: 1; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 100;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-content {
+            width: 100%;
+            max-width: 1000px;
+            position: relative;
+        }
+        .close-modal {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+        }
+
+        /* Passport Widget */
+        .passport-widget {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .passport-item {
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+        .passport-item.active {
+            opacity: 1;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--midnight-blue); }
+        ::-webkit-scrollbar-thumb { background: var(--primary-green); border-radius: 4px; }
+
+        .ad-objective-card {
+            transition: all 0.3s;
+        }
+        .ad-objective-card:hover {
+            border-color: #3b82f6;
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+        .ad-objective-card.selected-obj {
+            border-color: var(--primary-green);
+            background-color: rgba(16, 185, 129, 0.1);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+        }
+
+        .growth-bar {
+            transition: height 1s ease-out;
+        }
+        
+        .code-block {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #1e293b;
+            color: #a5b4fc;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            overflow-x: auto;
+            direction: ltr;
+            text-align: left;
+        }
+
+        /* VIP Button Animation */
+        .vip-pulse {
+            animation: vipPulse 2s infinite;
+        }
+        @keyframes vipPulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 215, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+        }
+    </style>
+</head>
+<body class="pb-32">
+
+    <!-- Sound Effect Audio Element (Cheering) -->
+    <audio id="success-sound" src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" preload="auto"></audio>
+
+    <!-- Video Modal -->
+    <div id="video-modal" class="modal-overlay" onclick="closeVideoModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="close-modal" onclick="closeVideoModal()">&times;</span>
+            <div class="video-container" id="modal-video-container">
+                <!-- Iframe injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Sticky Progress & Timer -->
+    <div class="fixed top-0 left-0 right-0 w-full z-50 bg-slate-900/95 backdrop-blur-md border-b border-white/10 shadow-2xl">
+        <div class="max-w-5xl mx-auto px-4 py-3">
+            <div class="flex flex-wrap items-center justify-between mb-2 gap-2">
+                <div class="flex items-center gap-3">
+                    <span class="font-black text-xl md:text-2xl text-white tracking-tighter">JOE<span class="text-primary">TECH</span></span>
+                    <span class="bg-primary/20 text-primary border border-primary/30 px-2 py-0.5 rounded text-[10px] md:text-xs font-bold whitespace-nowrap">تحدي الـ 24 ساعة</span>
+                </div>
+                
+                <!-- Countdown Timer -->
+                <div class="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full border border-white/10 ml-auto md:ml-0">
+                    <i data-lucide="clock" class="w-3 h-3 md:w-4 md:h-4 text-white"></i>
+                    <span class="text-white font-mono font-bold text-sm md:text-lg" id="countdown-timer">24:00:00</span>
+                    <span class="text-[10px] md:text-xs text-slate-400 hidden sm:inline">متبقي</span>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden relative">
+                <div id="progress-bar" class="bg-gradient-to-r from-emerald-600 to-emerald-400 h-full w-0 transition-all duration-700 relative">
+                    <div class="absolute inset-0 bg-white/20 w-full h-full animate-[shimmer_2s_infinite]"></div>
+                </div>
+            </div>
+            <div class="flex justify-between text-[10px] text-slate-400 mt-1 px-1">
+                <span>البداية</span>
+                <span id="progress-text" class="text-primary font-bold">0%</span>
+                <span>الهدف: إطلاق البراند</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Brand Passport Widget -->
+    <div class="fixed bottom-4 left-4 z-40 bg-slate-900/95 passport-widget rounded-2xl p-4 shadow-2xl w-64 transform transition-all duration-500 translate-y-2 hover:translate-y-0 hover:shadow-emerald-500/20 hidden lg:block border-l-4 border-l-slate-700" id="brand-passport">
+        <h3 class="text-xs font-bold text-slate-400 uppercase mb-4 flex justify-between items-center border-b border-white/10 pb-2">
+            <span>بطاقة هوية البراند</span>
+            <i data-lucide="fingerprint" class="w-4 h-4 text-primary"></i>
+        </h3>
+        <div class="space-y-4">
+            <!-- Niche Status -->
+            <div class="passport-item flex items-center gap-3" id="passport-niche-row">
+                <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500 transition-colors" id="passport-niche-icon">
+                    <i data-lucide="target" class="w-4 h-4"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] text-slate-500">النيش الفرعي</p>
+                    <p class="text-xs font-bold text-white truncate w-36" id="passport-niche-text">---</p>
+                </div>
+            </div>
+            <!-- Name Status -->
+            <div class="passport-item flex items-center gap-3" id="passport-name-row">
+                <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500 transition-colors" id="passport-name-icon">
+                    <i data-lucide="type" class="w-4 h-4"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] text-slate-500">اسم البراند</p>
+                    <p class="text-xs font-bold text-white truncate w-36" id="passport-name-text">---</p>
+                </div>
+            </div>
+            <!-- Colors Status -->
+            <div class="passport-item flex items-center gap-3" id="passport-color-row">
+                <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500 transition-colors" id="passport-color-icon">
+                    <i data-lucide="palette" class="w-4 h-4"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] text-slate-500">الألوان</p>
+                    <div class="flex gap-2 mt-1" id="passport-colors-preview">
+                        <div class="w-4 h-4 rounded-full bg-slate-700 border border-white/10"></div>
+                        <div class="w-4 h-4 rounded-full bg-slate-700 border border-white/10"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto mt-36 md:mt-40 px-4 relative pb-10">
+        
+        <div class="text-center mb-10 md:mb-16">
+            <h1 class="text-3xl md:text-6xl font-black text-white mb-4 leading-tight">
+                ابدأ رحلة <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">البراند الاحترافي</span>
+            </h1>
+            <p class="text-slate-400 text-sm md:text-lg max-w-2xl mx-auto">خطوة بخطوة، سنبني إمبراطوريتك الرقمية خلال 24 ساعة فقط. لا تفوت أي تفصيلة، فالنجاح يكمن في التفاصيل.</p>
+        </div>
+
+        <!-- Step 1: Niche Selection -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-12 md:mb-16 group step-item" id="step-1">
+            <div class="absolute right-0 top-0 w-8 h-8 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 md:border-4 border-slate-900 flex items-center justify-center z-10 step-circle shadow-lg text-sm md:text-lg">
+                <span class="font-bold text-slate-400">1</span>
+            </div>
+            <div class="step-connector"></div>
+            
+            <div class="card-gradient p-5 md:p-8 rounded-3xl border border-white/5 shadow-xl relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-20 h-20 bg-primary/10 rounded-br-full -z-0"></div>
+                
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-2 relative z-10 flex items-center gap-2">
+                    <i data-lucide="target" class="text-primary"></i> اختيار النيش (المجال)
+                </h2>
+                <p class="text-slate-400 mb-6 md:mb-8 text-sm">حجر الأساس لمشروعك. اختر المجال الذي ترى فيه شغفك وفرصتك.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-5 mb-8">
+                    <div class="niche-card border border-white/10 p-5 rounded-2xl text-center hover:bg-white/5" onclick="selectNiche('ai')">
+                        <div class="w-12 h-12 mx-auto mb-3 bg-cyan-900/30 rounded-full flex items-center justify-center">
+                            <i data-lucide="bot" class="w-6 h-6 text-cyan-400"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-lg">الذكاء الاصطناعي</h3>
+                        <p class="text-xs text-slate-500 mt-1">الأعلى طلباً حالياً</p>
+                    </div>
+                    <div class="niche-card border border-white/10 p-5 rounded-2xl text-center hover:bg-white/5" onclick="selectNiche('business')">
+                        <div class="w-12 h-12 mx-auto mb-3 bg-emerald-900/30 rounded-full flex items-center justify-center">
+                            <i data-lucide="briefcase" class="w-6 h-6 text-emerald-400"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-lg">البزنس & التدريب</h3>
+                        <p class="text-xs text-slate-500 mt-1">الأعلى ربحية</p>
+                    </div>
+                    <div class="niche-card border border-white/10 p-5 rounded-2xl text-center hover:bg-white/5" onclick="selectNiche('marketing')">
+                        <div class="w-12 h-12 mx-auto mb-3 bg-orange-900/30 rounded-full flex items-center justify-center">
+                            <i data-lucide="megaphone" class="w-6 h-6 text-orange-400"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-lg">التسويق & الفريلانس</h3>
+                        <p class="text-xs text-slate-500 mt-1">الأسرع انتشاراً</p>
+                    </div>
+                </div>
+
+                <div id="niche-analysis" class="hidden bg-gradient-to-r from-slate-900 to-slate-800 p-6 rounded-2xl border border-primary/20 mb-6"></div>
+
+                <div id="sub-niche-area" class="hidden bg-slate-800/50 p-6 rounded-2xl border border-white/5 mb-6 backdrop-blur-sm">
+                    <h4 class="text-primary font-bold mb-4 flex items-center gap-2">
+                        <i data-lucide="lightbulb" class="w-4 h-4"></i> اختر تخصصاً دقيقاً (سيتم تحديث الخطة بناءً عليه):
+                    </h4>
+                    <ul id="sub-niche-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></ul>
+                </div>
+
+                <div class="flex flex-col md:flex-row items-stretch md:items-center gap-4 pt-6 border-t border-white/5">
+                    <input type="text" id="niche-input" readonly placeholder="اضغط على فكرة بالأعلى ليتم تعبئة الحقل..." class="flex-1 bg-black/30 border border-white/10 rounded-xl px-5 py-3 text-white focus:border-primary focus:outline-none transition-colors placeholder-slate-600 w-full cursor-not-allowed opacity-80">
+                    <label class="flex items-center justify-center gap-3 cursor-pointer bg-primary/10 px-4 py-3 rounded-xl hover:bg-primary/20 transition-colors border border-primary/20 w-full md:w-auto">
+                        <input type="checkbox" class="w-5 h-5 rounded accent-emerald-500" onchange="updateProgress(this)">
+                        <span class="font-bold text-primary text-sm whitespace-nowrap">تم الاختيار</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Naming with AI -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-12 md:mb-16 group step-item">
+            <div class="absolute right-0 top-0 w-8 h-8 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 md:border-4 border-slate-900 flex items-center justify-center z-10 step-circle shadow-lg text-sm md:text-lg">
+                <span class="font-bold text-slate-400">2</span>
+            </div>
+            <div class="step-connector"></div>
+
+            <div class="card-gradient p-5 md:p-8 rounded-3xl border border-white/5 shadow-xl">
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                    <i data-lucide="wand-2" class="text-primary"></i> اختيار اسم البراند (AI)
+                </h2>
+                
+                <div class="bg-black/30 p-1 rounded-xl mb-6 border border-white/10 video-wrapper">
+                    <div class="video-container">
+                        <iframe src="https://app.screencastify.com/watch/eSj4cmGwR9sLXke9gDP0/embed" title="فيديو انشاء الشعارات والاسماء" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                    </div>
+                     <button class="expand-btn" onclick="openVideoModal('https://app.screencastify.com/watch/eSj4cmGwR9sLXke9gDP0/embed')">
+                        <i data-lucide="maximize-2" class="w-3 h-3"></i> تكبير
+                    </button>
+                </div>
+
+                <div class="flex flex-col md:flex-row items-stretch md:items-center gap-4">
+                    <input type="text" placeholder="اسم البراند المعتمد..." oninput="updatePassportName(this.value)" class="flex-1 bg-black/30 border border-white/10 rounded-xl px-5 py-3 text-white focus:border-primary focus:outline-none placeholder-slate-600 w-full">
+                    <label class="flex items-center justify-center gap-3 cursor-pointer bg-primary/10 px-4 py-3 rounded-xl hover:bg-primary/20 transition-colors border border-primary/20 w-full md:w-auto">
+                        <input type="checkbox" class="w-5 h-5 rounded accent-emerald-500" onchange="updateProgress(this)">
+                        <span class="font-bold text-primary text-sm whitespace-nowrap">تم الاعتماد</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Branding & Identity (Simulator + Palettes) -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-12 md:mb-16 group step-item">
+            <div class="absolute right-0 top-0 w-8 h-8 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 md:border-4 border-slate-900 flex items-center justify-center z-10 step-circle shadow-lg text-sm md:text-lg">
+                <span class="font-bold text-slate-400">3</span>
+            </div>
+            <div class="step-connector"></div>
+
+            <div class="card-gradient p-5 md:p-8 rounded-3xl border border-white/5 shadow-xl">
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                    <i data-lucide="palette" class="text-primary"></i> الهوية البصرية (Visual Identity)
+                </h2>
+                <p class="text-slate-400 mb-6 text-sm">الألوان واللوجو هما أساس تصميم موقعك لاحقاً. اختر بعناية.</p>
+
+                <!-- Palette Suggestions -->
+                <div class="bg-slate-800/40 p-5 rounded-2xl border border-white/5 mb-6">
+                    <h3 class="text-white font-bold mb-4 flex items-center gap-2 text-sm border-b border-white/10 pb-2">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-yellow-400"></i> 12 باليت ألوان مقترحة
+                    </h3>
+                    <div id="palette-suggestions" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
+                        <!-- Filled by JS -->
+                    </div>
+
+                    <h3 class="text-white font-bold mb-4 flex items-center gap-2 text-sm border-b border-white/10 pb-2">
+                        <i data-lucide="droplet" class="w-4 h-4 text-cyan-400"></i> تخصيص الألوان يدوياً
+                    </h3>
+                    
+                    <div class="flex flex-col md:flex-row items-center gap-4">
+                        <div class="flex-1 w-full">
+                            <label class="text-xs text-slate-500 block mb-1">اللون الأساسي</label>
+                            <div class="flex gap-2">
+                                <input type="color" id="primary-color-input" class="w-12 h-12 rounded cursor-pointer border-none bg-transparent p-0" value="#10B981" onchange="updatePassportColors(); updateBrandPreviewLive()">
+                                <input type="text" class="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 text-sm text-white" placeholder="#CODE">
+                            </div>
+                        </div>
+                        <div class="flex-1 w-full">
+                            <label class="text-xs text-slate-500 block mb-1">اللون الثانوي</label>
+                            <div class="flex gap-2">
+                                <input type="color" id="secondary-color-input" class="w-12 h-12 rounded cursor-pointer border-none bg-transparent p-0" value="#0f172a" onchange="updatePassportColors(); updateBrandPreviewLive()">
+                                <input type="text" class="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 text-sm text-white" placeholder="#CODE">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Logo Upload & Brand Simulator -->
+                <div class="mt-6 border-t border-white/10 pt-6 mb-6">
+                    <div class="bg-gradient-to-r from-purple-900/20 to-blue-900/20 p-5 rounded-2xl border border-white/10">
+                        <h3 class="text-white font-bold mb-2 flex items-center gap-2 text-sm">
+                            <i data-lucide="wand-2" class="w-4 h-4 text-purple-400"></i> استوديو البراند (AI Brand Studio)
+                        </h3>
+                        <p class="text-xs text-slate-400 mb-4">اذهب إلى Gemini واطلب منه تصميم لوجو، ثم ارفعه هنا لترى كيف سيبدو براندك على أرض الواقع!</p>
+                        
+                        <div class="flex flex-col md:flex-row gap-4 items-center">
+                            <div class="flex-1 w-full">
+                                <div class="relative border-2 border-dashed border-white/20 rounded-xl p-4 text-center hover:border-primary/50 transition-colors bg-slate-800/50 group cursor-pointer h-24 flex flex-col justify-center items-center overflow-hidden">
+                                    <input type="file" accept="image/*" onchange="handleLogoUpload(this)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                                    <div class="flex flex-col items-center justify-center transition-opacity duration-300" id="upload-placeholder">
+                                        <i data-lucide="upload-cloud" class="w-6 h-6 text-slate-500 mb-1 group-hover:text-primary"></i>
+                                        <p class="text-[10px] text-slate-400">اضغط لرفع اللوجو</p>
+                                    </div>
+                                    <img src="" class="brand-logo-preview hidden absolute inset-0 w-full h-full object-contain p-2 z-0 rounded-xl" alt="Logo">
+                                </div>
+                            </div>
+                            <button onclick="generateBrandPreview()" class="w-full md:w-auto bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg flex items-center justify-center gap-2 transition-all transform hover:scale-105 active:scale-95 h-12">
+                                <i data-lucide="eye" class="w-4 h-4"></i> معاينة شكل البراند
+                            </button>
+                        </div>
+
+                        <!-- Simulation Container -->
+                        <div id="brand-simulation" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 animate-[fadeIn_0.5s_ease-out]">
+                            <!-- Website Preview -->
+                            <div class="bg-slate-950 border border-white/10 rounded-xl overflow-hidden relative shadow-2xl flex flex-col h-80">
+                                <div class="bg-slate-900 px-3 py-2 flex items-center gap-2 border-b border-white/5 shrink-0">
+                                    <div class="flex gap-1"><div class="w-2 h-2 rounded-full bg-red-500"></div><div class="w-2 h-2 rounded-full bg-yellow-500"></div><div class="w-2 h-2 rounded-full bg-green-500"></div></div>
+                                    <div class="bg-slate-800 h-4 rounded w-full ml-2 opacity-30"></div>
+                                </div>
+                                <div class="overflow-y-auto custom-scrollbar flex-1 bg-slate-950">
+                                    <div id="mock-nav" class="sticky top-0 z-20 flex justify-between items-center px-4 py-3 transition-colors duration-500 bg-slate-900">
+                                        <div class="w-8 h-8 flex items-center justify-center"><img src="" class="brand-logo-preview w-full h-full object-contain hidden"><div class="brand-logo-placeholder-icon w-6 h-6 bg-white/20 rounded-full animate-pulse"></div></div>
+                                        <div class="flex gap-2"><div class="w-8 h-1.5 bg-white/20 rounded"></div><div class="w-8 h-1.5 bg-white/20 rounded"></div></div>
+                                    </div>
+                                    <div class="p-6 flex flex-col items-center justify-center text-center space-y-3 bg-slate-900/50 backdrop-blur-sm relative overflow-hidden h-48 border-b border-white/5">
+                                        <div id="mock-hero-circle" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-primary/5 rounded-full blur-2xl -z-10"></div>
+                                        <h4 id="mock-hero-text" class="text-sm md:text-lg font-black text-white transition-colors">عنوان موقعك الجذاب هنا</h4>
+                                        <p class="text-[8px] text-slate-400 w-3/4">هنا وصف المنتج الذي سيجذب العميل ويقنعه بالشراء فوراً.</p>
+                                        <div id="mock-hero-btn" class="px-4 py-1.5 rounded-full text-[8px] font-bold text-white bg-emerald-500 shadow-lg mt-1 transition-colors">اشترِ الآن</div>
+                                    </div>
+                                    <div class="p-4 grid grid-cols-3 gap-2 bg-slate-950"><div class="bg-white/5 rounded p-2 h-16 animate-pulse"></div><div class="bg-white/5 rounded p-2 h-16 animate-pulse"></div><div class="bg-white/5 rounded p-2 h-16 animate-pulse"></div></div>
+                                    <div class="p-4 bg-black/50 text-center"><div class="w-1/2 h-2 bg-white/10 mx-auto rounded"></div></div>
+                                </div>
+                                <div class="bg-black/80 py-1 text-center text-[8px] text-slate-500 tracking-wider shrink-0">WEBSITE PREVIEW</div>
+                            </div>
+
+                            <!-- Social Media Preview -->
+                            <div id="mock-social-bg" class="rounded-xl overflow-hidden relative shadow-2xl flex flex-col items-center justify-center p-6 bg-gradient-to-br from-slate-800 to-slate-900 transition-all duration-500 h-80">
+                                <div class="bg-white text-slate-900 w-full max-w-[220px] rounded-xl overflow-hidden shadow-2xl">
+                                    <div class="flex items-center justify-between p-2 border-b border-gray-100">
+                                        <div class="flex items-center gap-2"><div class="w-6 h-6 rounded-full bg-gray-200 overflow-hidden relative border border-gray-300"><img src="" class="brand-logo-preview w-full h-full object-cover hidden"></div><div class="w-16 h-2 bg-gray-200 rounded"></div></div>
+                                        <div class="w-1 h-1 bg-gray-400 rounded-full box-content border-l-[2px] border-r-[2px] border-gray-400 w-[2px]"></div>
+                                    </div>
+                                    <div class="aspect-square bg-gray-100 flex items-center justify-center relative overflow-hidden" id="social-post-image-area"><img src="" class="brand-logo-preview w-full h-full object-contain p-4 z-10 hidden"><div class="brand-logo-placeholder-icon"><i data-lucide="image" class="text-gray-300 w-8 h-8"></i></div></div>
+                                    <div class="p-2 flex gap-2"><i data-lucide="heart" class="w-4 h-4 text-red-500 fill-red-500"></i><i data-lucide="message-circle" class="w-4 h-4 text-gray-600"></i><i data-lucide="send" class="w-4 h-4 text-gray-600"></i></div>
+                                    <div class="px-2 pb-3"><div class="w-full h-2 bg-gray-200 rounded mb-1"></div><div class="w-2/3 h-2 bg-gray-200 rounded"></div></div>
+                                </div>
+                                <div class="absolute bottom-2 right-2 text-[8px] text-white/50 tracking-wider">INSTAGRAM POST</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <label class="w-full flex justify-between items-center cursor-pointer bg-primary/10 px-5 py-4 rounded-xl hover:bg-primary/20 transition-colors border border-primary/20 group">
+                    <span class="font-bold text-white group-hover:text-primary transition-colors text-sm">تم حفظ اللوجو وأكواد الألوان لاستخدامها في الموقع</span>
+                    <input type="checkbox" class="w-6 h-6 rounded accent-emerald-500" onchange="updateProgress(this)">
+                </label>
+            </div>
+        </div>
+
+        <!-- Step 4: UpKlick Infrastructure -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-12 md:mb-16 group step-item">
+            <div class="absolute right-0 top-0 w-8 h-8 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 md:border-4 border-slate-900 flex items-center justify-center z-10 step-circle shadow-lg text-sm md:text-lg">
+                <span class="font-bold text-slate-400">4</span>
+            </div>
+            <div class="step-connector"></div>
+
+            <div class="card-gradient p-5 md:p-8 rounded-3xl border border-white/5 shadow-xl border-r-4 border-r-orange-500 relative overflow-hidden">
+                <div class="absolute -top-3 -left-12 bg-yellow-500 text-black font-black text-xs py-1 px-12 rotate-[-45deg] z-20 shadow-lg border-2 border-white">14 يوم مجاناً</div>
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                    <div><h2 class="text-xl md:text-2xl font-bold text-white mb-1">البنية التحتية (UpKlick Setup)</h2><p class="text-slate-400 text-sm">ابدأ رحلتك الآن بدون مخاطرة</p></div>
+                    <div class="flex flex-col items-center"><a href="https://upklick.co" target="_blank" class="w-full md:w-auto text-center bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white px-6 py-3 rounded-xl text-sm font-bold transition-all shadow-lg hover:shadow-orange-500/50 flex items-center justify-center gap-2 transform hover:-translate-y-1">ابدأ تجربتك المجانية (14 يوم) <i data-lucide="external-link" class="w-4 h-4"></i></a><span class="text-[10px] text-green-400 mt-1 font-bold animate-pulse">🎁 عرض خاص للمشتركين</span></div>
+                </div>
+
+                <!-- Registration Video (ADDED) -->
+                <div class="mb-6">
+                    <p class="text-xs font-bold text-slate-300 mb-2 flex items-center gap-2"><i data-lucide="play-circle" class="w-3 h-3 text-orange-400"></i> شرح التسجيل وتفعيل الحساب:</p>
+                    <div class="video-wrapper">
+                        <div class="video-container">
+                            <iframe src="https://app.screencastify.com/watch/rnZP2Bz2zUrjWLvne4TO/embed" frameborder="0" allowfullscreen></iframe>
+                        </div>
+                         <button class="expand-btn" onclick="openVideoModal('https://app.screencastify.com/watch/rnZP2Bz2zUrjWLvne4TO/embed')">
+                            <i data-lucide="maximize-2" class="w-3 h-3"></i> تكبير
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-4 mb-6">
+                    <label class="flex items-center gap-4 p-4 bg-slate-800/30 rounded-xl border border-white/5 hover:border-orange-500/30 transition-colors cursor-pointer"><input type="checkbox" class="w-6 h-6 rounded accent-orange-500" onchange="updateProgress(this)"><div><span class="text-slate-200 font-bold text-sm block">إنشاء حساب جديد وتفعيل الـ 14 يوم المجانية</span></div></label>
+                    <label class="flex items-center gap-4 p-4 bg-gradient-to-r from-orange-900/20 to-slate-800/50 rounded-xl border border-orange-500/30 hover:border-orange-500 transition-colors cursor-pointer relative overflow-hidden group"><div class="absolute right-0 top-0 w-1 h-full bg-orange-500"></div><input type="checkbox" class="w-6 h-6 rounded accent-orange-500" onchange="updateProgress(this)"><div class="flex-1"><span class="text-white font-bold text-sm flex items-center gap-2"><i data-lucide="wallet" class="w-4 h-4 text-orange-400"></i> شحن الرصيد (Top Up Balance)</span><span class="text-xs text-slate-400 block mt-1">لتفعيل شراء الدومين (يمكنك استرداد الرصيد إذا لم يعجبك)</span></div></label>
+                </div>
+
+                <!-- Domain Video (ADDED & UPDATED with new link) -->
+                <div class="mb-4 pt-4 border-t border-white/5">
+                    <p class="text-xs font-bold text-slate-300 mb-2 flex items-center gap-2"><i data-lucide="play-circle" class="w-3 h-3 text-orange-400"></i> شرح شراء الدومين (Domain):</p>
+                    <div class="video-wrapper">
+                        <div class="video-container">
+                             <iframe src="https://drive.google.com/file/d/1zH86EQPBmwcbIP-FqPO01Qhel-F9h5Zq/preview" frameborder="0" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <label class="flex items-center gap-4 p-4 bg-slate-800/30 rounded-xl border border-white/5 hover:border-orange-500/30 transition-colors cursor-pointer"><input type="checkbox" class="w-6 h-6 rounded accent-orange-500" onchange="updateProgress(this)"><div><span class="text-slate-200 font-bold text-sm block">شراء الدومين (Buy Domain)</span></div></label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 5: Website Construction -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-12 md:mb-16 group step-item">
+            <div class="absolute right-0 top-0 w-8 h-8 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 md:border-4 border-slate-900 flex items-center justify-center z-10 step-circle shadow-lg text-sm md:text-lg"><span class="font-bold text-slate-400">5</span></div>
+            <div class="step-connector"></div>
+            <div class="card-gradient p-5 md:p-8 rounded-3xl border border-white/5 shadow-xl">
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-2">طريقة بناء الموقع</h2>
+                <p class="text-slate-400 text-sm mb-6">كيف تريد تصميم موقعك اليوم؟ اختر طريقتك:</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+                    <div class="border border-white/10 bg-slate-800/20 p-6 rounded-2xl text-center cursor-pointer hover:bg-blue-900/10 hover:border-blue-400 hover:shadow-[0_0_15px_rgba(59,130,246,0.2)] transition-all group build-method" onclick="selectBuildMethod(this, 'gemini')"><div class="w-14 h-14 bg-blue-500/10 rounded-full mx-auto mb-4 flex items-center justify-center border border-blue-500/20 group-hover:bg-blue-500 group-hover:text-white transition-colors"><i data-lucide="code-2" class="w-7 h-7 text-blue-400 group-hover:text-white"></i></div><h3 class="text-lg font-bold text-white mb-2">Gemini Code</h3><p class="text-xs text-slate-400 leading-relaxed mb-4">استخدم الذكاء الاصطناعي لكتابة كود صفحة هبوط احترافية متكاملة بضغطة زر.</p><div class="text-blue-400 text-xs font-bold border border-blue-500/30 rounded-full py-1 px-3 inline-block">للمحترفين والمستعجلين ⚡</div></div>
+                    <div class="border border-white/10 bg-slate-800/20 p-6 rounded-2xl text-center cursor-pointer hover:bg-orange-900/10 hover:border-orange-400 hover:shadow-[0_0_15px_rgba(249,115,22,0.2)] transition-all group build-method" onclick="selectBuildMethod(this, 'template')"><div class="w-14 h-14 bg-orange-500/10 rounded-full mx-auto mb-4 flex items-center justify-center border border-orange-500/20 group-hover:bg-orange-500 group-hover:text-white transition-colors"><i data-lucide="layout-template" class="w-7 h-7 text-orange-400 group-hover:text-white"></i></div><h3 class="text-lg font-bold text-white mb-2">قوالب جاهزة</h3><p class="text-xs text-slate-400 leading-relaxed mb-4">اختر قالب جاهز وعدل عليه بنظام السحب والإفلات السهل (Drag & Drop).</p><div class="text-orange-400 text-xs font-bold border border-orange-500/30 rounded-full py-1 px-3 inline-block">سهل وسريع 🎨</div></div>
+                </div>
+                <div id="build-instructions" class="hidden bg-slate-900/80 p-6 rounded-2xl border border-white/10 mb-6 relative animate-[fadeIn_0.5s_ease-out]"></div>
+                <div class="bg-slate-900/50 p-4 rounded-xl border border-white/5"><label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" class="w-6 h-6 rounded accent-emerald-500" onchange="updateProgress(this)"><span class="text-slate-300 font-bold text-sm">تم تنفيذ التصميم ووضعه في الموقع ✅</span></label></div>
+                
+                <!-- VIP CTA (Added 1) -->
+                <div class="mt-6 pt-4 border-t border-white/5 text-center">
+                    <p class="text-xs text-slate-400 mb-3">حاسس إن الموضوع صعب أو معقد؟ 🤔</p>
+                    <a href="https://koalendar.com/e/mohamedjoe24togo" target="_blank" class="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black font-bold px-5 py-2 rounded-lg text-xs hover:scale-105 transition-transform shadow-lg shadow-yellow-500/20">
+                        <i data-lucide="crown" class="w-4 h-4"></i> احجز استشارة وخلينا نبنيهولك
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 6: Landing Page Content -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-12 md:mb-16 group step-item">
+            <div class="absolute right-0 top-0 w-8 h-8 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 md:border-4 border-slate-900 flex items-center justify-center z-10 step-circle shadow-lg text-sm md:text-lg"><span class="font-bold text-slate-400">6</span></div>
+            <div class="step-connector"></div>
+            <div class="card-gradient p-5 md:p-8 rounded-3xl border border-white/5 shadow-xl">
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-6">محتوى صفحة الهبوط (Content)</h2>
+                <div class="space-y-4">
+                    <label class="flex items-center gap-4 p-4 bg-slate-800/30 rounded-xl border border-white/5 hover:border-primary/30 transition-colors cursor-pointer group"><input type="checkbox" class="w-5 h-5 rounded accent-emerald-500" onchange="updateProgress(this)"><span class="text-slate-300 group-hover:text-white transition-colors text-sm">رفع صور وملفات المنتج على الموقع</span></label>
+                    <label class="flex items-center gap-4 p-4 bg-slate-800/30 rounded-xl border border-white/5 hover:border-primary/30 transition-colors cursor-pointer group"><input type="checkbox" class="w-5 h-5 rounded accent-emerald-500" onchange="updateProgress(this)"><span class="text-slate-300 group-hover:text-white transition-colors text-sm">كتابة الوصف التسويقي (مميزات، فوائد، ضمان)</span></label>
+                    <label class="flex items-center gap-4 p-4 bg-slate-800/30 rounded-xl border border-white/5 hover:border-primary/30 transition-colors cursor-pointer group"><input type="checkbox" class="w-5 h-5 rounded accent-emerald-500" onchange="updateProgress(this)"><span class="text-slate-300 group-hover:text-white transition-colors text-sm">نشر الصفحة (Publish) والتأكد من أنها Live</span></label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 7: Legal Pages -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-12 md:mb-16 group step-item">
+            <div class="absolute right-0 top-0 w-8 h-8 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 md:border-4 border-slate-900 flex items-center justify-center z-10 step-circle shadow-lg text-sm md:text-lg"><span class="font-bold text-slate-400">7</span></div>
+            <div class="step-connector"></div>
+            <div class="card-gradient p-5 md:p-8 rounded-3xl border border-white/5 shadow-xl">
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-2 flex items-center gap-2"><i data-lucide="shield-check" class="text-blue-400"></i> المصداقية والصفحات القانونية</h2>
+                <div class="space-y-4">
+                    <label class="flex items-center gap-4 p-4 bg-slate-800/30 rounded-xl border border-white/5 hover:border-blue-500/30 transition-colors cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded accent-blue-500" onchange="updateProgress(this)"><div class="flex-1"><span class="text-slate-200 font-bold text-sm block">إنشاء صفحة سياسة الخصوصية (Privacy Policy)</span></div></label>
+                    <label class="flex items-center gap-4 p-4 bg-slate-800/30 rounded-xl border border-white/5 hover:border-blue-500/30 transition-colors cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded accent-blue-500" onchange="updateProgress(this)"><div class="flex-1"><span class="text-slate-200 font-bold text-sm block">إنشاء صفحة الشروط والأحكام (Terms & Conditions)</span></div></label>
+                    <label class="flex items-center gap-4 p-4 bg-slate-800/30 rounded-xl border border-white/5 hover:border-blue-500/30 transition-colors cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded accent-blue-500" onchange="updateProgress(this)"><div class="flex-1"><span class="text-slate-200 font-bold text-sm block">إضافة "سياسة الاسترجاع" (Refund Policy)</span></div></label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 8: UpKlick Settings -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-12 md:mb-16 group step-item">
+            <div class="absolute right-0 top-0 w-8 h-8 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 md:border-4 border-slate-900 flex items-center justify-center z-10 step-circle shadow-lg text-sm md:text-lg"><span class="font-bold text-slate-400">8</span></div>
+            <div class="step-connector"></div>
+            <div class="card-gradient p-5 md:p-8 rounded-3xl border border-white/5 shadow-xl">
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-4">الإعدادات العامة (Settings)</h2>
+                <div class="space-y-4">
+                    <label class="flex items-center gap-4 p-4 bg-slate-800/30 rounded-xl border border-white/5 hover:border-orange-500/30 transition-colors cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded accent-orange-500" onchange="updateProgress(this)"><span class="text-slate-300 text-sm">رفع اللوجو (Logo & Favicon)</span></label>
+                    <label class="flex items-center gap-4 p-4 bg-slate-800/30 rounded-xl border border-white/5 hover:border-orange-500/30 transition-colors cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded accent-orange-500" onchange="updateProgress(this)"><span class="text-slate-300 text-sm">ضبط ألوان الموقع وخطوطه (Global Styling)</span></label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 9: Chatbot Setup -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-12 md:mb-16 group step-item">
+            <div class="absolute right-0 top-0 w-8 h-8 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 md:border-4 border-slate-900 flex items-center justify-center z-10 step-circle shadow-lg text-sm md:text-lg"><span class="font-bold text-slate-400">9</span></div>
+            <div class="step-connector"></div>
+            <div class="card-gradient p-5 md:p-8 rounded-3xl border border-white/5 shadow-xl">
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="bot" class="text-orange-400"></i> إعداد الشات بوت والدعم</h2>
+                <div class="space-y-4">
+                    <label class="flex items-center gap-4 p-4 bg-slate-800/30 rounded-xl border border-white/5 hover:border-orange-500/30 transition-colors cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded accent-orange-500" onchange="updateProgress(this)"><span class="text-slate-300 text-sm">تفعيل زر واتساب أو شات بوت على الموقع</span></label>
+                    <label class="flex items-center gap-4 p-4 bg-slate-800/30 rounded-xl border border-white/5 hover:border-orange-500/30 transition-colors cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded accent-orange-500" onchange="updateProgress(this)"><span class="text-slate-300 text-sm">تدريب البوت على الأسئلة الشائعة</span></label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 10: Social Integration -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-12 md:mb-16 group step-item">
+            <div class="absolute right-0 top-0 w-8 h-8 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 md:border-4 border-slate-900 flex items-center justify-center z-10 step-circle shadow-lg text-sm md:text-lg"><span class="font-bold text-slate-400">10</span></div>
+            <div class="step-connector"></div>
+            <div class="card-gradient p-5 md:p-8 rounded-3xl border border-white/5 shadow-xl">
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-4">ربط السوشيال ميديا</h2>
+                <div class="space-y-4">
+                    <label class="flex items-center gap-4 p-4 bg-slate-800/30 rounded-xl border border-white/5 hover:border-orange-500/30 transition-colors cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded accent-orange-500" onchange="updateProgress(this)"><span class="text-slate-300 text-sm">ربط حسابات فيسبوك وانستجرام بـ UpKlick</span></label>
+                    <label class="flex items-center gap-4 p-4 bg-slate-800/30 rounded-xl border border-white/5 hover:border-orange-500/30 transition-colors cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded accent-orange-500" onchange="updateProgress(this)"><span class="text-slate-300 text-sm">إضافة كود البيكسل (Pixel/Tracking)</span></label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 11: Email Setup -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-12 md:mb-16 group step-item">
+            <div class="absolute right-0 top-0 w-8 h-8 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 md:border-4 border-slate-900 flex items-center justify-center z-10 step-circle shadow-lg text-sm md:text-lg"><span class="font-bold text-slate-400">11</span></div>
+            <div class="step-connector"></div>
+            <div class="card-gradient p-5 md:p-8 rounded-3xl border border-white/5 shadow-xl">
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-4">إعدادات الإيميل (Email Setup)</h2>
+                <div class="space-y-4">
+                    <label class="flex items-center gap-4 p-4 bg-slate-800/30 rounded-xl border border-white/5 hover:border-orange-500/30 transition-colors cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded accent-orange-500" onchange="updateProgress(this)"><span class="text-slate-300 text-sm">إعداد وتوثيق الدومين للإرسال (DNS Records)</span></label>
+                    <label class="flex items-center gap-4 p-4 bg-slate-800/30 rounded-xl border border-white/5 hover:border-orange-500/30 transition-colors cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded accent-orange-500" onchange="updateProgress(this)"><span class="text-slate-300 text-sm">إنشاء قوائم المشتركين (Lists)</span></label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 12: Product Source -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-12 md:mb-16 group step-item">
+            <div class="absolute right-0 top-0 w-8 h-8 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 md:border-4 border-slate-900 flex items-center justify-center z-10 step-circle shadow-lg text-sm md:text-lg"><span class="font-bold text-slate-400">12</span></div>
+            <div class="step-connector"></div>
+            <div class="card-gradient p-5 md:p-8 rounded-3xl border border-white/5 shadow-xl">
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-2">مصدر المنتج</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+                    <a href="https://www.etsy.com/search?q=%D9%85%D9%86%D8%AA%D8%AC%D8%A7%D8%AA%20%D8%B1%D9%82%D9%85%D9%8A%D8%A9&ref=auto-1&as_prefix=%D9%85%D9%86" target="_blank" class="border border-white/10 bg-slate-800/20 p-6 rounded-2xl text-center cursor-pointer hover:bg-orange-900/10 hover:border-orange-400 transition-all group block"><div class="w-14 h-14 bg-orange-500/10 rounded-full mx-auto mb-4 flex items-center justify-center"><i data-lucide="shopping-bag" class="w-7 h-7 text-orange-400"></i></div><h3 class="text-lg font-bold text-white mb-2">Etsy (شراء وإعادة بيع)</h3></a>
+                    <a href="https://drive.google.com/drive/folders/1tnW4eGiTeSbEZxvpEXeL5cBclhaAUkt9" target="_blank" class="border border-white/10 bg-slate-800/20 p-6 rounded-2xl text-center cursor-pointer hover:bg-red-900/10 hover:border-red-400 transition-all group block"><div class="w-14 h-14 bg-red-500/10 rounded-full mx-auto mb-4 flex items-center justify-center"><i data-lucide="folder-open" class="w-7 h-7 text-red-400"></i></div><h3 class="text-lg font-bold text-white mb-2">Digital Kanz Drive</h3></a>
+                </div>
+                <div class="bg-slate-900/50 p-4 rounded-xl border border-white/5"><label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" class="w-6 h-6 rounded accent-emerald-500" onchange="updateProgress(this)"><span class="text-slate-300 font-bold text-sm">تم تحديد المصدر وتحميل الملفات ✅</span></label></div>
+            </div>
+        </div>
+
+        <!-- Step 13: Product Tutorials -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-12 md:mb-16 group step-item">
+            <div class="absolute right-0 top-0 w-8 h-8 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 md:border-4 border-slate-900 flex items-center justify-center z-10 step-circle shadow-lg text-sm md:text-lg"><span class="font-bold text-slate-400">13</span></div>
+            <div class="step-connector"></div>
+            <div class="card-gradient p-5 md:p-8 rounded-3xl border border-white/5 shadow-xl border-r-4 border-r-red-500">
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-4">شروحات المنتجات (Tutorials)</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-black/20 p-3 rounded-xl border border-white/5"><p class="text-xs font-bold text-white mb-2">المقالات الرقمية</p><div class="video-wrapper"><div class="video-container"><iframe src="https://app.screencastify.com/watch/WLisCCFJ7gYq8BZyPg2c/embed" frameborder="0" allowfullscreen></iframe></div></div></div>
+                    <div class="bg-black/20 p-3 rounded-xl border border-white/5"><p class="text-xs font-bold text-white mb-2">الكتب الإلكترونية</p><div class="video-wrapper"><div class="video-container"><iframe src="https://app.screencastify.com/watch/T2IYy65tH3qPDuddrcIL/embed" frameborder="0" allowfullscreen></iframe></div></div></div>
+                    <div class="bg-black/20 p-3 rounded-xl border border-white/5"><p class="text-xs font-bold text-white mb-2">قوالب الريلز والآفاتار</p><div class="video-wrapper"><div class="video-container"><iframe src="https://app.screencastify.com/watch/YaDM64oqOkbrZJtEh87L/embed" frameborder="0" allowfullscreen></iframe></div></div></div>
+                    <div class="bg-black/20 p-3 rounded-xl border border-white/5"><p class="text-xs font-bold text-white mb-2">فيديوهات وايت بورد</p><div class="video-wrapper"><div class="video-container"><iframe src="https://app.screencastify.com/watch/OrQy9sOuas5CMJrbIsrG/embed" frameborder="0" allowfullscreen></iframe></div></div></div>
+                    <div class="bg-black/20 p-3 rounded-xl border border-white/5"><p class="text-xs font-bold text-white mb-2">قوالب السوشيال ميديا</p><div class="video-wrapper"><div class="video-container"><iframe src="https://app.screencastify.com/watch/QvTn936AyWpL4yapEPd1/embed" frameborder="0" allowfullscreen></iframe></div></div></div>
+                    <div class="bg-black/20 p-3 rounded-xl border border-white/5"><p class="text-xs font-bold text-white mb-2">قوالب الإكسل (Excel)</p><div class="video-wrapper"><div class="video-container"><iframe src="https://app.screencastify.com/watch/gdvEmziuZchnZoJjYS6Z/embed" frameborder="0" allowfullscreen></iframe></div></div></div>
+                </div>
+                <div class="bg-slate-800/50 p-4 rounded-xl border border-white/5 mb-4"><label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" class="w-6 h-6 rounded accent-red-500" onchange="updateProgress(this)"><div><span class="font-bold text-white block">تم مشاهدة الشرح وتجهيز المنتج</span></div></label></div>
+            </div>
+        </div>
+
+        <!-- Step 14: Pricing -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-12 md:mb-16 group step-item">
+            <div class="absolute right-0 top-0 w-8 h-8 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 md:border-4 border-slate-900 flex items-center justify-center z-10 step-circle shadow-lg text-sm md:text-lg"><span class="font-bold text-slate-400">14</span></div>
+            <div class="step-connector"></div>
+            <div class="card-gradient p-5 md:p-8 rounded-3xl border border-white/5 shadow-xl">
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-2 flex items-center gap-2"><i data-lucide="dollar-sign" class="text-green-400"></i> حاسبة الأرباح الذكية</h2>
+                <div class="bg-black/20 p-4 md:p-6 rounded-2xl border border-white/5 mb-6">
+                    <p class="text-slate-400 text-xs mb-4">بما أن المنتج رقمي، تكلفته 0 تقريباً. سنقوم بحساب تكلفة الإعلان التقديرية لك.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="text-xs text-white mb-2 block font-bold">العملة</label>
+                                <select onchange="document.getElementById('ad-currency').value = this.value; calculateProfit()" class="w-full bg-slate-900 border border-primary/50 rounded-lg px-4 py-3 text-white font-bold">
+                                    <option value="USD">$ USD</option>
+                                    <option value="EGP">ج.م EGP</option>
+                                    <option value="SAR">ر.س SAR</option>
+                                    <option value="AED">د.إ AED</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-white mb-2 block font-bold">بكم ستبيع المنتج؟ (السعر للعميل)</label>
+                                <input type="number" id="sale-price" oninput="calculateProfit()" class="w-full bg-slate-900 border border-primary/50 rounded-lg px-4 py-3 text-center text-white font-bold text-xl" placeholder="مثال: 20">
+                            </div>
+                        </div>
+                        <div class="mb-6">
+                            <label class="text-xs text-red-400 mb-2 block">تكلفة الإعلان المتوقعة (تقديري 40%)</label>
+                            <div class="w-full bg-slate-900/50 border border-red-900/30 rounded-lg px-4 py-3 text-center text-red-200 font-mono text-lg flex items-center justify-center gap-1">
+                                <span id="ad-cost-display">0</span> <span class="text-xs opacity-50">تقريباً</span>
+                            </div>
+                        </div>
+                    <div class="bg-emerald-900/20 p-4 rounded-xl border border-emerald-500/20 text-center mb-6">
+                        <p class="text-slate-400 text-xs mb-1">صافي ربحك (Net Profit)</p>
+                        <p class="text-4xl font-black text-emerald-400" id="profit-display">0</p>
+                    </div>
+                    <div class="border-t border-white/10 pt-4 grid grid-cols-3 gap-2 text-center">
+                        <div class="bg-slate-800/30 p-2 rounded-lg"><span class="text-[10px] text-slate-400 block">1 مبيعة يومياً</span><span class="text-white font-bold" id="profit-daily">0</span></div>
+                        <div class="bg-slate-800/30 p-2 rounded-lg border border-yellow-500/20"><span class="text-[10px] text-yellow-400 block">5 مبيعات يومياً</span><span class="text-yellow-400 font-bold" id="profit-5x">0</span></div>
+                        <div class="bg-slate-800/30 p-2 rounded-lg"><span class="text-[10px] text-slate-400 block">10 مبيعات يومياً</span><span class="text-white font-bold" id="profit-10x">0</span></div>
+                    </div>
+                </div>
+                <label class="flex items-center gap-3 cursor-pointer bg-slate-800/40 p-4 rounded-xl border border-white/5"><input type="checkbox" class="w-6 h-6 rounded accent-emerald-500" onchange="updateProgress(this)"><span class="text-slate-300 text-sm">تم تحديد السعر وفهمت المعادلة ✅</span></label>
+                
+                <!-- VIP CTA (Added 2) -->
+                <div class="mt-6 pt-4 border-t border-white/5 text-center">
+                    <p class="text-xs text-slate-400 mb-3">مش متأكد من تسعيرك؟ 📊</p>
+                    <a href="https://koalendar.com/e/mohamedjoe24togo" target="_blank" class="inline-flex items-center justify-center gap-2 text-yellow-500 font-bold text-xs hover:text-white transition-colors">
+                        احجز استشارة مع فريق محمد جو <i data-lucide="arrow-left" class="w-3 h-3"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 15: Social Presence -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-12 md:mb-16 group step-item">
+            <div class="absolute right-0 top-0 w-8 h-8 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 md:border-4 border-slate-900 flex items-center justify-center z-10 step-circle shadow-lg text-sm md:text-lg"><span class="font-bold text-slate-400">15</span></div>
+            <div class="step-connector"></div>
+            <div class="card-gradient p-5 md:p-8 rounded-3xl border border-white/5 shadow-xl">
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-6">حسابات السوشيال ميديا</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label class="flex items-center gap-3 p-4 bg-slate-800/30 rounded-xl border border-white/5 hover:bg-blue-900/10 hover:border-blue-500/30 transition-all cursor-pointer"><input type="checkbox" class="w-5 h-5 accent-blue-600" onchange="updateProgress(this)"><span class="text-sm font-bold text-slate-300">Facebook Page</span></label>
+                    <label class="flex items-center gap-3 p-4 bg-slate-800/30 rounded-xl border border-white/5 hover:bg-pink-900/10 hover:border-pink-500/30 transition-all cursor-pointer"><input type="checkbox" class="w-5 h-5 accent-pink-600" onchange="updateProgress(this)"><span class="text-sm font-bold text-slate-300">Instagram</span></label>
+                    <label class="flex items-center gap-3 p-4 bg-slate-800/30 rounded-xl border border-white/5 hover:bg-slate-700/30 hover:border-white/30 transition-all cursor-pointer"><input type="checkbox" class="w-5 h-5 accent-slate-500" onchange="updateProgress(this)"><span class="text-sm font-bold text-slate-300">TikTok</span></label>
+                    <label class="flex items-center gap-3 p-4 bg-slate-800/30 rounded-xl border border-white/5 hover:bg-red-900/10 hover:border-red-500/30 transition-all cursor-pointer"><input type="checkbox" class="w-5 h-5 accent-red-600" onchange="updateProgress(this)"><span class="text-sm font-bold text-slate-300">YouTube Channel</span></label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 16: Content Factory (Dynamic) -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-12 md:mb-16 group step-item">
+            <div class="absolute right-0 top-0 w-8 h-8 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 md:border-4 border-slate-900 flex items-center justify-center z-10 step-circle shadow-lg text-sm md:text-lg"><span class="font-bold text-slate-400">16</span></div>
+            <div class="step-connector"></div>
+            <div class="card-gradient p-5 md:p-8 rounded-3xl border border-white/5 shadow-xl">
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-2 flex items-center gap-2"><i data-lucide="image" class="text-pink-400"></i> مصنع المحتوى (6 تصميمات)</h2>
+                <p class="text-slate-400 text-sm mb-6">هذه الأفكار مخصصة للنيش الذي اخترته:</p>
+                <div id="content-ideas-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div class="text-slate-500 text-center py-4 bg-slate-900 rounded-xl col-span-2"><i data-lucide="alert-circle" class="w-5 h-5 mx-auto mb-2"></i>يرجى اختيار النيش الفرعي من الخطوة رقم 1 أولاً.</div>
+                </div>
+                <label class="flex items-center gap-4 p-4 bg-slate-800/40 rounded-xl border border-white/5 hover:border-primary/30 transition-colors cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded accent-emerald-500" onchange="updateProgress(this)"><span class="text-slate-300 text-sm">تم تصميم 6 بوستات باستخدام الذكاء الاصطناعي</span></label>
+            </div>
+        </div>
+
+        <!-- Step 17: HeyGen AI (Dynamic) -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-12 md:mb-16 group step-item">
+            <div class="absolute right-0 top-0 w-8 h-8 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 md:border-4 border-slate-900 flex items-center justify-center z-10 step-circle shadow-lg text-sm md:text-lg"><span class="font-bold text-slate-400">17</span></div>
+            <div class="step-connector"></div>
+            <div class="card-gradient p-5 md:p-8 rounded-3xl border border-white/5 shadow-xl border-r-4 border-r-violet-500">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                    <div><h2 class="text-xl md:text-2xl font-bold text-white mb-1">المتحدث الرسمي (HeyGen)</h2><p class="text-slate-400 text-xs">سكربتات جاهزة للنيش الخاص بك</p></div>
+                    <a href="https://www.heygen.com/?sid=rewardful&via=Mohamedjoe" target="_blank" class="w-full md:w-auto text-center bg-violet-600 hover:bg-violet-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg hover:shadow-violet-500/25 flex items-center justify-center gap-2">HeyGen <i data-lucide="external-link" class="w-4 h-4"></i></a>
+                </div>
+                <div id="heygen-guide-container" class="bg-violet-900/10 p-5 rounded-2xl border border-violet-500/20 mb-6"><div class="text-slate-500 text-center py-4">يرجى اختيار النيش الفرعي من الخطوة رقم 1 أولاً.</div></div>
+                <label class="flex items-center gap-4 p-4 bg-slate-800/40 rounded-xl border border-white/5 hover:border-violet-500/30 transition-colors cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded accent-violet-500" onchange="updateProgress(this)"><span class="text-slate-300 text-sm">تم إنشاء فيديو المتحدث الرسمي</span></label>
+            </div>
+        </div>
+
+        <!-- Step 18: Email Automation (Dynamic) -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-12 md:mb-16 group step-item">
+            <div class="absolute right-0 top-0 w-8 h-8 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 md:border-4 border-slate-900 flex items-center justify-center z-10 step-circle shadow-lg text-sm md:text-lg"><span class="font-bold text-slate-400">18</span></div>
+            <div class="step-connector"></div>
+            <div class="card-gradient p-5 md:p-8 rounded-3xl border border-white/5 shadow-xl">
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-2">سلسلة الترحيب (Email)</h2>
+                <p class="text-slate-400 text-sm mb-6">انسخ هذا الإيميل المخصص لعميلك:</p>
+                <div id="email-template-container" class="bg-slate-900 border border-white/10 p-4 rounded-xl mb-4 relative group"><div class="text-slate-500 text-center py-4">يرجى اختيار النيش الفرعي من الخطوة رقم 1 أولاً.</div></div>
+                <div class="bg-slate-800/30 p-4 rounded-xl border border-white/5 mb-4 text-xs text-slate-300">
+                    <h4 class="text-primary font-bold mb-2">خطوات التفعيل في UpKlick:</h4>
+                    <ol class="list-decimal list-inside space-y-1">
+                        <li>اذهب إلى <strong>Automation</strong> > <strong>Create Workflow</strong>.</li>
+                        <li>اختر التريجر: <strong>Order Submitted</strong>.</li>
+                        <li>أضف أكشن: <strong>Send Email</strong>.</li>
+                        <li>انسخ العنوان والمحتوى من الأعلى والصقه.</li>
+                        <li>اضغط <strong>Publish</strong>.</li>
+                    </ol>
+                </div>
+                <label class="flex items-center gap-4 p-5 bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl border border-white/10 hover:border-primary/50 transition-all cursor-pointer shadow-lg"><input type="checkbox" class="w-6 h-6 rounded accent-emerald-500" onchange="updateProgress(this)"><div><span class="text-white font-bold block text-sm md:text-base">تم تفعيل الأتمتة بنجاح</span></div></label>
+            </div>
+        </div>
+
+        <!-- Step 20: Marketing Plan -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-12 md:mb-16 group step-item">
+            <div class="absolute right-0 top-0 w-8 h-8 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 md:border-4 border-slate-900 flex items-center justify-center z-10 step-circle shadow-lg text-sm md:text-lg"><span class="font-bold text-slate-400">19</span></div>
+            <div class="step-connector"></div>
+            <div class="card-gradient p-5 md:p-8 rounded-3xl border border-white/5 shadow-xl">
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-2 flex items-center gap-2"><i data-lucide="map" class="text-blue-400"></i> مولد خطة التسويق الذكي</h2>
+                <div class="space-y-4 mb-6" id="marketing-form">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div><label class="text-xs text-slate-500 mb-1 block">السوق المستهدف</label><select id="target-country" class="w-full bg-slate-900 border border-white/10 rounded-lg px-4 py-3 text-white"><option>Egypt</option><option>KSA</option><option>UAE</option></select></div>
+                        <div><label class="text-xs text-green-400 mb-1 block">العملة</label><select id="ad-currency" onchange="calculateProfit()" class="w-full bg-slate-900 border border-green-500/30 rounded-lg px-4 py-3 text-white"><option value="USD">$ USD</option><option value="EGP">ج.م EGP</option><option value="SAR">ر.س SAR</option><option value="AED">د.إ AED</option></select></div>
+                        <div><label class="text-xs text-slate-500 mb-1 block">الفئة العمرية</label><select id="target-age" class="w-full bg-slate-900 border border-white/10 rounded-lg px-4 py-3 text-white"><option>18-24</option><option>25-34</option><option>35-44</option><option>All</option></select></div>
+                        <div><label class="text-xs text-slate-500 mb-1 block">الجنس</label><select id="target-gender" class="w-full bg-slate-900 border border-white/10 rounded-lg px-4 py-3 text-white"><option>الكل</option><option>رجال</option><option>نساء</option></select></div>
+                    </div>
+                    <button onclick="generateMarketingPlan()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex justify-center items-center gap-2"><i data-lucide="cpu" class="w-5 h-5"></i> توليد الخطة</button>
+                </div>
+                <div id="generated-plan" class="hidden bg-slate-900 p-4 md:p-6 rounded-2xl border border-blue-500/30 relative overflow-hidden">
+                    <h3 class="text-white font-bold mb-4 flex items-center gap-2"><i data-lucide="file-check" class="text-green-400 w-5 h-5"></i> خطة: <span id="plan-country-title" class="text-blue-400"></span></h3>
+                    <div class="space-y-4 text-sm">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-b border-white/5 pb-4">
+                            <div><span class="text-slate-400 block text-xs">الميزانية اليومية:</span><span class="text-green-400 font-bold text-lg" id="plan-budget">---</span></div>
+                            <div><span class="text-slate-400 block text-xs">الاستهداف:</span><span class="text-white text-xs" id="plan-interests">---</span></div>
+                            <div><span class="text-slate-400 block text-xs">العمر:</span><span class="text-white text-xs" id="plan-age">---</span></div>
+                            <div><span class="text-slate-400 block text-xs">الجنس:</span><span class="text-white text-xs" id="plan-gender">---</span></div>
+                        </div>
+                        <div>
+                            <h4 class="text-purple-400 font-bold mb-2 flex items-center gap-2"><i data-lucide="pen-tool" class="w-3 h-3"></i> مقترحات الإعلان (Creative Copy)</h4>
+                            <div class="bg-black/30 p-3 rounded mb-2"><span class="text-[10px] text-slate-500 block uppercase tracking-wider mb-1">Headline 1</span><p class="text-white font-bold" id="ad-head-1">...</p></div>
+                            <div class="bg-black/30 p-3 rounded mb-2"><span class="text-[10px] text-slate-500 block uppercase tracking-wider mb-1">Headline 2</span><p class="text-white font-bold" id="ad-head-2">...</p></div>
+                            <div class="bg-black/30 p-3 rounded mb-2"><span class="text-[10px] text-slate-500 block uppercase tracking-wider mb-1">Headline 3</span><p class="text-white font-bold" id="ad-head-3">...</p></div>
+                            <div class="bg-black/30 p-3 rounded"><span class="text-[10px] text-slate-500 block uppercase tracking-wider mb-1">Primary Text (Long Copy)</span><p class="text-slate-300 text-xs leading-relaxed" id="ad-body">...</p></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4"><label class="flex items-center gap-4 p-4 bg-slate-800/40 rounded-xl border border-white/5 hover:border-blue-500/30 transition-colors cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded accent-blue-500" onchange="updateProgress(this)"><span class="text-slate-300 text-sm">تم نسخ المحتوى واعتماد الميزانية</span></label></div>
+            </div>
+        </div>
+
+        <!-- Step 20: Ad Creative (Dynamic) -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-12 md:mb-16 group step-item">
+            <div class="absolute right-0 top-0 w-8 h-8 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 md:border-4 border-slate-900 flex items-center justify-center z-10 step-circle shadow-lg text-sm md:text-lg"><span class="font-bold text-slate-400">20</span></div>
+            <div class="step-connector"></div>
+            <div class="card-gradient p-5 md:p-8 rounded-3xl border border-white/5 shadow-xl">
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="video" class="text-red-400"></i> أفكار الإعلانات (Creative)</h2>
+                <div id="creative-ideas-container" class="space-y-4 mb-6"><div class="text-slate-500 text-center py-4 bg-slate-900 rounded-xl">يرجى اختيار النيش الفرعي من الخطوة رقم 1 أولاً.</div></div>
+                <div class="mt-6 pt-4 border-t border-white/5"><label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded accent-emerald-500" onchange="updateProgress(this)"><span class="text-slate-300 font-bold">الإعلان جاهز تماماً 100%</span></label></div>
+            </div>
+        </div>
+
+        <!-- Step 21: LAUNCH -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-20 group step-item">
+            <div class="absolute right-0 top-0 w-8 h-8 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 md:border-4 border-slate-900 flex items-center justify-center z-10 step-circle shadow-lg text-sm md:text-lg"><span class="font-bold text-slate-400">21</span></div>
+            <div class="step-connector"></div>
+            <div class="bg-gradient-to-br from-emerald-900 to-black p-6 md:p-10 rounded-3xl border border-primary/50 shadow-2xl relative overflow-hidden">
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-primary/20 blur-[100px] rounded-full pointer-events-none"></div>
+                <h2 class="text-2xl md:text-4xl font-black text-white mb-4 text-center relative z-10">إطلاق الحملة الإعلانية</h2>
+                <p class="text-emerald-100 text-center mb-8 text-sm md:text-lg relative z-10">اختر الهدف الصحيح لتبدأ الربح:</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 relative z-10">
+                    <div class="bg-white/5 p-4 rounded-xl border border-white/10 text-center cursor-pointer ad-objective-card group" onclick="showObjDetails('awareness')"><div class="w-10 h-10 bg-slate-700 rounded-full mx-auto mb-2 flex items-center justify-center group-hover:bg-slate-600"><i data-lucide="megaphone" class="w-5 h-5 text-slate-300"></i></div><h4 class="font-bold text-white">Awareness</h4></div>
+                    <div class="bg-white/5 p-4 rounded-xl border border-white/10 text-center cursor-pointer ad-objective-card group" onclick="showObjDetails('traffic')"><div class="w-10 h-10 bg-slate-700 rounded-full mx-auto mb-2 flex items-center justify-center group-hover:bg-slate-600"><i data-lucide="mouse-pointer-2" class="w-5 h-5 text-slate-300"></i></div><h4 class="font-bold text-white">Traffic</h4></div>
+                    <div class="bg-emerald-600/20 p-4 rounded-xl border border-emerald-500 text-center cursor-pointer ad-objective-card ring-2 ring-emerald-500 shadow-lg selected-obj" onclick="showObjDetails('sales')"><div class="w-10 h-10 bg-emerald-600 rounded-full mx-auto mb-2 flex items-center justify-center"><i data-lucide="shopping-cart" class="w-5 h-5 text-white"></i></div><h4 class="font-bold text-white">Sales</h4></div>
+                </div>
+                <div id="obj-details" class="bg-black/40 p-5 rounded-xl border border-white/10 mb-8 relative z-10 text-sm"><h5 class="text-emerald-400 font-bold mb-2 flex items-center gap-2"><i data-lucide="info" class="w-4 h-4"></i> تفاصيل حملة المبيعات (Sales Campaign):</h5><ul class="space-y-2 text-slate-300 list-disc list-inside"><li><strong>Conversion Location:</strong> Website (موقعك الإلكتروني)</li><li><strong>Performance Goal:</strong> Maximize number of conversions</li><li><strong>Pixel Event:</strong> Purchase (شراء) أو Initiate Checkout</li></ul></div>
+                <div class="flex justify-center relative z-10"><label class="flex flex-col items-center gap-6 cursor-pointer group"><div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-emerald-600 border-4 border-emerald-400 flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.4)] group-hover:scale-110 group-hover:bg-emerald-500 transition-all duration-300"><input type="checkbox" class="w-10 h-10 accent-white opacity-0 absolute w-full h-full cursor-pointer" onchange="updateProgress(this); celebrateLaunch(this)"><i data-lucide="power" class="w-8 h-8 md:w-10 md:h-10 text-white stroke-[3]"></i></div><span class="font-black text-white text-xl md:text-2xl uppercase tracking-[0.2em] group-hover:text-primary transition-colors">PUBLISH</span></label></div>
+            </div>
+        </div>
+        
+        <!-- Step 22: QA -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-12 md:mb-16 group step-item">
+            <div class="absolute right-0 top-0 w-8 h-8 md:w-12 md:h-12 rounded-full bg-slate-800 border-2 md:border-4 border-slate-900 flex items-center justify-center z-10 step-circle shadow-lg text-sm md:text-lg"><span class="font-bold text-slate-400">22</span></div>
+            <div class="card-gradient p-5 md:p-8 rounded-3xl border border-white/5 shadow-xl">
+                <h2 class="text-xl md:text-2xl font-bold text-white mb-2 flex items-center gap-2"><i data-lucide="check-square" class="text-yellow-400"></i> اختبار الجودة (Final QA)</h2>
+                <div class="space-y-3">
+                    <label class="flex items-center gap-3 p-3 bg-slate-800/30 rounded-lg border border-white/5 cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded accent-yellow-500"><span class="text-slate-300 text-sm">عملية الدفع تعمل (Stripe/PayPal)</span></label>
+                    <label class="flex items-center gap-3 p-3 bg-slate-800/30 rounded-lg border border-white/5 cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded accent-yellow-500"><span class="text-slate-300 text-sm">صفحة الشكر (Thank You Page) تظهر بعد الدفع</span></label>
+                    <label class="flex items-center gap-3 p-3 bg-slate-800/30 rounded-lg border border-white/5 cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded accent-yellow-500"><span class="text-slate-300 text-sm">الإيميل يصل خلال 5 دقائق</span></label>
+                    <label class="flex items-center gap-3 p-3 bg-slate-800/30 rounded-lg border border-white/5 cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded accent-yellow-500"><span class="text-slate-300 text-sm">الموقع متجاوب على الموبايل 100%</span></label>
+                    <label class="flex items-center gap-3 p-3 bg-slate-800/30 rounded-lg border border-white/5 cursor-pointer"><input type="checkbox" class="w-5 h-5 rounded accent-yellow-500"><span class="text-slate-300 text-sm">مراجعة النصوص من الأخطاء الإملائية</span></label>
+                </div>
+            </div>
+        </div>
+        <!-- FINAL VIP SECTION (Floating or Fixed at bottom) -->
+        <div class="relative pl-0 pr-10 md:pr-14 mb-24 group animate-[fadeIn_1s_ease-out]">
+             <div class="bg-gradient-to-r from-[#FFD700]/10 to-[#B8860B]/10 p-6 md:p-10 rounded-3xl border border-[#FFD700]/30 shadow-[0_0_50px_rgba(255,215,0,0.1)] text-center relative overflow-hidden vip-pulse">
+                <div class="relative z-10">
+                    <div class="w-16 h-16 bg-[#FFD700]/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-[#FFD700]/50">
+                        <i data-lucide="gem" class="w-8 h-8 text-[#FFD700]"></i>
+                    </div>
+                    <h2 class="text-2xl md:text-3xl font-black text-white mb-2">حابب نختصر عليك الطريق؟</h2>
+                    <p class="text-[#FFD700] text-lg font-medium mb-6">احجز استشارة مجانية مع محمد جو والفريق لبناء البراند وتسليمه لك بالكامل.</p>
+                    
+                    <a href="https://koalendar.com/e/mohamedjoe24togo" target="_blank" class="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-[#FFD700] to-[#B8860B] text-black font-black text-lg py-4 px-8 rounded-full hover:scale-105 transition-all shadow-[0_0_30px_rgba(255,215,0,0.4)] hover:shadow-[0_0_50px_rgba(255,215,0,0.6)]">
+                        <i data-lucide="calendar-check" class="w-6 h-6"></i>
+                        احجز مكانك الآن (مجاناً)
+                    </a>
+                    <p class="text-slate-500 text-xs mt-4 font-medium">العدد محدود جداً لهذا الشهر 🔥</p>
+                </div>
+                <!-- Background Decoration -->
+                <div class="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 z-0"></div>
+             </div>
+        </div>
+
+    </main>
+
+    <footer class="text-center py-8 text-slate-500 text-sm border-t border-white/5 bg-slate-900">
+        <p class="mb-2">© 2024 Joe Tech Challenge. All Rights Reserved.</p>
+        <p class="text-xs">
+            <a href="#" class="hover:text-primary transition-colors">Privacy Policy</a> | 
+            <a href="#" class="hover:text-primary transition-colors">Terms of Service</a>
+        </p>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // --- Data ---
+        const nicheInsights = {
+            ai: {
+                problems: [
+                    "استنزاف الوقت في المهام الروتينية المملة.",
+                    "ارتفاع تكاليف التوظيف والتشغيل التقليدي.",
+                    "صعوبة مواكبة التطور التكنولوجي المتسارع.",
+                    "انخفاض جودة المخرجات بسبب الأخطاء البشرية."
+                ],
+                audience: "رواد الأعمال، صناع المحتوى، والمديرون التنفيذيون الذين يبحثون عن الكفاءة.",
+                age: "25 - 45 سنة (جيل الألفية والجيل Z المهني).",
+                why: "يبحثون عن 'الرافعة' (Leverage) التي تمكنهم من إنجاز المزيد بجهد أقل."
+            },
+            business: {
+                problems: [
+                    "الفوضى الإدارية وغياب النظام في العمل.",
+                    "صعوبة التوظيف وإيجاد الكفاءات المناسبة.",
+                    "سوء الإدارة المالية وغياب التخطيط.",
+                    "نقص المهارات القيادية اللازمة للنمو."
+                ],
+                audience: "الخريجين الجدد، أصحاب المشاريع الصغيرة، والموظفين الطموحين.",
+                age: "20 - 35 سنة (الشباب الباحث عن الاستقلال المالي).",
+                why: "يحتاجون لمسار واضح ومنهجية مجربة لتحقيق النجاح والاستقرار."
+            },
+            marketing: {
+                problems: [
+                    "انخفاض الوصول (Reach) وتفاعل العملاء.",
+                    "صعوبة تحويل المتابعين إلى مشترين فعليين.",
+                    "التكلفة المتزايدة للإعلانات المدفوعة.",
+                    "نقص الأفكار الإبداعية للمحتوى."
+                ],
+                audience: "أصحاب المتاجر الإلكترونية، المدربين، والمسوقين المستقلين.",
+                age: "22 - 40 سنة (الفئة الأكثر نشاطاً تجارياً).",
+                why: "يريدون حلولاً سريعة ومباشرة لزيادة المبيعات والأرباح."
+            }
+        };
+
+        const niches = {
+            ai: ["وكالة تسويق AI Influencers", "بيع قوالب Notion", "خدمات تحسين الصور AI", "بوتات واتساب", "أغلفة كتب AI", "محتوى UGC آلي"],
+            business: ["حقائب تدريبية (Resell)", "قوالب CV", "خدمات توظيف عن بعد", "منتجات رقمية للمصممين", "استشارات تجارة إلكترونية", "ملفات Excel محاسبة"],
+            marketing: ["وكالة تيك توك", "فلاتر انستجرام", "إدارة ديسكورد", "باقات هاشتاجات", "سكربتات يوتيوب", "مونتاج CapCut"]
+        };
+
+            { name: "Mint", primary: "#14b8a6", secondary: "#ccfbf1" }, { name: "Pink", primary: "#ec4899", secondary: "#fdf2f8" }
+        ];
+
+        const currencySymbols = {
+            USD: '$', EGP: 'ج.م', SAR: 'ر.س', AED: 'د.إ',
+            EUR: '€', GBP: '£', KWD: 'د.ك', QAR: 'ر.ق'
+        };
+
+        // --- THE MASSIVE DYNAMIC CONTENT OBJECT ---
+        const subNicheData = {
+            // --- AI Niches ---
+            "وكالة تسويق AI Influencers": {
+                design: ["صورة لروبوت أنيق يرتدي ملابس عصرية (Influencer)", "مقارنة بين مؤثر بشري (مكلف) ومؤثر AI (رخيص)", "شاشة هاتف تعرض حساب انستجرام لمؤثر افتراضي عليه ملايين المتابعين", "جرافيك يوضح نمو المتابعين باستخدام AI", "صورة يدين تتصافحان (بشري وروبوت) لرمز الشراكة", "أيقونات منصات السوشيال ميديا تدور حول رأس روبوت"],
+                heygen: { 
+                    avatar: "شخصية عصرية جداً، خلفية استوديو نيون، ملابس كاجوال.", 
+                    scripts: [
+                        "هل تعلم أن المستقبل للمؤثرين الافتراضيين؟ وفر ميزانيتك وابدأ وكالتك اليوم مع أدواتنا.",
+                        "تخيل أن تمتلك مؤثراً يعمل 24 ساعة بدون توقف وبدون راتب. هذا هو الـ AI Influencer."
+                    ] 
+                },
+                email: "أهلاً بك في عالم المؤثرين الافتراضيين! 🤖\nهذا المجال هو الأسرع نمواً حالياً. دليلك الكامل للبدء موجود في الرابط أدناه.",
+                ads: [
+                    { type: "صورة", desc: "روبوت جذاب يمسك منتجاً ويبتسم (Gemini Nano Prompt: Realistic AI influencer holding a product, smiling, studio lighting)", how: "استخدم Gemini لتوليد الصورة ثم Canva لإضافة النص." },
+                    { type: "فيديو", desc: "فيديو سريع لمؤثرين AI يتحدثون بلغات مختلفة (استخدم HeyGen)", how: "أنشئ عدة شخصيات في HeyGen واجمعها في فيديو واحد بـ CapCut." },
+                    { type: "كاروسيل", desc: "5 خطوات لبناء مؤثر AI (محتوى تعليمي)", how: "صمم 5 صور مربعة تشرح الخطوات ببساطة." }
+                ]
+            },
+             "بيع قوالب Notion": {
+                design: ["لقطة شاشة لقالب Notion منظم جداً (Dashboard)", "صورة لمكتب فوضوي vs شاشة لابتوب منظمة", "رسم بياني للإنتاجية يرتفع للأعلى", "أيقونة Notion ثلاثية الأبعاد", "شخص سعيد ينجز مهامه بسرعة", "قائمة مهام (To-Do List) يتم شطبها بالكامل"],
+                heygen: { 
+                    avatar: "شخصية هادئة ومنظمة، خلفية مكتب منزلي مريح (Minimalist).", 
+                    scripts: [
+                         "حياتك فوضوية؟ قوالب Notion هي الحل. حول الفوضى إلى نظام بضغطة زر.",
+                         "لا تضيع وقتك في التنظيم، ابدأ العمل فوراً مع قالبنا الجاهز."
+                    ]
+                },
+                email: "وداعاً للفوضى! 📝\nقالب Notion الذي طلبته سيغير طريقة عملك للأبد. حمله الآن.",
+                ads: [
+                    { type: "فيديو", desc: "جولة سريعة (Screen Recording) داخل القالب تظهر سهولة الاستخدام", how: "صور شاشتك ببرنامج Loom وأنت تستخدم القالب." },
+                    { type: "صورة", desc: "مقارنة قبل وبعد استخدام القالب (الفوضى vs النظام)", how: "استخدم تصميم Split Screen." },
+                     { type: "صورة", desc: "صورة للقالب على شاشة آيباد ولابتوب وموبايل (Responsive)", how: "استخدم Mockup جاهز." }
+                ]
+            },
+            
+            // --- Business Niches (ADDED) ---
+            "حقائب تدريبية (Resell)": {
+                design: ["صورة لحقيبة أعمال أنيقة مفتوحة يخرج منها أيقونات (PowerPoint, Word, PDF)", "شخص يشرح أمام جمهور (مدرب) وبجانبه علامة 'جاهز للاستخدام'", "مخطط هيكلي لمحتويات الدورة التدريبية", "صورة لشهادة تدريب احترافية", "مكتب مدرب مرتب وعليه مواد تعليمية", "مقارنة: إعداد المادة (100 ساعة) vs شراؤها جاهزة (دقيقة واحدة)"],
+                heygen: { 
+                    avatar: "شخصية مدرب محترف (Business Trainer)، يرتدي بدلة رسمية أو قميص أنيق، خلفية قاعة مؤتمرات أو مكتب.", 
+                    scripts: [
+                        "هل أنت مدرب وتريد توفير وقتك في إعداد المواد؟ لدينا حقائب تدريبية جاهزة بالكامل.",
+                        "ابدأ مشروعك في التدريب اليوم مع حقائبنا الاحترافية. محتوى متميز وتصميم جذاب."
+                    ] 
+                },
+                email: "مرحباً أيها المدرب القائد! 🎓\nوفر مئات الساعات في إعداد المواد التدريبية. حقائبنا جاهزة، قابلة للتعديل، وتبدأ معك فوراً.",
+                ads: [
+                    { type: "صورة", desc: "صورة جذابة لغلاف الحقيبة التدريبية مع عنوان بارز", how: "استخدم Canva لعمل Mockup لغلاف كتاب أو ملف." },
+                    { type: "فيديو", desc: "فيديو يستعرض محتويات الحقيبة (سلايدات، أدلة، تمارين)", how: "تسجيل شاشة سريع للتنقل بين الملفات." },
+                    { type: "كاروسيل", desc: "ماذا يوجد داخل الحقيبة؟ (استعراض المحتويات)", how: "صور متتالية لكل جزء من الحقيبة." }
+                ]
+            },
+            "قوالب CV": {
+                design: ["صورة لسيرة ذاتية بتصميم جذاب وملفت", "مقارنة بين سيرة ذاتية عادية (مرفوضة) واحترافية (مقبولة)", "شخص سعيد يحصل على وظيفة", "أيقونات لشركات كبرى (Google, Amazon) كهدف", "تصميم Minimalist لسيرة ذاتية", "يد تمسك ورقة الـ CV بثقة"],
+                heygen: { 
+                    avatar: "شخصية HR Manager أو مستشار توظيف، مظهر مهني وودود.", 
+                    scripts: [
+                        "هل تعلم أن الـ CV الخاص بك يتم فحصه في 6 ثوانٍ فقط؟ اجعله مميزاً مع قوالبنا.",
+                        "احصل على وظيفة أحلامك بتصميم سيرة ذاتية لا يُرفض. قوالب جاهزة وسهلة التعديل."
+                    ] 
+                },
+                email: "مبروك مقدماً على الوظيفة! 💼\nالسيرة الذاتية هي بوابتك الأولى. إليك القالب الذي سيجعل مسؤول التوظيف يتصل بك فوراً.",
+                ads: [
+                    { type: "صورة", desc: "صورة قبل وبعد للـ CV", how: "تصميم Split Screen يوضح الفرق الجذري." },
+                    { type: "فيديو", desc: "نصائح سريعة لكتابة CV ناجح + عرض القالب", how: "فيديو قصير بصوتك أو صوت AI مع عرض القالب." }
+                ]
+            },
+
+            // --- Marketing Niches (ADDED) ---
+            "وكالة تيك توك": {
+                design: ["شعار تيك توك بستايل نيون وجذاب", "رسم بياني يوضح صعود المشاهدات (Viral)", "شخصيات Gen Z يرقصون أو يصورون", "واجهة موبايل عليها فيديو تيك توك عليه ملايين اللايكات", "أيقونة 'Trending' مشتعلة", "كاميرا تصوير احترافية مع إضاءة Ring Light"],
+                heygen: { 
+                    avatar: "شخصية صانع محتوى (Creator)، ملابس كاجوال عصرية (Hoodie)، خلفية استوديو ملون.", 
+                    scripts: [
+                        "تيك توك هو الفرصة الذهبية الآن. لا تضيع الوقت، دعنا نساعدك في الانتشار.",
+                        "تريد الوصول للملايين؟ استراتيجياتنا في تيك توك مجربة ومضمونة."
+                    ] 
+                },
+                email: "جاهز لتصدر التريند؟ 🔥\nتيك توك ليس للرقص فقط، إنه آلة بيع. اكتشف كيف تستغله لعملك الآن.",
+                ads: [
+                    { type: "فيديو", desc: "فيديو تيك توك سريع وعصري (Reel style) مع موسيقى تريند", how: "استخدم CapCut وقوالب تيك توك الجاهزة." },
+                    { type: "صورة", desc: "صورة لنتائج حقيقية (Screenshot) لمشاهدات عالية", how: "صورة إثبات اجتماعي (Social Proof)." }
+                ]
+            },
+            "فلاتر انستجرام": {
+                design: ["وجه فتاة عليه فلتر تجميلي جذاب", "موبايل يعرض تجربة الفلتر", "أيقونات Spark AR Studio", "شخصيات كرتونية ثلاثية الأبعاد", "مقارنة وجه عادي vs وجه بفلتر", "رمز QR لتجربة الفلتر"],
+                heygen: { 
+                    avatar: "شخصية فنانة رقمية أو مصممة جرافيك، ستايل فني ومبتكر.", 
+                    scripts: [
+                        "اجعل ستورياتك لا تُنسى مع فلاتر انستجرام الخاصة بنا.",
+                        "الفلاتر هي وسيلة تسويق قوية. صمم فلتر خاص لبراندك اليوم."
+                    ] 
+                },
+                email: "اجعل الستوري الخاص بك يتوهج! ✨\nالفلاتر ليست مجرد لعب، إنها هوية بصرية. جرب مجموعتنا الجديدة الآن.",
+                ads: [
+                    { type: "فيديو", desc: "فيديو لشخص يستخدم الفلتر ويستمتع به", how: "سجل شاشة الموبايل أثناء استخدام الفلتر." },
+                    { type: "صورة", desc: "صورة جمالية للفلتر مع ألوان زاهية", how: "استخدم صورة عالية الجودة لنتيجة الفلتر." }
+                ]
+            },
+
+             "default": {
+                design: ["صورة 1 عامة للنيش", "صورة 2 تعبر عن النجاح والنمو", "صورة 3 للمنتج بشكل احترافي", "صورة 4 توضح المشكلة التي يحلها المنتج", "صورة 5 توضح الحل والنتيجة", "صورة 6 تحفيزية لاتخاذ القرار"],
+                heygen: { avatar: "شخصية احترافية ببدلة رسمية، خلفية مكتب محايدة.", scripts: ["هذا المنتج هو الحل الأمثل لمشاكلك. ابدأ الآن ولا تتردد في تغيير حياتك.", "فيديو قصير يشرح الفائدة الرئيسية للمنتج ولماذا تحتاجه الآن."] },
+                email: "مرحباً بك في عالم النجاح! 🚀\nشكراً لاهتمامك بمنتجنا المميز. نحن هنا لمساعدتك في تحقيق أهدافك. تفضل رابط التحميل ونتمنى لك التوفيق.",
+                ads: [
+                    { type: "صورة", desc: "صورة جذابة للمنتج مع خصم 50% لفترة محدودة", how: "تصميم بسيط يركز على العرض وقيمة الخصم." },
+                    { type: "فيديو", desc: "فيديو يشرح الفوائد في 30 ثانية بشكل سريع", how: "استخدم لقطات سريعة (Stock Footage) وموسيقى حماسية." }
+                ]
+            }
+        };
+
+        const marketingPlans = {
+            ai: {
+                interests: "Artificial Intelligence, Technology, Business Productivity",
+                head1: "أتمتة عملك بالكامل 🤖",
+                head2: "هل يضيع وقتك في الروتين؟",
+                head3: "الذكاء الاصطناعي هو الحل",
+                body: "اكتشف الحل الذكي الذي يوفر 80% من وقتك ويزيد أرباحك. الدليل الشامل متاح الآن لفترة محدودة."
+            },
+            business: {
+                interests: "Entrepreneurship, Small Business, Career",
+                head1: "ابدأ مشروعك الخاص اليوم 🚀",
+                head2: "لا تحتاج لخبرة سابقة",
+                head3: "الطريق إلى الحرية المالية",
+                body: "الدليل الشامل الذي يأخذ بيدك من الصفر حتى أول 1000 دولار. استثمر في نفسك الآن وغير مستقبلك."
+            },
+            marketing: {
+                interests: "Social Media Marketing, Digital Advertising",
+                head1: "ضاعف مبيعاتك 3 مرات 📈",
+                head2: "سر المشاهير مكشوف",
+                head3: "توقف عن حرق ميزانيتك",
+                body: "احصل على الأدوات والقوالب التي يستخدمها كبار المسوقين لتصدر التريند. عرض لفترة محدودة لرواد الأعمال الجادين."
+            }
+        };
+
+        let currentNiche = null;
+
+        // --- Functions ---
+
+        function selectNiche(nicheKey) {
+            currentNiche = nicheKey;
+            
+            // UI Updates
+            document.querySelectorAll('.niche-card').forEach(c => c.classList.remove('selected'));
+            const cards = document.querySelectorAll('.niche-card');
+            if(nicheKey === 'ai') cards[0].classList.add('selected');
+            if(nicheKey === 'business') cards[1].classList.add('selected');
+            if(nicheKey === 'marketing') cards[2].classList.add('selected');
+
+            // Show Analysis
+            const analysisDiv = document.getElementById('niche-analysis');
+            const data = nicheInsights[nicheKey];
+            analysisDiv.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-white font-bold mb-3 flex items-center gap-2 border-b border-white/10 pb-2">
+                            <i data-lucide="alert-triangle" class="text-yellow-400 w-4 h-4"></i> أهم 4 مشاكل يحلها النيش:
+                        </h4>
+                        <ul class="space-y-2">
+                            ${data.problems.map(p => `<li class="text-slate-300 text-sm flex items-start gap-2"><span class="text-red-400 mt-1">•</span> ${p}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div>
+                         <h4 class="text-white font-bold mb-3 flex items-center gap-2 border-b border-white/10 pb-2">
+                            <i data-lucide="users" class="text-blue-400 w-4 h-4"></i> من هو العميل؟ (Avatar)
+                        </h4>
+                        <p class="text-slate-300 text-sm mb-2"><strong class="text-white">الجمهور:</strong> ${data.audience}</p>
+                        <p class="text-slate-300 text-sm mb-2"><strong class="text-white">العمر:</strong> ${data.age}</p>
+                        <p class="text-slate-300 text-sm"><strong class="text-white">الدافع:</strong> ${data.why}</p>
+                    </div>
+                </div>
+            `;
+            analysisDiv.classList.remove('hidden');
+
+            // Show Sub-niches
+            const list = document.getElementById('sub-niche-list');
+            list.innerHTML = '';
+            niches[nicheKey].forEach(item => {
+                const li = document.createElement('li');
+                li.className = "flex items-center gap-2 text-slate-300 bg-black/20 p-3 rounded border border-white/5 text-sm cursor-pointer micro-niche-btn";
+                li.onclick = function() { fillNicheInput(item); };
+                li.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-primary"></span> ${item}`;
+                list.appendChild(li);
+            });
+            
+            document.getElementById('sub-niche-area').classList.remove('hidden');
+            populatePalettes();
+            lucide.createIcons();
+        }
+
+        function fillNicheInput(text) {
+            const input = document.getElementById('niche-input');
+            input.value = text;
+            updatePassportNiche(text);
+            updateDynamicContent(text); // Trigger content update
+            
+            // Visual feedback
+            input.style.borderColor = "#10B981";
+            setTimeout(() => input.style.borderColor = "rgba(255,255,255,0.1)", 500);
+        }
+
+        function updateDynamicContent(subNicheName) {
+            // Get specific data or fallback to default
+            const data = subNicheData[subNicheName] || subNicheData["default"];
+            
+            // 1. Content Factory
+            const contentDiv = document.getElementById('content-ideas-container');
+            contentDiv.innerHTML = data.design.map(idea => `
+                <div class="bg-black/30 p-3 rounded-lg border border-white/5 flex items-start gap-3">
+                    <div class="mt-1 min-w-[20px]"><i data-lucide="check-circle" class="w-4 h-4 text-pink-400"></i></div>
+                    <p class="text-xs text-slate-300">${idea}</p>
+                </div>
+            `).join('');
+
+            // 2. HeyGen
+            const heyGenDiv = document.getElementById('heygen-guide-container');
+            heyGenDiv.innerHTML = `
+                <div class="mb-4 pb-4 border-b border-white/10">
+                    <h4 class="text-white font-bold text-sm mb-2 flex items-center gap-2"><i data-lucide="user" class="w-4 h-4 text-violet-400"></i> شكل الآفاتار:</h4>
+                    <p class="text-slate-300 text-xs bg-black/20 p-3 rounded border border-white/5">${data.heygen.avatar}</p>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold text-sm mb-2 flex items-center gap-2"><i data-lucide="file-text" class="w-4 h-4 text-violet-400"></i> أفكار السكربت:</h4>
+                    <div class="space-y-2">
+                        ${data.heygen.scripts.map((script, i) => `
+                            <p class="text-xs text-slate-300 bg-black/20 p-3 rounded border border-white/5 relative group">
+                                <span class="text-violet-400 font-bold block mb-1">فكرة ${i+1}:</span>
+                                "${script}"
+                            </p>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            // 3. Email
+            const emailDiv = document.getElementById('email-template-container');
+            emailDiv.innerHTML = `
+                <textarea readonly class="w-full h-40 bg-black/30 text-slate-300 text-xs p-3 rounded border border-white/5 mt-1 resize-none focus:outline-none">${data.email}</textarea>
+            `;
+
+            // 4. Ads
+            const adsDiv = document.getElementById('creative-ideas-container');
+            if(data.ads) {
+                adsDiv.innerHTML = data.ads.map((ad, i) => `
+                    <div class="bg-slate-900/50 p-4 rounded-xl border border-white/10">
+                        <h4 class="text-${i===0?'blue':(i===1?'red':'green')}-400 font-bold text-xs mb-2 flex items-center gap-1">
+                            <i data-lucide="${ad.type === 'فيديو' ? 'video' : 'image'}" class="w-3 h-3"></i> فكرة ${i+1}: ${ad.type}
+                        </h4>
+                        <p class="text-[10px] text-slate-300 mb-2 font-bold">${ad.desc}</p>
+                        <p class="text-[10px] text-slate-500 bg-black/20 p-2 rounded">💡 طريقة التنفيذ: ${ad.how}</p>
+                    </div>
+                `).join('');
+            }
+            
+            lucide.createIcons();
+        }
+
+        // --- Helper Functions ---
+        function updatePassportNiche(v) { document.getElementById('passport-niche-text').textContent = v; document.getElementById('passport-niche-row').classList.add('active'); }
+        function updatePassportName(v) { document.getElementById('passport-name-text').textContent = v; document.getElementById('passport-name-row').classList.add('active'); }
+        function updatePassportColors() {
+            const p1 = document.getElementById('primary-color-input').value;
+            const p2 = document.getElementById('secondary-color-input').value;
+            const preview = document.getElementById('passport-colors-preview');
+            preview.children[0].style.backgroundColor = p1; preview.children[1].style.backgroundColor = p2;
+            document.getElementById('passport-color-row').classList.add('active');
+        }
+        
+        function populatePalettes() {
+            const c = document.getElementById('palette-suggestions');
+            c.innerHTML = '';
+            allPalettes.forEach(pal => {
+                const d = document.createElement('div');
+                d.className = 'cursor-pointer p-2 rounded-xl bg-slate-900 border border-white/10 hover:border-primary/50 transition-all flex flex-col items-center gap-2';
+                d.onclick = () => { 
+                    document.getElementById('primary-color-input').value = pal.primary;
+                    document.getElementById('secondary-color-input').value = pal.secondary;
+                    updatePassportColors();
+                    updateBrandPreviewLive();
+                };
+                d.innerHTML = `<div class="flex gap-1 w-full justify-center"><div class="w-6 h-6 rounded-full" style="background-color:${pal.primary}"></div><div class="w-6 h-6 rounded-full border border-white/10" style="background-color:${pal.secondary}"></div></div>`;
+                c.appendChild(d);
+            });
+        }
+
+        function handleLogoUpload(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    document.querySelectorAll('.brand-logo-preview').forEach(img => { img.src = e.target.result; img.classList.remove('hidden'); });
+                    document.querySelectorAll('.brand-logo-placeholder-icon').forEach(icon => icon.classList.add('hidden'));
+                    document.getElementById('upload-placeholder').innerHTML = '<p class="text-[10px] text-green-400">تم الرفع!</p>';
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function generateBrandPreview() {
+            updateBrandPreviewLive();
+            document.getElementById('brand-simulation').classList.remove('hidden');
+            setTimeout(() => document.getElementById('brand-simulation').scrollIntoView({behavior: 'smooth', block: 'center'}), 100);
+            const p = document.getElementById('primary-color-input').value;
+            const s = document.getElementById('secondary-color-input').value;
+            confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 }, colors: [p, s] });
+        }
+
+        function updateBrandPreviewLive() {
+            const p = document.getElementById('primary-color-input').value;
+            const s = document.getElementById('secondary-color-input').value;
+            document.getElementById('mock-nav').style.backgroundColor = s;
+            document.getElementById('mock-hero-btn').style.backgroundColor = p;
+            document.getElementById('mock-hero-text').style.color = p;
+            document.getElementById('mock-hero-circle').style.backgroundColor = p;
+            document.getElementById('mock-social-bg').style.background = `linear-gradient(135deg, ${s}, ${p})`;
+        }
+
+        function updateProgress(cb) {
+            const total = document.querySelectorAll('input[type="checkbox"]').length;
+            const checked = document.querySelectorAll('input[type="checkbox"]:checked').length;
+            const pct = Math.round((checked / total) * 100);
+            document.getElementById('progress-bar').style.width = pct + '%';
+            document.getElementById('progress-text').textContent = pct + '%';
+            
+            const item = cb.closest('.step-item');
+            if(item) {
+               const itemChecks = item.querySelectorAll('input[type="checkbox"]');
+               const itemChecked = item.querySelectorAll('input[type="checkbox"]:checked');
+               const circle = item.querySelector('.step-circle');
+               
+               // Check if the step is fully completed
+               if(itemChecks.length === itemChecked.length && !item.classList.contains('step-completed')) {
+                   item.classList.add('step-completed');
+                   circle.classList.add('bg-primary', 'text-white', 'border-white');
+                   circle.classList.remove('bg-slate-800', 'text-slate-400', 'border-slate-900');
+                   circle.innerHTML = '<i data-lucide="check" class="w-6 h-6"></i>';
+                   lucide.createIcons();
+
+                   // --- Celebration Effects ---
+                   
+                   // 1. Play Sound
+                   const audio = document.getElementById('success-sound');
+                   if(audio) {
+                       audio.currentTime = 0;
+                       audio.play().catch(e => console.log("Audio play failed (user interaction needed first):", e));
+                   }
+
+                   // 2. Confetti Explosion
+                   confetti({
+                       particleCount: 100,
+                       spread: 70,
+                       origin: { y: 0.6 },
+                       colors: ['#10B981', '#F97316', '#FFD700'] // Brand colors
+                   });
+               }
+            }
+        }
+        
+        // Timer
+        let time = 24 * 60 * 60;
+        setInterval(() => {
+            time--;
+            const h = Math.floor(time / 3600);
+            const m = Math.floor((time % 3600) / 60);
+            const s = time % 60;
+            document.getElementById('countdown-timer').textContent = `${h}:${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+        }, 1000);
+
+        function calculateProfit() { 
+            const sale = parseFloat(document.getElementById('sale-price').value) || 0;
+            const currency = document.getElementById('ad-currency')?.value || 'USD';
+            const sym = currencySymbols[currency] || '$';
+            
+            // Logic: Digital Product Cost = 0. Ad Cost estimated at 40% of sale price (Safe Margin).
+            const estimatedAdCost = sale * 0.40;
+            const profit = sale - estimatedAdCost;
+
+            document.getElementById('ad-cost-display').innerText = estimatedAdCost.toFixed(1) + ' ' + sym;
+            document.getElementById('profit-display').innerText = profit.toFixed(1) + ' ' + sym;
+            
+            // Projections
+            document.getElementById('profit-daily').innerText = profit.toFixed(0) + ' ' + sym;
+            document.getElementById('profit-5x').innerText = (profit * 5).toFixed(0) + ' ' + sym;
+            document.getElementById('profit-10x').innerText = (profit * 10).toFixed(0) + ' ' + sym;
+        }
+
+        function generateMarketingPlan() { 
+            const planData = marketingPlans[currentNiche] || marketingPlans['business']; // Fallback
+            const currency = document.getElementById('ad-currency').value;
+            const age = document.getElementById('target-age').value;
+            const gender = document.getElementById('target-gender').value;
+            
+            // Smart Budget Logic (Just a simulation)
+            let dailyBudget = "20 " + currency;
+            if (currency === 'EGP') dailyBudget = "500 EGP";
+            if (currency === 'SAR') dailyBudget = "100 SAR";
+
+            document.getElementById('generated-plan').classList.remove('hidden');
+            document.getElementById('plan-country-title').innerText = document.getElementById('target-country').value;
+            document.getElementById('plan-budget').innerText = dailyBudget + " يومياً";
+            document.getElementById('plan-interests').innerText = planData.interests;
+            document.getElementById('plan-age').innerText = age;
+            document.getElementById('plan-gender').innerText = gender;
+            
+            document.getElementById('ad-head-1').innerText = planData.head1;
+            document.getElementById('ad-head-2').innerText = planData.head2;
+            document.getElementById('ad-head-3').innerText = planData.head3;
+            document.getElementById('ad-body').innerText = planData.body;
+        }
+
+        function showObjDetails(obj) { 
+            const detailBox = document.getElementById('obj-details');
+            const cards = document.querySelectorAll('.ad-objective-card');
+            cards.forEach(c => c.classList.remove('selected-obj', 'ring-2', 'ring-emerald-500', 'shadow-lg', 'bg-emerald-600/20', 'border-emerald-500'));
+            
+            let content = "";
+            if (obj === 'awareness') {
+                content = `
+                    <h5 class="text-white font-bold mb-2 flex items-center gap-2">تفاصيل الوعي (Awareness):</h5>
+                    <ul class="space-y-2 text-slate-300 list-disc list-inside">
+                        <li><strong>الهدف:</strong> الوصول لأكبر عدد من الناس.</li>
+                        <li><strong>النتيجة:</strong> مشاهدات ولايكات (لا مبيعات غالباً).</li>
+                        <li><span class="text-red-400">نصيحة:</span> استخدمه فقط إذا كنت تريد شهرة للبراند وليس مبيعات فورية.</li>
+                    </ul>`;
+            } else if (obj === 'traffic') {
+                content = `
+                    <h5 class="text-white font-bold mb-2 flex items-center gap-2">تفاصيل الزيارات (Traffic):</h5>
+                    <ul class="space-y-2 text-slate-300 list-disc list-inside">
+                        <li><strong>الهدف:</strong> إرسال الناس للموقع.</li>
+                        <li><strong>Optimization:</strong> Link Clicks أو Landing Page Views.</li>
+                        <li><span class="text-yellow-400">تنبيه:</span> قد تحصل على زيارات كثيرة لكن بدون شراء (Window Shoppers).</li>
+                    </ul>`;
+            } else {
+                 content = `
+                    <h5 class="text-emerald-400 font-bold mb-2 flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4"></i> تفاصيل المبيعات (Sales) - الخيار الصحيح:</h5>
+                    <ul class="space-y-2 text-slate-300 list-disc list-inside">
+                        <li><strong>Conversion Location:</strong> Website (موقعك).</li>
+                        <li><strong>Pixel Event:</strong> Purchase (شراء).</li>
+                        <li><strong>الخوارزمية:</strong> تبحث عن أشخاص لديهم تاريخ في الشراء أونلاين.</li>
+                        <li><span class="text-green-400">النتيجة:</span> هذا هو الطريق الأقصر للأرباح.</li>
+                    </ul>`;
+            }
+            detailBox.innerHTML = content;
+            lucide.createIcons();
+        }
+
+        function celebrateLaunch(cb) { if(cb.checked) confetti(); }
+
+        function selectBuildMethod(el, type) { 
+             document.querySelectorAll('.build-method').forEach(b => b.classList.remove('border-blue-400', 'border-orange-400'));
+             const instrDiv = document.getElementById('build-instructions');
+             instrDiv.classList.remove('hidden');
+             const niche = document.getElementById('niche-input').value || "العام";
+             const pColor = document.getElementById('primary-color-input').value;
+
+             if(type == 'gemini') { 
+                 el.classList.add('border-blue-400'); 
+                 instrDiv.innerHTML = `
+                    <h4 class="text-blue-400 font-bold mb-3 flex items-center gap-2"><i data-lucide="sparkles" class="w-4 h-4"></i> برومبت Gemini:</h4>
+                    <div class="code-block relative">
+                        <code>Create a landing page for ${niche} niche. Primary Color: ${pColor}. Sections: Hero, Features, Pricing. RTL Arabic.</code>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-2">انسخ الكود الناتج من Gemini وضعه في UpKlick -> صفحة الهبوط -> Custom Code.</p>`;
+             }
+             if(type == 'template') { 
+                 el.classList.add('border-orange-400'); 
+                 instrDiv.innerHTML = `
+                    <h4 class="text-orange-400 font-bold mb-3 flex items-center gap-2"><i data-lucide="layout" class="w-4 h-4"></i> خطوات القوالب:</h4>
+                    <ul class="list-disc list-inside text-sm text-slate-300">
+                        <li>افتح UpKlick > Landing Pages</li>
+                        <li>اختر قالب مناسب لـ "${niche}"</li>
+                        <li>غير الألوان إلى ${pColor}</li>
+                        <li>استخدم السحب والإفلات لتعديل الصور والنصوص.</li>
+                    </ul>`;
+             }
+             lucide.createIcons();
+        }
+
+        // --- Video Modal Functions ---
+        function openVideoModal(url) {
+            document.getElementById('video-modal').style.display = 'flex';
+            document.getElementById('modal-video-container').innerHTML = `<iframe src="${url}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
+        }
+
+        function closeVideoModal() {
+            document.getElementById('video-modal').style.display = 'none';
+            document.getElementById('modal-video-container').innerHTML = ''; // Stop video
+        }
+
+    </script>
+</body>
+</html>

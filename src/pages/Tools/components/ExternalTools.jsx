@@ -6,6 +6,16 @@ import './ExternalTools.css';
 
 const EXTERNAL_TOOLS_DATA = [
   {
+    id: 'upklick',
+    name: 'Upklick',
+    url: 'https://upklick-eight.vercel.app/',
+    logo: 'https://upklick-eight.vercel.app/best_logo_dark.png',
+    desc_ar: 'المنصة المتكاملة لبناء الاستراتيجيات التجارية والمواقع والهويات البصرية بالذكاء الاصطناعي.',
+    desc_en: 'The all-in-one platform to build business strategies, websites, and visual identities with AI.',
+    help_ar: 'تساعدك في تخطيط مشروعك، اختيار الاسم واللوجو، توليد المحتوى التسويقي وأتمتة العمليات بالكامل.',
+    help_en: 'Helps you plan your project, choose brand name and logo, generate marketing content, and automate workflows completely.'
+  },
+  {
     id: 'chatgpt',
     name: 'ChatGPT',
     url: 'https://chatgpt.com',
@@ -338,8 +348,13 @@ export default function ExternalTools() {
               style={{ cursor: 'pointer' }}
             >
               <div className="et-card-inner">
-                <div className="et-logo-container">
-                  <img src={tool.logo} alt={tool.name} onError={(e) => { e.target.src = 'https://cdn-icons-png.flaticon.com/512/2103/2103633.png' }} />
+                <div className="et-logo-container" style={tool.id === 'upklick' ? { background: '#0d1220', width: '90px', padding: '2px' } : {}}>
+                  <img 
+                    src={tool.logo} 
+                    alt={tool.name} 
+                    onError={(e) => { e.target.src = 'https://cdn-icons-png.flaticon.com/512/2103/2103633.png' }} 
+                    style={tool.id === 'upklick' ? { transform: 'scale(2.8)', transformOrigin: 'center' } : {}}
+                  />
                 </div>
                 <div className="et-info">
                   <h3 className="et-name">{tool.name}</h3>
@@ -367,8 +382,12 @@ export default function ExternalTools() {
           <div className="et-popup" onClick={(e) => e.stopPropagation()}>
             <button className="et-close-btn" onClick={closePopup}>✕</button>
             <div className="et-popup-header">
-              <div className="et-popup-logo">
-                <img src={selectedTool.logo} alt={selectedTool.name} />
+              <div className="et-popup-logo" style={selectedTool.id === 'upklick' ? { background: '#0d1220', width: '140px', padding: '4px' } : {}}>
+                <img 
+                  src={selectedTool.logo} 
+                  alt={selectedTool.name} 
+                  style={selectedTool.id === 'upklick' ? { transform: 'scale(2.8)', transformOrigin: 'center' } : {}}
+                />
               </div>
               <div className="et-popup-title-group">
                 <h2>{selectedTool.name}</h2>

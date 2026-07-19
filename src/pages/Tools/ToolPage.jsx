@@ -9,6 +9,7 @@ import './ToolPage.css';
 import NicheSelection from './components/NicheSelection';
 import BrandNaming from './components/BrandNaming';
 import VisualIdentity from './components/VisualIdentity';
+import AnalysisIdentity from './components/AnalysisIdentity';
 import WebsiteConstruction from './components/WebsiteConstruction';
 import LandingPageContent from './components/LandingPageContent';
 import LegalPages from './components/LegalPages';
@@ -20,7 +21,6 @@ import SocialPresence from './components/SocialPresence';
 import ProductSource from './components/ProductSource';
 import ProfitCalculator from './components/ProfitCalculator';
 import ContentFactory from './components/ContentFactory';
-import EmailAutomation from './components/EmailAutomation';
 import MarketingPlan from './components/MarketingPlan';
 import AdCreative from './components/AdCreative';
 import CampaignLaunch from './components/CampaignLaunch';
@@ -97,7 +97,11 @@ export default function ToolPage() {
 
   const isTrial = userData?.subscription?.type === 'trial';
   const allowedTools = brandData?.freeTrialSettings?.allowedTools || [];
-  const isLocked = isTrial && normalizedId !== 'onboarding' && !allowedTools.includes(normalizedId);
+  const isLocked = isTrial && normalizedId !== 'onboarding' && (
+    normalizedId === 'analysis-identity'
+      ? !allowedTools.includes('analysis-identity') && !allowedTools.includes('niche-selection') && !allowedTools.includes('brand-naming') && !allowedTools.includes('visual-identity')
+      : !allowedTools.includes(normalizedId)
+  );
 
   if (isLocked) {
     return (
@@ -160,9 +164,10 @@ export default function ToolPage() {
 
   // Exact Components Mapping (From tools.html)
   const toolComponents = {
-    'niche-selection': <NicheSelection stepNumber={1} />,
-    'brand-naming': <BrandNaming stepNumber={2} />,
-    'visual-identity': <VisualIdentity stepNumber={3} />,
+    'analysis-identity': <AnalysisIdentity />,
+    'niche-selection': <AnalysisIdentity />,
+    'brand-naming': <AnalysisIdentity />,
+    'visual-identity': <AnalysisIdentity />,
     'website-construction': <WebsiteConstruction stepNumber={5} />,
     'landing-page-content': <LandingPageContent stepNumber={6} />,
     'legal-pages': <LegalPages stepNumber={7} />,
@@ -172,7 +177,6 @@ export default function ToolPage() {
     'profit-calculator': <ProfitCalculator stepNumber={14} />,
     'social-presence': <SocialPresence stepNumber={15} />,
     'content-factory': <ContentFactory stepNumber={16} />,
-    'email-automation': <EmailAutomation stepNumber={18} />,
 
     'marketing-plan': <MarketingPlan stepNumber={20} />,
     'ad-creative': <AdCreative stepNumber={21} />,

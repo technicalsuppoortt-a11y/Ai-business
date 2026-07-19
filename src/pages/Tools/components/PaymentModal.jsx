@@ -24,6 +24,7 @@ export default function PaymentModal({
   
   const [selectedPlanId, setSelectedPlanId] = useState('');
   const [isStripeLoading, setIsStripeLoading] = useState(false);
+  const [isPaddleLoading, setIsPaddleLoading] = useState(false);
 
   // Check for existing pending payment whenever modal opens
   useEffect(() => {
@@ -52,6 +53,36 @@ export default function PaymentModal({
     setScreenshot(null);
     checkPending();
   }, [isOpen, userData?.uid]);
+
+  // Load and initialize Paddle SDK if client key is configured and enabled
+  useEffect(() => {
+    if (!isOpen || !paymentMethods?.paddleKeys?.enabled || !paymentMethods?.paddleKeys?.clientKey) return;
+
+    const loadPaddle = () => {
+      if (window.Paddle) {
+        window.Paddle.Initialize({ 
+          token: paymentMethods.paddleKeys.clientKey,
+          environment: paymentMethods.paddleKeys.environment || 'sandbox'
+        });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = "https://cdn.paddle.com/paddle/v3/paddle.js";
+      script.async = true;
+      script.onload = () => {
+        if (window.Paddle) {
+          window.Paddle.Initialize({ 
+            token: paymentMethods.paddleKeys.clientKey,
+            environment: paymentMethods.paddleKeys.environment || 'sandbox'
+          });
+        }
+      };
+      document.body.appendChild(script);
+    };
+
+    loadPaddle();
+  }, [isOpen, paymentMethods?.paddleKeys?.enabled, paymentMethods?.paddleKeys?.clientKey, paymentMethods?.paddleKeys?.environment]);
 
   if (!isOpen) return null;
 
@@ -143,6 +174,53 @@ export default function PaymentModal({
       setError(lang === 'ar' ? 'فشل الاتصال بـ Stripe' : 'Failed to connect to Stripe');
     } finally {
       setIsStripeLoading(false);
+    }
+  };
+
+  const handlePaddleCheckout = async () => {
+    if (!selectedPlanId) {
+      setError(lang === 'ar' ? 'يرجى اختيار الباقة أولاً' : 'Please select a plan first');
+      return;
+    }
+
+    const selectedPlan = plans?.find(p => p.id === Number(selectedPlanId) || p.name === selectedPlanId);
+    if (!selectedPlan?.paddlePriceId) {
+      setError(lang === 'ar' 
+        ? 'بوابة Paddle غير مهيأة لهذه الباقة. يرجى اختيار وسيلة دفع أخرى أو مراجعة المشرف.' 
+        : 'Paddle is not configured for this plan. Please select another payment method or contact support.');
+      return;
+    }
+
+    if (!window.Paddle) {
+      setError(lang === 'ar' ? 'فشل تحميل مكتبة دفع Paddle' : 'Failed to load Paddle SDK');
+      return;
+    }
+
+    setIsPaddleLoading(true);
+    setError('');
+    try {
+      window.Paddle.Checkout.open({
+        items: [
+          {
+            priceId: selectedPlan.paddlePriceId,
+            quantity: 1
+          }
+        ],
+        customer: {
+          email: userData.email
+        },
+        customData: {
+          userId: userData.uid,
+          adminUid: adminUid,
+          planId: (selectedPlan.id || selectedPlanId).toString(),
+          durationDays: (selectedPlan.durationDays || selectedPlan.duration || 30).toString()
+        }
+      });
+    } catch (err) {
+      console.error('Paddle Checkout error:', err);
+      setError(lang === 'ar' ? 'فشل بدء عملية الدفع عبر Paddle' : 'Failed to start Paddle checkout');
+    } finally {
+      setIsPaddleLoading(false);
     }
   };
 
@@ -274,30 +352,55 @@ export default function PaymentModal({
               </ul>
             </div>
 
-            {paymentMethods?.stripeKeys?.publishableKey && (
+            {(paymentMethods?.stripeKeys?.publishableKey || (paymentMethods?.paddleKeys?.enabled && paymentMethods?.paddleKeys?.clientKey)) && (
               <div style={{ background: 'var(--bg2)', padding: '16px', borderRadius: '12px', marginBottom: '24px', textAlign: 'center' }}>
                 <h4 style={{ marginBottom: '12px', color: '#fff' }}>
-                  {lang === 'ar' ? 'أو الدفع عبر البطاقة البنكية:' : 'Or Pay via Credit Card:'}
+                  {lang === 'ar' ? 'أو الدفع الإلكتروني السريع:' : 'Or Fast Electronic Payment:'}
                 </h4>
-                <button 
-                  onClick={handleStripeCheckout}
-                  disabled={isStripeLoading}
-                  style={{
-                    display: 'inline-block',
-                    background: '#6772E5',
-                    color: '#fff',
-                    padding: '10px 20px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    fontWeight: 'bold',
-                    fontSize: '14px',
-                    boxShadow: '0 4px 10px rgba(103, 114, 229, 0.3)',
-                    cursor: isStripeLoading ? 'not-allowed' : 'pointer',
-                    opacity: isStripeLoading ? 0.7 : 1
-                  }}
-                >
-                  {isStripeLoading ? '⏳ ...' : '💳 ' + (lang === 'ar' ? 'الدفع الآمن عبر Stripe' : 'Secure Payment via Stripe')}
-                </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center', justifyContent: 'center' }}>
+                  {paymentMethods?.stripeKeys?.publishableKey && (
+                    <button 
+                      onClick={handleStripeCheckout}
+                      disabled={isStripeLoading}
+                      style={{
+                        width: '100%',
+                        background: '#6772E5',
+                        color: '#fff',
+                        padding: '10px 20px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        fontWeight: 'bold',
+                        fontSize: '14px',
+                        boxShadow: '0 4px 10px rgba(103, 114, 229, 0.3)',
+                        cursor: isStripeLoading ? 'not-allowed' : 'pointer',
+                        opacity: isStripeLoading ? 0.7 : 1
+                      }}
+                    >
+                      {isStripeLoading ? '⏳ ...' : '💳 ' + (lang === 'ar' ? 'الدفع الآمن عبر Stripe' : 'Secure Payment via Stripe')}
+                    </button>
+                  )}
+                  {paymentMethods?.paddleKeys?.enabled && paymentMethods?.paddleKeys?.clientKey && (
+                    <button 
+                      onClick={handlePaddleCheckout}
+                      disabled={isPaddleLoading}
+                      style={{
+                        width: '100%',
+                        background: '#00bfff',
+                        color: '#fff',
+                        padding: '10px 20px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        fontWeight: 'bold',
+                        fontSize: '14px',
+                        boxShadow: '0 4px 10px rgba(0, 191, 255, 0.3)',
+                        cursor: isPaddleLoading ? 'not-allowed' : 'pointer',
+                        opacity: isPaddleLoading ? 0.7 : 1
+                      }}
+                    >
+                      {isPaddleLoading ? '⏳ ...' : '💳 ' + (lang === 'ar' ? 'الدفع الآمن عبر Paddle' : 'Secure Payment via Paddle')}
+                    </button>
+                  )}
+                </div>
               </div>
             )}
 

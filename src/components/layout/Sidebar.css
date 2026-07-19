@@ -85,6 +85,69 @@
   border-radius: 50%;
   display: inline-block;
 }
+
+.nav-sublabel-toggle {
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--accent);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  margin-top: 8px;
+  user-select: none;
+}
+
+.nav-sublabel-toggle:hover {
+  background: rgba(59, 130, 246, 0.05);
+  color: var(--text);
+}
+
+.nav-sublabel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-sublabel-title::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.chevron-icon {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.nav-sublabel-toggle.expanded .chevron-icon {
+  transform: rotate(180deg);
+  opacity: 1;
+  color: var(--accent);
+}
+
+/* Collapsible wrapper using grid transition (0fr -> 1fr) */
+.nav-group-items-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.nav-group-items-wrapper.expanded {
+  grid-template-rows: 1fr;
+}
+
+.nav-group-items-inner {
+  min-height: 0;
+}
 .nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;color:var(--text2);font-size:13px;font-weight:500;position:relative;border:1px solid transparent;margin-bottom:1px}
 .nav-item:hover{color:var(--text);background:var(--bg3)}
 .nav-item.active{background:rgba(59,130,246,0.1);color:var(--accent);border-color:rgba(59,130,246,0.2)}

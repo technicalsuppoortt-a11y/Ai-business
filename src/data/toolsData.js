@@ -1,7 +1,5 @@
 export const TOOLS_24H = [
-  { id: 'niche-selection', label_ar: 'اختيار النيش', label_en: 'Niche Selection', icon: '🎯', section: 'tools', group_ar: 'التحليل والهوية', group_en: 'Analysis & Identity' },
-  { id: 'brand-naming', label_ar: 'اسم البراند', label_en: 'Brand Naming', icon: '🪄', section: 'tools', group_ar: 'التحليل والهوية', group_en: 'Analysis & Identity' },
-  { id: 'visual-identity', label_ar: 'الهوية البصرية', label_en: 'Visual Identity', icon: '🎨', section: 'tools', group_ar: 'التحليل والهوية', group_en: 'Analysis & Identity' },
+  { id: 'analysis-identity', label_ar: 'التحليل والهوية', label_en: 'Analysis & Identity', icon: '🎯', section: 'tools', group_ar: 'التحليل والهوية', group_en: 'Analysis & Identity' },
   { id: 'website-construction', label_ar: 'بناء وتجهيز الموقع', label_en: 'Website Setup & Build', icon: '💻', section: 'tools', group_ar: 'بناء وتجهيز المتجر', group_en: 'Store Setup' },
   { id: 'landing-page-content', label_ar: 'محتوى الموقع', label_en: 'Page Content', icon: '📄', section: 'tools', group_ar: 'بناء وتجهيز المتجر', group_en: 'Store Setup' },
   { id: 'legal-pages', label_ar: 'الصفحات القانونية', label_en: 'Legal Pages', icon: '⚖️', section: 'tools', group_ar: 'بناء وتجهيز المتجر', group_en: 'Store Setup' },
@@ -11,7 +9,6 @@ export const TOOLS_24H = [
   { id: 'profit-calculator', label_ar: 'حاسبة الأرباح', label_en: 'Profit Calculator', icon: '💰', section: 'tools', group_ar: 'المنتج والربحية', group_en: 'Product & Profit' },
   { id: 'social-presence', label_ar: 'السوشيال ميديا', label_en: 'Social Presence', icon: '📱', section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing' },
   { id: 'content-factory', label_ar: 'مصنع المحتوى', label_en: 'Content Factory', icon: '🖼️', section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing' },
-  { id: 'email-automation', label_ar: 'أتمتة الإيميل', label_en: 'Email Automation', icon: '⚙️', section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing' },
   { id: 'marketing-plan', label_ar: 'خطة التسويق', label_en: 'Marketing Plan', icon: '🗺️', section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing' },
   { id: 'ad-creative', label_ar: 'أفكار الإعلانات', label_en: 'Ad Creative', icon: '🎞️', section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing' },
   { id: 'campaign-launch', label_ar: 'إطلاق الحملة', label_en: 'Campaign Launch', icon: '🚀', section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing' },
@@ -29,26 +26,12 @@ export const TOOLS_24H = [
 ];
 
 export const TOOLS_CONTENT = {
-  'niche-selection': {
-    title_ar: 'اختيار النيش (المجال)',
-    title_en: 'Niche Selection',
-    description_ar: 'حجر الأساس لمشروعك. اختر المجال الذي ترى فيه شغفك وفرصتك.',
-    description_en: 'The cornerstone of your project. Choose the field where you see your passion and opportunity.',
-    type: 'niche-picker',
-  },
-  'brand-naming': {
-    title_ar: 'اختيار اسم البراند (AI)',
-    title_en: 'Brand Name Generator (AI)',
-    description_ar: 'استخدم الذكاء الاصطناعي لتوليد اسم براند مميز وسهل التذكر.',
-    description_en: 'Use AI to generate a distinctive, memorable brand name.',
-    video: 'https://app.screencastify.com/watch/eSj4cmGwR9sLXke9gDP0/embed',
-  },
-  'visual-identity': {
-    title_ar: 'الهوية البصرية (Visual Identity)',
-    title_en: 'Visual Identity',
-    description_ar: 'الألوان واللوجو هما أساس تصميم موقعك لاحقاً. اختر بعناية.',
-    description_en: 'Colors and logo are the foundation of your website design. Choose carefully.',
-    type: 'branding-studio',
+  'analysis-identity': {
+    title_ar: 'التحليل والهوية',
+    title_en: 'Analysis & Identity',
+    description_ar: 'اختر نيش مشروعك، ابتكار اسم براند فخم، وحدد ألوان هويتك البصرية في مكان واحد.',
+    description_en: 'Select your project niche, generate a premium brand name, and define your identity colors all in one place.',
+    type: 'analysis-identity',
   },
   'website-construction': {
     title_ar: 'بناء وتجهيز الموقع',
@@ -149,14 +132,7 @@ export const TOOLS_CONTENT = {
     type: 'dynamic-content',
     category: 'design'
   },
-  'email-automation': {
-    title_ar: 'سلسلة الترحيب (Email Automation)',
-    title_en: 'Welcome Series (Email Automation)',
-    description_ar: 'أتمتة التواصل مع عملائك الجدد.',
-    description_en: 'Automate communication with your new customers.',
-    type: 'dynamic-content',
-    category: 'email'
-  },
+
 
   'marketing-plan': {
     title_ar: 'مولد خطة التسويق الذكي',

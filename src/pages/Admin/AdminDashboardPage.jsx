@@ -120,6 +120,7 @@ export default function AdminDashboardPage() {
   const [planCurrency, setPlanCurrency] = useState('EGP');
   const [planFeatures, setPlanFeatures] = useState('');
   const [planFeaturesEn, setPlanFeaturesEn] = useState('');
+  const [planPaddlePriceId, setPlanPaddlePriceId] = useState('');
 
   // Prevent multiple state initializations
   const [isInitialized, setIsInitialized] = useState(false);
@@ -140,6 +141,17 @@ export default function AdminDashboardPage() {
   const [stripeSecretKey, setStripeSecretKey] = useState('');
   const [stripePublishableKey, setStripePublishableKey] = useState('');
   const [stripeWebhookSecret, setStripeWebhookSecret] = useState('');
+  const [paddleVendorId, setPaddleVendorId] = useState('');
+  const [paddleApiKey, setPaddleApiKey] = useState('');
+  const [paddleClientKey, setPaddleClientKey] = useState('');
+  const [paddleWebhookSecret, setPaddleWebhookSecret] = useState('');
+  const [paddleEnvironment, setPaddleEnvironment] = useState('sandbox');
+  const [paddleEnabled, setPaddleEnabled] = useState(false);
+  const [isPaddleValidating, setIsPaddleValidating] = useState(false);
+  const [isPaddleValidated, setIsPaddleValidated] = useState(false);
+  const [paddleValidationError, setPaddleValidationError] = useState('');
+  const [isPaddleSettingsModalOpen, setIsPaddleSettingsModalOpen] = useState(false);
+  const [isSyncingStripe, setIsSyncingStripe] = useState(false);
   const [pendingPayments, setPendingPayments] = useState([]);
   const [loadingPayments, setLoadingPayments] = useState(false);
   const [paymentToApprove, setPaymentToApprove] = useState(null);
@@ -215,6 +227,13 @@ export default function AdminDashboardPage() {
       setStripeSecretKey(userData.paymentMethods?.stripeKeys?.secretKey || '');
       setStripePublishableKey(userData.paymentMethods?.stripeKeys?.publishableKey || '');
       setStripeWebhookSecret(userData.paymentMethods?.stripeKeys?.webhookSecret || '');
+      setPaddleVendorId(userData.paymentMethods?.paddleKeys?.vendorId || '');
+      setPaddleApiKey(userData.paymentMethods?.paddleKeys?.apiKey || '');
+      setPaddleClientKey(userData.paymentMethods?.paddleKeys?.clientKey || '');
+      setPaddleWebhookSecret(userData.paymentMethods?.paddleKeys?.webhookSecret || '');
+      setPaddleEnvironment(userData.paymentMethods?.paddleKeys?.environment || 'sandbox');
+      setPaddleEnabled(userData.paymentMethods?.paddleKeys?.enabled ?? !!userData.paymentMethods?.paddleKeys?.clientKey);
+      setIsPaddleValidated(!!userData.paymentMethods?.paddleKeys?.apiKey);
 
       setIsInitialized(true);
     }
@@ -236,6 +255,71 @@ export default function AdminDashboardPage() {
     setFontFamily('Cairo');
     setTextColor('#FFFFFF');
     setLineColor('#1e293b');
+  };
+
+  const handleValidatePaddle = async () => {
+    if (!paddleVendorId.trim() || !paddleClientKey.trim() || !paddleApiKey.trim() || !paddleWebhookSecret.trim()) {
+      setPaddleValidationError(state.language === 'en' ? 'All fields are required.' : 'جميع الحقول مطلوبة للتحقق.');
+      return;
+    }
+
+    setIsPaddleValidating(true);
+    setPaddleValidationError('');
+    try {
+      const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const response = await fetch(`${baseUrl}/api/paddle/validate-credentials`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          apiKey: paddleApiKey.trim(),
+          environment: paddleEnvironment
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setIsPaddleValidated(true);
+        toast(state.language === 'en' ? 'Paddle keys validated successfully! ✓' : 'تم التحقق من مفاتيح Paddle بنجاح! ✓', 'success');
+      } else {
+        setIsPaddleValidated(false);
+        setPaddleValidationError(data.error || (state.language === 'en' ? 'Validation failed. Check API Key.' : 'فشل التحقق. تأكد من مفتاح API.'));
+      }
+    } catch (err) {
+      console.error(err);
+      setIsPaddleValidated(false);
+      setPaddleValidationError(state.language === 'en' ? 'Error connecting to validation server.' : 'حدث خطأ في الاتصال بخادم التحقق.');
+    } finally {
+      setIsPaddleValidating(false);
+    }
+  };
+
+  const handleSyncStripePlans = async () => {
+    if (!stripeSecretKey) {
+      return toast(state.language === 'en' ? 'Please configure your Stripe Secret Key first!' : 'يرجى إعداد مفتاح Stripe السري أولاً!', 'error');
+    }
+
+    setIsSyncingStripe(true);
+    try {
+      const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const response = await fetch(`${baseUrl}/api/stripe/sync-plans`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminUid: userData.uid
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setPlans(data.plans);
+        toast(state.language === 'en' ? 'Successfully synchronized plans with Stripe! ✓' : 'تمت مزامنة الباقات مع Stripe بنجاح! ✓', 'success');
+      } else {
+        throw new Error(data.error || 'Sync failed');
+      }
+    } catch (err) {
+      console.error('Stripe sync error:', err);
+      toast(state.language === 'en' ? `Sync failed: ${err.message}` : `فشلت المزامنة: ${err.message}`, 'error');
+    } finally {
+      setIsSyncingStripe(false);
+    }
   };
 
   const handleUpdateAdminProfile = async () => {
@@ -283,6 +367,14 @@ export default function AdminDashboardPage() {
             secretKey: stripeSecretKey,
             publishableKey: stripePublishableKey,
             webhookSecret: stripeWebhookSecret
+          },
+          paddleKeys: {
+            enabled: paddleEnabled,
+            vendorId: paddleVendorId,
+            apiKey: paddleApiKey,
+            clientKey: paddleClientKey,
+            webhookSecret: paddleWebhookSecret,
+            environment: paddleEnvironment
           }
         },
         defaultLanguage: defaultLanguage,
@@ -291,10 +383,34 @@ export default function AdminDashboardPage() {
         showWhatsappLoginBtn: showWhatsappLoginBtn
       };
 
-      // 1. Update Admin User document
+      // Validation check before save
+      if (paddleEnabled && !isPaddleValidated) {
+        toast(state.language === 'en' ? 'Please validate your Paddle credentials first!' : 'يرجى التحقق من صحة مفاتيح Paddle أولاً!', 'error');
+        setIsUpdatingProfile(false);
+        return;
+      }
+
+      // Filter public payment methods to prevent exposing secret keys in the public brand document
+      const publicPaymentMethods = {
+        vodafone: vodafoneWallet,
+        etisalat: etisalatWallet,
+        orange: orangeWallet,
+        instapay: instapayWallet,
+        stripeKeys: {
+          publishableKey: stripePublishableKey
+        },
+        paddleKeys: {
+          enabled: paddleEnabled,
+          vendorId: paddleVendorId,
+          clientKey: paddleClientKey,
+          environment: paddleEnvironment
+        }
+      };
+
+      // 1. Update Admin User document (contains secrets)
       await setDoc(doc(db, 'users', userData.uid), updateData, { merge: true });
 
-      // 2. Update/Create Brand document
+      // 2. Update/Create Brand document (filtered secrets)
       await setDoc(doc(db, 'brands', brandNameForm), {
         name: brandNameForm,
         domain: updateData.brandUrl,
@@ -303,7 +419,7 @@ export default function AdminDashboardPage() {
         socialLinks: updateData.socialLinks,
         plans: plans,
         freeTrialSettings: updateData.freeTrialSettings,
-        paymentMethods: updateData.paymentMethods,
+        paymentMethods: publicPaymentMethods,
         defaultLanguage: updateData.defaultLanguage,
         landingTemplate: updateData.landingTemplate,
         logoDisplayMode: updateData.logoDisplayMode,
@@ -892,9 +1008,19 @@ export default function AdminDashboardPage() {
                     💎 باقات الاشتراك الخاصة بك
                     <span className="sa-card-count">{plans.length}</span>
                   </div>
-                  <button className="btn" onClick={() => { setEditingPlan(null); setPlanName(''); setPlanNameEn(''); setPlanPrice(''); setPlanCurrency('EGP'); setPlanFeatures(''); setPlanFeaturesEn(''); setIsPlanModalOpen(true); }} style={{ background: 'var(--accent)', color: '#fff', border: 'none' }}>
-                    ➕ إضافة باقة جديدة
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button 
+                      className="btn" 
+                      onClick={handleSyncStripePlans} 
+                      disabled={isSyncingStripe}
+                      style={{ background: '#6772E5', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', gap: '6px', cursor: isSyncingStripe ? 'not-allowed' : 'pointer' }}
+                    >
+                      {isSyncingStripe ? '⏳ جاري المزامنة...' : '🔄 مزامنة مع Stripe'}
+                    </button>
+                    <button className="btn" onClick={() => { setEditingPlan(null); setPlanName(''); setPlanNameEn(''); setPlanPrice(''); setPlanCurrency('EGP'); setPlanFeatures(''); setPlanFeaturesEn(''); setPlanPaddlePriceId(''); setIsPlanModalOpen(true); }} style={{ background: 'var(--accent)', color: '#fff', border: 'none' }}>
+                      ➕ إضافة باقة جديدة
+                    </button>
+                  </div>
                 </div>
                 <div className="sa-table-wrapper">
                   <table className="sa-table">
@@ -912,6 +1038,31 @@ export default function AdminDashboardPage() {
                           <td>
                             <div style={{ fontWeight: 'bold', color: '#fff' }}>{p.name_ar || p.name}</div>
                             {p.name_en && <div style={{ fontSize: '11px', color: 'var(--text3)', marginTop: '2px' }}>{p.name_en}</div>}
+                            {p.paddlePriceId && <div style={{ fontSize: '9px', color: '#00bfff', marginTop: '4px', fontFamily: 'monospace' }}>Paddle ID: {p.paddlePriceId}</div>}
+                            {p.stripe_product_id ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '6px' }}>
+                                <div style={{ fontSize: '10px', color: 'var(--green)', fontWeight: 'bold' }}>
+                                  ✓ متزامن مع Stripe
+                                </div>
+                                <div style={{ fontSize: '8px', color: 'var(--text3)', fontFamily: 'monospace' }}>
+                                  Prod ID: {p.stripe_product_id}
+                                </div>
+                                {p.stripe_monthly_price_id && (
+                                  <div style={{ fontSize: '8px', color: 'var(--text3)', fontFamily: 'monospace' }}>
+                                    Monthly Price ID: {p.stripe_monthly_price_id}
+                                  </div>
+                                )}
+                                {p.stripe_yearly_price_id && (
+                                  <div style={{ fontSize: '8px', color: 'var(--text3)', fontFamily: 'monospace' }}>
+                                    Yearly Price ID: {p.stripe_yearly_price_id}
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div style={{ fontSize: '10px', color: '#F59E0B', fontWeight: 'bold', marginTop: '6px' }}>
+                                ⚠️ غير متزامن مع Stripe
+                              </div>
+                            )}
                           </td>
                           <td><span style={{ color: 'var(--green)', fontWeight: 800 }}>{p.price} {p.currency === 'USD' ? '$' : p.currency === 'SAR' ? 'ر.س' : p.currency === 'AED' ? 'د.إ' : p.currency === 'KWD' ? 'د.ك' : 'ج.م'}</span></td>
                           <td style={{ maxWidth: 300, fontSize: 11, color: 'var(--text3)' }}>
@@ -927,6 +1078,7 @@ export default function AdminDashboardPage() {
                               setPlanCurrency(p.currency || 'EGP');
                               setPlanFeatures(p.features_ar || p.features || '');
                               setPlanFeaturesEn(p.features_en || '');
+                              setPlanPaddlePriceId(p.paddlePriceId || '');
                               setIsPlanModalOpen(true);
                             }}>تعديل</button>
                             <button className="sa-delete-btn" onClick={() => setPlans(plans.filter(pl => pl.id !== p.id))}>حذف</button>
@@ -1150,12 +1302,12 @@ export default function AdminDashboardPage() {
                         <label className="field-label" style={{ color: '#8A2BE2', fontWeight: 'bold' }}>إنستاباي (InstaPay)</label>
                         <input className="field-input" placeholder="username@instapay" value={instapayWallet} onChange={e => setInstapayWallet(e.target.value)} dir="ltr" />
                       </div>
-                      <div className="field" style={{ display: 'flex', alignItems: 'flex-end' }}>
+                      <div className="field" style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
                         <button 
                           className="btn btn-primary" 
                           onClick={() => setIsStripeSettingsModalOpen(true)}
                           style={{ 
-                            width: '100%', 
+                            flex: 1, 
                             height: '42px', 
                             background: '#6772E5', 
                             color: '#fff', 
@@ -1167,7 +1319,25 @@ export default function AdminDashboardPage() {
                             fontWeight: 'bold'
                           }}
                         >
-                          💳 إعدادات بوابة الدفع Stripe
+                          💳 بوابة Stripe
+                        </button>
+                        <button 
+                          className="btn btn-primary" 
+                          onClick={() => setIsPaddleSettingsModalOpen(true)}
+                          style={{ 
+                            flex: 1, 
+                            height: '42px', 
+                            background: '#00bfff', 
+                            color: '#fff', 
+                            border: 'none',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          💳 بوابة Paddle
                         </button>
                       </div>
                     </div>
@@ -1334,6 +1504,138 @@ export default function AdminDashboardPage() {
                       className="ad-submit-btn" 
                       style={{ width: '100%', background: '#6772E5' }}
                       onClick={() => setIsStripeSettingsModalOpen(false)}
+                    >
+                      تأكيد وإغلاق النافذة
+                    </button>
+                    <div style={{ fontSize: '11px', color: 'var(--text3)', textAlign: 'center', marginTop: '12px' }}>
+                      ملاحظة: لا تنسَ الضغط على "حفظ أرقام المحافظ" في الصفحة الرئيسية ليتم حفظ هذه التعديلات.
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Paddle Settings Modal */}
+              {isPaddleSettingsModalOpen && (
+                <div className="ad-modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+                  <div className="ad-modal" style={{ background: '#111827', width: '90%', maxWidth: '500px', borderRadius: '16px', padding: '32px', position: 'relative', border: '1px solid #374151', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
+                    <button className="ad-modal-close" onClick={() => setIsPaddleSettingsModalOpen(false)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'transparent', border: 'none', color: '#9CA3AF', fontSize: '20px', cursor: 'pointer' }}>✕</button>
+                    <h3 style={{ marginBottom: '20px', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ color: '#00bfff' }}>💳</span> إعدادات الربط مع Paddle
+                    </h3>
+                    
+                    <p style={{ fontSize: '13px', color: 'var(--text2)', marginBottom: '15px', lineHeight: '1.6' }}>
+                      أدخل إعدادات الربط الخاصة بحسابك في Paddle Billing (v3) ليتمكن العملاء من الدفع بالبطاقات أو PayPal وتفعيل اشتراكهم تلقائياً.
+                    </p>
+
+                    {/* Helper Links */}
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+                      <a 
+                        href={paddleEnvironment === 'production' ? 'https://dashboard.paddle.com/developer/credentials' : 'https://sandbox-dashboard.paddle.com/developer/credentials'} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="btn btn-sm" 
+                        style={{ flex: 1, textAlign: 'center', background: 'rgba(0, 191, 255, 0.1)', color: '#00bfff', border: '1px solid rgba(0, 191, 255, 0.2)', textDecoration: 'none', display: 'inline-block', fontSize: '11px', padding: '8px', borderRadius: '8px', fontWeight: 'bold' }}
+                      >
+                        🔑 صفحة المفاتيح (Credentials)
+                      </a>
+                      <a 
+                        href={paddleEnvironment === 'production' ? 'https://dashboard.paddle.com/developer/webhooks' : 'https://sandbox-dashboard.paddle.com/developer/webhooks'} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="btn btn-sm" 
+                        style={{ flex: 1, textAlign: 'center', background: 'rgba(0, 191, 255, 0.1)', color: '#00bfff', border: '1px solid rgba(0, 191, 255, 0.2)', textDecoration: 'none', display: 'inline-block', fontSize: '11px', padding: '8px', borderRadius: '8px', fontWeight: 'bold' }}
+                      >
+                        🔗 صفحة الـ Webhooks
+                      </a>
+                    </div>
+
+                    {/* Enable Checkbox */}
+                    <div className="field" style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <input 
+                        type="checkbox" 
+                        id="paddleEnabled" 
+                        checked={paddleEnabled} 
+                        onChange={e => setPaddleEnabled(e.target.checked)} 
+                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                      />
+                      <label htmlFor="paddleEnabled" style={{ color: '#00bfff', fontWeight: 'bold', cursor: 'pointer', margin: 0 }}>
+                        تفعيل بوابة الدفع Paddle (Enable Paddle Gateway)
+                      </label>
+                    </div>
+
+                    <div className="field" style={{ marginBottom: '16px' }}>
+                      <label className="field-label" style={{ color: '#00bfff', fontWeight: 'bold' }}>Paddle Vendor / Seller ID</label>
+                      <input className="field-input" placeholder="e.g. 12345" value={paddleVendorId} onChange={e => { setPaddleVendorId(e.target.value); setIsPaddleValidated(false); }} dir="ltr" />
+                    </div>
+                    <div className="field" style={{ marginBottom: '16px' }}>
+                      <label className="field-label" style={{ color: '#00bfff', fontWeight: 'bold' }}>Paddle Client Key</label>
+                      <input className="field-input" placeholder="test_client_..." value={paddleClientKey} onChange={e => { setPaddleClientKey(e.target.value); setIsPaddleValidated(false); }} dir="ltr" />
+                    </div>
+                    <div className="field" style={{ marginBottom: '16px' }}>
+                      <label className="field-label" style={{ color: '#00bfff', fontWeight: 'bold' }}>Paddle Secret API Key</label>
+                      <input className="field-input" placeholder="p_api_..." value={paddleApiKey} onChange={e => { setPaddleApiKey(e.target.value); setIsPaddleValidated(false); }} dir="ltr" type="password" />
+                    </div>
+                    <div className="field" style={{ marginBottom: '16px' }}>
+                      <label className="field-label" style={{ color: '#00bfff', fontWeight: 'bold' }}>Paddle Webhook Secret</label>
+                      <input className="field-input" placeholder="pwhsec_..." value={paddleWebhookSecret} onChange={e => { setPaddleWebhookSecret(e.target.value); setIsPaddleValidated(false); }} dir="ltr" />
+                    </div>
+                    <div className="field" style={{ marginBottom: '20px' }}>
+                      <label className="field-label" style={{ color: '#00bfff', fontWeight: 'bold' }}>بيئة العمل (Environment)</label>
+                      <select className="field-input" value={paddleEnvironment} onChange={e => { setPaddleEnvironment(e.target.value); setIsPaddleValidated(false); }}>
+                        <option value="sandbox">Sandbox (بيئة اختبارية)</option>
+                        <option value="production">Production (بيئة حية)</option>
+                      </select>
+                    </div>
+
+                    {/* Validation Message & Controls */}
+                    {paddleEnabled && (
+                      <div style={{ marginBottom: '20px', background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#fff' }}>حالة التحقق:</span>
+                          <span style={{ fontSize: '12px', fontWeight: 'bold', color: isPaddleValidated ? 'var(--green)' : 'var(--red)' }}>
+                            {isPaddleValidated ? '✓ تم التحقق بنجاح' : '⚠️ غير متحقق منه'}
+                          </span>
+                        </div>
+                        {paddleValidationError && (
+                          <div style={{ color: 'var(--red)', fontSize: '11px', marginBottom: '10px' }}>
+                            {paddleValidationError}
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          className="btn btn-sm"
+                          disabled={isPaddleValidating}
+                          onClick={handleValidatePaddle}
+                          style={{
+                            width: '100%',
+                            background: isPaddleValidated ? 'rgba(16, 185, 129, 0.1)' : 'rgba(0, 191, 255, 0.1)',
+                            border: '1px solid ' + (isPaddleValidated ? 'rgba(16, 185, 129, 0.2)' : 'rgba(0, 191, 255, 0.2)'),
+                            color: isPaddleValidated ? 'var(--green)' : '#00bfff',
+                            fontWeight: 'bold',
+                            padding: '8px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {isPaddleValidating ? '⏳ جاري التحقق...' : '🔍 التحقق من المفاتيح (Validate Keys)'}
+                        </button>
+                      </div>
+                    )}
+
+                    <button 
+                      className="ad-submit-btn" 
+                      style={{ 
+                        width: '100%', 
+                        background: '#00bfff',
+                        opacity: (paddleEnabled && !isPaddleValidated) ? 0.5 : 1,
+                        cursor: (paddleEnabled && !isPaddleValidated) ? 'not-allowed' : 'pointer'
+                      }}
+                      onClick={() => {
+                        if (paddleEnabled && !isPaddleValidated) {
+                          toast(state.language === 'en' ? 'Please validate your credentials first!' : 'يرجى التحقق من المفاتيح أولاً!', 'error');
+                          return;
+                        }
+                        setIsPaddleSettingsModalOpen(false);
+                      }}
                     >
                       تأكيد وإغلاق النافذة
                     </button>
@@ -1839,6 +2141,10 @@ export default function AdminDashboardPage() {
                 <label className="field-label">المميزات بالإنجليزية (ميزة في كل سطر - English Features)</label>
                 <textarea className="field-input" rows="4" value={planFeaturesEn} onChange={e => setPlanFeaturesEn(e.target.value)} placeholder="Access all tools&#10;Tech support&#10;Regular updates" style={{ resize: 'none', textAlign: 'left', direction: 'ltr' }} />
               </div>
+              <div className="field">
+                <label className="field-label">معرّف السعر في Paddle (Paddle Price ID - اختياري)</label>
+                <input className="field-input" value={planPaddlePriceId} onChange={e => setPlanPaddlePriceId(e.target.value)} placeholder="pri_01hxxxxxxxxxxxxxxxxxxxxx" style={{ textAlign: 'left', direction: 'ltr' }} />
+              </div>
               <button className="ad-submit-btn" style={{ marginTop: 20 }} onClick={() => {
                 if (!planName || !planPrice) return toast('يرجى ملأ البيانات الأساسية', 'error');
                 if (editingPlan) {
@@ -1851,7 +2157,11 @@ export default function AdminDashboardPage() {
                     currency: planCurrency,
                     features: planFeatures,
                     features_ar: planFeatures,
-                    features_en: planFeaturesEn
+                    features_en: planFeaturesEn,
+                    paddlePriceId: planPaddlePriceId,
+                    stripe_product_id: editingPlan.stripe_product_id || null,
+                    stripe_monthly_price_id: editingPlan.stripe_monthly_price_id || null,
+                    stripe_yearly_price_id: editingPlan.stripe_yearly_price_id || null
                   } : p));
                 } else {
                   setPlans([...plans, {
@@ -1863,7 +2173,8 @@ export default function AdminDashboardPage() {
                     currency: planCurrency,
                     features: planFeatures,
                     features_ar: planFeatures,
-                    features_en: planFeaturesEn
+                    features_en: planFeaturesEn,
+                    paddlePriceId: planPaddlePriceId
                   }]);
                 }
                 setIsPlanModalOpen(false);

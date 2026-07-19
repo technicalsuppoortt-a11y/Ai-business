@@ -30,6 +30,20 @@ export default function ProfilePage() {
 
   const getToolValue = (stepId) => {
     switch (stepId) {
+      case 'analysis-identity':
+        return state.niche && state.brandName ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div>{lang === 'en' ? 'Niche:' : 'النيش:'} {state.niche} ({state.subNiche})</div>
+            <div>{lang === 'en' ? 'Brand Name:' : 'اسم البراند:'} {state.brandName}</div>
+            {state.primaryColor && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>{lang === 'en' ? 'Colors:' : 'الألوان:'}</span>
+                <div style={{ width: 12, height: 12, borderRadius: '50%', background: state.primaryColor, border: '1px solid rgba(255,255,255,0.2)' }} />
+                {state.primaryColor}
+              </div>
+            )}
+          </div>
+        ) : null;
       case 'niche-selection':
         return state.niche ? `${state.niche} (${state.subNiche || ''})` : null;
       case 'brand-naming':

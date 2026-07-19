@@ -328,7 +328,6 @@
 }
 
 .sn-dropdown-content {
-    display: none;
     position: absolute;
     top: 100%;
     inset-inline-start: 0;
@@ -339,10 +338,29 @@
     border-radius: 8px;
     z-index: 100;
     margin-top: 5px;
+    
+    /* Smooth Transition & Animation */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
 }
 
 .sn-dropdown:hover .sn-dropdown-content {
-    display: block;
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+/* Bridge the gap between the button and the dropdown content to prevent hover loss */
+.sn-dropdown-content::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: transparent;
 }
 
 .sn-dropdown-content div {

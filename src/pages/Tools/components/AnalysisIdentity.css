@@ -1,0 +1,317 @@
+/* ==========================================================================
+   Analysis & Identity Premium Design System
+   ========================================================================== */
+
+.ai-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}
+
+/* Tabs Navigation Panel */
+.ai-tabs-header {
+  background: rgba(17, 24, 39, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+.ai-tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-radius: 12px;
+  background: transparent;
+  border: none;
+  color: #9CA3AF;
+  font-family: 'Cairo', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-tab-btn:hover:not(:disabled) {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ai-tab-btn.active {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(236, 72, 153, 0.15) 100%);
+  color: #fff;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.15);
+}
+
+.ai-tab-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ai-tab-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4B5563;
+  transition: all 0.3s;
+}
+
+.ai-tab-btn.active .ai-tab-status {
+  background: #A78BFA;
+  box-shadow: 0 0 10px #A78BFA;
+}
+
+.ai-tab-btn.completed .ai-tab-status {
+  background: #10B981;
+  box-shadow: 0 0 10px #10B981;
+}
+
+/* Tool Panel Glassmorphic Base */
+.ai-panel {
+  background: rgba(17, 24, 39, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 28px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* Grids & Cards */
+.niche-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+.niche-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-align: center;
+}
+
+.niche-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+}
+
+.niche-card.active {
+  background: rgba(var(--accent-rgb, 139, 92, 246), 0.08);
+  border-color: var(--accent-color, #8B5CF6);
+  box-shadow: 0 0 15px rgba(var(--accent-rgb, 139, 92, 246), 0.15);
+}
+
+.niche-icon {
+  font-size: 28px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.3s;
+}
+
+.niche-card.active .niche-icon {
+  background: var(--accent-color, #8B5CF6);
+  color: #fff;
+}
+
+.niche-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #9CA3AF;
+  transition: color 0.2s;
+}
+
+.niche-card.active .niche-label {
+  color: #fff;
+}
+
+/* Micro-Niches Buttons */
+.micro-niche-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #9CA3AF;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.micro-niche-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.micro-niche-btn.active {
+  background: rgba(var(--accent-rgb, 139, 92, 246), 0.15);
+  border-color: var(--accent-color, #8B5CF6);
+  color: #fff;
+}
+
+/* Market Badges */
+.market-badge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 6px;
+  position: absolute;
+  top: -8px;
+  right: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.market-badge.trend {
+  background: #F43F5E;
+  color: #fff;
+}
+
+.market-badge.profit {
+  background: #10B981;
+  color: #fff;
+}
+
+.market-badge.stable {
+  background: #3B82F6;
+  color: #fff;
+}
+
+.market-badge.freelance {
+  background: #F59E0B;
+  color: #fff;
+}
+
+/* Structured Result Panel */
+.result-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 20px;
+  transition: all 0.3s;
+}
+
+.result-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.result-card-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--accent-color, #8B5CF6);
+}
+
+/* Mini Cards for ICP Profile */
+.icp-item-card {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.icp-item-label {
+  font-size: 11px;
+  color: #6B7A8D;
+  font-weight: bold;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.icp-item-val {
+  font-size: 13px;
+  color: #fff;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+/* Transition Banner */
+.transition-banner {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(236, 72, 153, 0.08) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* General Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Color Wheel / Color Picker Area */
+.color-circle-container {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.color-input-card {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 140px;
+}
+
+.color-input-card input[type="color"] {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.color-input-card input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.color-input-card input[type="color"]::-webkit-color-swatch {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+}

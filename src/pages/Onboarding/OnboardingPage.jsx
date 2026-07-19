@@ -101,7 +101,7 @@ export default function OnboardingPage() {
   const proceed = () => {
     dispatch({ type: 'COMPLETE_STEP', step: 'onboarding' });
     toast(lang === 'en' ? 'Excellent! Let\'s start with Niche Selection 🎯' : 'ممتاز! لنبدأ باختيار النيش 🎯', 'success');
-    navigate('/dashboard/tool/niche-selection');
+    navigate('/dashboard/tool/analysis-identity');
   };
 
   const levelDetails = {

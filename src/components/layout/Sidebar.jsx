@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
@@ -16,12 +16,56 @@ export default function Sidebar() {
   const location = useLocation();
   const lang = state.language || 'ar';
 
+  const currentPath = location.pathname.replace('/dashboard/', '').replace('/dashboard', '') || 'onboarding';
+
+  // State to track expanded groups
+  const [expandedGroups, setExpandedGroups] = useState(() => {
+    const initial = {};
+    // Find active step
+    const activeItem = TOOLS_24H.find(step => {
+      return currentPath === step.id || currentPath === `tool/${step.id}`;
+    });
+    if (activeItem && activeItem.group_en) {
+      initial[activeItem.group_en] = true;
+    } else {
+      // Default to expand the first group
+      initial['Analysis & Identity'] = true;
+    }
+    return initial;
+  });
+
+  // Auto-expand group of active item on route change
+  useEffect(() => {
+    const activeItem = TOOLS_24H.find(step => {
+      return currentPath === step.id || currentPath === `tool/${step.id}`;
+    });
+    if (activeItem && activeItem.group_en) {
+      setExpandedGroups(prev => ({
+        ...prev,
+        [activeItem.group_en]: true
+      }));
+    }
+  }, [currentPath]);
+
+  const toggleGroup = (groupKey) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [groupKey]: !prev[groupKey]
+    }));
+  };
+
   const isTrial = userData?.subscription?.type === 'trial';
   const allowedTools = brandData?.freeTrialSettings?.allowedTools || [];
   
   const isStepLocked = (stepId) => {
     if (stepId === 'onboarding') return false;
     if (!isTrial) return false;
+    if (stepId === 'analysis-identity') {
+      return !allowedTools.includes('analysis-identity') && 
+             !allowedTools.includes('niche-selection') && 
+             !allowedTools.includes('brand-naming') && 
+             !allowedTools.includes('visual-identity');
+    }
     return !allowedTools.includes(stepId);
   };
   
@@ -56,7 +100,6 @@ export default function Sidebar() {
     );
   };
 
-  const currentPath = location.pathname.replace('/dashboard/', '').replace('/dashboard', '') || 'onboarding';
   const totalStepsCount = JOURNEY_STEPS.length + TOOLS_24H.length;
   const progressPct = Math.round((state.completedSteps.length / totalStepsCount) * 100) || 0;
 
@@ -151,35 +194,72 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className="sidebar-nav">
-        {navSections.map(section => (
-          <div className="nav-section" key={section.label}>
-            <div className="nav-label">{section.label}</div>
-            
-            {section.label.includes('AI') || section.label.includes('ذكية') ? (
-              // Sequential grouping for AI Tools (respects original order)
-              section.items.map((step, idx) => {
-                const group = lang === 'en' ? (step.group_en || 'Other') : (step.group_ar || 'أخرى');
-                const prevStep = section.items[idx - 1];
-                const prevGroup = prevStep ? (lang === 'en' ? (prevStep.group_en || 'Other') : (prevStep.group_ar || 'أخرى')) : null;
-                const isNewGroup = group !== prevGroup;
-
-                return (
-                  <div key={step.id} className="nav-group-wrapper">
-                    {isNewGroup && (
-                      <div className="nav-sublabel" style={{ marginTop: idx === 0 ? 0 : 12 }}>
-                        {group}
+        {navSections.map(section => {
+          const isAiTools = section.label.includes('AI') || section.label.includes('ذكية');
+          
+          return (
+            <div className="nav-section" key={section.label}>
+              <div className="nav-label">{section.label}</div>
+              
+              {isAiTools ? (
+                // Group items for AI Tools
+                (() => {
+                  const groups = [];
+                  section.items.forEach(step => {
+                    const groupKey = step.group_en || 'Other';
+                    const groupLabel = lang === 'en' ? (step.group_en || 'Other') : (step.group_ar || 'أخرى');
+                    
+                    let existingGroup = groups.find(g => g.key === groupKey);
+                    if (!existingGroup) {
+                      existingGroup = {
+                        key: groupKey,
+                        label: groupLabel,
+                        items: []
+                      };
+                      groups.push(existingGroup);
+                    }
+                    existingGroup.items.push(step);
+                  });
+                  
+                  return groups.map(group => {
+                    const isExpanded = !!expandedGroups[group.key];
+                    return (
+                      <div key={group.key} className="nav-group-container">
+                        <div 
+                          className={`nav-sublabel-toggle ${isExpanded ? 'expanded' : ''}`}
+                          onClick={() => toggleGroup(group.key)}
+                        >
+                          <span className="nav-sublabel-title">{group.label}</span>
+                          <svg 
+                            className="chevron-icon" 
+                            viewBox="0 0 24 24" 
+                            width="12" 
+                            height="12" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            strokeWidth="2.5" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                          </svg>
+                        </div>
+                        <div className={`nav-group-items-wrapper ${isExpanded ? 'expanded' : ''}`}>
+                          <div className="nav-group-items-inner">
+                            {group.items.map(step => renderNavItem(step))}
+                          </div>
+                        </div>
                       </div>
-                    )}
-                    {renderNavItem(step)}
-                  </div>
-                );
-              })
-            ) : (
-              // Normal rendering for other sections
-              section.items.map(step => renderNavItem(step))
-            )}
-          </div>
-        ))}
+                    );
+                  });
+                })()
+              ) : (
+                // Normal rendering for other sections
+                section.items.map(step => renderNavItem(step))
+              )}
+            </div>
+          );
+        })}
 
         <div className="nav-divider" />
         <div className="nav-section">

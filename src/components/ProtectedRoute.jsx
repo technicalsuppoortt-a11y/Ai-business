@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import BrandedLoader from './common/BrandedLoader';
 
 /**
  * ProtectedRoute — checks auth + role + portal independence.
@@ -15,24 +16,7 @@ export default function ProtectedRoute({ children, requiredRole = 'user', requir
 
   // Show loading while Firebase auth is initializing
   if (loading) {
-    return (
-      <div style={{
-        position: 'fixed', inset: 0,
-        background: 'var(--bg, #080C14)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexDirection: 'column', gap: 16,
-      }}>
-        <div style={{
-          width: 44, height: 44,
-          border: '3px solid rgba(255,255,255,0.15)',
-          borderTopColor: 'var(--accent, #3B82F6)',
-          borderRadius: '50%',
-          animation: 'spin 0.8s linear infinite',
-        }} />
-        <span style={{ fontSize: 13, color: 'var(--text2, #94A3B8)' }}>جاري التحقق...</span>
-        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-      </div>
-    );
+    return <BrandedLoader message={userData?.defaultLanguage === 'en' ? 'Verifying credentials...' : 'جاري التحقق...'} lang={userData?.defaultLanguage || 'ar'} />;
   }
 
   // Not logged in to THIS portal
@@ -44,24 +28,7 @@ export default function ProtectedRoute({ children, requiredRole = 'user', requir
   // This happens because onAuthStateChanged fires before onSnapshot resolves.
   // We must wait for userData before checking roles.
   if (isAuth && !userData) {
-    return (
-      <div style={{
-        position: 'fixed', inset: 0,
-        background: 'var(--bg, #080C14)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexDirection: 'column', gap: 16,
-      }}>
-        <div style={{
-          width: 44, height: 44,
-          border: '3px solid rgba(255,255,255,0.15)',
-          borderTopColor: 'var(--accent, #3B82F6)',
-          borderRadius: '50%',
-          animation: 'spin 0.8s linear infinite',
-        }} />
-        <span style={{ fontSize: 13, color: 'var(--text2, #94A3B8)' }}>جاري تحميل البيانات...</span>
-        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-      </div>
-    );
+    return <BrandedLoader message={userData?.defaultLanguage === 'en' ? 'Loading database...' : 'جاري تحميل البيانات...'} lang={userData?.defaultLanguage || 'ar'} />;
   }
 
   // Check role hierarchy within this portal's user data

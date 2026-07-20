@@ -118,11 +118,18 @@ export default function BrandLibrary({ isMobile }) {
       )}
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 60 }}>
-          <div className="sa-submit-spinner" style={{ borderTopColor: 'var(--accent)', margin: '0 auto 16px' }} />
-          <div style={{ color: 'var(--text2)' }}>
-            {lang === 'en' ? 'Loading library...' : 'جاري تحميل المكتبة...'}
-          </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} style={{ background: 'var(--bg2)', border: '1px solid var(--line)', borderRadius: 16, overflow: 'hidden', height: 380, display: 'flex', flexDirection: 'column', opacity: 0.8 }} className="skeleton-shimmer">
+              <div style={{ height: 180, background: 'var(--bg3)' }} />
+              <div style={{ padding: 20, flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ height: 20, background: 'var(--bg3)', borderRadius: 4, width: '60%' }} />
+                <div style={{ height: 14, background: 'var(--bg3)', borderRadius: 4, width: '80%' }} />
+                <div style={{ height: 14, background: 'var(--bg3)', borderRadius: 4, width: '40%' }} />
+                <div style={{ height: 40, background: 'var(--bg3)', borderRadius: 8, marginTop: 'auto' }} />
+              </div>
+            </div>
+          ))}
         </div>
       ) : error ? (
         <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--red)', padding: 24, borderRadius: 12, textAlign: 'center', fontWeight: 600 }}>

@@ -113,9 +113,14 @@ export default function NicheSelection({ stepNumber }) {
       timeEstimate="10 - 20"
     >
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '40px 0' }}>
-          <div className="td-spinner" style={{ width: '40px', height: '40px', borderWidth: '4px', borderColor: 'rgba(139, 92, 246, 0.2)', borderTopColor: '#8B5CF6' }}></div>
-          <p style={{ marginTop: '16px', color: '#8B5CF6', fontWeight: 'bold' }}>{lang === 'en' ? 'Loading Niches...' : 'جاري تحميل المجالات...'}</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '24px' }}>
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <div 
+              key={i} 
+              className="td-card skeleton-shimmer" 
+              style={{ height: '110px', borderRadius: 'var(--radius)', opacity: 0.15 }}
+            />
+          ))}
         </div>
       ) : (
         <>

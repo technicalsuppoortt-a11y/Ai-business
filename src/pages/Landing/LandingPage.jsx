@@ -6,6 +6,8 @@ import { useApp } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
 import { landingTranslations } from './LandingTranslations';
 import MadgicxTemplate from './MadgicxTemplate';
+import Logo from '../../components/common/Logo';
+import BrandedLoader from '../../components/common/BrandedLoader';
 import './Landing.css';
 
 const sanitizePhoneForWhatsapp = (phone) => {
@@ -504,31 +506,10 @@ export default function LandingPage() {
     <div className="landing-page" dir={state.language === 'ar' ? 'rtl' : 'ltr'}>
       {/* Loading Overlay */}
       {loading && (
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'var(--bg, #080C14)',
-          zIndex: 999999,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'opacity 0.3s ease'
-        }}>
-          {/* Animated BG for loader */}
-          <div className="lp-bg" style={{ opacity: 0.6 }}>
-            <div className="lp-orb lp-orb1" />
-            <div className="lp-orb lp-orb2" />
-            <div className="lp-orb lp-orb3" />
-            <div className="lp-grid" />
-          </div>
-          <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', color: '#fff' }}>
-            <div className="ad-submit-spinner" style={{ margin: '0 auto 24px', width: '48px', height: '48px', borderWidth: '4px', borderTopColor: 'var(--accent, #3B82F6)' }} />
-            <div style={{ fontSize: '18px', fontWeight: 600, letterSpacing: '0.5px' }}>
-              {state.language === 'en' ? 'Loading workspace...' : 'جاري تحميل مساحة العمل...'}
-            </div>
-          </div>
-        </div>
+        <BrandedLoader 
+          message={state.language === 'en' ? 'Loading workspace...' : 'جاري تحميل مساحة العمل...'} 
+          lang={state.language || 'ar'} 
+        />
       )}
 
       {/* Animated BG */}
@@ -547,35 +528,32 @@ export default function LandingPage() {
               const logoDisplayMode = brandData?.logoDisplayMode || state?.logoDisplayMode || 'both';
               const showLogo = (brandData?.logoUrl || brandData?.logo || brandData?.photoURL) && (logoDisplayMode === 'both' || logoDisplayMode === 'logo');
               const showText = logoDisplayMode === 'both' || logoDisplayMode === 'text';
-              console.debug('[LandingPage] Display Settings:', { logoDisplayMode, showLogo, showText, brandData });
-              return (
-                <>
-                  {showLogo && (
+              
+              if (showLogo) {
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <img 
                       src={brandData.logoUrl || brandData.logo || brandData.photoURL} 
                       alt="Brand Logo" 
                       className="lp-logo-img" 
                       style={{ maxHeight: '38px', maxWidth: '160px', width: 'auto', objectFit: 'contain', borderRadius: '4px' }} 
                     />
-                  )}
-                  {!showLogo && !showText && (
-                    <div className="lp-logo-icon">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                        <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
-                      </svg>
-                    </div>
-                  )}
-                  {showText && (
-                    <span>
-                      {brandData?.brandName ? (
-                        <strong>{brandData.brandName}</strong>
-                      ) : (
-                        <>AI Brand <strong>{t.nav.vision}</strong></>
-                      )}
-                    </span>
-                  )}
-                </>
+                    {showText && (
+                      <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text, #FFF)' }}>
+                        {brandData?.brandName}
+                      </span>
+                    )}
+                  </div>
+                );
+              }
+              
+              return (
+                <Logo 
+                  size={32} 
+                  showText={showText} 
+                  lang={state.language || 'ar'} 
+                  text={brandData?.brandName} 
+                />
               );
             })()}
           </div>

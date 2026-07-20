@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -7,6 +7,10 @@ import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../../firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import PhoneInput from '../../components/PhoneInput';
+import Logo from '../../components/common/Logo';
+import BrandedLoader from '../../components/common/BrandedLoader';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, Lock, Eye, EyeOff, User, Phone, Check, Globe, LogIn, Sparkles, Shield, Zap, Star, Circle, Diamond, Crown } from 'lucide-react';
 
 const authTranslations = {
   ar: {
@@ -43,7 +47,6 @@ const authTranslations = {
     whatsappBtn: 'تفعيل الاشتراك عن طريق الواتس اب',
     securedBy: '🔒 محمي بتقنية Firebase Authentication',
     inactiveSubscription: 'عذراً، اشتراكك متوقف أو منتهي الصلاحية. يرجى التواصل مع الإدارة.',
-    // Validation & Messages
     enterEmail: 'أدخل البريد الإلكتروني',
     enterPassword: 'أدخل كلمة المرور',
     enterName: 'يرجى إدخال الاسم',
@@ -104,7 +107,6 @@ const authTranslations = {
     whatsappBtn: 'Activate Subscription via WhatsApp',
     securedBy: '🔒 Secured by Firebase Authentication',
     inactiveSubscription: 'Sorry, your subscription is suspended or expired. Please contact support.',
-    // Validation & Messages
     enterEmail: 'Please enter your email address',
     enterPassword: 'Please enter your password',
     enterName: 'Please enter your full name',
@@ -135,17 +137,14 @@ const authTranslations = {
 
 /**
  * Unified Login Page — used for all 3 portals.
- * Props:
- *   portal: 'user' | 'admin' | 'superadmin'
- *   redirectTo: where to go after login
  */
 export default function AuthPage({ portal = 'user', redirectTo = '/dashboard/onboarding' }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  
-  const [activeForm, setActiveForm] = useState('login'); // 'login' | 'register'
+
+  const [activeForm, setActiveForm] = useState('login');
   const [name, setName] = useState('');
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
@@ -165,71 +164,52 @@ export default function AuthPage({ portal = 'user', redirectTo = '/dashboard/onb
 
   useEffect(() => {
     if (portal !== 'user') return;
-    
+
     const resolveBrand = async () => {
       try {
-        const cleanUrl = (url) => {
-          if (!url) return '';
-          return url
-            .toLowerCase()
-            .replace(/^(https?:\/\/)?(www\.)?/, '')
-            .replace(/\/$/, '')
-            .trim();
-        };
-
-        // 1. FIRST PRIORITY: Read from React Router state (passed from LandingPage)
         if (location.state?.resolvedBrand) {
           const adminData = location.state.resolvedBrand;
           setResolvedBrand(adminData);
           setAdminPhone(adminData.phoneNumber || '');
           setAdminBrandName(adminData.brandName || '');
-          return; // Exit early! No need to query Firebase again.
+          return;
         }
 
         const currentHref = window.location.href.toLowerCase();
-        // Extract possible slugs from path (e.g., ai-brand-vision-page -> ai brand vision page)
         const pathParts = window.location.pathname.split('/').filter(Boolean);
         const urlSlugs = pathParts.map(p => p.replace(/-/g, ' ').toLowerCase());
-        
-        // Check for explicit query parameter (?test=mybrand)
         const explicitTest = new URLSearchParams(window.location.search).get('test');
 
         const { collection, getDocs, query, where } = await import('firebase/firestore');
         const q = query(collection(db, 'users'), where('role', '==', 'admin'));
         const snap = await getDocs(q);
-        
+
         let candidates = [];
-        
+
         snap.forEach(docSnap => {
           const data = docSnap.data();
           const brandUrlClean = data.brandUrl ? data.brandUrl.toLowerCase().trim() : '';
           const brandNameClean = data.brandName ? data.brandName.toLowerCase().trim() : '';
-          
+
           let isMatch = false;
           let matchScore = 0;
-          
-          // 1. Explicit ?test= param is highest priority
+
           if (explicitTest && (brandUrlClean === explicitTest || brandNameClean === explicitTest)) {
             isMatch = true;
             matchScore = 1000;
-          } 
-          // 2. Exact URL or Slug matching
-          else {
+          } else {
             if (brandUrlClean && currentHref.includes(brandUrlClean.replace(/\s+/g, '-'))) {
               isMatch = true;
               matchScore = brandUrlClean.length;
-            } 
-            else if (brandNameClean && currentHref.includes(brandNameClean.replace(/\s+/g, '-'))) {
+            } else if (brandNameClean && currentHref.includes(brandNameClean.replace(/\s+/g, '-'))) {
               isMatch = true;
               matchScore = brandNameClean.length;
-            }
-            // Check if the path segments match the brand name (with spaces replacing hyphens)
-            else if (brandNameClean && urlSlugs.some(slug => slug.includes(brandNameClean) || brandNameClean.includes(slug))) {
+            } else if (brandNameClean && urlSlugs.some(slug => slug.includes(brandNameClean) || brandNameClean.includes(slug))) {
               isMatch = true;
               matchScore = brandNameClean.length;
             }
           }
-          
+
           if (isMatch) {
             candidates.push({
               admin: { uid: docSnap.id, ...data },
@@ -237,14 +217,10 @@ export default function AuthPage({ portal = 'user', redirectTo = '/dashboard/onb
             });
           }
         });
-        
-        // Sort candidates by score descending to prioritize the most specific match
+
         candidates.sort((a, b) => b.score - a.score);
-        
         let matchedAdmin = candidates.length > 0 ? candidates[0].admin : null;
-        
-        // We NO LONGER fallback to the first random admin. If no match is found, it stays null.
-        // This ensures we never show an incorrect brand name (like 'abdelrhamn samy').
+
         if (matchedAdmin) {
           setResolvedBrand(matchedAdmin);
           setAdminPhone(matchedAdmin.phoneNumber || '');
@@ -258,23 +234,20 @@ export default function AuthPage({ portal = 'user', redirectTo = '/dashboard/onb
         console.error('Failed to resolve brand admin:', err);
       }
     };
-    
+
     resolveBrand();
   }, [portal]);
 
   const isAuth = isAuthenticatedFor(portal);
   const userData = getUserDataFor(portal);
 
-  // Combined effect for redirects and error handling
   useEffect(() => {
-    // 1. Handle URL errors (e.g. from ProtectedRoute)
     const params = new URLSearchParams(window.location.search);
     if (params.get('error') === 'subscription_inactive') {
       toast(activeTrans.inactiveSubscription, 'error');
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    // 2. Handle automatic redirect if already logged in for THIS portal
     if (!loading && isAuth && userData) {
       const sub = userData?.subscription;
       const isStopped = sub?.status === 'stopped';
@@ -282,10 +255,9 @@ export default function AuthPage({ portal = 'user', redirectTo = '/dashboard/onb
       const expiry = sub?.expiryDate?.toDate ? sub.expiryDate.toDate() : (sub?.expiryDate ? new Date(sub.expiryDate) : null);
       const isExpired = !isLifetime && expiry && expiry < new Date();
 
-      // Ensure the user has the correct role for THIS portal before redirecting
       const hasCorrectRole = (portal === 'superadmin' && userData.role === 'superadmin') ||
-                             (portal === 'admin' && (userData.role === 'admin' || userData.role === 'superadmin')) ||
-                             (portal === 'user');
+        (portal === 'admin' && (userData.role === 'admin' || userData.role === 'superadmin')) ||
+        (portal === 'user');
 
       if (hasCorrectRole && (userData.role === 'superadmin' || (!isStopped && !isExpired))) {
         navigate(redirectTo, { replace: true });
@@ -293,7 +265,6 @@ export default function AuthPage({ portal = 'user', redirectTo = '/dashboard/onb
     }
   }, [isAuth, userData, loading, navigate, redirectTo, portal, activeTrans.inactiveSubscription]);
 
-  // Automatic login in iframe
   useEffect(() => {
     const isIframe = window.self !== window.top;
     if (isIframe && portal === 'user' && !isAuth && !loading && !isLoading) {
@@ -316,14 +287,9 @@ export default function AuthPage({ portal = 'user', redirectTo = '/dashboard/onb
   }, [portal, isAuth, loading, isLoading, login, activeTrans.autoLoginSuccess]);
 
   if (loading) {
-    return (
-      <div style={{ position: 'fixed', inset: 0, background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="ad-submit-spinner" />
-      </div>
-    );
+    return <BrandedLoader message={state.language === 'en' ? 'Verifying credentials...' : 'جاري التحقق...'} lang={state.language || 'ar'} />;
   }
 
-  // Prevent flash of content if we are about to redirect
   if (isAuth && userData) {
     const sub = userData?.subscription;
     const isStopped = sub?.status === 'stopped';
@@ -354,7 +320,7 @@ export default function AuthPage({ portal = 'user', redirectTo = '/dashboard/onb
       title: activeTrans.portals.superadmin.title,
       subtitle: activeTrans.portals.superadmin.subtitle,
       badgeText: activeTrans.portals.superadmin.badgeText,
-      gradient: 'linear-gradient(135deg, var(--amber), var(--red))',
+      gradient: 'linear-gradient(135deg, var(--amber, #F59E0B), var(--red, #EF4444))',
       icon: '👑',
     },
   };
@@ -381,7 +347,6 @@ export default function AuthPage({ portal = 'user', redirectTo = '/dashboard/onb
       const result = await login(email.trim(), password, portal);
       const uid = result.user.uid;
 
-      // Verify role matches portal
       let role = 'user';
       try {
         const userDoc = await getDoc(doc(db, 'users', uid));
@@ -394,10 +359,9 @@ export default function AuthPage({ portal = 'user', redirectTo = '/dashboard/onb
         role = 'superadmin';
       }
 
-      // Validate role for portal
       let allowed = false;
       if (portal === 'user') {
-        allowed = true; // any role can access tools
+        allowed = true;
       } else if (portal === 'admin') {
         allowed = role === 'admin' || role === 'superadmin';
       } else if (portal === 'superadmin') {
@@ -405,7 +369,6 @@ export default function AuthPage({ portal = 'user', redirectTo = '/dashboard/onb
       }
 
       if (!allowed) {
-        // Sign out — role doesn't match portal
         await logout(portal);
         toast(getRoleMismatchMessage(), 'error');
         setIsLoading(false);
@@ -479,377 +442,1253 @@ export default function AuthPage({ portal = 'user', redirectTo = '/dashboard/onb
     }
   };
 
+  const lang = state.language || 'ar';
+
+  const themeColors = {
+    user: {
+      glow1: 'rgba(99, 102, 241, 0.22)',
+      glow2: 'rgba(168, 85, 247, 0.25)',
+      glow3: 'rgba(6, 182, 212, 0.18)',
+      glow4: 'rgba(139, 92, 246, 0.15)',
+      accent: '#06b6d4',
+    },
+    admin: {
+      glow1: 'rgba(59, 130, 246, 0.22)',
+      glow2: 'rgba(16, 185, 129, 0.25)',
+      glow3: 'rgba(6, 182, 212, 0.18)',
+      glow4: 'rgba(52, 211, 153, 0.15)',
+      accent: '#10b981',
+    },
+    superadmin: {
+      glow1: 'rgba(245, 158, 11, 0.22)',
+      glow2: 'rgba(239, 68, 68, 0.25)',
+      glow3: 'rgba(236, 72, 153, 0.18)',
+      glow4: 'rgba(251, 191, 36, 0.15)',
+      accent: '#f59e0b',
+    }
+  }[portal] || {
+    glow1: 'rgba(99, 102, 241, 0.22)',
+    glow2: 'rgba(168, 85, 247, 0.25)',
+    glow3: 'rgba(6, 182, 212, 0.18)',
+    glow4: 'rgba(139, 92, 246, 0.15)',
+    accent: '#06b6d4',
+  };
+
   return (
     <div style={{
-      position: 'fixed', inset: 0,
-      background: 'var(--bg)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      animation: 'fadeIn 0.4s ease',
-    }} dir={state.language === 'ar' ? 'rtl' : 'ltr'}>
-      {/* Floating Language Toggle */}
-      <div style={{ 
-        position: 'absolute', 
-        top: 20, 
-        right: state.language === 'ar' ? 'auto' : 20, 
-        left: state.language === 'ar' ? 20 : 'auto', 
-        zIndex: 10 
-      }}>
-        <button
+      position: 'fixed',
+      inset: 0,
+      background: '#040712',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+      padding: '24px 16px',
+      boxSizing: 'border-box',
+      '--theme-accent': themeColors.accent,
+      '--accent': themeColors.accent
+    }} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-20px) rotate(2deg); }
+        }
+        @keyframes floatReverse {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(20px) rotate(-2deg); }
+        }
+        @keyframes pulseRing {
+          0% { transform: scale(0.95); opacity: 0.7; }
+          50% { transform: scale(1.05); opacity: 1; }
+          100% { transform: scale(0.95); opacity: 0.7; }
+        }
+        @keyframes shimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        @keyframes spinSlow {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @keyframes glowPulse {
+          0%, 100% { opacity: 0.3; transform: scale(1); }
+          50% { opacity: 0.8; transform: scale(1.1); }
+        }
+        @keyframes particleFloat {
+          0% { transform: translateY(0px) translateX(0px); opacity: 0; }
+          20% { opacity: 1; }
+          80% { opacity: 1; }
+          100% { transform: translateY(-200px) translateX(50px); opacity: 0; }
+        }
+
+        .glass-card {
+          background: rgba(4, 7, 18, 0.75) !important;
+          backdrop-filter: blur(40px) saturate(200%) !important;
+          -webkit-backdrop-filter: blur(40px) saturate(200%) !important;
+          border: 1px solid rgba(255, 255, 255, 0.06) !important;
+          box-shadow: 
+            0 30px 80px -20px rgba(0, 0, 0, 0.8),
+            inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+        }
+
+        .glass-card-content::-webkit-scrollbar {
+          width: 6px;
+        }
+        .glass-card-content::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .glass-card-content::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.08);
+          border-radius: 99px;
+        }
+        .glass-card-content::-webkit-scrollbar-thumb:hover {
+          background: var(--theme-accent);
+        }
+
+        @keyframes gradientMove {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+
+        /* Animated gradient border - STATIC POSITION, NO MOVEMENT */
+        .card-border-gradient {
+          position: absolute;
+          inset: -2px;
+          border-radius: 28px;
+          padding: 2px;
+          background: linear-gradient(
+            135deg,
+            var(--theme-accent) 0%,
+            transparent 25%,
+            var(--theme-accent) 50%,
+            transparent 75%,
+            var(--theme-accent) 100%
+          );
+          background-size: 300% 300%;
+          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          pointer-events: none;
+          z-index: 0;
+          animation: gradientMove 6s ease-in-out infinite;
+        }
+
+        .glass-input {
+          background: rgba(255, 255, 255, 0.02) !important;
+          border: 1px solid rgba(255, 255, 255, 0.06) !important;
+          color: #fff !important;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+          backdrop-filter: blur(10px) !important;
+        }
+        .glass-input:hover {
+          border-color: rgba(255, 255, 255, 0.12) !important;
+          background: rgba(255, 255, 255, 0.04) !important;
+        }
+        .glass-input:focus {
+          background: rgba(255, 255, 255, 0.06) !important;
+          border-color: var(--theme-accent) !important;
+          box-shadow: 0 0 30px rgba(59, 130, 246, 0.08), inset 0 1px 2px rgba(0,0,0,0.2) !important;
+        }
+        .glass-input::placeholder {
+          color: rgba(255, 255, 255, 0.25) !important;
+        }
+
+        /* Floating particles */
+        .particle {
+          position: absolute;
+          width: 4px;
+          height: 4px;
+          background: var(--theme-accent);
+          border-radius: 50%;
+          animation: particleFloat 8s ease-in-out infinite;
+          opacity: 0;
+        }
+
+        /* Cut effect for register form */
+        .register-cut-top {
+          position: absolute;
+          top: -1px;
+          left: 10%;
+          right: 10%;
+          height: 2px;
+          background: var(--theme-accent);
+          filter: blur(4px);
+          opacity: 0.3;
+          border-radius: 50%;
+        }
+        .register-cut-bottom {
+          position: absolute;
+          bottom: -1px;
+          left: 10%;
+          right: 10%;
+          height: 2px;
+          background: var(--theme-accent);
+          filter: blur(4px);
+          opacity: 0.3;
+          border-radius: 50%;
+        }
+      `}</style>
+
+      {/* Background Stars & Nebula Effect */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        {/* Deep space stars */}
+        {[...Array(80)].map((_, i) => (
+          <div
+            key={`star-${i}`}
+            style={{
+              position: 'absolute',
+              width: Math.random() * 2 + 1 + 'px',
+              height: Math.random() * 2 + 1 + 'px',
+              background: '#fff',
+              borderRadius: '50%',
+              top: Math.random() * 100 + '%',
+              left: Math.random() * 100 + '%',
+              opacity: Math.random() * 0.6 + 0.2,
+              animation: `glowPulse ${Math.random() * 4 + 3}s ease-in-out infinite`,
+              animationDelay: Math.random() * 5 + 's',
+            }}
+          />
+        ))}
+
+        {/* Primary Aurora/Glow Orbs with enhanced animations */}
+        <motion.div
+          animate={{
+            x: [0, 100, -50, 80, 0],
+            y: [0, -80, 50, -30, 0],
+            scale: [1, 1.2, 0.9, 1.1, 1],
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+          style={{
+            position: 'absolute',
+            width: '700px',
+            height: '700px',
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${themeColors.glow1} 0%, rgba(0,0,0,0) 70%)`,
+            filter: 'blur(130px)',
+            top: '-20%',
+            left: '-15%',
+          }}
+        />
+
+        <motion.div
+          animate={{
+            x: [0, -80, 100, -60, 0],
+            y: [0, 60, -90, 40, 0],
+            scale: [1, 0.9, 1.1, 0.95, 1],
+          }}
+          transition={{ duration: 28, repeat: Infinity, ease: "easeInOut" }}
+          style={{
+            position: 'absolute',
+            width: '750px',
+            height: '750px',
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${themeColors.glow2} 0%, rgba(0,0,0,0) 70%)`,
+            filter: 'blur(130px)',
+            bottom: '-25%',
+            right: '-15%',
+          }}
+        />
+
+        <motion.div
+          animate={{
+            x: [0, 60, -80, 40, 0],
+            y: [0, -40, 60, -50, 0],
+            scale: [1, 1.1, 0.95, 1.05, 1],
+          }}
+          transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+          style={{
+            position: 'absolute',
+            width: '600px',
+            height: '600px',
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${themeColors.glow3} 0%, rgba(0,0,0,0) 70%)`,
+            filter: 'blur(130px)',
+            top: '25%',
+            left: '30%',
+          }}
+        />
+
+        <motion.div
+          animate={{
+            x: [0, -50, 70, -30, 0],
+            y: [0, 50, -60, 30, 0],
+            scale: [1, 1.05, 0.95, 1.02, 1],
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+          style={{
+            position: 'absolute',
+            width: '500px',
+            height: '500px',
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${themeColors.glow4} 0%, rgba(0,0,0,0) 70%)`,
+            filter: 'blur(120px)',
+            top: '55%',
+            left: '55%',
+          }}
+        />
+
+        {/* Orbiting geometric shapes */}
+        <div style={{ position: 'absolute', top: '10%', right: '5%', width: '300px', height: '300px', pointerEvents: 'none' }}>
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+            style={{ width: '100%', height: '100%', position: 'relative' }}
+          >
+            {[...Array(6)].map((_, i) => (
+              <motion.div
+                key={`orbit-${i}`}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20 + i * 3, repeat: Infinity, ease: "linear" }}
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  width: '100%',
+                  height: '100%',
+                }}
+              >
+                <div
+                  style={{
+                    position: 'absolute',
+                    width: i % 2 === 0 ? '8px' : '12px',
+                    height: i % 2 === 0 ? '8px' : '12px',
+                    borderRadius: i % 2 === 0 ? '50%' : '30%',
+                    background: `radial-gradient(circle, ${themeColors.accent}, transparent)`,
+                    opacity: 0.15 + i * 0.05,
+                    left: '50%',
+                    top: '-10px',
+                    transform: 'translateX(-50%)',
+                    boxShadow: `0 0 20px ${themeColors.accent}`,
+                  }}
+                />
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+
+        {/* Floating particles */}
+        {[...Array(15)].map((_, i) => (
+          <div
+            key={`particle-${i}`}
+            className="particle"
+            style={{
+              left: Math.random() * 100 + '%',
+              top: Math.random() * 100 + '%',
+              animationDelay: Math.random() * 10 + 's',
+              animationDuration: (Math.random() * 8 + 6) + 's',
+              width: (Math.random() * 3 + 2) + 'px',
+              height: (Math.random() * 3 + 2) + 'px',
+              opacity: 0,
+            }}
+          />
+        ))}
+
+        {/* Animated grid lines */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `
+            linear-gradient(rgba(255, 255, 255, 0.01) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.01) 1px, transparent 1px)
+          `,
+          backgroundSize: '60px 60px',
+          maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 70%)',
+          WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
+      </div>
+
+      {/* Language Toggle - Enhanced */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        style={{
+          position: 'absolute',
+          top: 24,
+          right: lang === 'ar' ? 'auto' : 24,
+          left: lang === 'ar' ? 24 : 'auto',
+          zIndex: 20,
+        }}
+      >
+        <motion.button
+          whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(255,255,255,0.05)' }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => {
-            const nextLang = state.language === 'ar' ? 'en' : 'ar';
+            const nextLang = lang === 'ar' ? 'en' : 'ar';
             dispatch({ type: 'SET_LANGUAGE', payload: nextLang });
           }}
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 6,
-            background: 'var(--bg2)',
-            border: '1px solid var(--line2)',
-            borderRadius: 12,
-            padding: '8px 14px',
-            color: 'var(--text)',
-            fontSize: 12,
-            fontWeight: 600,
+            gap: 10,
+            background: 'rgba(4, 7, 18, 0.6)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.06)',
+            borderRadius: 16,
+            padding: '10px 20px',
+            color: '#fff',
+            fontSize: 13,
+            fontWeight: 700,
             cursor: 'pointer',
-            boxShadow: 'var(--shadow)',
-            transition: 'all 0.2s ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'var(--accent)';
-            e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'var(--line2)';
-            e.currentTarget.style.background = 'var(--bg2)';
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            transition: 'all 0.3s ease',
           }}
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
-            <circle cx="12" cy="12" r="10" />
-            <line x1="2" y1="12" x2="22" y2="12" />
-            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-          </svg>
-          <span>{state.language === 'ar' ? 'English' : 'العربية'}</span>
-        </button>
-      </div>
+          <Globe size={16} style={{ color: 'var(--theme-accent)' }} />
+          <span style={{ letterSpacing: '0.5px' }}>{lang === 'ar' ? 'English' : 'العربية'}</span>
+          <motion.div
+            animate={{ rotate: lang === 'ar' ? 0 : 180 }}
+            transition={{ duration: 0.3 }}
+            style={{ display: 'flex' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 5v14M5 12l7-7 7 7" stroke="rgba(255,255,255,0.3)" />
+            </svg>
+          </motion.div>
+        </motion.button>
+      </motion.div>
 
-      {/* Animated background */}
-      <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-        <div style={{
-          position: 'absolute', top: '20%', left: '15%',
-          width: 300, height: 300,
-          background: 'radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%)',
-          borderRadius: '50%', animation: 'orbFloat 8s ease-in-out infinite',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: '15%', right: '10%',
-          width: 250, height: 250,
-          background: 'radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 70%)',
-          borderRadius: '50%', animation: 'orbFloat 10s ease-in-out infinite reverse',
-        }} />
-      </div>
+      {/* Main Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+        className="glass-card"
+        style={{
+          width: '100%',
+          maxWidth: 440,
+          borderRadius: 28,
+          position: 'relative',
+          overflow: 'hidden',
+          zIndex: 10,
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        {/* Animated gradient border - STATIC POSITION */}
+        <div className="card-border-gradient" />
 
-      <div style={{
-        width: '100%', maxWidth: 420, padding: 40,
-        background: 'var(--bg2)',
-        border: '1px solid var(--line2)',
-        borderRadius: 20,
-        boxShadow: 'var(--shadow)',
-        position: 'relative', overflow: 'hidden', zIndex: 1,
-      }}>
-        {/* Glow */}
+        {/* Inner glow */}
         <div style={{
-          position: 'absolute', top: -80, right: -80,
-          width: 200, height: 200,
-          background: 'radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%)',
+          position: 'absolute',
+          top: -50,
+          right: -50,
+          width: 200,
+          height: 200,
+          background: `radial-gradient(circle, ${themeColors.accent}10, transparent 70%)`,
           pointerEvents: 'none',
+          borderRadius: '50%',
+          zIndex: 1,
         }} />
 
-        {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, justifyContent: 'center' }}>
-          {(() => {
-            const brandData = resolvedBrand;
-            const logoDisplayMode = brandData?.logoDisplayMode || state?.logoDisplayMode || 'both';
-            const showLogo = (brandData?.logoUrl || brandData?.logo || brandData?.photoURL) && (logoDisplayMode === 'both' || logoDisplayMode === 'logo');
-            const showText = logoDisplayMode === 'both' || logoDisplayMode === 'text';
-            return (
-              <>
-                {showLogo && (
-                  <img 
-                    src={brandData.logoUrl || brandData.logo || brandData.photoURL} 
-                    alt="Brand Logo" 
-                    style={{ maxHeight: '48px', maxWidth: '160px', width: 'auto', objectFit: 'contain', borderRadius: '8px' }} 
-                  />
-                )}
-                {!showLogo && !showText && (
-                  <div style={{
-                    width: 48, height: 48,
-                    background: config.gradient,
-                    borderRadius: 14,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 8px 24px rgba(59,130,246,0.2)',
-                    fontSize: 22,
-                  }}>
-                    {config.icon}
-                  </div>
-                )}
-                {showText && (
-                  <div>
-                    <h1 style={{ fontSize: 20, fontWeight: 800 }}>
-                      {brandData?.brandName || activeTrans.portals.user.title}
-                    </h1>
-                    <span style={{ fontSize: 10, color: 'var(--text2)', display: 'block', marginTop: -2, letterSpacing: '.05em' }}>
-                      {config.subtitle}
-                    </span>
-                  </div>
-                )}
-              </>
-            );
-          })()}
-        </div>
+        {/* Cut effects for register form - appears as cut from top and bottom */}
+        {activeForm === 'register' && portal === 'user' && (
+          <>
+            <div className="register-cut-top" />
+            <div className="register-cut-bottom" />
+          </>
+        )}
 
-        {/* Badge */}
-        <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            background: 'rgba(59,130,246,0.08)',
-            border: '1px solid rgba(59,130,246,0.15)',
-            borderRadius: 20, padding: '4px 14px',
-            fontSize: 11, color: 'var(--accent)', fontWeight: 600,
-          }}>
-            <div style={{
-              width: 6, height: 6, borderRadius: '50%',
-              background: 'var(--accent)', boxShadow: '0 0 8px var(--accent)',
-            }} />
-            {config.badgeText}
-          </div>
-        </div>
-
-        {/* Portal Register/Login Tab Toggle */}
-        {portal === 'user' && (
-          <div style={{
+        {/* Content wrapper with relative z-index to sit above the border */}
+        <div 
+          className="glass-card-content"
+          style={{ 
+            position: 'relative', 
+            zIndex: 2,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            padding: '40px',
+            boxSizing: 'border-box',
             display: 'flex',
-            background: 'rgba(255,255,255,0.02)',
-            border: '1px solid var(--line)',
-            borderRadius: '10px',
-            padding: '4px',
-            marginBottom: '20px',
-            gap: '4px'
-          }}>
-            <button
-              type="button"
-              onClick={() => setActiveForm('login')}
-              style={{
-                flex: 1,
-                padding: '8px',
-                borderRadius: '8px',
-                border: 'none',
-                background: activeForm === 'login' ? 'var(--accent)' : 'transparent',
-                color: '#fff',
-                fontSize: '11px',
-                fontWeight: activeForm === 'login' ? 'bold' : 'normal',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              {activeTrans.loginTab}
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveForm('register')}
-              style={{
-                flex: 1,
-                padding: '8px',
-                borderRadius: '8px',
-                border: 'none',
-                background: activeForm === 'register' ? 'var(--accent)' : 'transparent',
-                color: '#fff',
-                fontSize: '11px',
-                fontWeight: activeForm === 'register' ? 'bold' : 'normal',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              {activeTrans.registerTab}
-            </button>
-          </div>
-        )}
-
-        {/* Forms Container */}
-        {activeForm === 'login' ? (
-          <form onSubmit={handleLogin}>
-            <div className="field">
-              <label className="field-label">{activeTrans.emailLabel}</label>
-              <input className="field-input" type="email" value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="your@email.com" dir="ltr" autoComplete="email"
-                disabled={isLoading} style={{ textAlign: 'left' }} />
-            </div>
-
-            <div className="field">
-              <label className="field-label">{activeTrans.passwordLabel}</label>
-              <div style={{ position: 'relative' }}>
-                <input className="field-input"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password} onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••" dir="ltr" autoComplete="current-password"
-                  disabled={isLoading} style={{ textAlign: 'left', paddingLeft: 40 }} />
-                <button type="button" onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    color: 'var(--text3)', fontSize: 14, padding: 4,
-                  }}>
-                  {showPassword ? '🙈' : '👁'}
-                </button>
-              </div>
-            </div>
-
-            <button type="submit" className="btn btn-primary btn-full"
-              disabled={isLoading}
-              style={{
-                marginTop: 12, padding: 14, fontSize: 14,
-                opacity: isLoading ? 0.7 : 1,
-                background: config.gradient, borderColor: 'transparent',
-              }}>
-              {isLoading ? (
-                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{
-                    width: 16, height: 16,
-                    border: '2px solid rgba(255,255,255,0.3)',
-                    borderTopColor: '#fff', borderRadius: '50%',
-                    animation: 'spin 0.6s linear infinite',
-                    display: 'inline-block',
-                  }} />
-                  {activeTrans.loggingIn}
-                </span>
-              ) : activeTrans.loginBtn}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleRegister}>
-            <div className="field">
-              <label className="field-label">{activeTrans.nameLabel}</label>
-              <input className="field-input" type="text" value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder={activeTrans.namePlaceholder}
-                disabled={isLoading} />
-            </div>
-
-            <div className="field">
-              <label className="field-label">{activeTrans.emailLabel}</label>
-              <input className="field-input" type="email" value={registerEmail}
-                onChange={e => setRegisterEmail(e.target.value)}
-                placeholder="your@email.com" dir="ltr" autoComplete="email"
-                disabled={isLoading} style={{ textAlign: 'left' }} />
-            </div>
-
-            <div className="field">
-              <label className="field-label">{activeTrans.phoneLabel}</label>
-              <PhoneInput
-                phoneKey={registerPhoneKey}
-                setPhoneKey={setRegisterPhoneKey}
-                phoneNumber={registerPhone}
-                setPhoneNumber={setRegisterPhone}
-                disabled={isLoading}
-                placeholder={activeTrans.phonePlaceholder}
-              />
-            </div>
-
-            <div className="field">
-              <label className="field-label">{activeTrans.passwordLabel}</label>
-              <div style={{ position: 'relative' }}>
-                <input className="field-input"
-                  type={showPassword ? 'text' : 'password'}
-                  value={registerPassword} onChange={e => setRegisterPassword(e.target.value)}
-                  placeholder="••••••••" dir="ltr" autoComplete="new-password"
-                  disabled={isLoading} style={{ textAlign: 'left', paddingLeft: 40 }} />
-                <button type="button" onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    color: 'var(--text3)', fontSize: 14, padding: 4,
-                  }}>
-                  {showPassword ? '🙈' : '👁'}
-                </button>
-              </div>
-            </div>
-
-            <button type="submit" className="btn btn-primary btn-full"
-              disabled={isLoading}
-              style={{
-                marginTop: 12, padding: 14, fontSize: 14,
-                opacity: isLoading ? 0.7 : 1,
-                background: config.gradient, borderColor: 'transparent',
-              }}>
-              {isLoading ? (
-                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{
-                    width: 16, height: 16,
-                    border: '2px solid rgba(255,255,255,0.3)',
-                    borderTopColor: '#fff', borderRadius: '50%',
-                    animation: 'spin 0.6s linear infinite',
-                    display: 'inline-block',
-                  }} />
-                  {activeTrans.registering}
-                </span>
-              ) : activeTrans.registerBtn}
-            </button>
-          </form>
-        )}
-
-        {/* WhatsApp Activation Button */}
-        {portal === 'user' && adminPhone && resolvedBrand?.showWhatsappLoginBtn !== false && (
+            flexDirection: 'column',
+            flex: 1
+          }}
+        >
+          {/* Decorative icons floating in card */}
           <div style={{
-            marginTop: '24px',
-            paddingTop: '16px',
-            borderTop: '1px solid var(--line)',
-            textAlign: 'center'
+            position: 'absolute',
+            top: 20,
+            right: 20,
+            opacity: 0.05,
+            fontSize: 60,
+            pointerEvents: 'none',
           }}>
-            <div style={{ fontSize: '11px', color: 'var(--text3)', marginBottom: '8px' }}>
-              {activeTrans.whatsappPrompt}
-            </div>
-            <a 
-              href={`https://wa.me/${adminPhone.replace(/\+/g, '').trim()}?text=${encodeURIComponent(
-                state.language === 'en'
-                  ? `Hello, I want to activate my subscription in the platform ${adminBrandName}`
-                  : `مرحباً، أريد تفعيل اشتراكي في منصة ${adminBrandName}`
-              )}`}
-              target="_blank" 
-              rel="noopener noreferrer"
+            {portal === 'superadmin' ? '👑' : portal === 'admin' ? '🛡️' : '✨'}
+          </div>
+
+          {/* Logo Section - Enhanced */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              marginBottom: 16,
+              justifyContent: 'center',
+              position: 'relative',
+            }}
+          >
+            {(() => {
+              const brandData = resolvedBrand;
+              const logoDisplayMode = brandData?.logoDisplayMode || state?.logoDisplayMode || 'both';
+              const showLogo = (brandData?.logoUrl || brandData?.logo || brandData?.photoURL) && (logoDisplayMode === 'both' || logoDisplayMode === 'logo');
+              const showText = logoDisplayMode === 'both' || logoDisplayMode === 'text';
+
+              if (showLogo) {
+                return (
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 12 }}
+                  >
+                    <img
+                      src={brandData.logoUrl || brandData.logo || brandData.photoURL}
+                      alt="Brand Logo"
+                      style={{
+                        maxHeight: '52px',
+                        maxWidth: '180px',
+                        width: 'auto',
+                        objectFit: 'contain',
+                        borderRadius: '10px',
+                        filter: 'drop-shadow(0 0 20px rgba(255,255,255,0.05))',
+                      }}
+                    />
+                    {showText && (
+                      <span style={{
+                        fontSize: '22px',
+                        fontWeight: 800,
+                        background: `linear-gradient(135deg, #fff, ${themeColors.accent})`,
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text',
+                      }}>
+                        {brandData?.brandName}
+                      </span>
+                    )}
+                  </motion.div>
+                );
+              }
+              return (
+                <motion.div whileHover={{ scale: 1.02 }}>
+                  <Logo size={48} showText={showText} lang={lang} text={brandData?.brandName} />
+                </motion.div>
+              );
+            })()}
+          </motion.div>
+
+          {/* Portal badge indicator - Enhanced */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.15 }}
+            style={{ textAlign: 'center', marginBottom: 28 }}
+          >
+            <motion.div
+              whileHover={{ scale: 1.02 }}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                background: 'rgba(16, 185, 129, 0.1)',
-                border: '1px solid rgba(16, 185, 129, 0.2)',
-                borderRadius: '12px',
-                padding: '10px 18px',
-                color: 'var(--green)',
-                fontSize: '12px',
-                fontWeight: '700',
-                textDecoration: 'none',
-                transition: 'all 0.2s ease',
-                width: '100%',
-                boxSizing: 'border-box'
+                gap: 8,
+                background: portal === 'superadmin'
+                  ? 'rgba(245, 158, 11, 0.08)'
+                  : portal === 'admin'
+                    ? 'rgba(16, 185, 129, 0.08)'
+                    : 'rgba(99, 102, 241, 0.08)',
+                border: portal === 'superadmin'
+                  ? '1px solid rgba(245, 158, 11, 0.12)'
+                  : portal === 'admin'
+                    ? '1px solid rgba(16, 185, 129, 0.12)'
+                    : '1px solid rgba(99, 102, 241, 0.12)',
+                borderRadius: 24,
+                padding: '8px 20px',
+                fontSize: 12,
+                color: portal === 'superadmin'
+                  ? 'var(--amber, #F59E0B)'
+                  : portal === 'admin'
+                    ? 'var(--green)'
+                    : 'var(--accent)',
+                fontWeight: 700,
+                letterSpacing: '0.5px',
+                textTransform: 'uppercase',
               }}
-              className="whatsapp-activation-btn"
             >
-              <span style={{ fontSize: '16px' }}>💬</span>
-              {activeTrans.whatsappBtn}
-            </a>
-          </div>
-        )}
+              <motion.span
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: portal === 'superadmin'
+                    ? 'var(--amber, #F59E0B)'
+                    : portal === 'admin'
+                      ? 'var(--green)'
+                      : 'var(--accent)',
+                  boxShadow: `0 0 12px ${portal === 'superadmin' ? '#F59E0B' : portal === 'admin' ? '#10B981' : '#6366F1'}`,
+                }}
+              />
+              {config.badgeText}
+            </motion.div>
+          </motion.div>
 
-        <div style={{
-          textAlign: 'center', marginTop: 20,
-          fontSize: 10, color: 'var(--text3)', lineHeight: 1.8,
-        }}>
-          {activeTrans.securedBy}
+          {/* Form selection Tab Toggle - Enhanced */}
+          {portal === 'user' && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              style={{
+                display: 'flex',
+                background: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid rgba(255, 255, 255, 0.04)',
+                borderRadius: 16,
+                padding: '4px',
+                marginBottom: '28px',
+                gap: '4px',
+                backdropFilter: 'blur(10px)',
+                position: 'relative',
+              }}
+            >
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="button"
+                onClick={() => setActiveForm('login')}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: activeForm === 'login'
+                    ? `linear-gradient(135deg, ${themeColors.accent}, ${themeColors.accent}dd)`
+                    : 'transparent',
+                  color: activeForm === 'login' ? '#fff' : 'rgba(255,255,255,0.5)',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+              >
+                {activeForm === 'login' && (
+                  <motion.div
+                    layoutId="activeTab"
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: `linear-gradient(135deg, ${themeColors.accent}, ${themeColors.accent}dd)`,
+                      borderRadius: '12px',
+                      zIndex: -1,
+                    }}
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+                <span style={{ position: 'relative', zIndex: 1 }}>{activeTrans.loginTab}</span>
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="button"
+                onClick={() => setActiveForm('register')}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: activeForm === 'register'
+                    ? `linear-gradient(135deg, ${themeColors.accent}, ${themeColors.accent}dd)`
+                    : 'transparent',
+                  color: activeForm === 'register' ? '#fff' : 'rgba(255,255,255,0.5)',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+              >
+                {activeForm === 'register' && (
+                  <motion.div
+                    layoutId="activeTab"
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: `linear-gradient(135deg, ${themeColors.accent}, ${themeColors.accent}dd)`,
+                      borderRadius: '12px',
+                      zIndex: -1,
+                    }}
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+                <span style={{ position: 'relative', zIndex: 1 }}>{activeTrans.registerTab}</span>
+              </motion.button>
+            </motion.div>
+          )}
+
+          {/* Forms Switcher with Animation */}
+          <AnimatePresence mode="wait">
+            {activeForm === 'login' ? (
+              <motion.form
+                key="login-form"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+                onSubmit={handleLogin}
+                style={{ display: 'flex', flexDirection: 'column', gap: 18 }}
+              >
+                <div className="field">
+                  <label style={{
+                    fontWeight: '700',
+                    fontSize: '13px',
+                    color: 'rgba(255,255,255,0.7)',
+                    marginBottom: 8,
+                    display: 'block',
+                    letterSpacing: '0.5px',
+                  }}>
+                    {activeTrans.emailLabel}
+                  </label>
+                  <motion.div
+                    whileHover={{ scale: 1.01 }}
+                    style={{ position: 'relative', display: 'flex', alignItems: 'center' }}
+                  >
+                    <Mail
+                      size={18}
+                      style={{
+                        position: 'absolute',
+                        [lang === 'ar' ? 'right' : 'left']: '14px',
+                        color: 'rgba(255, 255, 255, 0.3)',
+                        transition: 'color 0.3s ease',
+                      }}
+                    />
+                    <input
+                      className="field-input glass-input"
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      dir="ltr"
+                      autoComplete="email"
+                      disabled={isLoading}
+                      style={{
+                        textAlign: 'left',
+                        [lang === 'ar' ? 'paddingRight' : 'paddingLeft']: '46px',
+                        height: '50px',
+                        borderRadius: '14px',
+                        width: '100%',
+                        fontSize: '15px',
+                      }}
+                    />
+                  </motion.div>
+                </div>
+
+                <div className="field">
+                  <label style={{
+                    fontWeight: '700',
+                    fontSize: '13px',
+                    color: 'rgba(255,255,255,0.7)',
+                    marginBottom: 8,
+                    display: 'block',
+                    letterSpacing: '0.5px',
+                  }}>
+                    {activeTrans.passwordLabel}
+                  </label>
+                  <motion.div
+                    whileHover={{ scale: 1.01 }}
+                    style={{ position: 'relative', display: 'flex', alignItems: 'center' }}
+                  >
+                    <Lock
+                      size={18}
+                      style={{
+                        position: 'absolute',
+                        [lang === 'ar' ? 'right' : 'left']: '14px',
+                        color: 'rgba(255, 255, 255, 0.3)',
+                        transition: 'color 0.3s ease',
+                      }}
+                    />
+                    <input
+                      className="field-input glass-input"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      dir="ltr"
+                      autoComplete="current-password"
+                      disabled={isLoading}
+                      style={{
+                        textAlign: 'left',
+                        [lang === 'ar' ? 'paddingRight' : 'paddingLeft']: '46px',
+                        [lang === 'ar' ? 'paddingLeft' : 'paddingRight']: '46px',
+                        height: '50px',
+                        borderRadius: '14px',
+                        width: '100%',
+                        fontSize: '15px',
+                      }}
+                    />
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        position: 'absolute',
+                        [lang === 'ar' ? 'left' : 'right']: '14px',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'rgba(255, 255, 255, 0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: 4,
+                        transition: 'color 0.3s ease',
+                      }}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </motion.button>
+                  </motion.div>
+                </div>
+
+                {portal === 'superadmin' ? (
+                  <motion.button
+                    whileHover={{
+                      scale: 1.02,
+                      boxShadow: '0 0 40px rgba(245, 158, 11, 0.15), inset 0 0 20px rgba(255,255,255,0.02)',
+                      borderColor: 'rgba(245, 158, 11, 0.3)'
+                    }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    disabled={isLoading}
+                    style={{
+                      marginTop: 12,
+                      height: '52px',
+                      fontSize: 14,
+                      fontWeight: 800,
+                      color: '#FFFFFF',
+                      background: 'linear-gradient(135deg, #111827, #1F2937)',
+                      border: '1px solid rgba(245, 158, 11, 0.15)',
+                      borderRadius: '14px',
+                      cursor: isLoading ? 'not-allowed' : 'pointer',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      letterSpacing: '0.5px',
+                      transition: 'all 0.3s ease',
+                    }}
+                  >
+                    <div style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: '10%',
+                      right: '10%',
+                      height: '1px',
+                      background: 'linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.4), transparent)',
+                      animation: 'shimmer 3s linear infinite',
+                      backgroundSize: '200% 100%',
+                    }} />
+
+                    {isLoading ? (
+                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                        <motion.span
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          style={{ display: 'flex' }}
+                        >
+                          <Sparkles size={18} style={{ color: 'var(--amber, #F59E0B)' }} />
+                        </motion.span>
+                        {activeTrans.loggingIn}
+                      </span>
+                    ) : (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Crown size={18} style={{ color: 'var(--amber, #F59E0B)' }} />
+                        {activeTrans.loginBtn}
+                      </span>
+                    )}
+                  </motion.button>
+                ) : (
+                  <motion.button
+                    whileHover={{
+                      scale: 1.02,
+                      boxShadow: `0 0 40px ${themeColors.accent}20, inset 0 1px 0 rgba(255,255,255,0.05)`,
+                    }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    className="btn btn-primary btn-full"
+                    disabled={isLoading}
+                    style={{
+                      marginTop: 12,
+                      height: '52px',
+                      fontSize: 14,
+                      fontWeight: 800,
+                      opacity: isLoading ? 0.7 : 1,
+                      background: config.gradient,
+                      border: 'none',
+                      borderRadius: '14px',
+                      cursor: isLoading ? 'not-allowed' : 'pointer',
+                      color: '#fff',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      transition: 'all 0.3s ease',
+                      letterSpacing: '0.5px',
+                    }}
+                  >
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
+                      transform: 'translateX(-100%)',
+                      animation: 'shimmer 3s ease-in-out infinite',
+                      backgroundSize: '200% 100%',
+                    }} />
+                    {isLoading ? (
+                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                        <motion.span
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          style={{ display: 'flex' }}
+                        >
+                          <Sparkles size={18} />
+                        </motion.span>
+                        {activeTrans.loggingIn}
+                      </span>
+                    ) : activeTrans.loginBtn}
+                  </motion.button>
+                )}
+              </motion.form>
+            ) : (
+              <motion.form
+                key="register-form"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                onSubmit={handleRegister}
+                style={{ display: 'flex', flexDirection: 'column', gap: 18 }}
+              >
+                <div className="field">
+                  <label style={{
+                    fontWeight: '700',
+                    fontSize: '13px',
+                    color: 'rgba(255,255,255,0.7)',
+                    marginBottom: 8,
+                    display: 'block',
+                    letterSpacing: '0.5px',
+                  }}>
+                    {activeTrans.nameLabel}
+                  </label>
+                  <motion.div
+                    whileHover={{ scale: 1.01 }}
+                    style={{ position: 'relative', display: 'flex', alignItems: 'center' }}
+                  >
+                    <User
+                      size={18}
+                      style={{
+                        position: 'absolute',
+                        [lang === 'ar' ? 'right' : 'left']: '14px',
+                        color: 'rgba(255, 255, 255, 0.3)',
+                      }}
+                    />
+                    <input
+                      className="field-input glass-input"
+                      type="text"
+                      value={name}
+                      onChange={e => setName(e.target.value)}
+                      placeholder={activeTrans.namePlaceholder}
+                      disabled={isLoading}
+                      style={{
+                        [lang === 'ar' ? 'paddingRight' : 'paddingLeft']: '46px',
+                        height: '50px',
+                        borderRadius: '14px',
+                        width: '100%',
+                        fontSize: '15px',
+                      }}
+                    />
+                  </motion.div>
+                </div>
+
+                <div className="field">
+                  <label style={{
+                    fontWeight: '700',
+                    fontSize: '13px',
+                    color: 'rgba(255,255,255,0.7)',
+                    marginBottom: 8,
+                    display: 'block',
+                    letterSpacing: '0.5px',
+                  }}>
+                    {activeTrans.emailLabel}
+                  </label>
+                  <motion.div
+                    whileHover={{ scale: 1.01 }}
+                    style={{ position: 'relative', display: 'flex', alignItems: 'center' }}
+                  >
+                    <Mail
+                      size={18}
+                      style={{
+                        position: 'absolute',
+                        [lang === 'ar' ? 'right' : 'left']: '14px',
+                        color: 'rgba(255, 255, 255, 0.3)',
+                      }}
+                    />
+                    <input
+                      className="field-input glass-input"
+                      type="email"
+                      value={registerEmail}
+                      onChange={e => setRegisterEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      dir="ltr"
+                      autoComplete="email"
+                      disabled={isLoading}
+                      style={{
+                        textAlign: 'left',
+                        [lang === 'ar' ? 'paddingRight' : 'paddingLeft']: '46px',
+                        height: '50px',
+                        borderRadius: '14px',
+                        width: '100%',
+                        fontSize: '15px',
+                      }}
+                    />
+                  </motion.div>
+                </div>
+
+                <div className="field">
+                  <label style={{
+                    fontWeight: '700',
+                    fontSize: '13px',
+                    color: 'rgba(255,255,255,0.7)',
+                    marginBottom: 8,
+                    display: 'block',
+                    letterSpacing: '0.5px',
+                  }}>
+                    {activeTrans.phoneLabel}
+                  </label>
+                  <PhoneInput
+                    phoneKey={registerPhoneKey}
+                    setPhoneKey={setRegisterPhoneKey}
+                    phoneNumber={registerPhone}
+                    setPhoneNumber={setRegisterPhone}
+                    disabled={isLoading}
+                    placeholder={activeTrans.phonePlaceholder}
+                  />
+                </div>
+
+                <div className="field">
+                  <label style={{
+                    fontWeight: '700',
+                    fontSize: '13px',
+                    color: 'rgba(255,255,255,0.7)',
+                    marginBottom: 8,
+                    display: 'block',
+                    letterSpacing: '0.5px',
+                  }}>
+                    {activeTrans.passwordLabel}
+                  </label>
+                  <motion.div
+                    whileHover={{ scale: 1.01 }}
+                    style={{ position: 'relative', display: 'flex', alignItems: 'center' }}
+                  >
+                    <Lock
+                      size={18}
+                      style={{
+                        position: 'absolute',
+                        [lang === 'ar' ? 'right' : 'left']: '14px',
+                        color: 'rgba(255, 255, 255, 0.3)',
+                      }}
+                    />
+                    <input
+                      className="field-input glass-input"
+                      type={showPassword ? 'text' : 'password'}
+                      value={registerPassword}
+                      onChange={e => setRegisterPassword(e.target.value)}
+                      placeholder="••••••••"
+                      dir="ltr"
+                      autoComplete="new-password"
+                      disabled={isLoading}
+                      style={{
+                        textAlign: 'left',
+                        [lang === 'ar' ? 'paddingRight' : 'paddingLeft']: '46px',
+                        [lang === 'ar' ? 'paddingLeft' : 'paddingRight']: '46px',
+                        height: '50px',
+                        borderRadius: '14px',
+                        width: '100%',
+                        fontSize: '15px',
+                      }}
+                    />
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        position: 'absolute',
+                        [lang === 'ar' ? 'left' : 'right']: '14px',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'rgba(255, 255, 255, 0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: 4,
+                      }}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </motion.button>
+                  </motion.div>
+                </div>
+
+                <motion.button
+                  whileHover={{
+                    scale: 1.02,
+                    boxShadow: `0 0 40px ${themeColors.accent}20, inset 0 1px 0 rgba(255,255,255,0.05)`,
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  type="submit"
+                  className="btn btn-primary btn-full"
+                  disabled={isLoading}
+                  style={{
+                    marginTop: 12,
+                    height: '52px',
+                    fontSize: 14,
+                    fontWeight: 800,
+                    opacity: isLoading ? 0.7 : 1,
+                    background: config.gradient,
+                    border: 'none',
+                    borderRadius: '14px',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    color: '#fff',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    transition: 'all 0.3s ease',
+                    letterSpacing: '0.5px',
+                  }}
+                >
+                  <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
+                    transform: 'translateX(-100%)',
+                    animation: 'shimmer 3s ease-in-out infinite',
+                    backgroundSize: '200% 100%',
+                  }} />
+                  {isLoading ? (
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                      <motion.span
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        style={{ display: 'flex' }}
+                      >
+                        <Sparkles size={18} />
+                      </motion.span>
+                      {activeTrans.registering}
+                    </span>
+                  ) : activeTrans.registerBtn}
+                </motion.button>
+              </motion.form>
+            )}
+          </AnimatePresence>
+
+          {/* WhatsApp Activation Section - Enhanced */}
+          {portal === 'user' && adminPhone && resolvedBrand?.showWhatsappLoginBtn !== false && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              style={{
+                marginTop: '28px',
+                paddingTop: '20px',
+                borderTop: '1px solid rgba(255, 255, 255, 0.04)',
+                textAlign: 'center'
+              }}
+            >
+              <div style={{
+                fontSize: '11px',
+                color: 'rgba(255,255,255,0.4)',
+                marginBottom: '10px',
+                letterSpacing: '0.5px',
+                fontWeight: 600,
+              }}>
+                {activeTrans.whatsappPrompt}
+              </div>
+              <motion.a
+                whileHover={{
+                  scale: 1.02,
+                  background: 'rgba(16, 185, 129, 0.12)',
+                  borderColor: 'rgba(16, 185, 129, 0.3)',
+                  boxShadow: '0 0 30px rgba(16, 185, 129, 0.05)',
+                }}
+                whileTap={{ scale: 0.98 }}
+                href={`https://wa.me/${adminPhone.replace(/\+/g, '').trim()}?text=${encodeURIComponent(
+                  lang === 'en'
+                    ? `Hello, I want to activate my subscription in the platform ${adminBrandName}`
+                    : `مرحباً، أريد تفعيل اشتراكي في منصة ${adminBrandName}`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  background: 'rgba(16, 185, 129, 0.06)',
+                  border: '1px solid rgba(16, 185, 129, 0.12)',
+                  borderRadius: '14px',
+                  padding: '14px 20px',
+                  color: 'var(--green)',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  transition: 'all 0.3s ease',
+                  letterSpacing: '0.3px',
+                }}
+              >
+                <motion.span
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  style={{ fontSize: '18px' }}
+                >
+                  💬
+                </motion.span>
+                {activeTrans.whatsappBtn}
+              </motion.a>
+            </motion.div>
+          )}
+
+          {/* Footer - Enhanced */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            style={{
+              textAlign: 'center',
+              marginTop: 24,
+              fontSize: 11,
+              color: 'rgba(255,255,255,0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              letterSpacing: '0.3px',
+            }}
+          >
+            <motion.span
+              animate={{ opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 3, repeat: Infinity }}
+            >
+              🔒
+            </motion.span>
+            <span>{activeTrans.securedBy}</span>
+          </motion.div>
         </div>
-      </div>
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      </motion.div>
     </div>
   );
 }

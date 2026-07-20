@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Users, TrendingUp, Award, Search, Plus, Edit2, Trash2 } from 'lucide-react';
 
 export default function SuperAdminEmployees({ employees, allUsers, onAdd, onEdit, onDelete, formatDate, totalSteps }) {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -12,29 +13,41 @@ export default function SuperAdminEmployees({ employees, allUsers, onAdd, onEdit
     });
     
     return (
-      <div className="sa-content">
+      <div className="sa-content" style={{ padding: 0 }}>
         {/* Stats for Employee */}
         <div className="sa-stats">
           <div className="sa-stat-card">
-            <div className="sa-stat-icon">👥</div>
-            <div className="sa-stat-value">{employeeUsers.length}</div>
-            <div className="sa-stat-label">مستخدمين مضافين</div>
+            <div className="sa-stat-info">
+              <div className="sa-stat-value">{employeeUsers.length}</div>
+              <div className="sa-stat-label">مستخدمين مضافين</div>
+            </div>
+            <div className="sa-stat-icon-wrapper" style={{ background: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent)' }}>
+              <Users size={24} />
+            </div>
           </div>
           <div className="sa-stat-card">
-            <div className="sa-stat-icon">📈</div>
-            <div className="sa-stat-value">
-              {employeeUsers.length > 0 
-                ? Math.round(employeeUsers.reduce((acc, u) => acc + (u.appState?.completedSteps?.length || 0), 0) / (employeeUsers.length * totalSteps) * 100) 
-                : 0}%
+            <div className="sa-stat-info">
+              <div className="sa-stat-value">
+                {employeeUsers.length > 0 
+                  ? Math.round(employeeUsers.reduce((acc, u) => acc + (u.appState?.completedSteps?.length || 0), 0) / (employeeUsers.length * totalSteps) * 100) 
+                  : 0}%
+              </div>
+              <div className="sa-stat-label">متوسط إنجاز المضافين</div>
             </div>
-            <div className="sa-stat-label">متوسط إنجاز المضافين</div>
+            <div className="sa-stat-icon-wrapper" style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--green)' }}>
+              <TrendingUp size={24} />
+            </div>
           </div>
           <div className="sa-stat-card">
-            <div className="sa-stat-icon">🏆</div>
-            <div className="sa-stat-value">
-              {employeeUsers.filter(u => (u.appState?.completedSteps?.length || 0) >= totalSteps).length}
+            <div className="sa-stat-info">
+              <div className="sa-stat-value">
+                {employeeUsers.filter(u => (u.appState?.completedSteps?.length || 0) >= totalSteps).length}
+              </div>
+              <div className="sa-stat-label">أتموا كافة المراحل</div>
             </div>
-            <div className="sa-stat-label">أتموا كافة المراحل</div>
+            <div className="sa-stat-icon-wrapper" style={{ background: 'rgba(245, 158, 11, 0.1)', color: 'var(--amber)' }}>
+              <Award size={24} />
+            </div>
           </div>
         </div>
 
@@ -53,9 +66,7 @@ export default function SuperAdminEmployees({ employees, allUsers, onAdd, onEdit
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-              </svg>
+              <Search size={14} style={{ position: 'absolute', right: 12, color: 'var(--text3)' }} />
             </div>
           </div>
           <div className="sa-table-wrapper">
@@ -114,8 +125,8 @@ export default function SuperAdminEmployees({ employees, allUsers, onAdd, onEdit
             <span className="sa-card-count">{employees.length}</span>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <button className="btn" onClick={onAdd} style={{ background: 'var(--accent)', color: '#fff', border: 'none', padding: '8px 16px', fontWeight: 800 }}>
-              ➕ إضافة موظف
+            <button className="btn" onClick={onAdd} style={{ background: 'var(--accent)', color: '#fff', border: 'none', padding: '8px 16px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Plus size={14} /> إضافة موظف
             </button>
             <div className="sa-search-box">
               <input 
@@ -124,9 +135,7 @@ export default function SuperAdminEmployees({ employees, allUsers, onAdd, onEdit
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-              </svg>
+              <Search size={14} style={{ position: 'absolute', right: 12, color: 'var(--text3)' }} />
             </div>
           </div>
         </div>
@@ -168,8 +177,20 @@ export default function SuperAdminEmployees({ employees, allUsers, onAdd, onEdit
                     <td><span className="sa-date">{formatDate(emp.createdAt)}</span></td>
                     <td>
                       <div style={{ display: 'flex', gap: 6 }}>
-                        <button className="btn btn-xs" onClick={() => onEdit(emp)}>✏️ تعديل</button>
-                        <button className="sa-delete-btn" onClick={() => onDelete(emp)}>🗑️ حذف</button>
+                        <button
+                          className="btn btn-xs btn-outline sa-action-btn"
+                          onClick={() => onEdit(emp)}
+                          title="تعديل"
+                        >
+                          <Edit2 size={12} />
+                        </button>
+                        <button
+                          className="sa-delete-btn btn-xs sa-action-btn"
+                          onClick={() => onDelete(emp)}
+                          title="حذف"
+                        >
+                          <Trash2 size={12} />
+                        </button>
                       </div>
                     </td>
                   </tr>

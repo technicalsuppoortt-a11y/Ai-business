@@ -14,10 +14,19 @@ import TutorialPage from './pages/Tutorial/TutorialPage';
 import { useAuth } from './context/AuthContext';
 import { useApp } from './context/AppContext';
 import { useEffect } from 'react';
-
 export default function App() {
   const { brandData, userData, adminUserData, superAdminUserData } = useAuth();
   const { state, dispatch } = useApp();
+
+  // Initialize theme from localStorage
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('ui_theme');
+    if (savedTheme === 'light') {
+      document.documentElement.classList.add('light-mode');
+    } else {
+      document.documentElement.classList.remove('light-mode');
+    }
+  }, []);
 
   // Apply Default Language based on Auth data
   useEffect(() => {

@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { useApp } from '../../context/AppContext';
+import { motion } from 'framer-motion';
 
 export default function DashboardLayout() {
   const { state } = useApp();
   const lang = state.language || 'ar';
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
 
   return (
     <div className="app-layout" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
@@ -32,8 +34,16 @@ export default function DashboardLayout() {
       </div>
 
       <div className="main-content">
-        <div className="content-area">
-          <Outlet />
+        <div className="content-area" style={{ minHeight: '100%', position: 'relative' }}>
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            style={{ width: '100%', height: '100%' }}
+          >
+            <Outlet />
+          </motion.div>
         </div>
       </div>
 

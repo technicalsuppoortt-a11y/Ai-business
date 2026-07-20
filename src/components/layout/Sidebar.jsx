@@ -6,6 +6,8 @@ import { useToast } from '../../context/ToastContext';
 import { JOURNEY_STEPS, CURRENCY_SYMBOLS } from '../../data/database';
 import { TOOLS_24H } from '../../data/toolsData';
 import SmartNotebook from '../../pages/Tools/components/SmartNotebook';
+import Logo from '../common/Logo';
+import { motion } from 'framer-motion';
 import './Sidebar.css';
 
 export default function Sidebar() {
@@ -15,6 +17,21 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const lang = state.language || 'ar';
+
+  const [theme, setTheme] = useState(() => {
+    return document.documentElement.classList.contains('light-mode') ? 'light' : 'dark';
+  });
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'light' ? 'dark' : 'light';
+    if (nextTheme === 'light') {
+      document.documentElement.classList.add('light-mode');
+    } else {
+      document.documentElement.classList.remove('light-mode');
+    }
+    localStorage.setItem('ui_theme', nextTheme);
+    setTheme(nextTheme);
+  };
 
   const currentPath = location.pathname.replace('/dashboard/', '').replace('/dashboard', '') || 'onboarding';
 
@@ -76,9 +93,12 @@ export default function Sidebar() {
     const isLocked = isStepLocked(step.id);
     
     return (
-      <div
+      <motion.div
         key={step.id}
         className={`nav-item ${isActive ? 'active' : ''} ${isDone ? 'done' : ''} ${isLocked ? 'locked' : ''}`}
+        whileHover={{ scale: 1.02, x: lang === 'en' ? 4 : -4 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         onClick={() => {
           if (isLocked) {
             toast(
@@ -96,7 +116,7 @@ export default function Sidebar() {
           {isLocked ? '🔒' : (isDone ? '✓' : step.icon)}
         </div>
         <span>{label}</span>
-      </div>
+      </motion.div>
     );
   };
 
@@ -142,6 +162,11 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar">
+      {/* Sidebar Logo */}
+      <div className="sidebar-logo" style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center' }}>
+        <Logo size={32} showText={true} lang={lang} />
+      </div>
+
       {/* Settings Controls */}
       <div className="sidebar-controls">
         <button 
@@ -149,6 +174,13 @@ export default function Sidebar() {
           title="تغيير لغة المخرجات (العربية / English)"
         >
           <span>🌍</span> {state.language === 'ar' ? 'English' : 'العربية'}
+        </button>
+
+        <button 
+          onClick={toggleTheme}
+          title={lang === 'en' ? 'Switch Theme' : 'تغيير المظهر'}
+        >
+          <span>{theme === 'light' ? '🌙' : '☀️'}</span> {lang === 'en' ? (theme === 'light' ? 'Dark' : 'Light') : (theme === 'light' ? 'داكن' : 'مضيء')}
         </button>
 
         <button 

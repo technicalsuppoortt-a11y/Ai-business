@@ -37,6 +37,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { libraryDb, libraryStorage } from "../../firebaseLibrary";
 import { useToast } from "../../context/ToastContext";
 import { useConfirm } from "../../context/ConfirmContext";
+import Pagination from "../../components/common/Pagination";
 
 function CustomFilterSelect({ value, onChange, options }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -602,75 +603,14 @@ export default function SuperAdminLibrary() {
               </div>
 
               {/* Pagination Controls */}
-              {totalPages > 1 && (
-                <div
-                  className="sa-pagination"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "16px 24px",
-                    borderTop: "1px solid var(--line)",
-                    marginTop: 12,
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: "13px",
-                      color: "var(--text2)",
-                    }}
-                  >
-                    عرض {startIndex + 1} -{" "}
-                    {Math.min(
-                      currentPage * itemsPerPage,
-                      filteredBrands.length,
-                    )}{" "}
-                    من {filteredBrands.length} منتج
-                  </span>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button
-                      className="btn btn-sm btn-outline"
-                      disabled={currentPage === 1}
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.max(prev - 1, 1))
-                      }
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4,
-                      }}
-                    >
-                      <ChevronRight size={14} /> السابق
-                    </button>
-                    <span
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        padding: "0 12px",
-                        fontSize: "13px",
-                        fontWeight: "700",
-                        color: "#fff",
-                      }}
-                    >
-                      {currentPage} / {totalPages}
-                    </span>
-                    <button
-                      className="btn btn-sm btn-outline"
-                      disabled={currentPage === totalPages}
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                      }
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4,
-                      }}
-                    >
-                      التالي <ChevronLeft size={14} />
-                    </button>
-                  </div>
-                </div>
-              )}
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                totalItems={filteredBrands.length}
+                itemsPerPage={itemsPerPage}
+                itemLabel="منتج"
+              />
             </>
           )}
         </div>

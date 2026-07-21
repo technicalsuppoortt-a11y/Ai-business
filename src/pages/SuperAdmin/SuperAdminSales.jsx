@@ -3,6 +3,7 @@ import { collection, getDocs, addDoc, serverTimestamp, query, orderBy } from 'fi
 import { db } from '../../firebase';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
+import Pagination from '../../components/common/Pagination';
 import {
   TrendingUp,
   FileText,
@@ -526,44 +527,11 @@ export default function SuperAdminSales({ allUsers }) {
         </div>
 
         {/* Pagination Controls */}
-        {!loading && totalPages > 1 && (
-          <div
-            className="sa-pagination"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "16px 24px",
-              borderTop: "1px solid var(--line)",
-              marginTop: 12,
-            }}
-          >
-            <span style={{ fontSize: "13px", color: "var(--text2)" }}>
-              عرض {startIndex + 1} - {Math.min(startIndex + itemsPerPage, filteredSales.length)} من {filteredSales.length} معاملة
-            </span>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button
-                className="btn btn-sm btn-outline"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                style={{ display: "flex", alignItems: "center", gap: 4 }}
-              >
-                <ChevronRight size={14} /> السابق
-              </button>
-              <span style={{ display: "flex", alignItems: "center", padding: "0 12px", fontSize: "13px", fontWeight: "700", color: "#fff" }}>
-                {currentPage} / {totalPages}
-              </span>
-              <button
-                className="btn btn-sm btn-outline"
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                style={{ display: "flex", alignItems: "center", gap: 4 }}
-              >
-                التالي <ChevronLeft size={14} />
-              </button>
-            </div>
-          </div>
-        )}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {/* Add Sale Modal */}

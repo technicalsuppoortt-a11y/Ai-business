@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { getContentPlan, getCanonicalNiche } from '../../../services/contentDbService';
 import { generatePostContent } from '../../../services/seedPart9_contentPlans';
+import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
+import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
 import ToolDashboardLayout from './ToolDashboardLayout';
 
 export default function ContentFactory({ stepNumber }) {
@@ -9,6 +11,8 @@ export default function ContentFactory({ stepNumber }) {
   const lang = state.language || 'ar';
   
   const savedState = state.toolResults['content-factory'] || {};
+
+  const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
   
   const audiences = [
     { id: 'beginners', label_ar: 'المبتدئين / الهواة', label_en: 'Beginners / Amateurs' },
@@ -54,32 +58,43 @@ export default function ContentFactory({ stepNumber }) {
     setResult('');
 
     try {
-      await new Promise(r => setTimeout(r, 600));
+      let dbResult = null;
 
-      let dbResult = await getContentPlan(state.niche || 'general', platform, contentFormat, targetAudience);
-      
-      // Fallback: If no plan is found in DB, generate one dynamically locally
-      if (!dbResult || !dbResult.posts || dbResult.posts.length === 0) {
-        const canonical = getCanonicalNiche(state.niche || 'general');
-        dbResult = {
-          id: `fallback_${canonical}_${platform}_${contentFormat}`,
-          platform,
-          format: contentFormat,
-          niche: canonical,
-          posts: [
-            generatePostContent(canonical, platform, contentFormat, 'story', targetAudience),
-            generatePostContent(canonical, platform, contentFormat, 'edu', targetAudience),
-            generatePostContent(canonical, platform, contentFormat, 'myth', targetAudience),
-            generatePostContent(canonical, platform, contentFormat, 'bts', targetAudience),
-            generatePostContent(canonical, platform, contentFormat, 'proof', targetAudience),
-            generatePostContent(canonical, platform, contentFormat, 'pitch', targetAudience)
-          ],
-          hooks: [
-            { ar: "سر محدش هيقولك عليه...", en: "A secret nobody will tell you..." },
-            { ar: "أكبر غلطة بتعملها...", en: "The biggest mistake you're making..." },
-            { ar: "تخيل لو قلتلك...", en: "Imagine if I told you..." }
-          ]
-        };
+      if (analysisMode === 'live') {
+        dbResult = await dispatchLiveAiAnalysis({
+          toolId: 'content-factory',
+          inputs: { targetAudience, platform, contentFormat, selectedDialect },
+          context: { niche: state.niche, user: state.user },
+          lang
+        });
+      } else {
+        await new Promise(r => setTimeout(r, 600));
+
+        dbResult = await getContentPlan(state.niche || 'general', platform, contentFormat, targetAudience);
+        
+        // Fallback: If no plan is found in DB, generate one dynamically locally
+        if (!dbResult || !dbResult.posts || dbResult.posts.length === 0) {
+          const canonical = getCanonicalNiche(state.niche || 'general');
+          dbResult = {
+            id: `fallback_${canonical}_${platform}_${contentFormat}`,
+            platform,
+            format: contentFormat,
+            niche: canonical,
+            posts: [
+              generatePostContent(canonical, platform, contentFormat, 'story', targetAudience),
+              generatePostContent(canonical, platform, contentFormat, 'edu', targetAudience),
+              generatePostContent(canonical, platform, contentFormat, 'myth', targetAudience),
+              generatePostContent(canonical, platform, contentFormat, 'bts', targetAudience),
+              generatePostContent(canonical, platform, contentFormat, 'proof', targetAudience),
+              generatePostContent(canonical, platform, contentFormat, 'pitch', targetAudience)
+            ],
+            hooks: [
+              { ar: "سر محدش هيقولك عليه...", en: "A secret nobody will tell you..." },
+              { ar: "أكبر غلطة بتعملها...", en: "The biggest mistake you're making..." },
+              { ar: "تخيل لو قلتلك...", en: "Imagine if I told you..." }
+            ]
+          };
+        }
       }
       
       if (dbResult && dbResult.posts && dbResult.posts.length > 0) {
@@ -92,7 +107,8 @@ export default function ContentFactory({ stepNumber }) {
             platform,
             contentFormat,
             selectedDialect,
-            result: dbResult
+            result: dbResult,
+            mode: analysisMode
           }
         });
       } else {
@@ -281,6 +297,14 @@ export default function ContentFactory({ stepNumber }) {
               ))}
             </div>
           </div>
+
+          {/* Dual Mode Selector */}
+          <AnalysisModeSelector 
+            mode={analysisMode} 
+            onChange={setAnalysisMode} 
+            lang={lang} 
+            accentColor="#14B8A6" 
+          />
 
           <button 
             onClick={handleGenerate}

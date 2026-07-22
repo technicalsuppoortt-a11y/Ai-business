@@ -1,0 +1,156 @@
+/* Dual Analysis Mode Selector Styles */
+.analysis-mode-selector-wrapper {
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.ams-label-title {
+  color: #94A3B8;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+.ams-current-badge {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--ams-accent, #10B981);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+}
+
+.ams-tabs-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px;
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+}
+
+.ams-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #94A3B8;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: inherit;
+}
+
+.ams-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #E2E8F0;
+}
+
+.ams-tab-btn.active {
+  background: rgba(15, 23, 42, 0.95);
+  border-color: var(--ams-accent, #10B981);
+  color: #F8FAFC;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(16, 185, 129, 0.15);
+}
+
+.ams-tab-icon {
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+}
+
+.ams-tab-btn.active .ams-tab-icon {
+  background: rgba(16, 185, 129, 0.15);
+  transform: scale(1.08);
+}
+
+.ams-tab-text {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ams-tab-main {
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.ams-tab-sub {
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.65;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .ams-tabs-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dedicated Live AI Shimmer & Loading Effect */
+.live-ai-shimmer-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 0 20px rgba(16, 185, 129, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.live-ai-shimmer-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.live-ai-pulsing-robot {
+  font-size: 24px;
+  animation: pulse-bounce 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse-bounce {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50% { transform: scale(1.15) translateY(-3px); }
+}
+
+.live-ai-shimmer-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #10B981;
+}
+
+.live-ai-shimmer-subtitle {
+  font-size: 11px;
+  color: #94A3B8;
+}
+
+.live-ai-shimmer-bar {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(16,185,129,0.2) 50%, rgba(255,255,255,0.05) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite linear;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { getAdLabStructure, getAdLabTemplate } from '../../../services/contentDbService';
+import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
+import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
 import ToolDashboardLayout from './ToolDashboardLayout';
 
 export default function AdCreative({ stepNumber }) {
@@ -8,6 +10,8 @@ export default function AdCreative({ stepNumber }) {
   const lang = state.language || 'ar';
 
   const savedState = state.toolResults['ad-creative'] || {};
+
+  const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
 
   const [structure, setStructure] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(savedState.selectedProduct || '');
@@ -36,10 +40,38 @@ export default function AdCreative({ stepNumber }) {
     setIsGenerating(true);
     setResult(null);
     try {
-      await new Promise(r => setTimeout(r, 700));
-      const dbResult = await getAdLabTemplate(selectedProduct, selectedPain, selectedPlatform, selectedDialect);
-      if (dbResult && dbResult.content) {
-        setResult(dbResult.content);
+      if (analysisMode === 'live') {
+        const liveResult = await dispatchLiveAiAnalysis({
+          toolId: 'ad-creative',
+          inputs: { selectedProduct, selectedPain, selectedPlatform, selectedDialect },
+          context: { niche: state.niche },
+          lang
+        });
+
+        const formattedResult = (typeof liveResult === 'object' && liveResult !== null) ? {
+          hook_ar: liveResult.hook_ar || liveResult.hook || '',
+          hook_en: liveResult.hook_en || liveResult.hook || '',
+          visual_ar: liveResult.visual_ar || liveResult.visualNotes || liveResult.visual || '',
+          visual_en: liveResult.visual_en || liveResult.visualNotes || liveResult.visual || '',
+          script_ar: liveResult.script_ar || liveResult.body || liveResult.script || '',
+          script_en: liveResult.script_en || liveResult.body || liveResult.script || '',
+          cta_ar: liveResult.cta_ar || liveResult.cta || '',
+          cta_en: liveResult.cta_en || liveResult.cta || '',
+          ad_angles: liveResult.ad_angles || [],
+          pro_tip_ar: liveResult.pro_tip_ar || '',
+          pro_tip_en: liveResult.pro_tip_en || ''
+        } : {
+          hook_ar: String(liveResult),
+          hook_en: String(liveResult),
+          visual_ar: 'Live AI visual direction',
+          visual_en: 'Live AI visual direction',
+          script_ar: String(liveResult),
+          script_en: String(liveResult),
+          cta_ar: 'Shop Now',
+          cta_en: 'Shop Now'
+        };
+
+        setResult(formattedResult);
         dispatch({
           type: 'SAVE_TOOL_RESULT',
           toolId: 'ad-creative',
@@ -48,11 +80,30 @@ export default function AdCreative({ stepNumber }) {
             selectedPain,
             selectedPlatform,
             selectedDialect,
-            result: dbResult.content
+            result: formattedResult,
+            mode: 'live'
           }
         });
       } else {
-        setResult({ error: lang === 'en' ? 'Template not found.' : 'لم يتم العثور على قالب لهذا التكوين.' });
+        await new Promise(r => setTimeout(r, 700));
+        const dbResult = await getAdLabTemplate(selectedProduct, selectedPain, selectedPlatform, selectedDialect);
+        if (dbResult && dbResult.content) {
+          setResult(dbResult.content);
+          dispatch({
+            type: 'SAVE_TOOL_RESULT',
+            toolId: 'ad-creative',
+            data: {
+              selectedProduct,
+              selectedPain,
+              selectedPlatform,
+              selectedDialect,
+              result: dbResult.content,
+              mode: 'fast'
+            }
+          });
+        } else {
+          setResult({ error: lang === 'en' ? 'Template not found.' : 'لم يتم العثور على قالب لهذا التكوين.' });
+        }
       }
     } catch (error) {
       console.error(error);
@@ -134,6 +185,14 @@ export default function AdCreative({ stepNumber }) {
               {lang === 'en' ? 'Loading...' : 'جاري تحميل الهيكل...'}
             </div>
           )}
+          {/* Dual Mode Selector */}
+          <AnalysisModeSelector 
+            mode={analysisMode} 
+            onChange={setAnalysisMode} 
+            lang={lang} 
+            accentColor="#EC4899" 
+          />
+
           <button onClick={handleGenerate} disabled={isGenerating || !structure} className="td-btn-primary"
             style={{ background: isGenerating ? 'rgba(236,72,153,0.2)' : '#EC4899', color: isGenerating ? '#8B96A8' : '#fff', marginTop: '16px', width: '100%' }}>
             {isGenerating

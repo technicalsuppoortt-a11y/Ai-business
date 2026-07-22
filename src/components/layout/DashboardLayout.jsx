@@ -1,45 +1,49 @@
 import React, { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import DashboardNavbar from './DashboardNavbar';
 import { useApp } from '../../context/AppContext';
 import { motion } from 'framer-motion';
 
 export default function DashboardLayout() {
   const { state } = useApp();
   const lang = state.language || 'ar';
+  const isRtl = lang === 'ar';
+
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
   return (
-    <div className="app-layout" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      {/* Mobile Toggle Button */}
-      <button 
-        className="mobile-toggle"
-        onClick={() => setMobileMenuOpen(true)}
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <path d="M3 12h18M3 6h18M3 18h18" />
-        </svg>
-      </button>
-
-      {/* Overlay */}
+    <div className="app-layout" dir={isRtl ? 'rtl' : 'ltr'}>
+      {/* Mobile Drawer Backdrop Overlay */}
       <div 
         className={`sidebar-overlay ${mobileMenuOpen ? 'show' : ''}`}
         onClick={() => setMobileMenuOpen(false)}
       />
 
-      {/* Sidebar with mobile class */}
-      <div className={`sidebar-wrapper ${mobileMenuOpen ? 'mobile-open' : ''}`}>
-        <Sidebar />
+      {/* Responsive Sidebar Drawer Wrapper */}
+      <div className={`sidebar-wrapper ${mobileMenuOpen ? 'mobile-open' : ''} ${isCollapsed ? 'collapsed' : ''}`}>
+        <Sidebar 
+          isCollapsed={isCollapsed} 
+          setIsCollapsed={setIsCollapsed} 
+        />
       </div>
 
+      {/* Main Page Column: Top Navbar + Scrollable Content */}
       <div className="main-content">
-        <div className="content-area" style={{ minHeight: '100%', position: 'relative' }}>
+        <DashboardNavbar 
+          isCollapsed={isCollapsed}
+          onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+          onOpenMobileMenu={() => setMobileMenuOpen(true)}
+        />
+
+        <div className="content-area" style={{ minHeight: 'calc(100vh - 64px)', position: 'relative' }}>
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
             style={{ width: '100%', height: '100%' }}
           >
             <Outlet />
@@ -54,52 +58,52 @@ export default function DashboardLayout() {
           overflow: hidden;
           background: var(--bg);
         }
+
+        .sidebar-wrapper {
+          height: 100vh;
+          flex-shrink: 0;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          z-index: 900;
+        }
+
         .main-content {
           flex: 1;
           height: 100vh;
           overflow-y: auto;
           overflow-x: hidden;
           background: var(--bg);
+          display: flex;
+          flex-direction: column;
         }
-        .mobile-toggle {
+
+        .sidebar-overlay {
           position: fixed;
-          top: 12px;
-          ${lang === 'ar' ? 'right' : 'left'}: 12px;
-          z-index: 900;
-          background: var(--accent);
-          color: #fff;
-          border: none;
-          border-radius: 8px;
-          width: 36px;
-          height: 36px;
-          display: none;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+          inset: 0;
+          background: rgba(0, 0, 0, 0.6);
+          backdrop-filter: blur(4px);
+          z-index: 950;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.3s ease;
         }
-        .mobile-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay.show {
+          opacity: 1;
+          pointer-events: auto;
+        }
 
         @media (max-width: 1024px) {
-          .mobile-toggle { display: flex !important; }
           .sidebar-wrapper {
             position: fixed;
-            ${lang === 'ar' ? 'right' : 'left'}: 0;
             top: 0;
             bottom: 0;
+            ${isRtl ? 'right' : 'left'}: 0;
             z-index: 1000;
-            transform: translateX(${lang === 'ar' ? '100%' : '-100%'});
-            transition: transform 0.3s ease;
+            transform: translateX(${isRtl ? '100%' : '-100%'});
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           }
           .sidebar-wrapper.mobile-open {
             transform: translateX(0);
-          }
-        }
-        @media (min-width: 1025px) {
-          .sidebar-wrapper {
-            width: 260px;
-            flex-shrink: 0;
-            border-${lang === 'ar' ? 'left' : 'right'}: 1px solid var(--line);
           }
         }
       `}} />

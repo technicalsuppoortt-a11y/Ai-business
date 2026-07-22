@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import { useApp } from '../../../context/AppContext';
 import ToolDashboardLayout from './ToolDashboardLayout';
 import { getLandingMatrixSection } from '../../../services/contentDbService';
+import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
+import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
 
 export default function LandingPageContent({ stepNumber }) {
-  const { state } = useApp();
+  const { state, dispatch } = useApp();
   const lang = state.language || 'ar';
+  const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
   
   // Base Inputs
   const [productName, setProductName] = useState('');
@@ -29,66 +32,111 @@ export default function LandingPageContent({ stepNumber }) {
     setGeneratedContent(null);
 
     try {
-      // Fetch matrix from Firebase
-      const heroMatrix = await getLandingMatrixSection('hero_sections');
-      const problemMatrix = await getLandingMatrixSection('problem_sections');
-      const offerMatrix = await getLandingMatrixSection('offer_sections');
-      const proofMatrix = await getLandingMatrixSection('proof_sections');
-      const ctaMatrix = await getLandingMatrixSection('cta_sections');
+      if (analysisMode === 'live') {
+        const liveResult = await dispatchLiveAiAnalysis({
+          toolId: 'landing-page-content',
+          inputs: { productName, audience, objective, awareness, pricePoint, emotion },
+          context: { niche: audience || state.niche, brandName: productName },
+          lang
+        });
 
-      // Keys to lookup
-      const heroKey = `${awareness}_${emotion}`;
-      const problemKey = `${awareness}`;
-      const offerKey = `${pricePoint}_${emotion}`;
-      const proofKey = `${pricePoint}_${objective}`;
-      const ctaKey = `${objective}_${emotion}`;
+        const ensureArray = (val) => Array.isArray(val) ? val : (val ? [String(val)] : []);
 
-      // Helper to safely get ideas array
-      const getIdeas = (matrix, key) => {
-        if (!matrix) return [];
-        if (matrix[key] && matrix[key].ideas) return matrix[key].ideas;
-        // Fallback strategy if exact match not found
-        const firstKey = Object.keys(matrix)[0];
-        return matrix[firstKey]?.ideas || [];
-      };
-
-      // Helper to replace variables
-      const replaceVars = (text) => {
-        if (!text) return '';
-        return text
-          .replace(/\{\{productName\}\}/g, productName)
-          .replace(/\{\{audience\}\}/g, audience)
-          .replace(/\{\{niche\}\}/g, audience)
-          .replace(/\{\{percent\}\}/g, Math.floor(Math.random() * (95 - 60) + 60)) // Random convincing stat 60-95
-          .replace(/\{\{hours\}\}/g, 24)
-          .replace(/\{\{number\}\}/g, '1,000')
-          .replace(/\{\{multiplier\}\}/g, '5')
-          .replace(/\{\{price\}\}/g, '$99');
-      };
-
-      const formatIdea = (idea) => {
-        if (idea.headline_ar) {
-          // Hero specific format
-          return lang === 'en' 
-            ? `${replaceVars(idea.headline_en)}\n\n${replaceVars(idea.sub_en)}`
-            : `${replaceVars(idea.headline_ar)}\n\n${replaceVars(idea.sub_ar)}`;
+        if (typeof liveResult === 'object' && liveResult !== null) {
+          setGeneratedContent({
+            hero: ensureArray(liveResult.hero),
+            problem: ensureArray(liveResult.problem),
+            offer: ensureArray(liveResult.offer),
+            proof: ensureArray(liveResult.proof),
+            cta: ensureArray(liveResult.cta)
+          });
+        } else {
+          setGeneratedContent({
+            hero: [String(liveResult)],
+            problem: [],
+            offer: [],
+            proof: [],
+            cta: []
+          });
         }
-        // Generic format
-        return lang === 'en' ? replaceVars(idea.en) : replaceVars(idea.ar);
-      };
 
-      const finalContent = {
-        hero: getIdeas(heroMatrix, heroKey).map(formatIdea),
-        problem: getIdeas(problemMatrix, problemKey).map(formatIdea),
-        offer: getIdeas(offerMatrix, offerKey).map(formatIdea),
-        proof: getIdeas(proofMatrix, proofKey).map(formatIdea),
-        cta: getIdeas(ctaMatrix, ctaKey).map(formatIdea),
-      };
+        dispatch({
+          type: 'SAVE_TOOL_RESULT',
+          toolId: 'landing-page-content',
+          data: { productName, audience, objective, awareness, pricePoint, emotion, result: liveResult, mode: 'live' }
+        });
+      } else {
+        // Fetch matrix from Firebase
+        const heroMatrix = await getLandingMatrixSection('hero_sections');
+        const problemMatrix = await getLandingMatrixSection('problem_sections');
+        const offerMatrix = await getLandingMatrixSection('offer_sections');
+        const proofMatrix = await getLandingMatrixSection('proof_sections');
+        const ctaMatrix = await getLandingMatrixSection('cta_sections');
 
-      setGeneratedContent(finalContent);
-    } catch (error) {
-      console.error(error);
-      alert(lang === 'en' ? 'Error generating content. Please try again.' : 'حدث خطأ. يرجى التأكد من تشغيل الـ Seeding.');
+        // Keys to lookup
+        const heroKey = `${awareness}_${emotion}`;
+        const problemKey = `${awareness}`;
+        const offerKey = `${pricePoint}_${emotion}`;
+        const proofKey = `${pricePoint}_${objective}`;
+        const ctaKey = `${objective}_${emotion}`;
+
+        // Helper to safely get ideas array
+        const getIdeas = (matrix, key) => {
+          if (!matrix) return [];
+          if (matrix[key] && matrix[key].ideas) return matrix[key].ideas;
+          const firstKey = Object.keys(matrix)[0];
+          return matrix[firstKey]?.ideas || [];
+        };
+
+        // Helper to replace variables
+        const replaceVars = (text) => {
+          if (!text) return '';
+          return text
+            .replace(/\{\{productName\}\}/g, productName)
+            .replace(/\{\{audience\}\}/g, audience)
+            .replace(/\{\{niche\}\}/g, audience)
+            .replace(/\{\{percent\}\}/g, Math.floor(Math.random() * (95 - 60) + 60))
+            .replace(/\{\{hours\}\}/g, 24)
+            .replace(/\{\{number\}\}/g, '1,000')
+            .replace(/\{\{multiplier\}\}/g, '5')
+            .replace(/\{\{price\}\}/g, '$99');
+        };
+
+        const formatIdea = (idea) => {
+          if (idea.headline_ar) {
+            return lang === 'en' 
+              ? `${replaceVars(idea.headline_en)}\n\n${replaceVars(idea.sub_en)}`
+              : `${replaceVars(idea.headline_ar)}\n\n${replaceVars(idea.sub_ar)}`;
+          }
+          return lang === 'en' ? replaceVars(idea.en) : replaceVars(idea.ar);
+        };
+
+        const pickRandom = (arr) => arr.length > 0 ? arr[Math.floor(Math.random() * arr.length)] : null;
+
+        const hIdea = pickRandom(getIdeas(heroMatrix, heroKey));
+        const pIdea = pickRandom(getIdeas(problemMatrix, problemKey));
+        const oIdea = pickRandom(getIdeas(offerMatrix, offerKey));
+        const prIdea = pickRandom(getIdeas(proofMatrix, proofKey));
+        const cIdea = pickRandom(getIdeas(ctaMatrix, ctaKey));
+
+        const content = {
+          hero: hIdea ? formatIdea(hIdea) : 'Hero Section',
+          problem: pIdea ? formatIdea(pIdea) : 'Problem Section',
+          offer: oIdea ? formatIdea(oIdea) : 'Offer Section',
+          proof: prIdea ? formatIdea(prIdea) : 'Social Proof Section',
+          cta: cIdea ? formatIdea(cIdea) : 'CTA Section'
+        };
+
+        setGeneratedContent(content);
+        dispatch({
+          type: 'SAVE_TOOL_RESULT',
+          toolId: 'landing-page-content',
+          data: { productName, audience, objective, awareness, pricePoint, emotion, result: content, mode: 'fast' }
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      alert(lang === 'en' ? 'Error generating content' : 'حدث خطأ أثناء التوليد');
     } finally {
       setIsGenerating(false);
     }
@@ -195,6 +243,14 @@ export default function LandingPageContent({ stepNumber }) {
             </div>
           </div>
 
+          {/* Dual Mode Selector */}
+          <AnalysisModeSelector 
+            mode={analysisMode} 
+            onChange={setAnalysisMode} 
+            lang={lang} 
+            accentColor="#F43F5E" 
+          />
+
           <button 
             onClick={handleGenerate}
             disabled={isGenerating}
@@ -249,14 +305,16 @@ export default function LandingPageContent({ stepNumber }) {
 function ContentSection({ title, ideas, onCopy, lang }) {
   const [activeTab, setActiveTab] = useState(0);
 
-  if (!ideas || ideas.length === 0) return null;
+  if (!ideas) return null;
+  const ideasList = Array.isArray(ideas) ? ideas : [ideas];
+  if (ideasList.length === 0 || (ideasList.length === 1 && !ideasList[0])) return null;
 
   return (
     <div style={{ border: '1px solid rgba(244, 63, 94, 0.2)', borderRadius: '12px', overflow: 'hidden' }}>
       <div style={{ background: 'rgba(244, 63, 94, 0.1)', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h4 style={{ color: '#F43F5E', margin: 0, fontSize: '13px', fontWeight: '800' }}>{title}</h4>
         <div style={{ display: 'flex', gap: '4px' }}>
-          {ideas.map((_, i) => (
+          {ideasList.map((_, i) => (
             <button 
               key={i} 
               onClick={() => setActiveTab(i)}
@@ -277,14 +335,14 @@ function ContentSection({ title, ideas, onCopy, lang }) {
       </div>
       <div style={{ padding: '16px', position: 'relative' }}>
         <button 
-          onClick={() => onCopy(ideas[activeTab])}
+          onClick={() => onCopy(ideasList[activeTab])}
           style={{ position: 'absolute', top: '16px', right: lang === 'ar' ? 'auto' : '16px', left: lang === 'ar' ? '16px' : 'auto', background: 'transparent', border: 'none', cursor: 'pointer', opacity: 0.6 }}
           title="Copy"
         >
           📋
         </button>
         <pre style={{ margin: 0, whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '13px', color: '#E8EDF5', lineHeight: '1.7', paddingRight: lang === 'en' ? '30px' : '0', paddingLeft: lang === 'ar' ? '30px' : '0' }}>
-          {ideas[activeTab]}
+          {ideasList[activeTab]}
         </pre>
       </div>
     </div>

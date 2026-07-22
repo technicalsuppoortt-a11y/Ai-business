@@ -722,8 +722,8 @@
 /* ═══ FLOATING HELP BUTTON ═══ */
 .td-help-fab {
   position: fixed;
-  top: 16px;
-  left: 16px;
+  top: 24px;
+  inset-inline-end: 24px;
   z-index: 999;
   padding: 8px 20px;
   border-radius: 12px;

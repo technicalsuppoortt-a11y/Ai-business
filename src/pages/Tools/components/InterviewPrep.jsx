@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import InteractiveToolLayout from './InteractiveToolLayout';
 import { useApp } from '../../../context/AppContext';
+import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
+import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
 
 export default function InterviewPrep({ stepNumber }) {
   const { state, dispatch } = useApp();
   const lang = state.language || 'ar';
+  const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
   const [clientType, setClientType] = useState('startup');
   const [projectType, setProjectType] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -26,7 +29,21 @@ export default function InterviewPrep({ stepNumber }) {
     setResult('');
 
     try {
-      await new Promise(r => setTimeout(r, 600));
+      if (analysisMode === 'live') {
+        const liveResult = await dispatchLiveAiAnalysis({
+          toolId: 'interview-prep',
+          inputs: { clientType, projectType },
+          context: { niche: state.niche, user: state.user },
+          lang
+        });
+        setResult(liveResult);
+        dispatch({
+          type: 'SAVE_TOOL_RESULT',
+          toolId: 'interview-prep',
+          data: { clientType, projectType, result: liveResult, mode: 'live' }
+        });
+      } else {
+        await new Promise(r => setTimeout(r, 600));
 
       let text = `### 🎤 ${lang === 'en' ? 'Strategic Interview Questions' : 'أسئلة المقابلة الاستراتيجية'}\n\n`;
       text += `*(${lang === 'en' ? 'Ask these questions to position yourself as an expert consultant, not just a worker:' : 'اطرح هذه الأسئلة لتظهر كمستشار خبير وليس مجرد منفذ:'})*\n\n`;
@@ -66,9 +83,15 @@ export default function InterviewPrep({ stepNumber }) {
       text += `---\n**💡 ${lang === 'en' ? 'Pro Tip' : 'نصيحة المقابلة'}:** ${lang === 'en' ? 'Let the client talk 80% of the time. You should only talk 20% to ask these questions and prescribe the solution.' : 'دع العميل يتحدث 80% من وقت المكالمة. يجب أن تتحدث أنت 20% فقط لطرح هذه الأسئلة وتقديم الحل (الروشتة).'}`;
 
       setResult(text);
+        dispatch({
+          type: 'SAVE_TOOL_RESULT',
+          toolId: 'interview-prep',
+          data: { clientType, projectType, result: text, mode: 'fast' }
+        });
+      }
     } catch (error) {
       console.error(error);
-      alert('حدث خطأ أثناء توليد الأسئلة. الرجاء المحاولة مجدداً.');
+      alert(lang === 'en' ? 'Error generating questions' : 'حدث خطأ أثناء توليد الأسئلة. الرجاء المحاولة مجدداً.');
     } finally {
       setIsGenerating(false);
     }
@@ -114,6 +137,14 @@ export default function InterviewPrep({ stepNumber }) {
           onChange={(e) => setProjectType(e.target.value)}
         />
       </div>
+
+      {/* Dual Mode Selector */}
+      <AnalysisModeSelector 
+        mode={analysisMode} 
+        onChange={setAnalysisMode} 
+        lang={lang} 
+        accentColor="#E11D48" 
+      />
 
       <button 
         onClick={handleGenerate}

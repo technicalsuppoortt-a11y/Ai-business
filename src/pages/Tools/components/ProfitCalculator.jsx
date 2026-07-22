@@ -3,13 +3,17 @@ import { useApp } from '../../../context/AppContext';
 import { getProfitScenarioTemplate } from '../../../services/contentDbService';
 import { parseTemplate } from '../../../utils/templateParser';
 import { CURRENCY_SYMBOLS } from '../../../data/database';
+import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
+import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
 import ToolDashboardLayout from './ToolDashboardLayout';
 
 export default function ProfitCalculator({ stepNumber }) {
-  const { state } = useApp();
+  const { state, dispatch } = useApp();
   const lang = state.language || 'ar';
   const currencySymbol = (CURRENCY_SYMBOLS[lang] && CURRENCY_SYMBOLS[lang][state.currency]) || CURRENCY_SYMBOLS['ar'][state.currency] || '$';
   
+  const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
+
   // -- Product Economics Inputs --
   const [salePrice, setSalePrice] = useState(49);
   const [productCost, setProductCost] = useState(15);
@@ -50,39 +54,59 @@ export default function ProfitCalculator({ stepNumber }) {
     setAiInsights('');
 
     try {
-      await new Promise(r => setTimeout(r, 600));
-      
-      let scenarioId = 'profitable_general';
-      
-      if (roas >= 2 && profitMargin >= 30) {
-        scenarioId = 'profitable_scale';
-      } else if (roas >= 2 && profitMargin > 0 && profitMargin < 30) {
-        scenarioId = 'profitable_low_margin';
-      } else if (roas >= 1 && roas < 2 && cvr >= 2) {
-        scenarioId = 'breakeven_high_cvr';
-      } else if (roas < 1 && cvr < 1) {
-        scenarioId = 'losing_low_cvr';
-      } else if (roas < 1 && cvr >= 1 && (salePrice - productCost) < (salePrice * 0.2)) {
-        scenarioId = 'losing_pricing_error';
-      } else if (roas < 1 && cvr >= 1) {
-        scenarioId = 'losing_high_cpc';
-      } else if (netProfitDaily < 0) {
-        scenarioId = 'losing_general';
-      }
-
-      const templateData = await getProfitScenarioTemplate(scenarioId);
-      if (templateData && templateData[lang]) {
-        const text = parseTemplate(templateData[lang], { 
-          margin: profitMargin.toFixed(1), 
-          roas: roas.toFixed(2),
-          cvr: cvr.toFixed(1),
-          cpc: cpc.toFixed(2),
-          salePrice: salePrice.toFixed(2), 
-          productCost: productCost.toFixed(2)
+      if (analysisMode === 'live') {
+        const liveResult = await dispatchLiveAiAnalysis({
+          toolId: 'profit-calculator',
+          inputs: { salePrice, productCost, dailyBudget, cpc, cvr, roas: roas.toFixed(2), profitMargin: profitMargin.toFixed(1), netProfitDaily: netProfitDaily.toFixed(2) },
+          context: { niche: state.niche, user: state.user },
+          lang
         });
-        setAiInsights(text);
+        setAiInsights(liveResult);
+        dispatch({
+          type: 'SAVE_TOOL_RESULT',
+          toolId: 'profit-calculator',
+          data: { salePrice, productCost, dailyBudget, cpc, cvr, roas, profitMargin, netProfitDaily, result: liveResult, mode: 'live' }
+        });
       } else {
-        setAiInsights(lang === 'en' ? 'Template not found.' : 'لم يتم العثور على القالب.');
+        await new Promise(r => setTimeout(r, 600));
+        
+        let scenarioId = 'profitable_general';
+        
+        if (roas >= 2 && profitMargin >= 30) {
+          scenarioId = 'profitable_scale';
+        } else if (roas >= 2 && profitMargin > 0 && profitMargin < 30) {
+          scenarioId = 'profitable_low_margin';
+        } else if (roas >= 1 && roas < 2 && cvr >= 2) {
+          scenarioId = 'breakeven_high_cvr';
+        } else if (roas < 1 && cvr < 1) {
+          scenarioId = 'losing_low_cvr';
+        } else if (roas < 1 && cvr >= 1 && (salePrice - productCost) < (salePrice * 0.2)) {
+          scenarioId = 'losing_pricing_error';
+        } else if (roas < 1 && cvr >= 1) {
+          scenarioId = 'losing_high_cpc';
+        } else if (netProfitDaily < 0) {
+          scenarioId = 'losing_general';
+        }
+
+        const templateData = await getProfitScenarioTemplate(scenarioId);
+        if (templateData && templateData[lang]) {
+          const text = parseTemplate(templateData[lang], { 
+            margin: profitMargin.toFixed(1), 
+            roas: roas.toFixed(2),
+            cvr: cvr.toFixed(1),
+            cpc: cpc.toFixed(2),
+            salePrice: salePrice.toFixed(2), 
+            productCost: productCost.toFixed(2)
+          });
+          setAiInsights(text);
+          dispatch({
+            type: 'SAVE_TOOL_RESULT',
+            toolId: 'profit-calculator',
+            data: { salePrice, productCost, dailyBudget, cpc, cvr, roas, profitMargin, netProfitDaily, result: text, mode: 'fast' }
+          });
+        } else {
+          setAiInsights(lang === 'en' ? 'Template not found.' : 'لم يتم العثور على القالب.');
+        }
       }
     } catch (error) {
       console.error(error);
@@ -225,6 +249,14 @@ export default function ProfitCalculator({ stepNumber }) {
               </div>
             </div>
           </div>
+
+          {/* Dual Mode Selector */}
+          <AnalysisModeSelector 
+            mode={analysisMode} 
+            onChange={setAnalysisMode} 
+            lang={lang} 
+            accentColor="#10B981" 
+          />
 
           <button 
             onClick={handleAnalyze}

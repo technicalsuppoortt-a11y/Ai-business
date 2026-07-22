@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import InteractiveToolLayout from './InteractiveToolLayout';
 import { useApp } from '../../../context/AppContext';
 import { getSalesReply } from '../../../services/contentDbService';
+import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
+import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
 
 export default function SalesTemplates({ stepNumber }) {
   const { state, dispatch } = useApp();
   const lang = state.language || 'ar';
+  const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
   const [situation, setSituation] = useState('');
   const [tone, setTone] = useState('professional');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -26,7 +29,6 @@ export default function SalesTemplates({ stepNumber }) {
   const commonSituations = lang === 'en' ? commonSituations_en : commonSituations_ar;
 
   const handleGenerate = async () => {
-    // situation is now the ID, or empty string. Since we allow typing, we will try to match or fallback to 'discount_request'
     if (!situation) {
       alert(lang === 'en' ? 'Please choose the situation first.' : 'الرجاء اختيار الموقف أولاً.');
       return;
@@ -36,34 +38,53 @@ export default function SalesTemplates({ stepNumber }) {
     setResult('');
 
     try {
-      await new Promise(r => setTimeout(r, 600));
-
-      const sitId = typeof situation === 'string' && !commonSituations.find(c => c.id === situation) 
-        ? 'discount_request' 
-        : situation;
-
-      const dbResult = await getSalesReply(sitId, tone);
-      
-      if (dbResult && (dbResult.reply_ar || dbResult.reply_en)) {
-        const replyStr = lang === 'en' ? (dbResult.reply_en || dbResult.reply_ar) : dbResult.reply_ar;
-        const tipStr = lang === 'en' ? (dbResult.tip_en || dbResult.tip_ar) : dbResult.tip_ar;
-        
-        let text = `### 💬 ${lang === 'en' ? 'Suggested Reply Template' : 'الرد المقترح (قالب)'}\n\n`;
-        text += `*(${lang === 'en' ? 'Adjust the parts in brackets:' : 'قم بتعديل الأجزاء بين الأقواس:'})*\n\n`;
-        text += replyStr;
-        
-        if (tipStr) {
-          text += `\n\n---\n**💡 ${lang === 'en' ? 'Pro Tip' : 'نصيحة الموقف'}:** ${tipStr}`;
-        }
-        setResult(text);
+      if (analysisMode === 'live') {
+        const liveResult = await dispatchLiveAiAnalysis({
+          toolId: 'sales-templates',
+          inputs: { situation, tone },
+          context: { niche: state.niche, user: state.user },
+          lang
+        });
+        setResult(liveResult);
+        dispatch({
+          type: 'SAVE_TOOL_RESULT',
+          toolId: 'sales-templates',
+          data: { situation, tone, result: liveResult, mode: 'live' }
+        });
       } else {
-        setResult(lang === 'en' 
-          ? "No template found for this situation. We are adding more soon." 
-          : "لم يتم العثور على رد جاهز لهذا الموقف بعد.");
+        await new Promise(r => setTimeout(r, 600));
+
+        const sitId = typeof situation === 'string' && !commonSituations.find(c => c.id === situation) 
+          ? 'discount_request' 
+          : situation;
+
+        const dbResult = await getSalesReply(sitId, tone);
+        
+        if (dbResult && (dbResult.reply_ar || dbResult.reply_en)) {
+          const replyStr = lang === 'en' ? (dbResult.reply_en || dbResult.reply_ar) : dbResult.reply_ar;
+          const tipStr = lang === 'en' ? (dbResult.tip_en || dbResult.tip_ar) : dbResult.tip_ar;
+          
+          let text = `### 💬 ${lang === 'en' ? 'Suggested Professional Reply' : 'الرد الاحترافي المقترح'}\n\n`;
+          text += replyStr;
+          
+          if (tipStr) {
+            text += `\n\n---\n**💡 ${lang === 'en' ? 'Sales Tip' : 'نصيحة بيعية'}:** ${tipStr}`;
+          }
+          setResult(text);
+          dispatch({
+            type: 'SAVE_TOOL_RESULT',
+            toolId: 'sales-templates',
+            data: { situation, tone, result: text, mode: 'fast' }
+          });
+        } else {
+          setResult(lang === 'en' 
+            ? "No template found for this situation yet. We are constantly expanding our database." 
+            : "لم يتم العثور على نموذج لهالموقف بعد. نقوم بإضافة قوالب جديدة باستمرار.");
+        }
       }
     } catch (error) {
       console.error(error);
-      alert('حدث خطأ أثناء التوليد. الرجاء المحاولة مجدداً.');
+      alert(lang === 'en' ? 'Error generating reply.' : 'حدث خطأ أثناء التوليد.');
     } finally {
       setIsGenerating(false);
     }
@@ -113,6 +134,14 @@ export default function SalesTemplates({ stepNumber }) {
           <option value="apologetic">🕊️ {lang === 'en' ? 'Diplomatic (to calm anger)' : 'دبلوماسي (لتهدئة الغضب)'}</option>
         </select>
       </div>
+
+      {/* Dual Mode Selector */}
+      <AnalysisModeSelector 
+        mode={analysisMode} 
+        onChange={setAnalysisMode} 
+        lang={lang} 
+        accentColor="#10B981" 
+      />
 
       <button 
         onClick={handleGenerate}

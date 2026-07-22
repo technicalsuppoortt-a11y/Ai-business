@@ -1,53 +1,88 @@
+/* Upgraded Glassmorphic Profile Page Styling */
 .profile-page {
-  padding: 40px;
-  max-width: 1200px;
+  padding: 32px;
+  max-width: 1240px;
   margin: 0 auto;
-  color: #fff;
-  padding-bottom: 100px;
+  color: var(--text);
+  box-sizing: border-box;
 }
 
-.profile-header {
+/* HERO HEADER CARD */
+.profile-hero-card {
+  background: linear-gradient(
+    135deg,
+    rgba(30, 41, 75, 0.7) 0%,
+    rgba(13, 18, 32, 0.9) 100%
+  );
+  border: 1px solid var(--line2);
+  backdrop-filter: blur(16px);
+  border-radius: 24px;
+  padding: 32px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 40px;
-  border-radius: 30px;
-  margin-bottom: 40px;
+  gap: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
 }
 
-.profile-user-info {
+.profile-hero-left {
   display: flex;
   align-items: center;
-  gap: 25px;
+  gap: 24px;
+}
+
+/* Avatar Styling with Glow Ring & Online Dot */
+.profile-avatar-wrapper {
+  position: relative;
+  cursor: pointer;
 }
 
 .profile-avatar {
-  width: 100px;
-  height: 100px;
-  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-  border-radius: 25px;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%);
+  border: 3px solid rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 24px rgba(99, 102, 241, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 40px;
+  font-size: 36px;
   font-weight: 900;
-  box-shadow: 0 10px 30px rgba(37, 99, 235, 0.3);
+  color: #fff;
+  background-size: cover;
+  background-position: center;
   position: relative;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease;
+}
+
+.profile-avatar-wrapper:hover .profile-avatar {
+  transform: scale(1.03);
+}
+
+.online-indicator {
+  position: absolute;
+  bottom: 4px;
+  inset-inline-end: 4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #10b981;
+  border: 2px solid var(--bg2);
+  box-shadow: 0 0 8px #10b981;
 }
 
 .avatar-edit-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
   opacity: 0;
   transition: opacity 0.2s ease;
 }
@@ -56,217 +91,595 @@
   opacity: 1;
 }
 
-.avatar-spinner {
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  z-index: 2;
+.profile-name {
+  font-size: 26px;
+  font-weight: 900;
+  color: #fff;
+  margin: 0;
+  letter-spacing: -0.5px;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+.profile-edit-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text);
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
 
-.profile-name {
-  font-size: 32px;
-  font-weight: 900;
-  margin: 0 0 5px 0;
-  letter-spacing: -1px;
+.profile-edit-btn:hover {
+  background: var(--accent);
+  color: #fff;
 }
 
 .profile-email {
-  color: rgba(255, 255, 255, 0.5);
-  margin: 0 0 15px 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 4px 0 12px 0;
 }
 
-.profile-badge {
-  display: inline-block;
-  padding: 6px 16px;
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  color: #3B82F6;
-  border-radius: 100px;
-  font-size: 13px;
+.profile-hero-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hero-role-badge,
+.hero-level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
   font-weight: 800;
 }
 
-.profile-stats {
+.hero-role-badge {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #3b82f6;
+}
+
+.hero-level-badge {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+}
+
+.profile-hero-right {
+  width: 280px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 18px;
+  border-radius: 16px;
+  flex-shrink: 0;
+}
+
+.hero-progress-label {
   display: flex;
-  gap: 40px;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 8px;
 }
 
-.stat-item {
-  text-align: center;
+.hero-progress-track {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-.stat-value {
-  font-size: 36px;
-  font-weight: 900;
-  color: #3B82F6;
+.hero-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981 0%, #3b82f6 100%);
+  border-radius: 8px;
+  transition: width 0.6s ease;
 }
 
-.stat-label {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
-  font-weight: 600;
-}
-
-.profile-content {
+/* STATS CARDS GRID */
+.profile-stats-grid {
   display: grid;
-  grid-template-columns: 1fr 350px;
-  gap: 40px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
 }
 
-.section-title {
-  font-size: 20px;
-  font-weight: 900;
-  margin-bottom: 30px;
+.profile-stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 20px;
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 16px;
+  transition: all 0.25s ease;
 }
 
-.roadmap-list {
+.profile-stat-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+}
+
+.stat-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-number {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1;
+}
+
+.stat-sub {
+  font-size: 13px;
+  color: var(--text3);
+  font-weight: 700;
+}
+
+.stat-title {
+  font-size: 11px;
+  color: var(--text3);
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+/* MAIN TWO COLUMN LAYOUT */
+.profile-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 28px;
+}
+
+/* Roadmap Controls Bar */
+.roadmap-controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.section-title-text {
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--text);
+}
+
+.roadmap-filter-tabs {
+  display: flex;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  padding: 3px;
+  border-radius: 10px;
+  gap: 2px;
+}
+
+.tab-btn {
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.roadmap-view-switcher {
+  display: flex;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  padding: 3px;
+  border-radius: 10px;
+  gap: 2px;
+}
+
+.view-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-btn.active {
+  background: var(--bg4);
+  color: var(--accent);
+}
+
+/* Roadmap Container Grid vs List */
+.roadmap-container.grid-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.roadmap-container.list-layout {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 10px;
 }
 
-.roadmap-item {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 20px 25px;
-  border-radius: 20px;
+.roadmap-card {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 18px;
+  cursor: pointer;
+  transition: all 0.25s ease;
   display: flex;
-  align-items: center;
-  gap: 20px;
-  transition: all 0.3s ease;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 140px;
 }
 
-.roadmap-item:hover {
-  background: rgba(255, 255, 255, 0.04);
-  transform: translateX(10px);
+.roadmap-card:hover {
+  border-color: var(--accent);
+  background: var(--bg3);
 }
 
-.roadmap-item.done {
-  border-color: rgba(16, 185, 129, 0.2);
+.roadmap-card.done {
+  border-color: rgba(16, 185, 129, 0.3);
   background: rgba(16, 185, 129, 0.03);
 }
 
-.roadmap-icon {
-  font-size: 24px;
-}
-
-.roadmap-info {
-  flex: 1;
-}
-
-.roadmap-step-name {
+.status-tag {
+  font-size: 10px;
   font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-tag.done {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.status-tag.pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.roadmap-card-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 10px 0 6px 0;
+}
+
+.roadmap-card-desc {
+  font-size: 11px;
+  color: var(--text3);
+  line-height: 1.5;
+  margin: 0 0 12px 0;
+}
+
+.roadmap-card-value {
+  font-size: 12px;
+  color: #10b981;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.roadmap-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+/* SIDEBAR COLUMN CARDS */
+.profile-sidebar-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.profile-panel-card {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 20px;
+}
+
+.panel-card-title {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--text);
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Achievements List */
+.achievements-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.achievement-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  transition: all 0.2s ease;
+}
+
+.achievement-item.unlocked {
+  cursor: pointer;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.achievement-item.locked {
+  opacity: 0.5;
+  filter: grayscale(100%);
+}
+
+.badge-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--bg4);
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 16px;
-  margin-bottom: 4px;
+  flex-shrink: 0;
 }
 
-.roadmap-step-value {
-  font-size: 13px;
-  color: #10B981;
-  font-weight: 600;
+.achievement-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0 0 2px 0;
 }
 
-.roadmap-step-value span {
-  color: rgba(255, 255, 255, 0.4);
-  margin-right: 5px;
+.achievement-desc {
+  font-size: 10px;
+  color: var(--text3);
+  margin: 0;
 }
 
-.roadmap-status {
+/* Timeline Activity */
+.timeline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  padding-inline-start: 10px;
+}
+
+.timeline-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  position: relative;
+}
+
+.timeline-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.timeline-title {
   font-size: 12px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  opacity: 0.5;
+  color: var(--text);
+  margin: 0 0 2px 0;
 }
 
-.roadmap-item.done .roadmap-status {
-  color: #10B981;
-  opacity: 1;
+.timeline-time {
+  font-size: 10px;
+  color: var(--text3);
 }
 
-.profile-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 30px;
-  border-radius: 25px;
-  position: sticky;
-  top: 40px;
-}
-
-.profile-card h3 {
-  font-size: 18px;
-  font-weight: 900;
-  margin-bottom: 25px;
-}
-
-.detail-row {
+/* Account Info Rows */
+.info-detail-row {
   display: flex;
   justify-content: space-between;
+  font-size: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.info-detail-row:last-child {
+  border-bottom: none;
+}
+
+.info-detail-row .label {
+  color: var(--text3);
+}
+
+.info-detail-row .val {
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* MODALS & PORTAL OVERLAYS */
+.profile-modal-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0, 0, 0, 0.75) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  z-index: 999999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 20px !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+}
+
+.profile-modal-box {
+  width: 100% !important;
+  max-width: 480px !important;
+  background: var(--bg2) !important;
+  border: 1px solid var(--line2) !important;
+  border-radius: 20px !important;
+  padding: 24px !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6) !important;
+  position: relative !important;
+  margin: auto !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--text);
+  margin: 0;
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+}
+
+.modal-body {
   margin-bottom: 20px;
-  font-size: 14px;
 }
 
-.detail-row span {
-  color: rgba(255, 255, 255, 0.4);
+.modal-value-box {
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 14px;
 }
 
-.detail-row strong {
-  font-weight: 800;
+.modal-input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
 }
 
-/* RTL Support */
-[dir="rtl"] .roadmap-item:hover {
-  transform: translateX(-10px);
-}
-[dir="rtl"] .roadmap-step-value span {
-  margin-right: 0;
-  margin-left: 5px;
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
-@media (max-width: 1100px) {
-  .profile-content {
-    grid-template-columns: 1fr;
+.modal-cancel-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.profile-primary-btn {
+  padding: 8px 20px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent) 0%, #4f46e5 100%);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+/* RESPONSIVE MEDIA QUERIES */
+@media (max-width: 1024px) {
+  .profile-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
-  .profile-sidebar {
-    order: -1;
+  .profile-main-grid {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
   .profile-page {
-    padding: 10px 4px;
+    padding: 16px;
   }
-  .profile-header {
+  .profile-hero-card {
     flex-direction: column;
-    text-align: center;
-    gap: 20px;
-    padding: 20px 10px;
-    border-radius: 20px;
-    margin-bottom: 20px;
+    align-items: flex-start;
+    padding: 20px;
   }
-  .profile-user-info {
+  .profile-hero-left {
     flex-direction: column;
-    gap: 15px;
+    align-items: flex-start;
+    gap: 16px;
   }
-  .profile-stats {
+  .profile-hero-right {
     width: 100%;
-    justify-content: space-around;
-    gap: 10px;
+    box-sizing: border-box;
   }
-  .roadmap-item {
-    padding: 15px 12px;
-    gap: 12px;
-  }
-  .profile-card {
-    padding: 20px 15px;
+  .profile-stats-grid {
+    grid-template-columns: 1fr 1fr;
   }
 }

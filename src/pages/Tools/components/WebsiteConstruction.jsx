@@ -3,12 +3,15 @@ import { useApp } from '../../../context/AppContext';
 import { getWebsiteTemplate, getAllWebsiteGalleryTemplates, getDomainIdeasTemplate } from '../../../services/contentDbService';
 import { parseTemplate } from '../../../utils/templateParser';
 import { callGemini } from '../../../services/geminiService';
+import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
+import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
 import { useNavigate } from 'react-router-dom';
 import ToolDashboardLayout from './ToolDashboardLayout';
 
 export default function WebsiteConstruction({ stepNumber }) {
   const { state, dispatch } = useApp();
   const lang = state.language || 'ar';
+  const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
   
   // -- Wizard State --
   const navigate = useNavigate();
@@ -65,42 +68,59 @@ export default function WebsiteConstruction({ stepNumber }) {
   };
 
   const generateAILandingPage = async () => {
-    const key = state.apiKey || tempApiKey;
-    if (!key) {
-      setApiKeyError(true);
-      return;
-    }
-
     setIsGenerating(true);
     setGeneratedCode('');
     try {
-      const brandName = state.brandName || (lang === 'en' ? 'My Brand' : 'براندي');
-      const colorHex = state.primaryColor || '#10B981';
-      const secondaryColor = state.secondaryColor || '#0f172a';
-      const nicheName = state.subNiche || state.niche || (lang === 'en' ? 'Business' : 'أعمال');
-      const logoUrl = state.logoUrl || state.logo || state.photoURL || '';
+      if (analysisMode === 'live') {
+        const brandName = state.brandName || (lang === 'en' ? 'My Brand' : 'براندي');
+        const colorHex = state.primaryColor || '#10B981';
+        const secondaryColor = state.secondaryColor || '#0f172a';
+        const nicheName = state.subNiche || state.niche || (lang === 'en' ? 'Business' : 'أعمال');
 
-      const prompt = `
-        You are a world-class landing page designer and developer. 
-        Generate a single-file HTML landing page using Tailwind CSS for a brand called "${brandName}" in the "${nicheName}" niche.
-        Primary Color: ${colorHex}, Secondary Color: ${secondaryColor}.
-        Brand Logo URL: ${logoUrl ? logoUrl : 'None provided, use text logo'}. Please use this logo image URL in the navigation bar.
-        The design should be modern, mobile-responsive, and high-converting.
-        Include:
-        - A Hero section with a strong headline and CTA.
-        - A Features/Services section with 3 items.
-        - A Testimonials section.
-        - A Contact/Footer section.
-        Use placeholder images from Unsplash or similar.
-        Return ONLY the raw HTML code without markdown code blocks.
-      `;
+        const liveHtml = await dispatchLiveAiAnalysis({
+          toolId: 'website-construction',
+          inputs: { brandName, colorHex, secondaryColor, nicheName },
+          context: { niche: state.niche, brandName: state.brandName },
+          lang
+        });
+        const cleanedHtml = liveHtml.replace(/```html|```/g, '').trim();
+        setGeneratedCode(`\`\`\`html\n${cleanedHtml}\n\`\`\``);
+        setApiKeyError(false);
+      } else {
+        const key = state.apiKey || tempApiKey;
+        if (!key) {
+          setApiKeyError(true);
+          return;
+        }
 
-      const aiResponse = await callGemini(prompt, key);
-      
-      // Remove any potential markdown wrapping
-      const cleanedHtml = aiResponse.replace(/```html|```/g, '').trim();
-      setGeneratedCode(`\`\`\`html\n${cleanedHtml}\n\`\`\``);
-      setApiKeyError(false);
+        const brandName = state.brandName || (lang === 'en' ? 'My Brand' : 'براندي');
+        const colorHex = state.primaryColor || '#10B981';
+        const secondaryColor = state.secondaryColor || '#0f172a';
+        const nicheName = state.subNiche || state.niche || (lang === 'en' ? 'Business' : 'أعمال');
+        const logoUrl = state.logoUrl || state.logo || state.photoURL || '';
+
+        const prompt = `
+          You are a world-class landing page designer and developer. 
+          Generate a single-file HTML landing page using Tailwind CSS for a brand called "${brandName}" in the "${nicheName}" niche.
+          Primary Color: ${colorHex}, Secondary Color: ${secondaryColor}.
+          Brand Logo URL: ${logoUrl ? logoUrl : 'None provided, use text logo'}. Please use this logo image URL in the navigation bar.
+          The design should be modern, mobile-responsive, and high-converting.
+          Include:
+          - A Hero section with a strong headline and CTA.
+          - A Features/Services section with 3 items.
+          - A Testimonials section.
+          - A Contact/Footer section.
+          Use placeholder images from Unsplash or similar.
+          Return ONLY the raw HTML code without markdown code blocks.
+        `;
+
+        const aiResponse = await callGemini(prompt, key);
+        
+        // Remove any potential markdown wrapping
+        const cleanedHtml = aiResponse.replace(/```html|```/g, '').trim();
+        setGeneratedCode(`\`\`\`html\n${cleanedHtml}\n\`\`\``);
+        setApiKeyError(false);
+      }
     } catch (error) {
       console.error(error);
       if (error.message?.includes('API Key') || error.message?.includes('key')) {
@@ -151,12 +171,26 @@ export default function WebsiteConstruction({ stepNumber }) {
     setIsGeneratingDomain(true);
     setDomainMatrix(null);
     try {
-      await new Promise(r => setTimeout(r, 600));
-      const dbResult = await getDomainIdeasTemplate(state.niche || 'general');
-      if (dbResult && dbResult.matrix) {
-        setDomainMatrix(dbResult.matrix);
+      if (analysisMode === 'live') {
+        const liveResult = await dispatchLiveAiAnalysis({
+          toolId: 'domain-matrix',
+          inputs: { brandName: state.brandName },
+          context: { niche: state.niche, brandName: state.brandName },
+          lang
+        });
+        if (typeof liveResult === 'object' && liveResult.classic) {
+          setDomainMatrix(liveResult);
+        } else {
+          setDomainMatrix({ error: typeof liveResult === 'string' ? liveResult : JSON.stringify(liveResult) });
+        }
       } else {
-        setDomainMatrix({ error: lang === 'en' ? 'Domain matrix not found.' : 'لم يتم العثور على مصفوفة الدومينات.' });
+        await new Promise(r => setTimeout(r, 600));
+        const dbResult = await getDomainIdeasTemplate(state.niche || 'general');
+        if (dbResult && dbResult.matrix) {
+          setDomainMatrix(dbResult.matrix);
+        } else {
+          setDomainMatrix({ error: lang === 'en' ? 'Domain matrix not found.' : 'لم يتم العثور على مصفوفة الدومينات.' });
+        }
       }
     } catch (error) {
       console.error(error);
@@ -204,33 +238,45 @@ export default function WebsiteConstruction({ stepNumber }) {
     }
     const bn = cleanBrand(state.brandName);
     
-    const classicList = [];
+    let classicList = [];
     if (domainMatrix.classic) {
-      domainMatrix.classic.formats.forEach(fmt => {
-        domainMatrix.classic.extensions.forEach(ext => {
-          let dom = fmt.replace('{{brandName}}', bn).replace('{ext}', ext);
-          classicList.push({ domain: dom, desc: lang === 'en' ? 'Standard Professional' : 'دومين احترافي ومعتمد' });
+      if (Array.isArray(domainMatrix.classic.domains)) {
+        classicList = domainMatrix.classic.domains;
+      } else if (Array.isArray(domainMatrix.classic.formats) && Array.isArray(domainMatrix.classic.extensions)) {
+        domainMatrix.classic.formats.forEach(fmt => {
+          domainMatrix.classic.extensions.forEach(ext => {
+            let dom = fmt.replace('{{brandName}}', bn).replace('{ext}', ext);
+            classicList.push({ domain: dom, desc: lang === 'en' ? 'Standard Professional' : 'دومين احترافي ومعتمد' });
+          });
         });
-      });
+      }
     }
 
-    const actionList = [];
+    let actionList = [];
     if (domainMatrix.action) {
-      const { prefixesEn, prefixesAr, extensions, formats } = domainMatrix.action;
-      prefixesEn.forEach((pref, i) => {
-        let ext = extensions[Math.floor(Math.random() * extensions.length)];
-        let dom = formats[0].replace('{prefix}', pref).replace('{{brandName}}', bn).replace('{ext}', ext);
-        let meaning = lang === 'en' ? `Action: ${pref}` : `بمعنى: ${prefixesAr[i]}`;
-        actionList.push({ domain: dom, desc: meaning });
-      });
+      if (Array.isArray(domainMatrix.action.domains)) {
+        actionList = domainMatrix.action.domains;
+      } else if (Array.isArray(domainMatrix.action.prefixesEn) && Array.isArray(domainMatrix.action.extensions) && Array.isArray(domainMatrix.action.formats)) {
+        const { prefixesEn, prefixesAr = [], extensions, formats } = domainMatrix.action;
+        prefixesEn.forEach((pref, i) => {
+          let ext = extensions[Math.floor(Math.random() * extensions.length)];
+          let dom = formats[0].replace('{prefix}', pref).replace('{{brandName}}', bn).replace('{ext}', ext);
+          let meaning = lang === 'en' ? `Action: ${pref}` : `بمعنى: ${prefixesAr[i] || pref}`;
+          actionList.push({ domain: dom, desc: meaning });
+        });
+      }
     }
 
-    const nicheList = [];
+    let nicheList = [];
     if (domainMatrix.niche) {
-      domainMatrix.niche.extensions.forEach(ext => {
-        let dom = domainMatrix.niche.formats[0].replace('{{brandName}}', bn).replace('{ext}', ext);
-        nicheList.push({ domain: dom, desc: lang === 'en' ? domainMatrix.niche.desc_en : domainMatrix.niche.desc_ar });
-      });
+      if (Array.isArray(domainMatrix.niche.domains)) {
+        nicheList = domainMatrix.niche.domains;
+      } else if (Array.isArray(domainMatrix.niche.extensions) && Array.isArray(domainMatrix.niche.formats)) {
+        domainMatrix.niche.extensions.forEach(ext => {
+          let dom = domainMatrix.niche.formats[0].replace('{{brandName}}', bn).replace('{ext}', ext);
+          nicheList.push({ domain: dom, desc: lang === 'en' ? domainMatrix.niche.desc_en : domainMatrix.niche.desc_ar });
+        });
+      }
     }
 
     return (
@@ -389,7 +435,16 @@ export default function WebsiteConstruction({ stepNumber }) {
               </div>
             </div>
           ) : !generatedCode || isGenerating ? (
-            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <div style={{ textAlign: 'center', padding: '20px 0' }}>
+              <div style={{ maxWidth: '400px', margin: '0 auto 16px auto' }}>
+                <AnalysisModeSelector 
+                  mode={analysisMode} 
+                  onChange={setAnalysisMode} 
+                  lang={lang} 
+                  accentColor="#10B981" 
+                />
+              </div>
+
               <button onClick={generateAILandingPage} disabled={isGenerating} className="td-btn-primary" style={{ background: isGenerating ? 'rgba(16, 185, 129, 0.2)' : '#10B981', color: isGenerating ? '#8B96A8' : '#fff', maxWidth: '300px', margin: '0 auto' }}>
                 {isGenerating ? (
                   <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
@@ -646,6 +701,16 @@ export default function WebsiteConstruction({ stepNumber }) {
         <p style={{ color: '#8B96A8', fontSize: '12px', lineHeight: '1.6', marginBottom: '20px' }}>
           {lang === 'en' ? `Generate strategic domain models based on your brand (${state?.brandName || 'please select a brand first'}) and your niche (${state?.niche || 'general'}).` : `استخرج نماذج ذكية واستراتيجية للدومينات بناءً على اسم البراند (${state?.brandName || 'يرجى اختيار براند أولاً'}) ومجالك (${state?.niche || 'عام'}).`}
         </p>
+        {/* Dual Mode Selector */}
+        <div style={{ marginBottom: '16px' }}>
+          <AnalysisModeSelector 
+            mode={analysisMode} 
+            onChange={setAnalysisMode} 
+            lang={lang} 
+            accentColor="#F59E0B" 
+          />
+        </div>
+
         <button 
           onClick={generateDomainIdeas}
           disabled={isGeneratingDomain || !state?.brandName}

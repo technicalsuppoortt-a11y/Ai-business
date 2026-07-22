@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useApp } from '../../../context/AppContext';
 import { getProductIdeasStructure, getProductIdeasV2 } from '../../../services/contentDbService';
+import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
+import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
 import ToolDashboardLayout from './ToolDashboardLayout';
 
 export default function ProductSource({ stepNumber }) {
-  const { state } = useApp();
+  const { state, dispatch } = useApp();
   const lang = state.language || 'ar';
+  const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
 
   const [structure, setStructure] = useState(null);
   const [selectedType, setSelectedType] = useState('');
@@ -33,16 +36,56 @@ export default function ProductSource({ stepNumber }) {
     setIsGenerating(true);
     setIdeas(null);
     try {
-      await new Promise(r => setTimeout(r, 500));
-      const dbResult = await getProductIdeasV2(selectedType, selectedNiche, selectedEffort);
-      if (dbResult && dbResult.ideas && dbResult.ideas.length > 0) {
-        setIdeas(dbResult.ideas);
+      if (analysisMode === 'live') {
+        const liveResult = await dispatchLiveAiAnalysis({
+          toolId: 'product-source',
+          inputs: { selectedType, selectedNiche, selectedEffort },
+          context: { niche: state.niche, user: state.user },
+          lang
+        });
+
+        const rawList = (typeof liveResult === 'object' && Array.isArray(liveResult.ideas)) 
+          ? liveResult.ideas 
+          : [liveResult];
+
+        const formattedIdeas = rawList.map((item, idx) => {
+          const title = typeof item === 'string' ? item : (item.name || item.name_en || item.name_ar || item.title || `Live AI Product Idea ${idx + 1}`);
+          const description = typeof item === 'string' ? item : (item.desc || item.desc_en || item.desc_ar || item.fullDescription || item.description || title);
+          const cost = typeof item === 'string' ? '$49 - $149' : (item.price || item.price_en || item.price_ar || item.pricing || '$49 - $149');
+
+          return {
+            id: item.id || `live_${idx + 1}`,
+            name_ar: item.name_ar || item.name || title,
+            name_en: item.name_en || item.name || title,
+            name: title,
+            desc_ar: item.desc_ar || item.desc || description,
+            desc_en: item.desc_en || item.desc || description,
+            desc: description,
+            price_ar: item.price_ar || item.price || cost,
+            price_en: item.price_en || item.price || cost,
+            price: cost,
+            effort: item.effort || selectedEffort || 'medium'
+          };
+        });
+
+        setIdeas(formattedIdeas);
+        dispatch({
+          type: 'SAVE_TOOL_RESULT',
+          toolId: 'product-source',
+          data: { selectedType, selectedNiche, selectedEffort, result: formattedIdeas, mode: 'live' }
+        });
       } else {
-        setIdeas([]);
+        await new Promise(r => setTimeout(r, 500));
+        const dbResult = await getProductIdeasV2(selectedType, selectedNiche, selectedEffort);
+        if (dbResult && dbResult.ideas && dbResult.ideas.length > 0) {
+          setIdeas(dbResult.ideas);
+        } else {
+          setIdeas([]);
+        }
       }
     } catch (error) {
       console.error(error);
-      alert(lang === 'en' ? 'Error. Please seed data first.' : 'حدث خطأ. يرجى رفع البيانات أولاً.');
+      alert(lang === 'en' ? 'Error generating product ideas.' : 'حدث خطأ أثناء التوليد.');
     } finally {
       setIsGenerating(false);
     }
@@ -118,6 +161,14 @@ export default function ProductSource({ stepNumber }) {
                 {lang === 'en' ? 'Loading...' : 'جاري تحميل الهيكل...'}
               </div>
             )}
+            {/* Dual Mode Selector */}
+            <AnalysisModeSelector 
+              mode={analysisMode} 
+              onChange={setAnalysisMode} 
+              lang={lang} 
+              accentColor="#F43F5E" 
+            />
+
             <button onClick={handleGenerate} disabled={isGenerating || !structure} className="td-btn-primary"
               style={{ background: isGenerating ? 'rgba(244,63,94,0.2)' : '#F43F5E', color: isGenerating ? '#8B96A8' : '#fff', marginTop: '16px', width: '100%' }}>
               {isGenerating

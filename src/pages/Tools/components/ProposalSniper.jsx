@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import InteractiveToolLayout from './InteractiveToolLayout';
 import { useApp } from '../../../context/AppContext';
 import { getProposalTemplate } from '../../../services/contentDbService';
+import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
+import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
 
 export default function ProposalSniper({ stepNumber }) {
   const { state, dispatch } = useApp();
   const lang = state.language || 'ar';
+  const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
   const [jobDescription, setJobDescription] = useState('');
   const [tone, setTone] = useState('expert');
   const [proposalLang, setProposalLang] = useState('ar');
@@ -21,27 +24,59 @@ export default function ProposalSniper({ stepNumber }) {
     setResult('');
 
     try {
-      await new Promise(r => setTimeout(r, 600));
-
-      // We use 'individual' client type as default for now
-      const dbResult = await getProposalTemplate(state.niche || 'general', tone, 'individual');
-      
-      if (dbResult && (dbResult.template_ar || dbResult.template_en)) {
-        const templateStr = (proposalLang === 'en' ? (dbResult.template_en || dbResult.template_ar) : dbResult.template_ar) || '';
-        const tipStr = lang === 'en' ? (dbResult.tip_en || dbResult.tip_ar) : dbResult.tip_ar;
-        
-        let text = `### 📝 ${lang === 'en' ? 'Suggested Proposal Template' : 'قالب العرض المقترح'}\n\n`;
-        text += `*(${lang === 'en' ? 'Adjust the parts in brackets to match the job description:' : 'قم بتعديل الأجزاء بين الأقواس لتناسب الوصف الوظيفي:'})*\n\n`;
-        text += templateStr;
-        
-        if (tipStr) {
-          text += `\n\n---\n**💡 ${lang === 'en' ? 'Pro Tip' : 'نصيحة ذهبية'}:** ${tipStr}`;
-        }
-        setResult(text);
+      if (analysisMode === 'live') {
+        const liveResult = await dispatchLiveAiAnalysis({
+          toolId: 'proposal-sniper',
+          inputs: { jobDescription, tone, proposalLang },
+          context: { niche: state.niche, user: state.user },
+          lang
+        });
+        setResult(liveResult);
+        dispatch({
+          type: 'SAVE_TOOL_RESULT',
+          toolId: 'proposal-sniper',
+          data: {
+            jobDescription,
+            tone,
+            proposalLang,
+            result: liveResult,
+            mode: 'live'
+          }
+        });
       } else {
-        setResult(lang === 'en' 
-          ? "No template found for this combination. We are constantly adding new templates to the database." 
-          : "لم يتم العثور على قالب لهذا الاختيار بعد. نحن نضيف قوالب جديدة باستمرار.");
+        await new Promise(r => setTimeout(r, 600));
+
+        // We use 'individual' client type as default for now
+        const dbResult = await getProposalTemplate(state.niche || 'general', tone, 'individual');
+        
+        if (dbResult && (dbResult.template_ar || dbResult.template_en)) {
+          const templateStr = (proposalLang === 'en' ? (dbResult.template_en || dbResult.template_ar) : dbResult.template_ar) || '';
+          const tipStr = lang === 'en' ? (dbResult.tip_en || dbResult.tip_ar) : dbResult.tip_ar;
+          
+          let text = `### 📝 ${lang === 'en' ? 'Suggested Proposal Template' : 'قالب العرض المقترح'}\n\n`;
+          text += `*(${lang === 'en' ? 'Adjust the parts in brackets to match the job description:' : 'قم بتعديل الأجزاء بين الأقواس لتناسب الوصف الوظيفي:'})*\n\n`;
+          text += templateStr;
+          
+          if (tipStr) {
+            text += `\n\n---\n**💡 ${lang === 'en' ? 'Pro Tip' : 'نصيحة ذهبية'}:** ${tipStr}`;
+          }
+          setResult(text);
+          dispatch({
+            type: 'SAVE_TOOL_RESULT',
+            toolId: 'proposal-sniper',
+            data: {
+              jobDescription,
+              tone,
+              proposalLang,
+              result: text,
+              mode: 'fast'
+            }
+          });
+        } else {
+          setResult(lang === 'en' 
+            ? "No template found for this combination. We are constantly adding new templates to the database." 
+            : "لم يتم العثور على قالب لهذا الاختيار بعد. نحن نضيف قوالب جديدة باستمرار.");
+        }
       }
     } catch (error) {
       console.error('Error generating proposal:', error);
@@ -111,6 +146,14 @@ export default function ProposalSniper({ stepNumber }) {
           </select>
         </div>
       </div>
+
+      {/* Dual Mode Selector */}
+      <AnalysisModeSelector 
+        mode={analysisMode} 
+        onChange={setAnalysisMode} 
+        lang={lang} 
+        accentColor="#8B5CF6" 
+      />
 
       <button 
         onClick={handleGenerate}

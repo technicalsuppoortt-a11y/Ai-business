@@ -3,10 +3,13 @@ import InteractiveToolLayout from './InteractiveToolLayout';
 import { useApp } from '../../../context/AppContext';
 import { getPricingAnalysisTemplate } from '../../../services/contentDbService';
 import { parseTemplate } from '../../../utils/templateParser';
+import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
+import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
 
 export default function FreelancePricing({ stepNumber }) {
   const { state, dispatch } = useApp();
   const lang = state.language || 'ar';
+  const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
   
   const [goal, setGoal] = useState(2000);
   const [currency, setCurrency] = useState('USD');
@@ -41,26 +44,56 @@ export default function FreelancePricing({ stepNumber }) {
     setAiAnalysis('');
 
     try {
-      await new Promise(r => setTimeout(r, 400));
-      
-      const nicheName = state.exactTitle || state.subNiche || state.niche || (lang === 'en' ? 'Freelancer' : 'مستقل');
-      const rate = hourlyRate;
-      const curr = currencySymbols[currency] || currency;
-
-      let rateLevel = 'competitive';
-      if (rate > 100) rateLevel = 'premium';
-      else if (rate <= 40) rateLevel = 'low';
-
-      const templateData = await getPricingAnalysisTemplate(rateLevel);
-      if (templateData && templateData[lang]) {
-        const text = parseTemplate(templateData[lang], { nicheName, rate, curr });
-        setAiAnalysis(text);
+      if (analysisMode === 'live') {
+        const liveResult = await dispatchLiveAiAnalysis({
+          toolId: 'freelance-pricing',
+          inputs: { goal, currency, hoursPerWeek, expenses, hourlyRate, projectRate },
+          context: { niche: state.niche, user: state.user },
+          lang
+        });
+        setAiAnalysis(liveResult);
+        dispatch({
+          type: 'SAVE_TOOL_RESULT',
+          toolId: 'freelance-pricing',
+          data: { goal, hourlyRate, projectRate, result: liveResult, mode: 'live' }
+        });
       } else {
-        setAiAnalysis(lang === 'en' ? 'Template not found.' : 'لم يتم العثور على القالب.');
+        await new Promise(r => setTimeout(r, 400));
+        
+        const nicheName = state.exactTitle || state.subNiche || state.niche || (lang === 'en' ? 'Freelancer' : 'مستقل');
+        const rate = hourlyRate;
+        const curr = currencySymbols[currency] || currency;
+
+        let rateLevel = 'competitive';
+        if (rate < 15) rateLevel = 'budget';
+        if (rate > 50) rateLevel = 'premium';
+
+        const template = await getPricingAnalysisTemplate(rateLevel);
+
+        if (template && (template.analysis_ar || template.analysis_en)) {
+          const rawAnalysis = lang === 'en' ? (template.analysis_en || template.analysis_ar) : template.analysis_ar;
+          const formatted = parseTemplate(rawAnalysis, {
+            rate: `${rate} ${curr}`,
+            niche: nicheName,
+            goal: `${goal} ${curr}`,
+            hours: actualHours,
+            projectRate: `${projectRate} ${curr}`
+          });
+          setAiAnalysis(formatted);
+          dispatch({
+            type: 'SAVE_TOOL_RESULT',
+            toolId: 'freelance-pricing',
+            data: { goal, hourlyRate, projectRate, result: formatted, mode: 'fast' }
+          });
+        } else {
+          setAiAnalysis(lang === 'en' 
+            ? `Your target rate of ${rate} ${curr}/hr is calculated based on your goal of ${goal} ${curr}/month.` 
+            : `ساعتك المستهدفة ${rate} ${curr}/ساعة تم حسابها بناءً على هدفك ${goal} ${curr}/شهر.`);
+        }
       }
     } catch (error) {
       console.error(error);
-      alert(lang === 'en' ? 'Error during price analysis.' : 'حدث خطأ أثناء تحليل السعر.');
+      alert(lang === 'en' ? 'Error analyzing price' : 'حدث خطأ أثناء تحليل السعر');
     } finally {
       setIsGenerating(false);
     }
@@ -140,6 +173,14 @@ export default function FreelancePricing({ stepNumber }) {
           />
         </div>
       </div>
+
+      {/* Dual Mode Selector */}
+      <AnalysisModeSelector 
+        mode={analysisMode} 
+        onChange={setAnalysisMode} 
+        lang={lang} 
+        accentColor="#3B82F6" 
+      />
 
       <button 
         onClick={handleAnalyze}

@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import InteractiveToolLayout from './InteractiveToolLayout';
 import { useApp } from '../../../context/AppContext';
 import { getBioTemplate } from '../../../services/contentDbService';
+import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
+import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
 
 export default function FreelanceProfile({ stepNumber }) {
   const { state, dispatch } = useApp();
   const lang = state.language || 'ar';
+  const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
   const [isGenerating, setIsGenerating] = useState(false);
   const [bio, setBio] = useState('');
   const [experience, setExperience] = useState('1');
@@ -15,30 +18,50 @@ export default function FreelanceProfile({ stepNumber }) {
     setBio('');
     
     try {
-      await new Promise(r => setTimeout(r, 600));
-      
-      let expLevel = 'intermediate';
-      if (experience === 'fresh' || experience === '1') expLevel = 'beginner';
-      if (experience === '5+') expLevel = 'expert';
-
-      const dbResult = await getBioTemplate(state.niche || 'general', expLevel);
-      
-      if (dbResult && (dbResult.bio_ar || dbResult.bio_en)) {
-        const bioText = lang === 'en' ? (dbResult.bio_en || dbResult.bio_ar) : dbResult.bio_ar;
-        const tipStr = lang === 'en' ? (dbResult.tip_en || dbResult.tip_ar) : dbResult.tip_ar;
-        
-        let text = `### 📝 ${lang === 'en' ? 'Professional Bio Template' : 'قالب النبذة الاحترافية'}\n\n`;
-        text += `*(${lang === 'en' ? 'Adjust the parts in brackets to match your details:' : 'قم بتعديل الأجزاء بين الأقواس لتناسب تفاصيلك:'})*\n\n`;
-        text += bioText;
-        
-        if (tipStr) {
-          text += `\n\n---\n**💡 ${lang === 'en' ? 'Pro Tip' : 'نصيحة ذهبية'}:** ${tipStr}`;
-        }
-        setBio(text);
+      if (analysisMode === 'live') {
+        const liveResult = await dispatchLiveAiAnalysis({
+          toolId: 'freelance-profile',
+          inputs: { experience, title: state.exactTitle },
+          context: { niche: state.niche, user: state.user },
+          lang
+        });
+        setBio(liveResult);
+        dispatch({
+          type: 'SAVE_TOOL_RESULT',
+          toolId: 'freelance-profile',
+          data: { experience, title: state.exactTitle, result: liveResult, mode: 'live' }
+        });
       } else {
-        setBio(lang === 'en' 
-          ? "No bio template found for this combination. We are constantly adding new templates." 
-          : "لم يتم العثور على قالب نبذة لهذا الاختيار بعد. نحن نضيف قوالب جديدة باستمرار.");
+        await new Promise(r => setTimeout(r, 600));
+        
+        let expLevel = 'intermediate';
+        if (experience === 'fresh' || experience === '1') expLevel = 'beginner';
+        if (experience === '5+') expLevel = 'expert';
+
+        const dbResult = await getBioTemplate(state.niche || 'general', expLevel);
+        
+        if (dbResult && (dbResult.bio_ar || dbResult.bio_en)) {
+          const bioText = lang === 'en' ? (dbResult.bio_en || dbResult.bio_ar) : dbResult.bio_ar;
+          const tipStr = lang === 'en' ? (dbResult.tip_en || dbResult.tip_ar) : dbResult.tip_ar;
+          
+          let text = `### 📝 ${lang === 'en' ? 'Professional Bio Template' : 'قالب النبذة الاحترافية'}\n\n`;
+          text += `*(${lang === 'en' ? 'Adjust the parts in brackets to match your details:' : 'قم بتعديل الأجزاء بين الأقواس لتناسب تفاصيلك:'})*\n\n`;
+          text += bioText;
+          
+          if (tipStr) {
+            text += `\n\n---\n**💡 ${lang === 'en' ? 'Pro Tip' : 'نصيحة ذهبية'}:** ${tipStr}`;
+          }
+          setBio(text);
+          dispatch({
+            type: 'SAVE_TOOL_RESULT',
+            toolId: 'freelance-profile',
+            data: { experience, title: state.exactTitle, result: text, mode: 'fast' }
+          });
+        } else {
+          setBio(lang === 'en' 
+            ? "No bio template found for this combination. We are constantly adding new templates." 
+            : "لم يتم العثور على قالب نبذة لهذا الاختيار بعد. نحن نضيف قوالب جديدة باستمرار.");
+        }
       }
     } catch (error) {
       console.error(error);
@@ -111,6 +134,14 @@ export default function FreelanceProfile({ stepNumber }) {
           ))}
         </div>
       </div>
+
+      {/* Dual Mode Selector */}
+      <AnalysisModeSelector 
+        mode={analysisMode} 
+        onChange={setAnalysisMode} 
+        lang={lang} 
+        accentColor="#3B82F6" 
+      />
 
       <button 
         onClick={handleGenBio}

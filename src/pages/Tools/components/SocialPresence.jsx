@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { getSocialPresenceMatrix } from '../../../services/contentDbService';
 import { SOCIAL_PLATFORMS, SOCIAL_GOALS, generateSocialStrategyText } from '../../../data/socialPresenceMatrix';
+import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
+import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
 import ToolDashboardLayout from './ToolDashboardLayout';
 
 export default function SocialPresence({ stepNumber }) {
-  const { state } = useApp();
+  const { state, dispatch } = useApp();
   const lang = state.language || 'ar';
+  const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
   
   // Inputs
   const [platform, setPlatform] = useState('instagram');
@@ -32,15 +35,43 @@ export default function SocialPresence({ stepNumber }) {
     setResult('');
 
     try {
-      await new Promise(r => setTimeout(r, 500));
+      if (analysisMode === 'live') {
+        const liveResult = await dispatchLiveAiAnalysis({
+          toolId: 'social-presence',
+          inputs: { platform, goal },
+          context: { niche: state.niche, brandName: state.brandName, user: state.user },
+          lang
+        });
+        setResult(liveResult);
+        dispatch({
+          type: 'SAVE_TOOL_RESULT',
+          toolId: 'social-presence',
+          data: {
+            platform,
+            goal,
+            result: liveResult,
+            mode: 'live'
+          }
+        });
+      } else {
+        await new Promise(r => setTimeout(r, 500));
 
-      const platformName = platforms.find(p => p.id === platform)?.[lang === 'en' ? 'label_en' : 'label_ar'];
-      const goalName = goals.find(g => g.id === goal)?.[lang === 'en' ? 'label_en' : 'label_ar'];
-      const niche = state.subNiche || state.niche || (lang === 'en' ? 'Freelance' : 'عمل حر');
-      const brandName = state.brandName || (lang === 'en' ? 'My Brand' : 'براندي');
-      
-      const text = generateSocialStrategyText(matrixData, platform, goal, niche, brandName, lang);
-      setResult(text);
+        const niche = state.subNiche || state.niche || (lang === 'en' ? 'Freelance' : 'عمل حر');
+        const brandName = state.brandName || (lang === 'en' ? 'My Brand' : 'براندي');
+        
+        const text = generateSocialStrategyText(matrixData, platform, goal, niche, brandName, lang);
+        setResult(text);
+        dispatch({
+          type: 'SAVE_TOOL_RESULT',
+          toolId: 'social-presence',
+          data: {
+            platform,
+            goal,
+            result: text,
+            mode: 'fast'
+          }
+        });
+      }
     } catch (error) {
       console.error(error);
       alert(lang === 'en' ? 'Error generating strategy. Try again.' : 'حدث خطأ أثناء التوليد. حاول مرة أخرى.');
@@ -156,6 +187,14 @@ export default function SocialPresence({ stepNumber }) {
               ))}
             </div>
           </div>
+
+          {/* Dual Mode Selector */}
+          <AnalysisModeSelector 
+            mode={analysisMode} 
+            onChange={setAnalysisMode} 
+            lang={lang} 
+            accentColor="#3B82F6" 
+          />
 
           <button 
             onClick={handleGenerate}

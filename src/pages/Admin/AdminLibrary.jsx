@@ -1065,7 +1065,7 @@ export default function AdminLibrary({ userData }) {
                 dir="rtl"
                 style={{ textAlign: "right" }}
               >
-                <thead>
+                <thead>ٌ
                   <tr>
                     <th style={{ textAlign: "right" }}>
                       {isEn ? "Product Details" : "المنتج والغلاف"}

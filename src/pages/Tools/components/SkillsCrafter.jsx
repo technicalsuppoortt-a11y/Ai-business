@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import InteractiveToolLayout from './InteractiveToolLayout';
 import { FREELANCE_DB } from '../../../data/freelanceData';
 import { useApp } from '../../../context/AppContext';
+import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
+import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
 
 export default function SkillsCrafter({ stepNumber }) {
   const { state, dispatch } = useApp();
   const lang = state.language || 'ar';
+  const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
   const [selectedCat, setSelectedCat] = useState('design');
   const [selectedSkills, setSelectedSkills] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -29,27 +32,46 @@ export default function SkillsCrafter({ stepNumber }) {
     setResult('');
 
     try {
-      await new Promise(r => setTimeout(r, 400));
-      
-      let text = `### 💎 ${lang === 'en' ? 'Your Value Propositions' : 'عروض القيمة الخاصة بك'}\n\n`;
-      text += `*(${lang === 'en' ? 'Use these directly in your bio or proposals to focus on results instead of just naming skills:' : 'استخدم هذه العبارات مباشرة في البايو أو العروض للتركيز على النتائج بدلاً من مجرد سرد المهارات:'})*\n\n`;
-
-      selectedSkills.forEach((skill) => {
-        const skillName = skill.name;
+      if (analysisMode === 'live') {
+        const liveResult = await dispatchLiveAiAnalysis({
+          toolId: 'skills-crafting',
+          inputs: { skills: selectedSkills.map(s => s.name) },
+          context: { niche: state.niche, user: state.user },
+          lang
+        });
+        setResult(liveResult);
+        dispatch({
+          type: 'SAVE_TOOL_RESULT',
+          toolId: 'skills-crafting',
+          data: { skills: selectedSkills.map(s => s.name), result: liveResult, mode: 'live' }
+        });
+      } else {
+        await new Promise(r => setTimeout(r, 400));
         
-        // Basic template generation based on category or general
-        const valuePropEn = `I don't just provide **${skillName}** services. I deliver a seamless experience that solves your problem and helps you achieve your core business goals efficiently and professionally.`;
-        const valuePropAr = `أنا لا أقدم لك مجرد خدمة **${skillName}**. بل أقدم لك تجربة متكاملة تحل مشكلتك وتساعدك على تحقيق أهداف مشروعك الأساسية باحترافية وسرعة.`;
-        
-        const tipEn = `Instead of saying "I am skilled at ${skillName}", say: "I will use my expertise in ${skillName} to save your time and increase your ROI."`;
-        const tipAr = `بدلاً من أن تقول "أنا خبير في ${skillName}"، قل: "سأستخدم خبرتي في ${skillName} لتوفير وقتك وزيادة أرباحك."`;
+        let text = `### 💎 ${lang === 'en' ? 'Your Value Propositions' : 'عروض القيمة الخاصة بك'}\n\n`;
+        text += `*(${lang === 'en' ? 'Use these directly in your bio or proposals to focus on results instead of just naming skills:' : 'استخدم هذه العبارات مباشرة في البايو أو العروض للتركيز على النتائج بدلاً من مجرد سرد المهارات:'})*\n\n`;
 
-        text += `### 🎯 ${skillName}\n`;
-        text += `**${lang === 'en' ? 'What to tell the client' : 'ماذا تقول للعميل'}:**\n${lang === 'en' ? valuePropEn : valuePropAr}\n\n`;
-        text += `**💡 ${lang === 'en' ? 'Pro Tip' : 'نصيحة بيعية'}:** ${lang === 'en' ? tipEn : tipAr}\n\n---\n\n`;
-      });
+        selectedSkills.forEach((skill) => {
+          const skillName = skill.name;
+          
+          const valuePropEn = `I don't just provide **${skillName}** services. I deliver a seamless experience that solves your problem and helps you achieve your core business goals efficiently and professionally.`;
+          const valuePropAr = `أنا لا أقدم لك مجرد خدمة **${skillName}**. بل أقدم لك تجربة متكاملة تحل مشكلتك وتساعدك على تحقيق أهداف مشروعك الأساسية باحترافية وسرعة.`;
+          
+          const tipEn = `Instead of saying "I am skilled at ${skillName}", say: "I will use my expertise in ${skillName} to save your time and increase your ROI."`;
+          const tipAr = `بدلاً من أن تقول "أنا خبير في ${skillName}"، قل: "سأستخدم خبرتي في ${skillName} لتوفير وقتك وزيادة أرباحك."`;
 
-      setResult(text);
+          text += `### 🎯 ${skillName}\n`;
+          text += `**${lang === 'en' ? 'What to tell the client' : 'ماذا تقول للعميل'}:**\n${lang === 'en' ? valuePropEn : valuePropAr}\n\n`;
+          text += `**💡 ${lang === 'en' ? 'Pro Tip' : 'نصيحة بيعية'}:** ${lang === 'en' ? tipEn : tipAr}\n\n---\n\n`;
+        });
+
+        setResult(text);
+        dispatch({
+          type: 'SAVE_TOOL_RESULT',
+          toolId: 'skills-crafting',
+          data: { skills: selectedSkills.map(s => s.name), result: text, mode: 'fast' }
+        });
+      }
     } catch (error) {
       console.error(error);
       alert(lang === 'en' ? 'Error generating. Please try again.' : 'حدث خطأ أثناء التوليد. الرجاء المحاولة مجدداً.');
@@ -110,6 +132,14 @@ export default function SkillsCrafter({ stepNumber }) {
           })}
         </div>
       </div>
+
+      {/* Dual Mode Selector */}
+      <AnalysisModeSelector 
+        mode={analysisMode} 
+        onChange={setAnalysisMode} 
+        lang={lang} 
+        accentColor="#3B82F6" 
+      />
 
       <button 
         onClick={handleGenerate}

@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import InteractiveToolLayout from './InteractiveToolLayout';
 import { useApp } from '../../../context/AppContext';
+import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
+import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
 
 export default function PortfolioBuilder({ stepNumber }) {
   const { state, dispatch } = useApp();
   const lang = state.language || 'ar';
+  const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
   const [projectData, setProjectData] = useState({
     title: '', client: '', challenge: '', solution: '', result: ''
   });
@@ -21,23 +24,43 @@ export default function PortfolioBuilder({ stepNumber }) {
     setGeneratedCaseStudy('');
 
     try {
-      await new Promise(r => setTimeout(r, 400));
-      
-      let text = `### 🚀 ${title}\n`;
-      text += `**${lang === 'en' ? 'Client / Industry' : 'العميل / الصناعة'}:** ${projectData.client || (lang === 'en' ? 'Anonymous' : 'غير محدد')}\n\n`;
-      
-      text += `**📌 ${lang === 'en' ? 'The Challenge' : 'التحدي (المشكلة)'}:**\n${challenge}\n\n`;
-      
-      text += `**🛠 ${lang === 'en' ? 'The Solution' : 'الحل المبتكر'}:**\n${solution}\n\n`;
-      
-      text += `**📈 ${lang === 'en' ? 'Results & Impact' : 'النتائج والأثر'}:**\n${result}\n\n`;
-      
-      text += `**✨ ${lang === 'en' ? 'Why This Project Matters' : 'القيمة المضافة للعميل'}:**\n`;
-      text += lang === 'en' 
-        ? `This project clearly demonstrates my capacity to tackle complex challenges and deliver measurable, high-quality results efficiently.` 
-        : `هذا المشروع يثبت قدرتي على معالجة التحديات المعقدة وتقديم حلول عملية تحقق نتائج ملموسة ونجاحاً حقيقياً لعملائي.`;
+      if (analysisMode === 'live') {
+        const liveResult = await dispatchLiveAiAnalysis({
+          toolId: 'portfolio-builder',
+          inputs: projectData,
+          context: { niche: state.niche, user: state.user },
+          lang
+        });
+        setGeneratedCaseStudy(liveResult);
+        dispatch({
+          type: 'SAVE_TOOL_RESULT',
+          toolId: 'portfolio-builder',
+          data: { projectData, result: liveResult, mode: 'live' }
+        });
+      } else {
+        await new Promise(r => setTimeout(r, 400));
+        
+        let text = `### 🚀 ${title}\n`;
+        text += `**${lang === 'en' ? 'Client / Industry' : 'العميل / الصناعة'}:** ${projectData.client || (lang === 'en' ? 'Anonymous' : 'غير محدد')}\n\n`;
+        
+        text += `**📌 ${lang === 'en' ? 'The Challenge' : 'التحدي (المشكلة)'}:**\n${challenge}\n\n`;
+        
+        text += `**🛠 ${lang === 'en' ? 'The Solution' : 'الحل المبتكر'}:**\n${solution}\n\n`;
+        
+        text += `**📈 ${lang === 'en' ? 'Results & Impact' : 'النتائج والأثر'}:**\n${result}\n\n`;
+        
+        text += `**✨ ${lang === 'en' ? 'Why This Project Matters' : 'القيمة المضافة للعميل'}:**\n`;
+        text += lang === 'en' 
+          ? `This project clearly demonstrates my capacity to tackle complex challenges and deliver measurable, high-quality results efficiently.` 
+          : `هذا المشروع يثبت قدرتي على معالجة التحديات المعقدة وتقديم حلول عملية تحقق نتائج ملموسة ونجاحاً حقيقياً لعملائي.`;
 
-      setGeneratedCaseStudy(text);
+        setGeneratedCaseStudy(text);
+        dispatch({
+          type: 'SAVE_TOOL_RESULT',
+          toolId: 'portfolio-builder',
+          data: { projectData, result: text, mode: 'fast' }
+        });
+      }
     } catch (error) {
       console.error(error);
       alert(lang === 'en' ? 'Error during generation. Please try again.' : 'حدث خطأ أثناء التوليد. الرجاء المحاولة مجدداً.');
@@ -114,6 +137,14 @@ export default function PortfolioBuilder({ stepNumber }) {
             onChange={(e) => setProjectData({...projectData, result: e.target.value})}
           />
         </div>
+
+        {/* Dual Mode Selector */}
+        <AnalysisModeSelector 
+          mode={analysisMode} 
+          onChange={setAnalysisMode} 
+          lang={lang} 
+          accentColor="#EC4899" 
+        />
 
         <button 
           onClick={generateCaseStudy}

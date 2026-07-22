@@ -3,10 +3,13 @@ import InteractiveToolLayout from './InteractiveToolLayout';
 import { FREELANCE_DB } from '../../../data/freelanceData';
 import { useApp } from '../../../context/AppContext';
 import { getPlatformStrategy } from '../../../services/contentDbService';
+import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
+import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
 
 export default function PlatformRadar({ stepNumber }) {
   const { state, dispatch } = useApp();
   const lang = state.language || 'ar';
+  const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
   const [filter, setFilter] = useState('all');
   const [selectedPlatform, setSelectedPlatform] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -36,27 +39,47 @@ export default function PlatformRadar({ stepNumber }) {
     setAiStrategy('');
 
     try {
-      await new Promise(r => setTimeout(r, 600));
-
-      const dbResult = await getPlatformStrategy(selectedPlatform.id, state.niche || 'general');
-      
-      if (dbResult && (dbResult.conquest_plan_ar || dbResult.conquest_plan_en)) {
-        const plan = lang === 'en' ? (dbResult.conquest_plan_en || dbResult.conquest_plan_ar) : dbResult.conquest_plan_ar;
-        const tip = lang === 'en' ? (dbResult.golden_tip_en || dbResult.golden_tip_ar) : dbResult.golden_tip_ar;
-        
-        let text = plan;
-        if (tip) {
-          text += `\n\n**💡 ${lang === 'en' ? 'Golden Tip' : 'السر الأكبر'}:** ${tip}`;
-        }
-        setAiStrategy(text);
+      if (analysisMode === 'live') {
+        const liveResult = await dispatchLiveAiAnalysis({
+          toolId: 'platform-radar',
+          inputs: { platformName: selectedPlatform.name, platformUrl: selectedPlatform.url },
+          context: { niche: state.niche, user: state.user },
+          lang
+        });
+        setAiStrategy(liveResult);
+        dispatch({
+          type: 'SAVE_TOOL_RESULT',
+          toolId: 'platform-radar',
+          data: { platform: selectedPlatform.name, result: liveResult, mode: 'live' }
+        });
       } else {
-        setAiStrategy(lang === 'en' 
-          ? "No specific strategy found for this platform/niche yet. We are constantly updating the database." 
-          : "لم يتم العثور على استراتيجية مخصصة لهذه المنصة/النيتش بعد. نقوم بتحديث قاعدة البيانات باستمرار.");
+        await new Promise(r => setTimeout(r, 600));
+
+        const dbResult = await getPlatformStrategy(selectedPlatform.id, state.niche || 'general');
+        
+        if (dbResult && (dbResult.conquest_plan_ar || dbResult.conquest_plan_en)) {
+          const plan = lang === 'en' ? (dbResult.conquest_plan_en || dbResult.conquest_plan_ar) : dbResult.conquest_plan_ar;
+          const tip = lang === 'en' ? (dbResult.golden_tip_en || dbResult.golden_tip_ar) : dbResult.golden_tip_ar;
+          
+          let text = plan;
+          if (tip) {
+            text += `\n\n**💡 ${lang === 'en' ? 'Golden Tip' : 'السر الأكبر'}:** ${tip}`;
+          }
+          setAiStrategy(text);
+          dispatch({
+            type: 'SAVE_TOOL_RESULT',
+            toolId: 'platform-radar',
+            data: { platform: selectedPlatform.name, result: text, mode: 'fast' }
+          });
+        } else {
+          setAiStrategy(lang === 'en' 
+            ? "No specific strategy found for this platform yet. We are constantly expanding our database." 
+            : "لم يتم العثور على خطة مخصصة لهذه المنصة بعد. نقوم بإضافة استراتيجيات جديدة باستمرار.");
+        }
       }
     } catch (error) {
       console.error(error);
-      alert(lang === 'en' ? 'Error during generation. Please try again.' : 'حدث خطأ أثناء التوليد. الرجاء المحاولة مجدداً.');
+      alert(lang === 'en' ? 'Error generating strategy' : 'حدث خطأ أثناء استخراج استراتيجية الاختراق');
     } finally {
       setIsGenerating(false);
     }
@@ -164,6 +187,14 @@ export default function PlatformRadar({ stepNumber }) {
                 <span className="text-sm font-bold text-amber-400">{selectedPlatform.successRate}</span>
               </div>
             </div>
+
+            {/* Dual Mode Selector */}
+            <AnalysisModeSelector 
+              mode={analysisMode} 
+              onChange={setAnalysisMode} 
+              lang={lang} 
+              accentColor="#F59E0B" 
+            />
 
             <button 
               onClick={handleAnalyze}

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { getMarketingPlan } from '../../../services/contentDbService';
+import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
+import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
 import ToolDashboardLayout from './ToolDashboardLayout';
 
 export default function MarketingPlan({ stepNumber }) {
@@ -8,6 +10,8 @@ export default function MarketingPlan({ stepNumber }) {
   const lang = state.language || 'ar';
   
   const savedState = state.toolResults['marketing-plan'] || {};
+
+  const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
 
   const [budget, setBudget] = useState(savedState.budget || '500');
   const [duration, setDuration] = useState(savedState.duration || '30'); // days
@@ -34,19 +38,14 @@ export default function MarketingPlan({ stepNumber }) {
     setResult('');
 
     try {
-      await new Promise(r => setTimeout(r, 800));
-
-      // Determine budget tier based on amount
-      const bNum = Number(budget);
-      let budgetTier = 'starter';
-      if (bNum > 1000) budgetTier = 'scale';
-      else if (bNum > 300) budgetTier = 'growth';
-
-      const dbResult = await getMarketingPlan(state.niche || 'general', budgetTier, goal, clientLevel);
-      
-      if (dbResult && (dbResult.plan_ar || dbResult.plan_en)) {
-        const plan = lang === 'en' ? (dbResult.plan_en || dbResult.plan_ar) : dbResult.plan_ar;
-        setResult(plan);
+      if (analysisMode === 'live') {
+        const liveResult = await dispatchLiveAiAnalysis({
+          toolId: 'marketing-plan',
+          inputs: { budget, duration, goal, clientLevel },
+          context: { niche: state.niche, user: state.user },
+          lang
+        });
+        setResult(liveResult);
         dispatch({
           type: 'SAVE_TOOL_RESULT',
           toolId: 'marketing-plan',
@@ -55,13 +54,41 @@ export default function MarketingPlan({ stepNumber }) {
             duration,
             goal,
             clientLevel,
-            result: plan
+            result: liveResult,
+            mode: 'live'
           }
         });
       } else {
-        setResult(lang === 'en' 
-          ? "No specific marketing plan found for this budget/niche yet. We are constantly updating the database." 
-          : "لم يتم العثور على خطة تسويقية مخصصة لهذه الميزانية/النيتش بعد. نقوم بتحديث قاعدة البيانات باستمرار.");
+        await new Promise(r => setTimeout(r, 800));
+
+        // Determine budget tier based on amount
+        const bNum = Number(budget);
+        let budgetTier = 'starter';
+        if (bNum > 1000) budgetTier = 'scale';
+        else if (bNum > 300) budgetTier = 'growth';
+
+        const dbResult = await getMarketingPlan(state.niche || 'general', budgetTier, goal, clientLevel);
+        
+        if (dbResult && (dbResult.plan_ar || dbResult.plan_en)) {
+          const plan = lang === 'en' ? (dbResult.plan_en || dbResult.plan_ar) : dbResult.plan_ar;
+          setResult(plan);
+          dispatch({
+            type: 'SAVE_TOOL_RESULT',
+            toolId: 'marketing-plan',
+            data: {
+              budget,
+              duration,
+              goal,
+              clientLevel,
+              result: plan,
+              mode: 'fast'
+            }
+          });
+        } else {
+          setResult(lang === 'en' 
+            ? "No specific marketing plan found for this budget/niche yet. We are constantly updating the database." 
+            : "لم يتم العثور على خطة تسويقية مخصصة لهذه الميزانية/النيتش بعد. نقوم بتحديث قاعدة البيانات باستمرار.");
+        }
       }
     } catch (error) {
       console.error(error);
@@ -222,6 +249,14 @@ export default function MarketingPlan({ stepNumber }) {
               ))}
             </div>
           </div>
+
+          {/* Dual Mode Selector */}
+          <AnalysisModeSelector 
+            mode={analysisMode} 
+            onChange={setAnalysisMode} 
+            lang={lang} 
+            accentColor="#3B82F6" 
+          />
 
           <button 
             onClick={handleGenerate}

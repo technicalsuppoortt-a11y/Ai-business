@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
@@ -6,6 +6,85 @@ import { useAuth } from '../../context/AuthContext';
 import { db } from '../../firebase';
 import Topbar from '../../components/layout/Topbar';
 import PaymentModal from '../Tools/components/PaymentModal';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Sparkles,
+  Compass,
+  TrendingUp,
+  Zap,
+  User,
+  Globe,
+  CheckCircle2,
+  MessageSquare,
+  CreditCard,
+  Gift,
+  Clock,
+  ArrowRight,
+  ArrowLeft,
+  ChevronDown,
+  Lightbulb,
+  Target,
+  Check
+} from 'lucide-react';
+import './OnboardingPage.css';
+
+// Sleek Custom Glassmorphic Dropdown Component
+function CustomDropdown({ value, onChange, options, placeholder }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(o => String(o.value) === String(value)) || options[0];
+
+  return (
+    <div className="custom-dropdown-container" ref={dropdownRef}>
+      <div 
+        className={`custom-dropdown-trigger ${isOpen ? 'open' : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span>{selectedOption?.label || placeholder}</span>
+        <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          <ChevronDown size={16} color="var(--text3)" />
+        </motion.div>
+      </div>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            className="custom-dropdown-menu"
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            transition={{ duration: 0.15 }}
+          >
+            {options.map(opt => (
+              <div
+                key={String(opt.value)}
+                className={`custom-dropdown-option ${String(opt.value) === String(value) ? 'selected' : ''}`}
+                onClick={() => {
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+              >
+                <span>{opt.label}</span>
+                {String(opt.value) === String(value) && <Check size={14} color="var(--accent)" />}
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export default function OnboardingPage() {
   const { state, dispatch } = useApp();
@@ -13,6 +92,7 @@ export default function OnboardingPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const lang = state.language || 'ar';
+  const isRtl = lang === 'ar';
 
   const [adminPhone, setAdminPhone] = useState('');
   const [adminBrandName, setAdminBrandName] = useState('');
@@ -69,26 +149,32 @@ export default function OnboardingPage() {
 
   const levels = [
     {
-      id: 'beginner', icon: '🗺',
+      id: 'beginner',
+      IconComponent: Compass,
       name_ar: 'مبتدئ', name_en: 'Beginner',
       desc_ar: 'أبدأ مشروعي من الصفر', desc_en: 'Starting my project from scratch',
-      color: 'accent',
+      color: '#6366F1',
+      bgGlow: 'rgba(99, 102, 241, 0.15)',
       perks_ar: ['إرشاد خطوة بخطوة', 'أفكار جاهزة', 'نماذج للنسخ'],
       perks_en: ['Step-by-step guidance', 'Ready ideas', 'Copy templates']
     },
     {
-      id: 'medium', icon: '🧭',
+      id: 'medium',
+      IconComponent: TrendingUp,
       name_ar: 'متوسط', name_en: 'Intermediate',
       desc_ar: 'عندي تجربة وعايز أطور', desc_en: 'I have experience and want to grow',
-      color: 'green',
+      color: '#10B981',
+      bgGlow: 'rgba(16, 185, 129, 0.15)',
       perks_ar: ['استراتيجيات متقدمة', 'أدوات براندينج', 'تحسين العروض'],
       perks_en: ['Advanced strategies', 'Branding tools', 'Offer optimization']
     },
     {
-      id: 'pro', icon: '⚡',
+      id: 'pro',
+      IconComponent: Zap,
       name_ar: 'محترف', name_en: 'Pro',
       desc_ar: 'عندي براند وعايز أوسّع', desc_en: 'I have a brand and want to scale',
-      color: 'amber',
+      color: '#F59E0B',
+      bgGlow: 'rgba(245, 158, 11, 0.15)',
       perks_ar: ['كل الأدوات مفتوحة', 'إعلانات ونمو', 'أنظمة أتمتة'],
       perks_en: ['All tools unlocked', 'Ads & growth', 'Automation systems']
     },
@@ -125,70 +211,74 @@ export default function OnboardingPage() {
     }
   };
 
+  const COUNTRY_OPTIONS = [
+    { value: 'SA', label: lang === 'en' ? '🇸🇦 Saudi Arabia (السعودية)' : '🇸🇦 المملكة العربية السعودية (Saudi Arabia)' },
+    { value: 'AE', label: lang === 'en' ? '🇦🇪 United Arab Emirates (الإمارات)' : '🇦🇪 الإمارات العربية المتحدة (UAE)' },
+    { value: 'EG', label: lang === 'en' ? '🇪🇬 Egypt (مصر)' : '🇪🇬 جمهورية مصر العربية (Egypt)' },
+    { value: 'KW', label: lang === 'en' ? '🇰🇼 Kuwait (الكويت)' : '🇰🇼 دولة الكويت (Kuwait)' },
+    { value: 'QA', label: lang === 'en' ? '🇶🇦 Qatar (قطر)' : '🇶🇦 دولة قطر (Qatar)' },
+    { value: 'JO', label: lang === 'en' ? '🇯🇴 Jordan (الأردن)' : '🇯🇴 المملكة الأردنية الهاشمية (Jordan)' },
+    { value: 'MA', label: lang === 'en' ? '🇲🇦 Morocco (المغرب)' : '🇲🇦 المملكة المغربية (Morocco)' },
+    { value: 'OTHER', label: lang === 'en' ? '🌍 Other / International' : '🌍 دولة أخرى / دولي' }
+  ];
+
   return (
     <>
       <Topbar
-        title={lang === 'en' ? '🚀 Start' : '🚀 البداية'}
-        subtitle={lang === 'en' ? 'Your first step to building your smart project' : 'خطوتك الأولى لبناء مشروعك الذكي'}
+        title={lang === 'en' ? '🚀 Start Onboarding' : '🚀 البداية والتأسيس'}
+        subtitle={lang === 'en' ? 'Your first step to building your smart project' : 'خطوتك الأولى لبناء مشروعك الذكي وتحديد المسار'}
       />
-      <div className="content-area view-enter">
-        {/* Welcome */}
-        <div style={{ textAlign: 'center', padding: '32px 24px 20px' }}>
-          <div style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 700, letterSpacing: '.1em', marginBottom: 8 }}>
-            {lang === 'en' ? 'Step 1 of 7' : 'الخطوة 1 من 7'}
-          </div>
-          <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: -0.5, marginBottom: 8 }}>
-            {lang === 'en' ? 'Welcome to AI Brand Vision' : 'مرحباً بك في AI Brand Vision'}
-          </div>
-          <div style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.7, maxWidth: 500, margin: '0 auto' }}>
-            {lang === 'en'
-              ? 'We will build with you a complete strategy — from idea to brand to content to growth'
-              : 'سنبني معك استراتيجية متكاملة — من الفكرة للبراند للمحتوى للنمو'}
-          </div>
-        </div>
 
+      <div className="onboarding-container animate-fade-in" dir={isRtl ? 'rtl' : 'ltr'}>
+
+        {/* HERO WELCOME HEADER */}
+        <motion.div 
+          className="onboarding-hero-header"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="onboarding-step-pill">
+            <Sparkles size={13} />
+            <span>{lang === 'en' ? 'Step 1 of 7' : 'الخطوة 1 من 7'}</span>
+          </div>
+          <h1 className="onboarding-hero-title">
+            {lang === 'en' ? 'Welcome to AI Brand Vision' : 'مرحباً بك في منصة AI Brand Vision'}
+          </h1>
+          <p className="onboarding-hero-subtitle">
+            {lang === 'en'
+              ? 'We will build a complete strategy with you — from idea to brand to content to sustainable growth.'
+              : 'سنبني معك استراتيجية متكاملة لمشروعك — من الفكرة للبراند للمحتوى والتوسع المستدام.'}
+          </p>
+        </motion.div>
+
+        {/* FREE TRIAL ALERT CARD */}
         {isTrial && (
-          <div className="trial-alert-card" style={{
-            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.04) 0%, rgba(59, 130, 246, 0.04) 100%)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(16, 185, 129, 0.2)',
-            borderRadius: '16px',
-            padding: '24px',
-            margin: '0 12px 24px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '20px',
-            direction: lang === 'ar' ? 'rtl' : 'ltr',
-            textAlign: lang === 'ar' ? 'right' : 'left'
-          }}>
-            <div style={{ flex: '1 1 350px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <span style={{ fontSize: '20px' }}>🎁</span>
-                <span style={{ 
-                  fontSize: '11px', 
-                  fontWeight: '800', 
-                  color: 'var(--green)',
-                  background: 'rgba(16, 185, 129, 0.08)',
-                  padding: '4px 10px',
-                  borderRadius: '20px',
-                  border: '1px solid rgba(16, 185, 129, 0.15)'
-                }}>
-                  {lang === 'ar' ? 'فترة تجريبية نشطة' : 'Active Free Trial'}
-                </span>
-                <span style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: 'bold' }}>
-                  ({getDaysRemaining()} {lang === 'ar' ? 'أيام متبقية' : 'days remaining'})
-                </span>
+          <motion.div 
+            className="onboarding-trial-card"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
+            <div style={{ flex: 1 }}>
+              <div className="trial-badge-row">
+                <div className="trial-active-tag">
+                  <Gift size={13} />
+                  <span>{lang === 'ar' ? 'فترة تجريبية نشطة' : 'Active Free Trial'}</span>
+                </div>
+                <div className="trial-days-tag">
+                  <Clock size={13} color="#F59E0B" />
+                  <span>({getDaysRemaining()} {lang === 'ar' ? 'أيام متبقية' : 'days remaining'})</span>
+                </div>
               </div>
-              <p style={{ fontSize: '13px', color: '#E8EDF5', lineHeight: '1.6', margin: 0 }}>
+              <p className="trial-card-text">
                 {lang === 'ar' 
-                  ? `أنت الآن تستخدم الفترة المجانية (ينتهي اشتراكك التجريبي خلال ${getDaysRemaining()} يوم بتاريخ ${expiry ? expiry.toLocaleDateString('ar-EG') : '—'}). لتفعيل الاشتراك الكامل والاستفادة من جميع الميزات الحصرية، يمكنك الاشتراك والدفع المباشر (المحافظ الإلكترونية) أو التواصل معنا عبر الواتساب!`
-                  : `You are currently using the Free Trial (your trial expires in ${getDaysRemaining()} day(s) on ${expiry ? expiry.toLocaleDateString('en-US') : '—'}). To activate your full subscription and unlock all features, you can pay directly (E-Wallets) or contact us via WhatsApp!`}
+                  ? `أنت الآن تستخدم الفترة المجانية (ينتهي اشتراكك التجريبي خلال ${getDaysRemaining()} يوم بتاريخ ${expiry ? expiry.toLocaleDateString('ar-EG') : '—'}). لتفعيل الاشتراك الكامل، يمكنك الدفع المباشر أو التواصل معنا عبر الواتساب!`
+                  : `You are currently using the Free Trial (your trial expires in ${getDaysRemaining()} day(s) on ${expiry ? expiry.toLocaleDateString('en-US') : '—'}). To activate full access, pay directly or contact us via WhatsApp!`}
               </p>
             </div>
             
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <div className="trial-actions-row">
               {adminPhone && (
                 <a 
                   href={`https://wa.me/${adminPhone.replace(/\+/g, '').trim()}?text=${encodeURIComponent(
@@ -198,53 +288,24 @@ export default function OnboardingPage() {
                   )}`}
                   target="_blank" 
                   rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                    borderRadius: '12px',
-                    padding: '12px 24px',
-                    color: '#fff',
-                    fontSize: '13px',
-                    fontWeight: '700',
-                    textDecoration: 'none',
-                    boxShadow: '0 8px 20px rgba(16, 185, 129, 0.25)',
-                    transition: 'all 0.2s ease',
-                    cursor: 'pointer'
-                  }}
-                  className="whatsapp-activation-btn"
+                  className="btn btn-green"
+                  style={{ textDecoration: 'none', padding: '12px 20px', borderRadius: 12 }}
                 >
-                  <span style={{ fontSize: '16px' }}>💬</span>
-                  {lang === 'ar' ? 'عبر الواتساب' : 'Via WhatsApp'}
+                  <MessageSquare size={16} />
+                  <span>{lang === 'ar' ? 'عبر الواتساب' : 'Via WhatsApp'}</span>
                 </a>
               )}
 
               <button 
                 onClick={() => setIsPaymentModalOpen(true)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
-                  borderRadius: '12px',
-                  padding: '12px 24px',
-                  color: '#fff',
-                  fontSize: '13px',
-                  fontWeight: '700',
-                  border: 'none',
-                  boxShadow: '0 8px 20px rgba(59, 130, 246, 0.25)',
-                  transition: 'all 0.2s ease',
-                  cursor: 'pointer'
-                }}
+                className="btn btn-primary"
+                style={{ padding: '12px 20px', borderRadius: 12 }}
               >
-                <span style={{ fontSize: '16px' }}>💳</span>
-                {lang === 'ar' ? 'الدفع المباشر' : 'Pay Directly'}
+                <CreditCard size={16} />
+                <span>{lang === 'ar' ? 'الدفع المباشر' : 'Pay Directly'}</span>
               </button>
             </div>
-          </div>
+          </motion.div>
         )}
 
         <PaymentModal 
@@ -258,108 +319,141 @@ export default function OnboardingPage() {
           lang={lang}
         />
 
-        {/* Level Cards */}
-        <div className="card">
-          <div className="card-header">
-            <div>
-              <div className="card-title">{lang === 'en' ? 'Where are you now?' : 'أين أنت الآن؟'}</div>
-              <div className="card-sub">{lang === 'en' ? 'Choose your level to fully customize the system' : 'اختر مستواك لتخصيص النظام بالكامل'}</div>
-            </div>
-          </div>
-          <div className="grid-3">
-            {levels.map(l => (
-              <div
-                key={l.id}
-                onClick={() => selectLevel(l.id)}
-                style={{
-                  background: state.user.level === l.id ? `rgba(59,130,246,0.08)` : 'var(--bg3)',
-                  border: `1px solid ${state.user.level === l.id ? 'rgba(59,130,246,0.4)' : 'var(--line)'}`,
-                  borderRadius: 'var(--radius)', padding: 18, cursor: 'pointer',
-                  transition: 'all .25s', position: 'relative'
-                }}
-              >
-                <div style={{ fontSize: 24, marginBottom: 10 }}>{l.icon}</div>
-                <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>
-                  {lang === 'en' ? l.name_en : l.name_ar}
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--text2)', lineHeight: 1.6, marginBottom: 10 }}>
-                  {lang === 'en' ? l.desc_en : l.desc_ar}
-                </div>
-                {(lang === 'en' ? l.perks_en : l.perks_ar).map((p, i) => (
-                  <div key={i} style={{ fontSize: 10, color: 'var(--text3)', display: 'flex', alignItems: 'center', gap: 4, marginTop: 3 }}>
-                    <span style={{ color: 'var(--accent)' }}>→</span> {p}
+        {/* EXPERIENCE LEVEL SELECTION CARD */}
+        <motion.div 
+          className="onboarding-card-panel"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          <h3 className="onboarding-section-title">
+            <Target size={20} color="#6366F1" />
+            <span>{lang === 'en' ? 'Where are you now?' : 'أين أنت الآن من رحلة مشروعك؟'}</span>
+          </h3>
+          <p className="onboarding-section-sub">
+            {lang === 'en' ? 'Choose your current experience level to fully customize the system recommendations' : 'اختر مستواك لتخصيص أدوات وخريطة طريق المنصة لتناسب احتياجك بدقة'}
+          </p>
+
+          <div className="levels-grid">
+            {levels.map(l => {
+              const isSelected = state.user.level === l.id;
+              const IconComp = l.IconComponent;
+              return (
+                <motion.div
+                  key={l.id}
+                  onClick={() => selectLevel(l.id)}
+                  className={`level-card ${isSelected ? 'selected' : ''}`}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div className="level-icon-badge" style={{ background: l.bgGlow, color: l.color }}>
+                    <IconComp size={22} />
                   </div>
-                ))}
-              </div>
-            ))}
+                  <div className="level-card-name">
+                    <span>{lang === 'en' ? l.name_en : l.name_ar}</span>
+                    {isSelected && <CheckCircle2 size={18} color="var(--accent)" />}
+                  </div>
+                  <p className="level-card-desc">
+                    {lang === 'en' ? l.desc_en : l.desc_ar}
+                  </p>
+                  {(lang === 'en' ? l.perks_en : l.perks_ar).map((p, i) => (
+                    <div key={i} className="level-perk-item">
+                      <Check size={12} color={l.color} />
+                      <span>{p}</span>
+                    </div>
+                  ))}
+                </motion.div>
+              );
+            })}
           </div>
           
-          {state.user.level && levelDetails[state.user.level] && (
-            <div style={{
-              marginTop: '24px',
-              padding: '20px',
-              borderRadius: '12px',
-              background: 'rgba(59, 130, 246, 0.05)',
-              border: '1px solid rgba(59, 130, 246, 0.2)',
-              animation: 'fadeIn 0.3s ease-out'
-            }}>
-              <h4 style={{ color: '#3B82F6', fontSize: '14px', marginBottom: '8px', fontWeight: 'bold' }}>
-                {lang === 'en' ? 'Level Details' : 'تفاصيل المستوى'}
-              </h4>
-              <p style={{ color: '#E8EDF5', fontSize: '13px', lineHeight: '1.6', marginBottom: '16px' }}>
-                {lang === 'en' ? levelDetails[state.user.level].details_en : levelDetails[state.user.level].details_ar}
-              </p>
-              
-              <div style={{
-                background: 'rgba(13, 18, 32, 0.5)',
-                padding: '16px',
-                borderRadius: '8px',
-                borderLeft: '4px solid #3B82F6'
-              }}>
-                <p style={{ color: '#fff', fontSize: '13px', lineHeight: '1.6', margin: 0, fontWeight: 'bold' }}>
-                  {lang === 'en' ? levelDetails[state.user.level].advice_en : levelDetails[state.user.level].advice_ar}
+          {/* LEVEL DETAILS ADVICE BOX */}
+          <AnimatePresence mode="wait">
+            {state.user.level && levelDetails[state.user.level] && (
+              <motion.div 
+                className="level-advice-box"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <h4 className="advice-header">
+                  <Lightbulb size={18} />
+                  <span>{lang === 'en' ? 'Level Focus & Strategy Details' : 'تفاصيل الخطة والتوجيه المخصص'}</span>
+                </h4>
+                <p className="advice-text">
+                  {lang === 'en' ? levelDetails[state.user.level].details_en : levelDetails[state.user.level].details_ar}
                 </p>
-              </div>
-            </div>
-          )}
-        </div>
+                
+                <div className="advice-quote-card">
+                  {lang === 'en' ? levelDetails[state.user.level].advice_en : levelDetails[state.user.level].advice_ar}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
 
-        {/* Profile quick form */}
-        <div className="card">
-          <div className="card-title" style={{ marginBottom: 16 }}>
-            {lang === 'en' ? 'Your Basic Information' : 'بياناتك الأساسية'}
-          </div>
-          <div className="grid-2">
-            <div className="field">
-              <label className="field-label">{lang === 'en' ? 'Your Name' : 'اسمك'}</label>
+        {/* PROFILE BASIC INFORMATION */}
+        <motion.div 
+          className="onboarding-card-panel"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
+        >
+          <h3 className="onboarding-section-title">
+            <User size={20} color="#10B981" />
+            <span>{lang === 'en' ? 'Your Basic Information' : 'بياناتك الأساسية'}</span>
+          </h3>
+          <p className="onboarding-section-sub">
+            {lang === 'en' ? 'Help us personalize your business workspace' : 'تخصيص البيانات المطبوعة بالتقارير والاستراتيجيات'}
+          </p>
+
+          <div className="onboarding-fields-grid">
+            <div className="onboarding-field-group">
+              <label className="onboarding-field-label">
+                <User size={15} color="#6366F1" />
+                <span>{lang === 'en' ? 'Your Name / Owner Name' : 'اسم المستخدم (المالك)'}</span>
+              </label>
               <input
-                className="field-input"
-                placeholder={lang === 'en' ? 'Ahmed Mohammed' : 'أحمد محمد'}
-                value={state.user.name}
+                className="onboarding-field-input"
+                placeholder={lang === 'en' ? 'e.g. Ahmed Mohamed' : 'مثال: أحمد محمد'}
+                value={state.user.name || ''}
                 onChange={e => dispatch({ type: 'SET_USER', payload: { name: e.target.value } })}
               />
             </div>
-            <div className="field">
-              <label className="field-label">{lang === 'en' ? 'Country' : 'الدولة'}</label>
-              <select className="field-select" value={state.user.country} onChange={e => dispatch({ type: 'SET_USER', payload: { country: e.target.value } })}>
-                <option value="EG">🇪🇬 {lang === 'en' ? 'Egypt' : 'مصر'}</option>
-                <option value="SA">🇸🇦 {lang === 'en' ? 'Saudi Arabia' : 'السعودية'}</option>
-                <option value="AE">🇦🇪 {lang === 'en' ? 'UAE' : 'الإمارات'}</option>
-                <option value="KW">🇰🇼 {lang === 'en' ? 'Kuwait' : 'الكويت'}</option>
-                <option value="JO">🇯🇴 {lang === 'en' ? 'Jordan' : 'الأردن'}</option>
-                <option value="MA">🇲🇦 {lang === 'en' ? 'Morocco' : 'المغرب'}</option>
-                <option value="OTHER">🌍 {lang === 'en' ? 'Other' : 'أخرى'}</option>
-              </select>
+
+            <div className="onboarding-field-group">
+              <label className="onboarding-field-label">
+                <Globe size={15} color="#6366F1" />
+                <span>{lang === 'en' ? 'Target Country / Region' : 'الدولة المستهدفة'}</span>
+              </label>
+              <CustomDropdown 
+                value={state.user.country || 'SA'}
+                onChange={v => dispatch({ type: 'SET_USER', payload: { country: v } })}
+                options={COUNTRY_OPTIONS}
+              />
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <button className="btn btn-primary" onClick={proceed}>
-            {lang === 'en' ? 'Save & Continue' : 'حفظ والاستمرار'}
-            <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-          </button>
-        </div>
+        {/* PROCEED ACTION BAR */}
+        <motion.div 
+          className="onboarding-footer-bar"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.4 }}
+        >
+          <motion.button 
+            className="proceed-btn" 
+            onClick={proceed}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+          >
+            <span>{lang === 'en' ? 'Save & Start Journey' : 'حفظ واستمرار إلى الانطلاق'}</span>
+            {isRtl ? <ArrowLeft size={18} /> : <ArrowRight size={18} />}
+          </motion.button>
+        </motion.div>
+
       </div>
     </>
   );

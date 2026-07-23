@@ -1264,22 +1264,63 @@ export default function AnalysisIdentity() {
           </div>
 
           {/* Confirm Brand Name input */}
-          <div style={{ borderTop: '1px solid var(--line)', paddingTop: '24px' }}>
-            <div style={{ maxWidth: '540px', margin: '0 auto', textAlign: 'center' }}>
-              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: '13px', fontWeight: '800', color: 'var(--text2)', marginBottom: '10px' }}>
-                <Crown size={18} color="#F59E0B" />
+          <div style={{ borderTop: '1px solid var(--line)', paddingTop: '24px', marginTop: '24px' }}>
+            <div style={{
+              maxWidth: '560px',
+              margin: '0 auto',
+              padding: '20px 24px',
+              background: 'rgba(15, 23, 42, 0.4)',
+              border: '1px solid rgba(236, 72, 153, 0.25)',
+              borderRadius: '16px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+              backdropFilter: 'blur(12px)'
+            }}>
+              <label style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                gap: '8px', 
+                fontSize: '14px', 
+                fontWeight: '800', 
+                color: 'var(--text)', 
+                marginBottom: '14px' 
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '8px',
+                  background: 'rgba(245, 158, 11, 0.15)',
+                  border: '1px solid rgba(245, 158, 11, 0.3)'
+                }}>
+                  <Crown size={16} color="#F59E0B" />
+                </div>
                 <span>{lang === 'en' ? 'Confirm Final Brand Name' : 'اسم البراند المعتمد النهائي'}</span>
               </label>
-              <div style={{ display: 'flex', gap: '10px' }}>
+
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                 <input 
                   type="text" 
                   className="setting-field-input"
                   value={customNameInput}
                   onChange={(e) => setCustomNameInput(e.target.value)}
-                  placeholder={lang === 'en' ? "NovaTrend" : "رونق"}
+                  placeholder={lang === 'en' ? "e.g. NovaTrend" : "مثال: رونق"}
                   style={{
-                    fontSize: '18px', fontWeight: '900', textAlign: 'center', height: '52px',
-                    borderColor: 'rgba(236, 72, 153, 0.4)', color: '#EC4899', background: 'rgba(236, 72, 153, 0.05)'
+                    flex: 1,
+                    width: '100%',
+                    fontSize: '16px',
+                    fontWeight: '800',
+                    textAlign: isRtl ? 'right' : 'left',
+                    height: '48px',
+                    padding: '0 16px',
+                    borderColor: 'rgba(236, 72, 153, 0.4)',
+                    color: '#EC4899',
+                    background: 'rgba(236, 72, 153, 0.06)',
+                    borderRadius: '12px',
+                    outline: 'none',
+                    transition: 'all 0.2s ease'
                   }}
                 />
                 <button
@@ -1287,11 +1328,24 @@ export default function AnalysisIdentity() {
                   disabled={!customNameInput}
                   className="btn btn-primary"
                   style={{
-                    margin: 0, padding: '0 28px', background: '#EC4899', height: '52px',
-                    borderRadius: '12px', fontSize: '14px', fontWeight: '800'
+                    margin: 0,
+                    padding: '0 24px',
+                    background: 'linear-gradient(135deg, #EC4899 0%, #DB2777 100%)',
+                    height: '48px',
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    fontWeight: '800',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 4px 14px rgba(236, 72, 153, 0.35)',
+                    cursor: customNameInput ? 'pointer' : 'not-allowed',
+                    opacity: customNameInput ? 1 : 0.6
                   }}
                 >
-                  <span>{lang === 'en' ? 'Confirm' : 'اعتماد الاسم'}</span>
+                  <span>{lang === 'en' ? 'Confirm Name' : 'اعتماد الاسم'}</span>
                   {isRtl ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
                 </button>
               </div>

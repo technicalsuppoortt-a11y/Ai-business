@@ -1,48 +1,73 @@
-/**
- * liveAiService.js
- * ====================================
- * Service for Live AI Real-time Analysis
- * Dispatches context-aware prompt requests to LLM API endpoint
- * using process.env.VITE_OPENAI_API_KEY or import.meta.env.VITE_OPENAI_API_KEY
- * ====================================
- */
+import { auth, adminAuth, superAdminAuth } from '../firebase';
 
 /**
- * Helper to safely extract the OpenAI API key
+ * Helper to retrieve the active authenticated user's email
  */
-export function getOpenAiApiKey() {
-  let key = '';
+export function getCurrentUserEmail(userEmail = null) {
+  if (userEmail && typeof userEmail === 'string') {
+    return userEmail.trim();
+  }
   try {
-    if (import.meta && import.meta.env && import.meta.env.VITE_OPENAI_API_KEY) {
-      key = import.meta.env.VITE_OPENAI_API_KEY;
-    }
+    const email = auth?.currentUser?.email || adminAuth?.currentUser?.email || superAdminAuth?.currentUser?.email || '';
+    if (email) return email.trim();
   } catch (e) {
-    // Ignore error in non-vite environment
+    // Ignore error in non-firebase environment
   }
+  return '';
+}
 
-  if (!key && typeof process !== 'undefined' && process?.env?.VITE_OPENAI_API_KEY) {
-    key = process.env.VITE_OPENAI_API_KEY;
-  }
+/**
+ * Helper to safely extract the OpenAI API key based on strict user email access rule.
+ * The VITE_OPENAI_API_KEY (configured in .env.local) MUST ONLY be used when the
+ * currently logged-in user's email is EXACTLY admin@brand.com.
+ * For any other user email:
+ *  - System VITE_OPENAI_API_KEY will NOT be used.
+ *  - Uses personal API key from settings (app_api_key in localStorage) if provided.
+ */
+export function getOpenAiApiKey(userEmail = null) {
+  const email = getCurrentUserEmail(userEmail);
+  const isAllowedUser = email.toLowerCase() === 'admin@brand.com';
 
-  if (!key) {
+  let defaultKey = '';
+  if (isAllowedUser) {
     try {
-      key = localStorage.getItem('app_api_key') || '';
+      if (import.meta && import.meta.env && import.meta.env.VITE_OPENAI_API_KEY) {
+        defaultKey = import.meta.env.VITE_OPENAI_API_KEY;
+      }
     } catch (e) {
       // Ignore
     }
+
+    if (!defaultKey && typeof process !== 'undefined' && process?.env?.VITE_OPENAI_API_KEY) {
+      defaultKey = process.env.VITE_OPENAI_API_KEY;
+    }
   }
 
-  return key ? key.trim() : '';
+  if (defaultKey) {
+    return defaultKey.trim();
+  }
+
+  // Fallback to user's personal API key configured in Settings
+  try {
+    const personalKey = localStorage.getItem('app_api_key') || localStorage.getItem('user_openai_api_key') || '';
+    if (personalKey) {
+      return personalKey.trim();
+    }
+  } catch (e) {
+    // Ignore
+  }
+
+  return '';
 }
 
 /**
  * Core function to dispatch prompt to OpenAI Chat Completion API
  */
-export async function callOpenAiApi({ systemPrompt, userPrompt, jsonMode = false }) {
-  const apiKey = getOpenAiApiKey();
+export async function callOpenAiApi({ systemPrompt, userPrompt, jsonMode = false, userEmail = null }) {
+  const apiKey = getOpenAiApiKey(userEmail);
 
   if (!apiKey) {
-    throw new Error('VITE_OPENAI_API_KEY is not defined. Please check your .env file or settings.');
+    throw new Error('Live AI Real-time Analysis requires an OpenAI API key. System VITE_OPENAI_API_KEY access is strictly restricted to admin@brand.com. Please enter your personal OpenAI API key in Settings to use Live AI Mode.');
   }
 
   const url = 'https://api.openai.com/v1/chat/completions';

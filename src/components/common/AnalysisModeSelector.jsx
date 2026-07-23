@@ -1,5 +1,6 @@
 import React from "react";
-import { Zap, Cpu, Sparkles } from "lucide-react";
+import { Zap, Cpu, Sparkles, Key } from "lucide-react";
+import { getCurrentUserEmail, getOpenAiApiKey } from "../../services/liveAiService";
 import "./AnalysisModeSelector.css";
 
 /**
@@ -16,6 +17,9 @@ export default function AnalysisModeSelector({
   style = {},
 }) {
   const isArabic = lang === "ar";
+  const activeEmail = getCurrentUserEmail();
+  const isAllowedUser = activeEmail.toLowerCase() === 'admin@brand.com';
+  const hasKey = Boolean(getOpenAiApiKey());
 
   return (
     <div
@@ -75,10 +79,16 @@ export default function AnalysisModeSelector({
             <Cpu size={18} color={mode === "live" ? accentColor : "#94A3B8"} />
           </div>
           <div className="ams-tab-text">
-            <span className="ams-tab-main">
+            <span className="ams-tab-main flex items-center gap-1.5">
               {isArabic
                 ? "الذكاء الاصطناعي المباشر"
                 : "Live AI Real-time"}
+              {!isAllowedUser && !hasKey && (
+                <span className="text-[10px] text-amber-400 font-normal flex items-center gap-0.5" title={isArabic ? "يتطلب إضافة مفتاحك الخاص في الإعدادات" : "Requires personal API key in Settings"}>
+                  <Key size={10} />
+                  ({isArabic ? "مفتاحك الإعدادات" : "Own Key"})
+                </span>
+              )}
             </span>
             <span className="ams-tab-sub">
               {isArabic

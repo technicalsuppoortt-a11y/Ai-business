@@ -49,10 +49,19 @@ export default function DashboardNavbar({
 
   const toggleTheme = () => {
     const nextTheme = theme === 'light' ? 'dark' : 'light';
+    const root = document.documentElement;
     if (nextTheme === 'light') {
-      document.documentElement.classList.add('light-mode');
+      root.classList.add('light-mode');
+      root.style.removeProperty('--bg');
+      root.style.removeProperty('--bg2');
+      root.style.removeProperty('--text');
+      root.style.removeProperty('--line');
     } else {
-      document.documentElement.classList.remove('light-mode');
+      root.classList.remove('light-mode');
+      root.style.setProperty('--bg', '#080C14');
+      root.style.setProperty('--bg2', '#0D1220');
+      root.style.setProperty('--text', '#FFFFFF');
+      root.style.setProperty('--line', 'rgba(255,255,255,0.08)');
     }
     localStorage.setItem('ui_theme', nextTheme);
     setTheme(nextTheme);

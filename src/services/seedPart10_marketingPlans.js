@@ -36,64 +36,147 @@ const clientLevels = [
 ];
 
 const generateMarketingPlan = (niche, budget, goal, clientLevel) => {
-  // Strategy & Setup based on Client Level
-  let strategyEn = '';
-  let strategyAr = '';
+  const planEn = `# 🗺️ Master Advertising & Marketing Plan
 
-  if (clientLevel.id === 'beginner') {
-    strategyEn = `**1. Foundation & Setup (Beginner Level):**\n- **Pixel & Tracking:** Ensure Meta/TikTok Pixel is installed correctly. No complex server-side tracking yet.\n- **Campaign Structure:** Keep it simple. One Campaign > Two Ad Sets (Broad vs Interests) > 3 Ads each.\n- **Trust Building:** Make sure social profiles look active. Add basic reviews to landing pages.`;
-    strategyAr = `**1. التأسيس والبنية التحتية (مستوى المبتدئ):**\n- **البيكسل والتتبع:** تأكد من تركيب Meta/TikTok Pixel الأساسي بطريقة صحيحة. لا تشغل نفسك بالتتبع المتقدم (Server-side) الآن.\n- **هيكلة الحملة:** ابقها بسيطة جداً. حملة واحدة (CBO/ABO) > مجموعتين إعلانيتين (استهداف عام Broad، واستهداف اهتمامات) > 3 إعلانات داخل كل مجموعة.\n- **بناء الثقة:** تأكد أن الحسابات الاجتماعية تبدو نشطة ولها صورة احترافية. أضف آراء عملاء أساسية في صفحة الهبوط.`;
-  } else if (clientLevel.id === 'intermediate') {
-    strategyEn = `**1. Optimization & Scaling (Intermediate Level):**\n- **Advanced Tracking:** Implement Server-Side Tracking (CAPI) to recover lost iOS data.\n- **Retargeting Funnel:** Build specific audiences: (Viewed 50% Video, Added to Cart 7 Days, IG Engagers 30 Days).\n- **Offer Enhancement:** Introduce a "Bump Offer" or simple Upsell to increase AOV (Average Order Value).`;
-    strategyAr = `**1. التحسين والنمو (مستوى المتوسط):**\n- **التتبع المتقدم (CAPI):** تركيب الـ Server-Side Tracking لاسترجاع البيانات المفقودة بسبب تحديثات iOS.\n- **قمع إعادة الاستهداف (Retargeting Funnel):** بناء جماهير مخصصة: (من شاهد 50% من الفيديو، من أضاف للسلة في آخر 7 أيام، المتفاعلين على إنستجرام آخر 30 يوماً).\n- **تحسين العرض:** إضافة عرض إضافي سريع (Bump Offer) أو (Upsell) لزيادة متوسط قيمة الطلب (AOV).`;
-  } else {
-    strategyEn = `**1. Omnichannel Scaling & Aggressive Growth (Professional Level):**\n- **MER & LTV Focus:** Stop looking at just ROAS. Monitor Marketing Efficiency Ratio (MER) and Customer Lifetime Value (LTV).\n- **Omnichannel Synergy:** Coordinate ads across Meta, TikTok, and Google Ads (PMax + Search) with cohesive messaging.\n- **Advanced Bid Strategies:** Use Cost-Cap / Bid-Cap for stable scaling during high-volume periods.`;
-    strategyAr = `**1. التوسع الشامل والسيطرة (مستوى المحترف):**\n- **التركيز على MER و LTV:** توقف عن الاعتماد الكلي على الـ ROAS. راقب كفاءة التسويق الإجمالية (MER) والقيمة الدائمة للعميل (LTV).\n- **التواجد الشامل (Omnichannel):** تنسيق الحملات بين Meta و TikTok و Google (PMax + Search) لضرب العميل من كل الاتجاهات برسائل مترابطة.\n- **استراتيجيات المزايدة:** استخدام (Cost-Cap) و (Bid-Cap) لضمان استقرار التكلفة عند ضخ ميزانيات ضخمة.`;
-  }
+## 📌 Executive Overview
+- **Niche/Industry**: ${niche.name_en}
+- **Total Budget**: ${budget.name_en}
+- **Campaign Duration**: 30 Days
+- **Primary Goal**: ${goal.name_en} (${clientLevel.name_en} Level)
 
-  // Logic to determine allocation
-  let allocationEn = '';
-  let allocationAr = '';
-  
-  if (budget.id === 'starter') {
-    allocationEn = `**2. Budget Allocation (${budget.name_en}):**\n- **80% Testing Phase:** Focus strictly on finding 1-2 winning creatives.\n  - *Action:* Test totally different visual angles, not just text changes.\n- **20% Retargeting:** Capture low-hanging fruit (Website visitors, Cart Abandoners).`;
-    allocationAr = `**2. توزيع الميزانية (${budget.name_ar}):**\n- **80% مرحلة الاختبار (Testing):** التركيز حصراً على العثور على إعلان أو إعلانين رابحين.\n  - *إجراء تنفيذي:* اختبر زوايا بصرية مختلفة تماماً، لا تغير فقط النص المكتوب.\n- **20% إعادة الاستهداف:** لاقتناص العملاء الذين أبدوا اهتماماً ولم يشتروا (زوار الموقع، التاركين للسلة).`;
-  } else if (budget.id === 'growth') {
-    allocationEn = `**2. Budget Allocation (${budget.name_en}):**\n- **60% Scaling:** Pushing budget into proven winning ads to maximize immediate returns.\n- **20% Continuous Testing:** Dedicate this strictly to test new hooks and creatives to avoid ad fatigue.\n- **20% Omnichannel Retargeting:** Strong retargeting across Meta and Google (Display/YouTube).`;
-    allocationAr = `**2. توزيع الميزانية (${budget.name_ar}):**\n- **60% التوسع (Scaling):** ضخ الميزانية بقوة في الإعلانات الرابحة لتعظيم العوائد الفورية.\n- **20% الاختبار المستمر:** ميزانية معزولة للبحث عن خطافات (Hooks) وأفكار جديدة لتجنب موت الإعلانات القديمة.\n- **20% إعادة استهداف شامل:** ملاحقة العملاء عبر Meta و Google Display.`;
-  } else {
-    allocationEn = `**2. Budget Allocation (${budget.name_en}):**\n- **70% Broad Scaling:** Going broad (Advantage+ / PMax) to let algorithms reach a massive audience.\n- **15% Radical Testing:** Testing completely radical, out-of-the-box concepts or new platforms.\n- **15% High-Value Retargeting:** Aggressive, personalized follow-up based on specific user actions.`;
-    allocationAr = `**2. توزيع الميزانية (${budget.name_ar}):**\n- **70% التوسع الواسع:** استخدام استهداف مفتوح (Advantage+) لإعطاء الخوارزميات حرية جلب آلاف العملاء يومياً.\n- **15% اختبار مفاهيم جريئة:** اختبار أفكار مجنونة خارج الصندوق، أو منصات جديدة كلياً.\n- **15% إعادة استهداف عالي القيمة:** ملاحقة شرسة برسائل مخصصة حسب الإجراء الذي اتخذه العميل (مثال: إعلان خاص لمن وصل لصفحة الدفع).`;
-  }
+---
 
-  // Targeting Angles
-  const targetingEn = `**3. High-Priority Targeting Angles:**\n- **Direct / Broad:** Trusting the AI. Broad targeting without limitations.\n- **Lookalike Value-Based:** Creating 1-3% LAL of your highest-paying customers.\n- **Competitor/Niche specific:** Targeting people who interact with massive pages in the ${niche.name_en} industry.\n- **Behavioral/Intent:** Targeting based on recent online purchase behaviors.`;
-  
-  const targetingAr = `**3. زوايا الاستهداف ذات الأولوية القصوى:**\n- **الاستهداف المفتوح (Broad):** ترك الخوارزميات (خاصة في Meta و TikTok) تبحث عن المشتري بدون تضييق النطاق.\n- **جمهور مشابه مبني على القيمة (Value-Based LAL):** بناء جمهور مشابه (1-3%) لأكثر عملائك دفعاً للأموال.\n- **المنافسين المباشرين:** استهداف المهتمين بالعلامات التجارية الكبيرة في قطاع ${niche.name_ar}.\n- **السلوك الشرائي (Behavioral):** استهداف من قاموا بعمليات شراء أونلاين مؤخراً (Engaged Shoppers).`;
+## 🎯 Target Audience & Angles
+- **Demographics & Profile**: Target customers interested in ${niche.name_en}, seeking high quality, convenience, and value.
+- **High-Priority Targeting Angles**:
+  1. **Direct/Broad**: Leverage Meta & TikTok broad AI targeting to reach wide intent pools.
+  2. **Interests & Behaviors**: Filter by active buyers, niche enthusiasts, and key competitor brand followers.
+  3. **Lookalike/Retargeting**: 1-3% LAL of top purchasers and aggressive retargeting for 7-day cart abandoners.
 
-  // Goal specifics
-  let kpisEn = '';
-  let kpisAr = '';
+---
 
-  if (goal.id === 'sales') {
-    kpisEn = `**4. Critical KPIs to Monitor (${goal.name_en}):**\n- **Primary Metric (ROAS / CPA):** Keep CPA strictly below your break-even margin.\n- **Secondary Metrics:**\n  - *Link CTR:* Must be > 1.5%.\n  - *Add to Cart Rate:* Target > 8% (If lower, product page needs work).\n  - *Checkout Completion:* Target > 40% (If lower, shipping costs or trust issues exist).`;
-    kpisAr = `**4. مؤشرات الأداء الحاسمة (${goal.name_ar}):**\n- **المؤشر الأساسي (ROAS و CPA):** يجب أن تظل تكلفة الاستحواذ (CPA) أقل من هامش ربحك الصافي.\n- **المؤشرات الثانوية (لتحديد مكان المشكلة):**\n  - *نسبة النقر للرابط (Link CTR):* يجب أن تتجاوز 1.5%.\n  - *نسبة الإضافة للسلة:* هدفك > 8% (إذا كانت أقل، صفحة المنتج ضعيفة أو السعر غير مناسب).\n  - *نسبة إكمال الدفع:* هدفك > 40% (إذا كانت أقل، غالباً المشكلة في تكلفة الشحن أو قلة الثقة).`;
-  } else if (goal.id === 'leads') {
-    kpisEn = `**4. Critical KPIs to Monitor (${goal.name_en}):**\n- **Primary Metric (CPL & Quality):** Balance low Cost Per Lead with high show-up/qualification rate.\n- **Secondary Metrics:**\n  - *Form/Landing Page Conversion Rate:* Target > 15-20%.\n  - *Lead to Call/Appointment Rate:* Target > 60%.\n  - *Sales Closing Rate:* Monitor how many leads actually become paying clients.`;
-    kpisAr = `**4. مؤشرات الأداء الحاسمة (${goal.name_ar}):**\n- **المؤشر الأساسي (CPL وجودة البيانات):** موازنة تكلفة العميل المحتمل مع جودة رده واستعداده للدفع.\n- **المؤشرات الثانوية:**\n  - *نسبة تحويل صفحة الهبوط/الفورم:* هدفك > 15-20%.\n  - *نسبة الرد / حجز المواعيد:* هدفك > 60%.\n  - *نسبة الإغلاق البيعي (Closing Rate):* مراقبة عدد الـ Leads الذين يتحولون فعلياً لعملاء دافعين.`;
-  } else {
-    kpisEn = `**4. Critical KPIs to Monitor (${goal.name_en}):**\n- **Primary Metric (CPM & Reach):** Ensure you are reaching the maximum qualified audience at the lowest cost.\n- **Secondary Metrics:**\n  - *Video ThruPlay/View Rate:* Target > 30% retention at 3 seconds.\n  - *Frequency:* Maintain between 2-4 per user to build memory without fatigue.\n  - *Engagement Quality:* Monitor saves, shares, and positive comments.`;
-    kpisAr = `**4. مؤشرات الأداء الحاسمة (${goal.name_ar}):**\n- **المؤشر الأساسي (CPM والوصول):** ضمان الوصول لأكبر عدد من الجمهور المستهدف بأقل تكلفة ممكنة.\n- **المؤشرات الثانوية:**\n  - *نسبة مشاهدة الفيديو:* هدفك بقاء > 30% من المشاهدين لأول 3 ثواني.\n  - *تكرار الإعلان (Frequency):* بين 2 إلى 4 مرات للمستخدم لزرع العلامة في عقله دون إزعاجه.\n  - *جودة التفاعل:* مراقبة الحفظ (Saves)، المشاركات (Shares)، والتعليقات الإيجابية.`;
-  }
+## 📊 Budget Allocation Strategy
+| Marketing Channel / Phase | Budget ($ / %) | Strategic Purpose | Key Expected Action |
+| :--- | :--- | :--- | :--- |
+| **Testing Phase (Paid Ads)** | $350 (70%) | Test creatives & find winners | Traffic & initial conversion |
+| **Retargeting & Nurturing** | $100 (20%) | Recapture cart abandoners | High ROI conversions |
+| **Content & Email / Organic** | $50 (10%) | Build authority & email list | Long-term retention |
 
-  // 5 Ad Creatives
-  const adsEn = `**5. Top-Performing Creative Concepts:**\n- **The "Us vs. Them" Comparison (Image/Video):**\n  - Split screen showing your solution vs traditional frustrating solutions.\n  - *Why it works:* Instantly positions you as the superior, logical choice.\n- **The Educational Hook (Video):**\n  - "Stop doing [Common Mistake], do this instead."\n  - *Why it works:* Provides immediate value and builds authority before pitching the product.\n- **User Generated Content (UGC):**\n  - Authentic, unpolished selfie-style review highlighting a specific emotional transformation.\n  - *Why it works:* Breaks through "ad blindness" and feels like advice from a friend.\n- **The Direct Offer / Unboxing (Carousel/Video):**\n  - Fast-paced showcase of the product features, irresistible offer, and clear pricing.\n  - *Why it works:* Converts high-intent audiences instantly.\n- **The Objection-Crusher (Video/Image):**\n  - Address the #1 reason people hesitate to buy from you head-on in the ad copy.\n  - *Why it works:* Removes friction and builds massive trust.`;
+---
 
-  const adsAr = `**5. أقوى 5 مفاهيم إعلانية (Concepts) يجب إنتاجها:**\n- **إعلان المقارنة (نحن ضدهم):**\n  - صورة أو فيديو (شاشة مقسومة) تقارن بين حلك الذكي، والطرق التقليدية المتعبة.\n  - *لماذا ينجح؟* يبرز منتجك كخيار منطقي ومتفوق على الفور.\n- **إعلان "تصحيح الأخطاء" التعليمي:**\n  - "توقف عن فعل [الخطأ الشائع]، وافعل هذا بدلاً منه..."\n  - *لماذا ينجح؟* يعطي قيمة مجانية فورية، ويجعل العميل ينظر لك كخبير قبل أن تبيع له أي شيء.\n- **محتوى رأي العميل العفوي (UGC):**\n  - فيديو بسيط غير متكلف (سيلفي) لعميل يشرح كيف تغيرت حياته/يومه بفضل خدمتك.\n  - *لماذا ينجح؟* يكسر حاجز "العمى الإعلاني" ويبدو كنصيحة صادقة من صديق.\n- **العرض المباشر الساحق:**\n  - استعراض سريع وقوي للمنتج وعرض لا يمكن رفضه (خصم أو باقة) وسعر واضح.\n  - *لماذا ينجح؟* يغلق البيعة فوراً للعملاء الجاهزين للشراء (High-Intent).\n- **إعلان "تدمير المخاوف" (Objection-Crusher):**\n  - اكتب أكثر سبب يمنع الناس من الشراء منك، وقم بالرد عليه وتفنيده داخل الإعلان نفسه.\n  - *لماذا ينجح؟* يزيل التردد والشك ويبني ثقة جبارة بينك وبين العميل.`;
+## ⚡ Step-by-Step Execution Plan
 
-  const planEn = `## 🗺️ Master Advertising Plan: ${niche.name_en} (${clientLevel.name_en})\n\n${strategyEn}\n\n${allocationEn}\n\n${targetingEn}\n\n${kpisEn}\n\n${adsEn}`;
-  
-  const planAr = `## 🗺️ الخطة الإعلانية الشاملة: ${niche.name_ar} (مستوى ${clientLevel.name_ar})\n\n${strategyAr}\n\n${allocationAr}\n\n${targetingAr}\n\n${kpisAr}\n\n${adsAr}`;
+### Phase 1: Foundation & Tracking Setup
+- Verify Pixel & Server-Side CAPI tracking installation on checkout & landing pages.
+- Setup Campaign Structure: 1 CBO Campaign > 2 Ad Sets (Broad vs Interests) > 3 Creatives each.
+
+### Phase 2: Campaign Strategy & Channels
+- **Paid Social Ads**: Meta/TikTok Ads focused on short-form video & high-converting carousel formats.
+- **Email & Direct Nurturing**: Automated 3-day welcome & abandoned cart email sequences.
+- **Content Marketing**: Produce 3 weekly organic value posts to boost social proof.
+
+---
+
+## 💡 Top-Performing Creative Concepts
+1. **The "Us vs. Them" Comparison**
+   - *Format*: Image/Video
+   - *Concept*: Side-by-side comparison showing ${niche.name_en} solution vs frustrating traditional alternatives.
+2. **The Educational Hook / Problem Solver**
+   - *Format*: Video/Carousel
+   - *Concept*: "Stop doing this mistake in ${niche.name_en}, do this instead."
+3. **User-Generated Content (UGC) / Social Proof**
+   - *Format*: Short Video
+   - *Concept*: Authentic selfie-style customer review highlighting emotional transformation.
+4. **The Direct Offer & Urgency**
+   - *Format*: Carousel/Single Image
+   - *Concept*: Unboxing showcase with an irresistible limited-time bonus offer.
+
+---
+
+## 📈 Critical KPIs & Performance Tracking
+- **Primary Metric**: Target CPA < 30% of Sale Price / Target ROAS > 2.5x
+- **Secondary Metrics**:
+  - **Link CTR**: Target > 1.5%
+  - **Add to Cart Rate**: Target > 8%
+  - **Checkout Completion**: Target > 40%
+
+---
+
+## 🏁 Summary & Immediate Action Items
+- Launch Pixel & CAPI tracking diagnostic test.
+- Finalize 4 creative assets (1 Us vs Them, 1 UGC, 1 Educational, 1 Offer).
+- Publish Campaign with $15-30/day initial testing budget.`;
+
+  const planAr = `# 🗺️ خطة التسويق والإعلانات الشاملة
+
+## 📌 النظرة العامة والتنفيذية
+- **النيتش / القطاع**: ${niche.name_ar}
+- **إجمالي الميزانية**: ${budget.name_ar}
+- **مدة الحملة**: 30 يومًا
+- **الهدف الرئيسي**: ${goal.name_ar} (مستوى ${clientLevel.name_ar})
+
+---
+
+## 🎯 الجمهور المستهدف وزوايا الإعلان
+- **الخصائص الديموغرافية والملف الشخصي**: العملاء المهتمين بقطاع ${niche.name_ar}، والباحثين عن الجودة العالية والحلول السريعة.
+- **زوايا الاستهداف عالية الأولوية**:
+  1. **الاستهداف المفتوح (Broad)**: الاستفادة من خوارزميات Meta و TikTok للوصول لأكبر شرائح المهتمين.
+  2. **الاهتمامات والسلوكيات**: استهداف المتابعين للمنافسين والمشترين المتفاعلين (Engaged Shoppers).
+  3. **الجماهير المشابهة وإعادة الاستهداف**: جمهور مشابه (1-3% LAL) وإعادة استهداف شرسة للتاركين للسلة في آخر 7 أيام.
+
+---
+
+## 📊 استراتيجية توزيع الميزانية
+| القناة / المرحلة التسويقية | الميزانية ($ / %) | الهدف الاستراتيجي | الإجراء المتوقع |
+| :--- | :--- | :--- | :--- |
+| **مرحلة الاختبار (إعلانات ممولة)** | 70% | اختبر الإعلانات واعثر على الإعلان الرابح | زيارات وتحويلات أولية |
+| **إعادة الاستهداف والمتابعة** | 20% | استرجاع زوار التاركين للسلة | مبيعات بعائد مرتفع (High ROAS) |
+| **المحتوى والإيميل / المطبوعات** | 10% | بناء السلطة والقائمة البريدية | ولاء والاحتفاظ بالعملاء |
+
+---
+
+## ⚡ خطة التنفيذ خطوة بخطوة
+
+### Phase 1: التأسيس والتتبع
+- تأكد من تركيب Meta/TikTok Pixel وتفعيل الـ CAPI للتتبع الدقيق.
+- بناء هيكل الحملة: حملة CBO واحدة > مجموعتان إعلانيتان > 3 إعلانات رابحة في كل مجموعة.
+
+### Phase 2: استراتيجية الحملات والقنوات
+- **إعلانات السوشيال ميديا**: فيديوهات قصيرة (Reels/TikTok) + إعلانات Carousel تفاعلية.
+- **التسويق بالإيميل والتواصل**: متتابعة إيميلات تلقائية للتاركين للسلة (اليوم 1 واليوم 3).
+- **تسويق المحتوى**: نشر 3 بوستات قيمة أسبوعياً لبناء الثقة والمصداقية.
+
+---
+
+## 💡 أفضل المفاهيم الإعلانية أداءً
+1. **إعلان المقارنة (نحن ضد الآخرين)**
+   - *الشكل*: صورة أو فيديو
+   - *الفكرة*: شاشة مقسومة تقارن بين حلك الذكي في ${niche.name_ar} والبدائل التقليدية المتعبة.
+2. **الخطاف التعليمي / حل المشكلة**
+   - *الشكل*: فيديو / Carousel
+   - *الفكرة*: "توقف عن فعل هذا الخطأ الشائع، وافعل هذا بدلاً منه..."
+3. **محتوى تجربة العميل (UGC) والرمز الاجتماعي**
+   - *الشكل*: فيديو قصير
+   - *الفكرة*: فيديو عفوي (سيلفي) لعميل يشرح النتيجة الإيجابية التي حصل عليها.
+4. **العرض المباشر ودافع العجلة**
+   - *الشكل*: Carousel / صورة ترويجية
+   - *الفكرة*: استعراض سريع للمنتج مع عرض محدد بوقت وسعر واضح.
+
+---
+
+## 📈 مؤشرات الأداء الرئيسية والتحليل
+- **المؤشر الرئيسي**: تكلفة الاستحواذ Target CPA أقل من 30% من سعر البيع / عائد ROAS > 2.5x
+- **المؤشرات الثانوية**:
+  - **نسبة النقر للرابط (Link CTR)**: هدفك > 1.5%
+  - **نسبة الإضافة للسلة**: هدفك > 8%
+  - **إكمال الدفع (Checkout)**: هدفك > 40%
+
+---
+
+## 🏁 الملخص والخطوات الفورية
+- إجراء اختبار فحص لبيكسل التتبع والتأكد من صحة البيانات.
+- تجهيز 4 إعلانات مختلفة (مقارنة، UGC، تعليمي، عرض مباشر).
+- إطلاق الحملة الإعلانية بميزانية تجريبية من 15-30$ يومياً.`;
 
   return { plan_en: planEn, plan_ar: planAr };
 };

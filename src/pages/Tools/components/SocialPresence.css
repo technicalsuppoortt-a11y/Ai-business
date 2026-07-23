@@ -1,0 +1,316 @@
+/* ==========================================================================
+   Social Media Setup & Strategy — Professional Design System
+   Full Light Mode & Dark Mode Support via CSS variables
+   ========================================================================== */
+
+.sp-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}
+
+.sp-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Glassmorphic Panel Base */
+.sp-panel {
+  background: var(--bg2, rgba(15, 23, 42, 0.65));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  border-radius: 24px;
+  padding: 28px;
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow, 0 12px 40px rgba(0, 0, 0, 0.3));
+}
+
+.sp-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+}
+
+.sp-panel-title {
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--text, #F8FAFC);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sp-panel-subtitle {
+  font-size: 12.5px;
+  color: var(--text2, #94A3B8);
+  margin: 4px 0 0 0;
+  line-height: 1.5;
+}
+
+/* Platform Selectors Grid */
+.sp-platform-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.sp-platform-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--bg3, rgba(30, 41, 59, 0.6));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  color: var(--text2, #94A3B8);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  text-align: start;
+}
+
+.sp-platform-btn:hover {
+  background: var(--bg4, rgba(30, 41, 59, 0.85));
+  color: var(--text, #F8FAFC);
+  transform: translateY(-1px);
+}
+
+.sp-platform-btn.active {
+  background: var(--plat-bg, rgba(59, 130, 246, 0.15));
+  border-color: var(--plat-color, #3B82F6);
+  color: var(--text, #F8FAFC);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.sp-platform-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--plat-color, #3B82F6);
+  flex-shrink: 0;
+}
+
+.sp-platform-btn.active .sp-platform-icon {
+  background: var(--plat-color, #3B82F6);
+  color: #FFFFFF;
+}
+
+/* Goal Radio Selectors */
+.sp-goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.sp-goal-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--bg3, rgba(30, 41, 59, 0.5));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sp-goal-item:hover {
+  background: var(--bg4, rgba(30, 41, 59, 0.85));
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.sp-goal-item.active {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: #3B82F6;
+}
+
+.sp-radio-indicator {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--line, rgba(255, 255, 255, 0.2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.sp-goal-item.active .sp-radio-indicator {
+  border-color: #3B82F6;
+  background: #3B82F6;
+}
+
+.sp-radio-inner {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #FFFFFF;
+}
+
+/* Generate Button */
+.sp-generate-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  background: #3B82F6;
+  border: none;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35);
+  margin-top: 16px;
+}
+
+.sp-generate-btn:hover:not(:disabled) {
+  background: #2563EB;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(59, 130, 246, 0.45);
+}
+
+.sp-generate-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Strategy Output Cards */
+.sp-strategy-block {
+  background: var(--bg3, rgba(30, 41, 59, 0.5));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 14px;
+}
+
+.sp-strategy-title {
+  font-size: 14px;
+  font-weight: 900;
+  color: #3B82F6;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sp-strategy-content {
+  background: var(--bg2, rgba(15, 23, 42, 0.8));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.06));
+  padding: 14px 16px;
+  border-radius: 12px;
+  color: var(--text, #F8FAFC);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+/* Copy Header Button */
+.sp-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: #3B82F6;
+  border: none;
+  color: #FFFFFF;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+}
+
+.sp-copy-btn:hover {
+  background: #2563EB;
+  transform: translateY(-1px);
+}
+
+/* Light Mode Overrides for Complete Visual Excellence */
+:root.light-mode .sp-panel {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+}
+
+:root.light-mode .sp-panel-title {
+  color: #0F172A;
+}
+
+:root.light-mode .sp-panel-subtitle {
+  color: #64748B;
+}
+
+:root.light-mode .sp-platform-btn {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: #475569;
+}
+
+:root.light-mode .sp-platform-btn:hover {
+  background: #F1F5F9;
+  color: #0F172A;
+}
+
+:root.light-mode .sp-platform-btn.active {
+  background: #FFFFFF;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+:root.light-mode .sp-goal-item {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+}
+
+:root.light-mode .sp-goal-item:hover {
+  background: #F1F5F9;
+}
+
+:root.light-mode .sp-goal-item.active {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+:root.light-mode .sp-strategy-block {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+}
+
+:root.light-mode .sp-strategy-content {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  color: #0F172A;
+}
+
+/* RESPONSIVE MEDIA QUERIES */
+@media (max-width: 960px) {
+  .sp-main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .sp-panel {
+    padding: 20px 16px;
+    border-radius: 18px;
+  }
+  .sp-platform-grid {
+    grid-template-columns: 1fr;
+  }
+}

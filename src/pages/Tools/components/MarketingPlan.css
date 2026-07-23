@@ -1,0 +1,374 @@
+/* ==========================================================================
+   Marketing Plan Generator — Professional Design System
+   Full Light Mode & Dark Mode Support via CSS variables
+   ========================================================================== */
+
+.mp-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}
+
+.mp-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Glassmorphic Panel Base */
+.mp-panel {
+  background: var(--bg2, rgba(15, 23, 42, 0.65));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  border-radius: 24px;
+  padding: 28px;
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow, 0 12px 40px rgba(0, 0, 0, 0.3));
+}
+
+.mp-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+}
+
+.mp-panel-title {
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--text, #F8FAFC);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mp-panel-subtitle {
+  font-size: 12.5px;
+  color: var(--text2, #94A3B8);
+  margin: 4px 0 0 0;
+  line-height: 1.5;
+}
+
+/* Inputs & Form Groups */
+.mp-form-group {
+  margin-bottom: 22px;
+}
+
+.mp-label {
+  font-size: 12px;
+  font-weight: 900;
+  color: #3B82F6;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mp-input-wrap {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.mp-input-badge {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text2, #94A3B8);
+  pointer-events: none;
+}
+
+.mp-input-badge.prefix {
+  inset-inline-start: 14px;
+}
+
+.mp-input-badge.suffix {
+  inset-inline-end: 14px;
+}
+
+.mp-input {
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 14px;
+  background: var(--bg3, rgba(30, 41, 59, 0.6));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+  color: var(--text, #F8FAFC);
+  font-size: 16px;
+  font-weight: 800;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.mp-input:focus {
+  border-color: #3B82F6;
+  background: var(--bg4, rgba(30, 41, 59, 0.9));
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.mp-input.has-prefix {
+  padding-inline-start: 40px;
+}
+
+.mp-input.has-suffix {
+  padding-inline-end: 54px;
+}
+
+/* Radio Option Cards */
+.mp-radio-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.mp-radio-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-radius: 14px;
+  background: var(--bg3, rgba(30, 41, 59, 0.5));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: start;
+}
+
+.mp-radio-card:hover {
+  background: var(--bg4, rgba(30, 41, 59, 0.85));
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.mp-radio-card.active {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: #3B82F6;
+  color: var(--text, #F8FAFC);
+}
+
+.mp-radio-circle {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--line, rgba(255, 255, 255, 0.2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.mp-radio-card.active .mp-radio-circle {
+  border-color: #3B82F6;
+  background: #3B82F6;
+}
+
+.mp-radio-inner {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #FFFFFF;
+}
+
+/* Generate Button */
+.mp-generate-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  background: #3B82F6;
+  border: none;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35);
+  margin-top: 16px;
+}
+
+.mp-generate-btn:hover:not(:disabled) {
+  background: #2563EB;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(59, 130, 246, 0.45);
+}
+
+.mp-generate-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Output Section Blocks */
+.mp-plan-block {
+  background: var(--bg3, rgba(30, 41, 59, 0.5));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  border-radius: 18px;
+  padding: 22px;
+  margin-bottom: 16px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mp-plan-block:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.mp-plan-block-title {
+  font-size: 14.5px;
+  font-weight: 900;
+  color: var(--text, #F8FAFC);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mp-section-icon-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--icon-bg, rgba(59, 130, 246, 0.12));
+  color: var(--icon-color, #3B82F6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mp-plan-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--bg2, rgba(15, 23, 42, 0.6));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.04));
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--text, #F8FAFC);
+  line-height: 1.6;
+}
+
+/* Markdown Table Styles */
+.mp-table-wrap {
+  overflow-x: auto;
+  margin: 12px 0;
+  border-radius: 12px;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+}
+
+.mp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  text-align: start;
+}
+
+.mp-table th {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3B82F6;
+  font-weight: 900;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+}
+
+.mp-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.05));
+  color: var(--text, #F8FAFC);
+}
+
+:root.light-mode .mp-table th {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border-bottom-color: #DBEAFE;
+}
+
+:root.light-mode .mp-table td {
+  border-bottom-color: #E2E8F0;
+  color: #0F172A;
+}
+
+/* Light Mode Overrides for Complete Visual Excellence */
+:root.light-mode .mp-panel {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+}
+
+:root.light-mode .mp-panel-title {
+  color: #0F172A;
+}
+
+:root.light-mode .mp-panel-subtitle {
+  color: #64748B;
+}
+
+:root.light-mode .mp-label {
+  color: #2563EB;
+}
+
+:root.light-mode .mp-input {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: #0F172A;
+}
+
+:root.light-mode .mp-input:focus {
+  background: #FFFFFF;
+  border-color: #3B82F6;
+}
+
+:root.light-mode .mp-input-badge {
+  color: #64748B;
+}
+
+:root.light-mode .mp-radio-card {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+}
+
+:root.light-mode .mp-radio-card:hover {
+  background: #F1F5F9;
+}
+
+:root.light-mode .mp-radio-card.active {
+  background: rgba(59, 130, 246, 0.08);
+  color: #0F172A;
+}
+
+:root.light-mode .mp-plan-block {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+}
+
+:root.light-mode .mp-plan-list-item {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  color: #0F172A;
+}
+
+/* RESPONSIVE MEDIA QUERIES */
+@media (max-width: 960px) {
+  .mp-main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .mp-panel {
+    padding: 20px 16px;
+    border-radius: 18px;
+  }
+}

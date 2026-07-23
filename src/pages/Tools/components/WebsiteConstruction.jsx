@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../../context/AppContext';
+import { useToast } from '../../../context/ToastContext';
 import { getWebsiteTemplate, getAllWebsiteGalleryTemplates, getDomainIdeasTemplate } from '../../../services/contentDbService';
 import { parseTemplate } from '../../../utils/templateParser';
 import { callGemini } from '../../../services/geminiService';
@@ -7,14 +8,50 @@ import AnalysisModeSelector from '../../../components/common/AnalysisModeSelecto
 import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
 import { useNavigate } from 'react-router-dom';
 import ToolDashboardLayout from './ToolDashboardLayout';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Layout,
+  Wand2,
+  Palette,
+  Globe,
+  CreditCard,
+  Coins,
+  Code,
+  Copy,
+  Eye,
+  Sparkles,
+  CheckCircle2,
+  Key,
+  Settings,
+  Server,
+  ArrowLeft,
+  ArrowRight,
+  ExternalLink,
+  ShieldCheck,
+  Layers,
+  Zap,
+  RefreshCw,
+  SlidersHorizontal,
+  Check,
+  AlertTriangle,
+  FolderOpen,
+  DollarSign,
+  Cpu,
+  Monitor,
+  CheckSquare
+} from 'lucide-react';
+import './WebsiteConstruction.css';
 
 export default function WebsiteConstruction({ stepNumber }) {
   const { state, dispatch } = useApp();
+  const toast = useToast();
+
   const lang = state.language || 'ar';
-  const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
+  const isRtl = lang === 'ar';
   
   // -- Wizard State --
   const navigate = useNavigate();
+  const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
   const [currentStep, setCurrentStep] = useState(1); // 1: Design, 2: Settings, 3: Infrastructure
 
   // -- API Key Handling --
@@ -33,9 +70,30 @@ export default function WebsiteConstruction({ stepNumber }) {
   // -- Step 2: Settings State --
   const [activeTab, setActiveTab] = useState('domain');
   const tabs = [
-    { id: 'domain', label_ar: 'ربط الدومين', label_en: 'Domain Connection', icon: '🌐' },
-    { id: 'payment', label_ar: 'بوابات الدفع', label_en: 'Payment Gateways', icon: '💳' },
-    { id: 'taxes', label_ar: 'العملة والضرائب', label_en: 'Currency & Taxes', icon: '💰' }
+    { 
+      id: 'domain', 
+      label_ar: 'ربط الدومين', 
+      label_en: 'Domain Connection', 
+      desc_ar: 'ربط نطاق خاص بمتجرك', 
+      desc_en: 'Connect custom store domain',
+      IconComp: Globe 
+    },
+    { 
+      id: 'payment', 
+      label_ar: 'بوابات الدفع', 
+      label_en: 'Payment Gateways', 
+      desc_ar: 'تفعيل Stripe و PayPal', 
+      desc_en: 'Enable Stripe & PayPal',
+      IconComp: CreditCard 
+    },
+    { 
+      id: 'taxes', 
+      label_ar: 'العملة والضرائب', 
+      label_en: 'Currency & Taxes', 
+      desc_ar: 'ضبط إعدادات المبيعات', 
+      desc_en: 'Configure store sales setup',
+      IconComp: Coins 
+    }
   ];
 
   // -- Step 3: Infrastructure State --
@@ -55,13 +113,12 @@ export default function WebsiteConstruction({ stepNumber }) {
     if (!tempApiKey.trim()) return;
     setIsSavingKey(true);
     try {
-      // Basic validation: must be at least 20 chars
       if (tempApiKey.length < 20) throw new Error('Invalid API Key');
       dispatch({ type: 'UPDATE_USER_DATA', payload: { apiKey: tempApiKey.trim() } });
       setApiKeyError(false);
-      alert(lang === 'en' ? 'API Key saved successfully! ✅' : 'تم حفظ مفتاح الـ API بنجاح! ✅');
+      toast(lang === 'en' ? 'API Key saved successfully! ✅' : 'تم حفظ مفتاح الـ API بنجاح! ✅', 'success');
     } catch (err) {
-      alert(lang === 'en' ? 'Invalid API key format.' : 'صيغة مفتاح الـ API غير صحيحة.');
+      toast(lang === 'en' ? 'Invalid API key format.' : 'صيغة مفتاح الـ API غير صحيحة.', 'error');
     } finally {
       setIsSavingKey(false);
     }
@@ -83,13 +140,26 @@ export default function WebsiteConstruction({ stepNumber }) {
           context: { niche: state.niche, brandName: state.brandName },
           lang
         });
+
+        if (!liveHtml || !liveHtml.trim()) {
+          toast(lang === 'en' ? 'No website code returned. Please try again.' : 'لم يتم توليد أي كود. يرجى إعادة المحاولة.', 'warning');
+          return;
+        }
+
         const cleanedHtml = liveHtml.replace(/```html|```/g, '').trim();
         setGeneratedCode(`\`\`\`html\n${cleanedHtml}\n\`\`\``);
         setApiKeyError(false);
+        toast(lang === 'en' ? 'Website code generated dynamically! ✅' : 'تم توليد كود الموقع بالذكاء الاصطناعي بنجاح! ✅', 'success');
       } else {
         const key = state.apiKey || tempApiKey;
         if (!key) {
           setApiKeyError(true);
+          toast(
+            lang === 'en' 
+              ? 'Gemini API Key is missing! Please enter your API key below or switch to Live mode.' 
+              : 'مفتاح الـ API لـ Gemini غير متوفر! يرجى أدناه إدخال المفتاح أو التبديل للوضع المباشر.', 
+            'warning'
+          );
           return;
         }
 
@@ -116,17 +186,48 @@ export default function WebsiteConstruction({ stepNumber }) {
 
         const aiResponse = await callGemini(prompt, key);
         
-        // Remove any potential markdown wrapping
+        if (!aiResponse || !aiResponse.trim()) {
+          toast(
+            lang === 'en' 
+              ? 'No website code returned from API. Please verify your API key or prompt.' 
+              : 'لم يتم إرجاع كود من المفتاح. يرجى التحقق من مفتاح الـ API.', 
+            'warning'
+          );
+          return;
+        }
+
         const cleanedHtml = aiResponse.replace(/```html|```/g, '').trim();
         setGeneratedCode(`\`\`\`html\n${cleanedHtml}\n\`\`\``);
         setApiKeyError(false);
+        toast(lang === 'en' ? 'Website code generated dynamically! ✅' : 'تم توليد كود الموقع بالذكاء الاصطناعي بنجاح! ✅', 'success');
       }
     } catch (error) {
-      console.error(error);
-      if (error.message?.includes('API Key') || error.message?.includes('key')) {
+      console.error('Gemini Website Generation Error:', error);
+      const errorStr = (error.message || '').toLowerCase();
+      
+      if (errorStr.includes('quota') || errorStr.includes('rate limit') || errorStr.includes('429') || errorStr.includes('limit: 0')) {
         setApiKeyError(true);
+        toast(
+          lang === 'en' 
+            ? 'Quota exceeded for this Gemini API Key! Please wait a minute or try another API key, or switch to Live mode.' 
+            : 'تم تجاوز حد استخدام مفتاح Gemini (Quota Exceeded)! يرجى التمهل دقيقة أو استخدام مفتاح جديد أو التبديل للوضع المباشر.', 
+          'warning'
+        );
+      } else if (errorStr.includes('api key') || errorStr.includes('key') || errorStr.includes('invalid')) {
+        setApiKeyError(true);
+        toast(
+          lang === 'en' 
+            ? 'Invalid or missing Gemini API Key. Please enter a valid API key below.' 
+            : 'مفتاح الـ API لـ Gemini غير صحيح أو مفقود. يرجى أدناه كتابة مفتاح صالح.', 
+          'error'
+        );
       } else {
-        alert(lang === 'en' ? 'Error generating website code.' : 'حدث خطأ أثناء توليد كود الموقع.');
+        toast(
+          lang === 'en' 
+            ? `Error generating code: ${error.message || 'Unexpected failure'}` 
+            : `حدث خطأ أثناء توليد الكود: ${error.message || 'خطأ غير متوقع'}`, 
+          'error'
+        );
       }
     } finally {
       setIsGenerating(false);
@@ -147,12 +248,13 @@ export default function WebsiteConstruction({ stepNumber }) {
     const templateRawStr = lang === 'en' ? template.code_en : template.code_ar;
     const rawHtml = parseTemplate(templateRawStr, { brandName, colorHex, secondaryColor, nicheName, logoUrl, brandLogoHtml });
     setGeneratedCode(`\`\`\`html\n${rawHtml}\n\`\`\``);
+    toast(lang === 'en' ? `Loaded "${template.name_en || template.name_ar}" template!` : `تم تحميل قالب "${template.name_ar || template.name_en}"!`, 'info');
   };
 
   const copyToClipboard = () => {
     const codeToCopy = generatedCode.replace(/^\`\`\`html\n/, '').replace(/\n\`\`\`$/, '');
     navigator.clipboard.writeText(codeToCopy);
-    alert(lang === 'en' ? 'Code copied successfully!' : 'تم نسخ الكود بنجاح!');
+    toast(lang === 'en' ? 'Code copied successfully to clipboard!' : 'تم نسخ الكود بنجاح إلى الحافظة!', 'success');
   };
 
   const handlePreview = () => {
@@ -165,7 +267,7 @@ export default function WebsiteConstruction({ stepNumber }) {
   // ====== STEP 3 METHODS ======
   const generateDomainIdeas = async () => {
     if (!state?.brandName) {
-      alert(lang === 'en' ? 'Please choose a brand name first.' : 'الرجاء اختيار اسم البراند أولاً.');
+      toast(lang === 'en' ? 'Please choose a brand name first in Step 1 of identity.' : 'الرجاء اختيار اسم البراند أولاً.', 'warning');
       return;
     }
     setIsGeneratingDomain(true);
@@ -192,9 +294,10 @@ export default function WebsiteConstruction({ stepNumber }) {
           setDomainMatrix({ error: lang === 'en' ? 'Domain matrix not found.' : 'لم يتم العثور على مصفوفة الدومينات.' });
         }
       }
+      toast(lang === 'en' ? 'Domain ideas generated!' : 'تم التوصل لأقوى اقتراحات الدومينات!', 'success');
     } catch (error) {
       console.error(error);
-      alert(lang === 'en' ? 'Error suggesting domains.' : 'حدث خطأ. يرجى إعادة المحاولة.');
+      toast(lang === 'en' ? 'Error suggesting domains.' : 'حدث خطأ. يرجى إعادة المحاولة.', 'error');
     } finally {
       setIsGeneratingDomain(false);
     }
@@ -207,34 +310,64 @@ export default function WebsiteConstruction({ stepNumber }) {
     return cleaned;
   };
 
-  const renderDomainCard = (domainText, description, color) => (
-    <div 
-      key={domainText} 
-      className="td-result-card"
-      style={{ 
-        borderLeftColor: lang === 'en' ? color : 'transparent', 
-        borderRightColor: lang === 'ar' ? color : 'transparent',
-        background: 'rgba(13, 18, 32, 0.8)',
-        cursor: 'copy'
-      }}
-      onClick={() => {
-        navigator.clipboard.writeText(domainText);
-      }}
-      title={lang === 'en' ? 'Click to copy' : 'اضغط للنسخ'}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-        <h5 style={{ fontSize: '18px', fontWeight: 900, color: color, margin: 0 }}>{domainText}</h5>
-        <span style={{ fontSize: '10px', fontWeight: 800, padding: '2px 8px', borderRadius: '10px', color: '#8B96A8', border: `1px solid rgba(255,255,255,0.1)`, backgroundColor: `rgba(0,0,0,0.4)` }}>
-          Copy
-        </span>
-      </div>
-      {description && <p style={{ fontSize: '12px', color: '#8B96A8', margin: 0, lineHeight: 1.6 }}>{description}</p>}
-    </div>
-  );
+  const renderDomainCard = (domainText, description, color) => {
+    const extMatch = domainText.match(/\.[a-z0-9]+$/i);
+    const ext = extMatch ? extMatch[0] : '';
+    const rgbVal = color === '#10B981' ? '16, 185, 129' : color === '#3B82F6' ? '59, 130, 246' : '139, 92, 246';
+
+    return (
+      <motion.div 
+        key={domainText} 
+        className="wc-domain-card"
+        whileHover={{ y: -4, scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        style={{ 
+          '--card-accent': color,
+          '--accent-rgb': rgbVal,
+          borderInlineStart: `4px solid ${color}`
+        }}
+        onClick={() => {
+          navigator.clipboard.writeText(domainText);
+          toast(lang === 'en' ? `Domain "${domainText}" copied to clipboard! ✅` : `تم نسخ الدومين "${domainText}" إلى الحافظة! ✅`, 'success');
+        }}
+        title={lang === 'en' ? 'Click to copy domain' : 'اضغط لنسخ الدومين'}
+      >
+        <div className="wc-domain-card-top">
+          <div className="wc-domain-name-block">
+            <span className="wc-domain-name">{domainText}</span>
+            {ext && (
+              <span className="wc-domain-ext-badge" style={{ color: color, borderColor: `${color}40`, backgroundColor: `${color}15` }}>
+                {ext}
+              </span>
+            )}
+          </div>
+          <button 
+            className="wc-domain-copy-btn"
+            style={{ color: color, borderColor: `${color}35`, backgroundColor: `${color}12` }}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigator.clipboard.writeText(domainText);
+              toast(lang === 'en' ? `Domain "${domainText}" copied to clipboard! ✅` : `تم نسخ الدومين "${domainText}" إلى الحافظة! ✅`, 'success');
+            }}
+          >
+            <Copy size={13} />
+            <span>{lang === 'en' ? 'Copy' : 'نسخ'}</span>
+          </button>
+        </div>
+
+        {description && (
+          <div className="wc-domain-desc">
+            <CheckCircle2 size={13} color={color} style={{ flexShrink: 0 }} />
+            <span>{description}</span>
+          </div>
+        )}
+      </motion.div>
+    );
+  };
 
   const renderMatrixSection = () => {
     if (!domainMatrix || domainMatrix.error) {
-      return domainMatrix?.error ? <div className="td-raw-output">{domainMatrix.error}</div> : null;
+      return domainMatrix?.error ? <div className="wc-code-box" style={{ color: '#EF4444' }}>{domainMatrix.error}</div> : null;
     }
     const bn = cleanBrand(state.brandName);
     
@@ -280,38 +413,38 @@ export default function WebsiteConstruction({ stepNumber }) {
     }
 
     return (
-      <div style={{ marginTop: '24px' }}>
+      <div className="wc-domain-section">
         {classicList.length > 0 && (
-          <div className="td-results-section" style={{ marginBottom: '32px', background: 'transparent', padding: 0 }}>
-            <div className="td-results-label" style={{ color: '#10B981', fontSize: '18px', marginBottom: '20px' }}>
-              <span className="td-results-line" style={{ background: '#10B981', height: '100%', width: '4px' }} />
-              💎 {lang === 'en' ? domainMatrix.classic.title_en : domainMatrix.classic.title_ar}
+          <div className="wc-domain-group">
+            <div className="wc-domain-group-title" style={{ color: '#10B981' }}>
+              <Sparkles size={18} />
+              <span>{lang === 'en' ? domainMatrix.classic.title_en : domainMatrix.classic.title_ar}</span>
             </div>
-            <div className="td-grid cols-3" style={{ marginBottom: 0 }}>
+            <div className="wc-domain-grid">
               {classicList.slice(0, 6).map(item => renderDomainCard(item.domain, item.desc, '#10B981'))}
             </div>
           </div>
         )}
 
         {actionList.length > 0 && (
-          <div className="td-results-section" style={{ marginBottom: '32px', background: 'transparent', padding: 0 }}>
-            <div className="td-results-label" style={{ color: '#3B82F6', fontSize: '18px', marginBottom: '20px' }}>
-              <span className="td-results-line" style={{ background: '#3B82F6', height: '100%', width: '4px' }} />
-              ⚡ {lang === 'en' ? domainMatrix.action.title_en : domainMatrix.action.title_ar}
+          <div className="wc-domain-group">
+            <div className="wc-domain-group-title" style={{ color: '#3B82F6' }}>
+              <Zap size={18} />
+              <span>{lang === 'en' ? domainMatrix.action.title_en : domainMatrix.action.title_ar}</span>
             </div>
-            <div className="td-grid cols-3" style={{ marginBottom: 0 }}>
+            <div className="wc-domain-grid">
               {actionList.map(item => renderDomainCard(item.domain, item.desc, '#3B82F6'))}
             </div>
           </div>
         )}
 
         {nicheList.length > 0 && (
-          <div className="td-results-section" style={{ marginBottom: '32px', background: 'transparent', padding: 0 }}>
-            <div className="td-results-label" style={{ color: '#8B5CF6', fontSize: '18px', marginBottom: '20px' }}>
-              <span className="td-results-line" style={{ background: '#8B5CF6', height: '100%', width: '4px' }} />
-              🎯 {lang === 'en' ? domainMatrix.niche.title_en : domainMatrix.niche.title_ar}
+          <div className="wc-domain-group">
+            <div className="wc-domain-group-title" style={{ color: '#8B5CF6' }}>
+              <Layers size={18} />
+              <span>{lang === 'en' ? domainMatrix.niche.title_en : domainMatrix.niche.title_ar}</span>
             </div>
-            <div className="td-grid cols-3" style={{ marginBottom: 0 }}>
+            <div className="wc-domain-grid">
               {nicheList.map(item => renderDomainCard(item.domain, item.desc, '#8B5CF6'))}
             </div>
           </div>
@@ -322,121 +455,152 @@ export default function WebsiteConstruction({ stepNumber }) {
 
   // ====== RENDER STEP 1 ======
   const renderStep1 = () => (
-    <div className="animate-fade-in">
-      <div className="td-section-title">
-        <div className="td-section-bar" style={{ background: '#3B82F6' }} />
-        {lang === 'en' ? 'Step 1: Choose Building Method' : 'الخطوة 1: اختر طريقة البناء'}
+    <motion.div 
+      key="step1"
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -14 }}
+      transition={{ duration: 0.25 }}
+    >
+      <div className="wc-section-header">
+        <div style={{ width: '4px', height: '22px', borderRadius: '4px', background: '#3B82F6' }} />
+        <div>
+          <h3 className="wc-section-title">
+            <Wand2 size={20} color="#3B82F6" />
+            <span>{lang === 'en' ? 'Step 1: Select Website Building Strategy' : 'الخطوة 1: اختر طريقة البناء والبرمجة'}</span>
+          </h3>
+          <p className="wc-section-desc">
+            {lang === 'en' 
+              ? 'Choose whether to dynamically generate code with AI or select from pre-built premium Tailwind landing page templates.' 
+              : 'اختر بين البناء الديناميكي التلقائي لكود الموقع بالذكاء الاصطناعي، أو تصفح القوالب الجاهزة المبرمجة لـ Tailwind CSS.'}
+          </p>
+        </div>
       </div>
-      <div className="td-grid cols-2" style={{ marginBottom: '36px' }}>
-        <div 
-          className={`td-card ${method === 'gemini' ? 'active' : ''}`}
-          onClick={() => { setMethod('gemini'); setGeneratedCode(''); setSelectedGalleryTemplate(null); }}
-          style={{ '--td-accent': '#10B981', padding: '24px', alignItems: 'flex-start', textAlign: lang === 'en' ? 'left' : 'right', display: 'block' }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px', flexDirection: lang === 'en' ? 'row' : 'row' }}>
-            <div className="td-card-icon" style={{ margin: 0, width: '56px', height: '56px', fontSize: '24px', background: method === 'gemini' ? '#10B981' : 'rgba(16, 185, 129, 0.1)', color: method === 'gemini' ? '#fff' : '#10B981', borderColor: method === 'gemini' ? 'transparent' : 'rgba(16, 185, 129, 0.2)' }}>🤖</div>
-            <div>
-              <h4 style={{ color: '#fff', fontSize: '16px', fontWeight: '900', marginBottom: '4px' }}>
-                {lang === 'en' ? 'AI Building (Dynamic)' : 'البناء بالذكاء الاصطناعي (ديناميكي)'}
-              </h4>
-              <p style={{ color: '#10B981', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                {lang === 'en' ? 'Generate based on your Niche' : 'توليد بناءً على مجالك الحالي'}
-              </p>
-            </div>
-          </div>
-          <p style={{ color: '#8B96A8', fontSize: '12px', lineHeight: '1.7', margin: 0 }}>
-            {lang === 'en' ? 'Use AI to write the code for a professional landing page based strictly on your identity and field.' : 'استخدم الذكاء الاصطناعي لكتابة كود صفحة هبوط متكاملة بناءً على هويتك ومجالك الذي أدخلته.'}
-          </p>
-        </div>
 
-        <div 
-          className={`td-card ${method === 'template' ? 'active' : ''}`}
-          onClick={() => { setMethod('template'); setGeneratedCode(''); setSelectedGalleryTemplate(null); }}
-          style={{ '--td-accent': '#C084FC', padding: '24px', alignItems: 'flex-start', textAlign: lang === 'en' ? 'left' : 'right', display: 'block' }}
+      <div className="wc-method-grid">
+        <motion.div 
+          className={`wc-method-card ${method === 'gemini' ? 'active' : ''}`}
+          onClick={() => { setMethod('gemini'); setGeneratedCode(''); setSelectedGalleryTemplate(null); }}
+          whileHover={{ y: -3 }}
+          whileTap={{ scale: 0.98 }}
+          style={{ '--accent-color': '#10B981', '--accent-rgb': '16, 185, 129' }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px', flexDirection: lang === 'en' ? 'row' : 'row' }}>
-            <div className="td-card-icon" style={{ margin: 0, width: '56px', height: '56px', fontSize: '24px', background: method === 'template' ? '#C084FC' : 'rgba(192, 132, 252, 0.1)', color: method === 'template' ? '#fff' : '#C084FC', borderColor: method === 'template' ? 'transparent' : 'rgba(192, 132, 252, 0.2)' }}>🎨</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div className="wc-method-icon-wrap">
+              <Cpu size={26} />
+            </div>
             <div>
-              <h4 style={{ color: '#fff', fontSize: '16px', fontWeight: '900', marginBottom: '4px' }}>
-                {lang === 'en' ? 'Premium Template Gallery' : 'معرض القوالب الاحترافية'}
+              <div className="wc-method-badge">
+                {lang === 'en' ? 'AI Dynamic Generator' : 'البناء بالذكاء الاصطناعي'}
+              </div>
+              <h4 style={{ color: 'var(--text, #F8FAFC)', fontSize: '16px', fontWeight: '900', margin: 0 }}>
+                {lang === 'en' ? 'Custom AI Website Code' : 'توليد كود مخصص بالكامل'}
               </h4>
-              <p style={{ color: '#C084FC', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                {lang === 'en' ? 'Choose from 10 Ready Models' : 'اختر من ١٠ نماذج جاهزة ومبرمجة'}
-              </p>
             </div>
           </div>
-          <p style={{ color: '#8B96A8', fontSize: '12px', lineHeight: '1.7', margin: 0 }}>
-            {lang === 'en' ? 'Browse our rich library of 10 fully-coded, responsive Tailwind templates tailored for different businesses.' : 'تصفح مكتبتنا الغنية المكونة من ١٠ قوالب احترافية متجاوبة مبرمجة بـ Tailwind.'}
+          <p style={{ color: 'var(--text2, #8B96A8)', fontSize: '13px', lineHeight: '1.7', margin: 0 }}>
+            {lang === 'en' 
+              ? 'Generate a single-file Tailwind CSS landing page tailored to your niche, logo, and primary colors using Gemini or Live AI.' 
+              : 'استخدم الذكاء الاصطناعي لكتابة كود صفحة هبوط متكاملة بـ Tailwind CSS بناءً على هويتك، ألوانك ومجالك.'}
           </p>
-        </div>
+        </motion.div>
+
+        <motion.div 
+          className={`wc-method-card ${method === 'template' ? 'active' : ''}`}
+          onClick={() => { setMethod('template'); setGeneratedCode(''); setSelectedGalleryTemplate(null); }}
+          whileHover={{ y: -3 }}
+          whileTap={{ scale: 0.98 }}
+          style={{ '--accent-color': '#C084FC', '--accent-rgb': '192, 132, 252' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div className="wc-method-icon-wrap">
+              <Layout size={26} />
+            </div>
+            <div>
+              <div className="wc-method-badge" style={{ color: '#C084FC' }}>
+                {lang === 'en' ? 'Pre-built Templates' : 'معرض القوالب الاحترافية'}
+              </div>
+              <h4 style={{ color: 'var(--text, #F8FAFC)', fontSize: '16px', fontWeight: '900', margin: 0 }}>
+                {lang === 'en' ? 'Premium Template Library' : 'اختر من القوالب الجاهزة'}
+              </h4>
+            </div>
+          </div>
+          <p style={{ color: 'var(--text2, #8B96A8)', fontSize: '13px', lineHeight: '1.7', margin: 0 }}>
+            {lang === 'en' 
+              ? 'Browse high-converting, fully responsive landing page models for E-commerce, SaaS, Agencies, and Digital Products.' 
+              : 'تصفح مكتبتنا الغنية القاطعة الجاهزة المبرمجة بـ Tailwind لجميع قطاعات الأعمال والتجارة.'}
+          </p>
+        </motion.div>
       </div>
 
       {method === 'gemini' && (
-        <div className="td-info-panel" style={{ margin: 0, borderColor: 'rgba(16, 185, 129, 0.2)', background: 'rgba(16, 185, 129, 0.05)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: '900', color: '#10B981', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>✨</span> {lang === 'en' ? 'Your Website Code (Tailwind CSS)' : 'الكود البرمجي لموقعك (Tailwind CSS)'}
+        <div className="wc-code-panel">
+          <div className="wc-code-header">
+            <h3 style={{ fontSize: '16px', fontWeight: '900', color: '#10B981', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+              <Code size={20} />
+              <span>{lang === 'en' ? 'Custom Website Code (Tailwind CSS)' : 'الكود البرمجي لموقعك (Tailwind CSS)'}</span>
             </h3>
             {generatedCode && !isGenerating && !apiKeyError && (
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button onClick={handlePreview} style={{ background: '#0f172a', color: '#fff', border: '1px solid #10B981', padding: '8px 16px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>
-                  👁️ {lang === 'en' ? 'Preview' : 'معاينة'}
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button onClick={handlePreview} className="wc-btn wc-btn-secondary" style={{ padding: '8px 16px', fontSize: '12px' }}>
+                  <Eye size={14} /> {lang === 'en' ? 'Preview Live' : 'معاينة مباشرة'}
                 </button>
-                <button onClick={copyToClipboard} style={{ background: '#10B981', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>
-                  📋 {lang === 'en' ? 'Copy Code' : 'نسخ الكود'}
+                <button onClick={copyToClipboard} className="wc-btn wc-btn-primary" style={{ background: '#10B981', padding: '8px 16px', fontSize: '12px' }}>
+                  <Copy size={14} /> {lang === 'en' ? 'Copy Code' : 'نسخ الكود'}
                 </button>
               </div>
             )}
           </div>
 
           {apiKeyError ? (
-            <div className="animate-fade-in" style={{ textAlign: 'center', padding: '20px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '12px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-              <div style={{ fontSize: '32px', marginBottom: '12px' }}>⚠️</div>
-              <h4 style={{ color: '#ef4444', fontSize: '14px', fontWeight: '900', marginBottom: '8px' }}>
+            <div style={{ textAlign: 'center', padding: '24px', background: 'rgba(239, 68, 68, 0.08)', borderRadius: '16px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+              <AlertTriangle size={36} color="#EF4444" style={{ marginBottom: '12px' }} />
+              <h4 style={{ color: '#EF4444', fontSize: '15px', fontWeight: '900', marginBottom: '8px' }}>
                 {lang === 'en' ? 'Gemini API Key Required' : 'مفتاح API الخاص بـ Gemini مطلوب'}
               </h4>
-              <p style={{ color: '#8B96A8', fontSize: '12px', marginBottom: '20px', lineHeight: '1.6' }}>
+              <p style={{ color: 'var(--text2, #8B96A8)', fontSize: '13px', marginBottom: '20px', lineHeight: '1.6', maxWidth: '500px', marginInline: 'auto' }}>
                 {lang === 'en' 
-                  ? 'To use dynamic AI building, please provide a valid Google Gemini API Key. You can enter it below or set it in the platform settings.' 
-                  : 'لاستخدام البناء الديناميكي بالذكاء الاصطناعي، يرجى تقديم مفتاح API صالح لـ Google Gemini. يمكنك إدخاله أدناه أو ضبطه في إعدادات المنصة.'}
+                  ? 'To use dynamic AI building in Fast mode, please provide a valid Google Gemini API Key below or switch to Live AI Analysis mode.' 
+                  : 'لاستخدام البناء السريع بالذكاء الاصطناعي، يرجى إدخال مفتاح API لـ Google Gemini أدناه أو التبديل لنمط الذكاء الاصطناعي المباشر.'}
               </p>
               
-              <div style={{ maxWidth: '400px', margin: '0 auto 16px auto', display: 'flex', gap: '10px' }}>
+              <div style={{ maxWidth: '420px', margin: '0 auto 16px auto', display: 'flex', gap: '10px' }}>
                 <input 
                   type="password"
                   className="td-input"
                   placeholder="AIzaSy..."
                   value={tempApiKey}
                   onChange={e => setTempApiKey(e.target.value)}
-                  style={{ flex: 1, margin: 0, padding: '10px 16px', fontSize: '12px' }}
+                  style={{ flex: 1, margin: 0, padding: '10px 16px', fontSize: '13px' }}
                 />
                 <button 
                   onClick={handleSaveApiKey}
                   disabled={isSavingKey || !tempApiKey.trim()}
-                  style={{ background: '#10B981', color: '#fff', border: 'none', padding: '0 20px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+                  className="wc-btn wc-btn-primary"
+                  style={{ background: '#10B981', padding: '0 20px', fontSize: '13px' }}
                 >
                   {isSavingKey ? '...' : (lang === 'en' ? 'Save' : 'حفظ')}
                 </button>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
                 <button 
                   onClick={() => navigate('/dashboard/settings')}
-                  style={{ background: 'transparent', color: '#3B82F6', border: 'none', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline' }}
+                  style={{ background: 'transparent', color: '#3B82F6', border: 'none', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
                 >
-                  ⚙️ {lang === 'en' ? 'Go to Settings' : 'الذهاب للإعدادات'}
+                  <Settings size={14} /> {lang === 'en' ? 'Go to Settings' : 'الذهاب للإعدادات'}
                 </button>
                 <button 
                   onClick={() => setApiKeyError(false)}
-                  style={{ background: 'transparent', color: '#8B96A8', border: 'none', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+                  style={{ background: 'transparent', color: 'var(--text2, #8B96A8)', border: 'none', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}
                 >
                   {lang === 'en' ? 'Cancel' : 'إلغاء'}
                 </button>
               </div>
             </div>
           ) : !generatedCode || isGenerating ? (
-            <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              <div style={{ maxWidth: '400px', margin: '0 auto 16px auto' }}>
+            <div style={{ textAlign: 'center', padding: '24px 0' }}>
+              <div style={{ maxWidth: '560px', width: '100%', margin: '0 auto 20px auto' }}>
                 <AnalysisModeSelector 
                   mode={analysisMode} 
                   onChange={setAnalysisMode} 
@@ -445,107 +609,104 @@ export default function WebsiteConstruction({ stepNumber }) {
                 />
               </div>
 
-              <button onClick={generateAILandingPage} disabled={isGenerating} className="td-btn-primary" style={{ background: isGenerating ? 'rgba(16, 185, 129, 0.2)' : '#10B981', color: isGenerating ? '#8B96A8' : '#fff', maxWidth: '300px', margin: '0 auto' }}>
+              <button 
+                onClick={generateAILandingPage} 
+                disabled={isGenerating} 
+                className="wc-btn wc-btn-primary" 
+                style={{ background: isGenerating ? 'rgba(16, 185, 129, 0.3)' : '#10B981', maxWidth: '320px', margin: '0 auto', width: '100%' }}
+              >
                 {isGenerating ? (
                   <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-                    <span className="td-spinner" /> {lang === 'en' ? 'Programming website...' : 'جاري برمجة الموقع...'}
+                    <span className="td-spinner" /> {lang === 'en' ? 'Coding Landing Page...' : 'جاري كتابة كود الموقع...'}
                   </span>
                 ) : (
-                  <span>💻 {lang === 'en' ? 'Generate Custom Website Code' : 'توليد كود الموقع المخصص'}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    <Sparkles size={18} /> {lang === 'en' ? 'Generate Landing Page Code' : 'توليد كود صفحة الهبوط'}
+                  </span>
                 )}
               </button>
             </div>
           ) : (
-            <div className="td-raw-output" style={{ margin: 0, borderTop: '3px solid #10B981', maxHeight: '500px', overflowY: 'auto' }}>
-              <pre style={{ margin: 0, whiteSpace: 'pre-wrap', direction: 'ltr', textAlign: 'left', fontSize: '12px', fontFamily: 'monospace' }}>
-                {generatedCode}
-              </pre>
+            <div className="wc-code-box">
+              <pre>{generatedCode}</pre>
             </div>
           )}
         </div>
       )}
 
       {method === 'template' && (
-        <div className="td-info-panel" style={{ margin: 0, borderColor: 'rgba(192, 132, 252, 0.2)', background: 'rgba(192, 132, 252, 0.05)' }}>
+        <div className="wc-code-panel" style={{ borderColor: 'rgba(192, 132, 252, 0.2)' }}>
           {!selectedGalleryTemplate ? (
             <>
               {!selectedCategory ? (
                 <>
-                  <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#C084FC', marginBottom: '24px', textAlign: 'center' }}>
-                    {lang === 'en' ? 'Select a Category' : 'اختر قسم لتصفح القوالب'}
-                  </h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
-                    <div 
+                  <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#C084FC', margin: '0 0 6px 0' }}>
+                      {lang === 'en' ? 'Select Template Category' : 'اختر القسم التخصصي لمشروعك'}
+                    </h3>
+                    <p style={{ fontSize: '13px', color: 'var(--text2, #8B96A8)', margin: 0 }}>
+                      {lang === 'en' ? 'Filter templates by business industry and type.' : 'قم بتصفية القوالب البرمجية حسب تخصص نشاطك التجاري.'}
+                    </p>
+                  </div>
+                  <div className="wc-category-pills" style={{ justifyContent: 'center' }}>
+                    <button 
+                      className="wc-category-pill active"
                       onClick={() => setSelectedCategory('All')}
-                      style={{
-                        background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(192, 132, 252, 0.2)', borderRadius: '12px', padding: '24px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s'
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.borderColor = '#C084FC'}
-                      onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(192, 132, 252, 0.2)'}
                     >
-                      <div style={{ fontSize: '32px', marginBottom: '12px' }}>📂</div>
-                      <h4 style={{ color: '#fff', fontSize: '15px', fontWeight: '800' }}>{lang === 'en' ? 'All Templates' : 'جميع القوالب'}</h4>
-                    </div>
+                      <FolderOpen size={16} />
+                      <span>{lang === 'en' ? 'All Templates' : 'جميع القوالب'}</span>
+                    </button>
                     {[...new Set(galleryTemplates.map(t => t.category).filter(Boolean))].map(cat => (
-                      <div 
+                      <button 
                         key={cat}
+                        className="wc-category-pill"
                         onClick={() => setSelectedCategory(cat)}
-                        style={{
-                          background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(192, 132, 252, 0.2)', borderRadius: '12px', padding: '24px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s'
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.borderColor = '#C084FC'}
-                        onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(192, 132, 252, 0.2)'}
                       >
-                        <div style={{ fontSize: '32px', marginBottom: '12px' }}>🎯</div>
-                        <h4 style={{ color: '#fff', fontSize: '15px', fontWeight: '800' }}>{cat}</h4>
-                      </div>
+                        <Layers size={16} />
+                        <span>{cat}</span>
+                      </button>
                     ))}
                   </div>
                 </>
               ) : (
                 <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
                     <button 
                       onClick={() => setSelectedCategory(null)}
-                      style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}
+                      className="wc-btn wc-btn-secondary"
+                      style={{ padding: '8px 16px', fontSize: '12px' }}
                     >
-                      {lang === 'en' ? '← Back to Categories' : '← العودة للأقسام'}
+                      {isRtl ? <ArrowRight size={14} /> : <ArrowLeft size={14} />}
+                      <span>{lang === 'en' ? 'Back to Categories' : 'العودة للأقسام'}</span>
                     </button>
-                    <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#C084FC', margin: 0 }}>
+                    <h3 style={{ fontSize: '17px', fontWeight: '900', color: '#C084FC', margin: 0 }}>
                       {selectedCategory === 'All' ? (lang === 'en' ? 'All Templates' : 'جميع القوالب') : selectedCategory}
                     </h3>
                   </div>
                   {galleryTemplates.filter(t => selectedCategory === 'All' || t.category === selectedCategory).length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '40px', color: '#8B96A8' }}>
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text2, #8B96A8)' }}>
                       {lang === 'en' ? 'No templates in this category yet.' : 'لا توجد قوالب في هذا القسم حالياً.'}
                     </div>
                   ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+                    <div className="wc-template-grid">
                       {galleryTemplates
                         .filter(tpl => selectedCategory === 'All' || tpl.category === selectedCategory)
                         .map(tpl => (
-                        <div 
+                        <motion.div 
                           key={tpl.id}
+                          className="wc-template-card"
                           onClick={() => handleSelectGalleryTemplate(tpl)}
-                          style={{
-                            background: 'rgba(0,0,0,0.3)',
-                            border: '1px solid rgba(192, 132, 252, 0.2)',
-                            borderRadius: '12px',
-                            padding: '20px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
-                          }}
-                          onMouseEnter={e => e.currentTarget.style.borderColor = '#C084FC'}
-                          onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(192, 132, 252, 0.2)'}
+                          whileHover={{ y: -4 }}
+                          whileTap={{ scale: 0.98 }}
                         >
-                          <div style={{ fontSize: '32px', marginBottom: '12px', textAlign: 'center' }}>{tpl.icon}</div>
-                          <h4 style={{ color: '#fff', fontSize: '15px', fontWeight: '800', marginBottom: '8px', textAlign: 'center' }}>
+                          <div className="wc-template-icon">{tpl.icon}</div>
+                          <h4 style={{ color: 'var(--text, #F8FAFC)', fontSize: '15px', fontWeight: '900', marginBottom: '6px' }}>
                             {lang === 'en' ? tpl.name_en : tpl.name_ar}
                           </h4>
-                          <p style={{ color: '#8B96A8', fontSize: '11px', textAlign: 'center', lineHeight: '1.5', margin: 0 }}>
+                          <p style={{ color: 'var(--text2, #8B96A8)', fontSize: '12px', lineHeight: '1.5', margin: 0 }}>
                             {lang === 'en' ? tpl.description_en : tpl.description_ar}
                           </p>
-                        </div>
+                        </motion.div>
                       ))}
                     </div>
                   )}
@@ -554,155 +715,249 @@ export default function WebsiteConstruction({ stepNumber }) {
             </>
           ) : (
             <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div className="wc-code-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <button 
                     onClick={() => setSelectedGalleryTemplate(null)}
-                    style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}
+                    className="wc-btn wc-btn-secondary"
+                    style={{ padding: '8px 16px', fontSize: '12px' }}
                   >
-                    {lang === 'en' ? '← Back to Gallery' : '← العودة للمعرض'}
+                    {isRtl ? <ArrowRight size={14} /> : <ArrowLeft size={14} />}
+                    <span>{lang === 'en' ? 'Back to Gallery' : 'العودة للمعرض'}</span>
                   </button>
-                  <h3 style={{ fontSize: '15px', fontWeight: '900', color: '#C084FC', margin: 0 }}>
+                  <h3 style={{ fontSize: '16px', fontWeight: '900', color: '#C084FC', margin: 0 }}>
                     {selectedGalleryTemplate.icon} {lang === 'en' ? selectedGalleryTemplate.name_en : selectedGalleryTemplate.name_ar}
                   </h3>
                 </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={handlePreview} style={{ background: '#0f172a', color: '#fff', border: '1px solid #C084FC', padding: '8px 16px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>
-                    👁️ {lang === 'en' ? 'Preview' : 'معاينة'}
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button onClick={handlePreview} className="wc-btn wc-btn-secondary" style={{ padding: '8px 16px', fontSize: '12px' }}>
+                    <Eye size={14} /> {lang === 'en' ? 'Preview Live' : 'معاينة مباشرة'}
                   </button>
-                  <button onClick={copyToClipboard} style={{ background: '#C084FC', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>
-                    📋 {lang === 'en' ? 'Copy Code' : 'نسخ الكود'}
+                  <button onClick={copyToClipboard} className="wc-btn wc-btn-primary" style={{ background: '#C084FC', padding: '8px 16px', fontSize: '12px' }}>
+                    <Copy size={14} /> {lang === 'en' ? 'Copy Code' : 'نسخ الكود'}
                   </button>
                 </div>
               </div>
-              <div className="td-raw-output" style={{ margin: 0, borderTop: '3px solid #C084FC', maxHeight: '500px', overflowY: 'auto' }}>
-                <pre style={{ margin: 0, whiteSpace: 'pre-wrap', direction: 'ltr', textAlign: 'left', fontSize: '12px', fontFamily: 'monospace' }}>
-                  {generatedCode}
-                </pre>
+              <div className="wc-code-box">
+                <pre>{generatedCode}</pre>
               </div>
             </>
           )}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 
   // ====== RENDER STEP 2 ======
   const renderStep2 = () => (
-    <div className="animate-fade-in">
-      <div className="td-section-title">
-        <div className="td-section-bar" style={{ background: '#10B981' }} />
-        {lang === 'en' ? 'Step 2: General Settings' : 'الخطوة 2: الإعدادات العامة'}
-      </div>
-      <div className="td-grid cols-2" style={{ marginBottom: '36px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '16px', padding: '20px', borderRadius: '16px',
-                background: activeTab === tab.id ? 'rgba(16, 185, 129, 0.1)' : 'rgba(13, 18, 32, 0.6)',
-                border: `1px solid ${activeTab === tab.id ? '#10B981' : 'rgba(255,255,255,0.05)'}`,
-                color: activeTab === tab.id ? '#fff' : '#8B96A8',
-                cursor: 'pointer', transition: 'all 0.3s ease',
-                textAlign: lang === 'en' ? 'left' : 'right', width: '100%',
-                flexDirection: lang === 'en' ? 'row' : 'row'
-              }}
-            >
-              <span style={{ fontSize: '28px', opacity: activeTab === tab.id ? 1 : 0.5 }}>{tab.icon}</span>
-              <span style={{ fontSize: '16px', fontWeight: '900' }}>{lang === 'en' ? tab.label_en : tab.label_ar}</span>
-              {activeTab === tab.id && <span style={{ marginLeft: lang === 'en' ? 'auto' : 0, marginRight: lang === 'en' ? 0 : 'auto', color: '#10B981', fontSize: '18px' }}>●</span>}
-            </button>
-          ))}
+    <motion.div 
+      key="step2"
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -14 }}
+      transition={{ duration: 0.25 }}
+    >
+      <div className="wc-section-header">
+        <div style={{ width: '4px', height: '22px', borderRadius: '4px', background: '#10B981' }} />
+        <div>
+          <h3 className="wc-section-title">
+            <SlidersHorizontal size={20} color="#10B981" />
+            <span>{lang === 'en' ? 'Step 2: Core Store Configurations' : 'الخطوة 2: الضبط والتهيئة العامة'}</span>
+          </h3>
+          <p className="wc-section-desc">
+            {lang === 'en' 
+              ? 'Configure domain connection, global payment gateways, and tax/currency defaults.' 
+              : 'خطوات عملية وتوجيهية لربط اسم النطاق الخاص بك، تفعيل بوابات الدفع، وتحديد العملة والضرائب.'}
+          </p>
         </div>
-        <div className="td-info-panel" style={{ margin: 0, padding: '24px', overflow: 'hidden' }}>
+      </div>
+
+      <div className="wc-settings-layout">
+        <div className="wc-settings-sidebar">
+          {tabs.map(tab => {
+            const IconComponent = tab.IconComp;
+            const isActive = activeTab === tab.id;
+            return (
+              <motion.button
+                key={tab.id}
+                className={`wc-settings-nav-btn ${isActive ? 'active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+                whileHover={{ x: isRtl ? -4 : 4 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <div style={{ 
+                  width: '36px', 
+                  height: '36px', 
+                  borderRadius: '10px', 
+                  background: isActive ? '#10B981' : 'rgba(255,255,255,0.05)', 
+                  color: isActive ? '#FFF' : '#10B981',
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center' 
+                }}>
+                  <IconComponent size={18} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '14px', fontWeight: '900', color: isActive ? '#FFF' : 'var(--text, #F8FAFC)' }}>
+                    {lang === 'en' ? tab.label_en : tab.label_ar}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text2, #8B96A8)' }}>
+                    {lang === 'en' ? tab.desc_en : tab.desc_ar}
+                  </div>
+                </div>
+                {isActive && <CheckCircle2 size={18} color="#10B981" />}
+              </motion.button>
+            );
+          })}
+        </div>
+
+        <div className="wc-settings-content">
           {activeTab === 'domain' && (
-            <div className="animate-fade-in">
-              <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#fff', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '24px' }}>🌐</span> {lang === 'en' ? 'Connect Custom Domain' : 'ربط الدومين المخصص'}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text, #F8FAFC)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Globe size={22} color="#3B82F6" />
+                <span>{lang === 'en' ? 'Connect Custom Domain (DNS Setup)' : 'ربط الدومين المخصص (إعدادات الـ DNS)'}</span>
               </h3>
-              <p style={{ color: '#8B96A8', fontSize: '14px', marginBottom: '24px', lineHeight: '1.6' }}>
-                {lang === 'en' ? 'Make your store link professional instead of using the free domain.' : 'اجعل رابط متجرك احترافياً بدلاً من استخدام النطاق المجاني.'}
+              <p style={{ color: 'var(--text2, #8B96A8)', fontSize: '13.5px', marginBottom: '24px', lineHeight: '1.6' }}>
+                {lang === 'en' 
+                  ? 'Follow these 4 simple steps in your domain registrar (Namecheap, GoDaddy, Cloudflare) to link your domain.' 
+                  : 'اتبع هذه الخطوات الـ 4 في لوحة تحكم شركة الدومين الخاصة بك (مثل Namecheap أو GoDaddy) لربط متجرك.'}
               </p>
-              <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', padding: '24px', borderRadius: '16px' }}>
-                <ol style={{ listStylePosition: 'inside', color: '#E8EDF5', fontSize: '14px', lineHeight: '2', padding: 0, margin: 0 }}>
-                  <li>{lang === 'en' ? 'Go to ' : 'اذهب إلى '}<strong>Settings &gt; Domains</strong></li>
-                  <li>{lang === 'en' ? 'Click on ' : 'اضغط على '}<strong>Add Domain</strong></li>
-                  <li>{lang === 'en' ? 'Copy the ' : 'انسخ الـ '}<strong>A Record</strong>{lang === 'en' ? ' and ' : ' و '}<strong>CNAME</strong></li>
-                  <li>{lang === 'en' ? 'Paste them in your domain provider.' : 'ألصق السجلات في شركة الدومينات الخاصة بك.'}</li>
-                </ol>
-              </div>
-            </div>
+
+              <ul className="wc-steps-list">
+                <li className="wc-step-item">
+                  <div className="wc-step-num">1</div>
+                  <span>{lang === 'en' ? 'Log in to your Domain Registrar -> DNS Management Settings' : 'سجل الدخول لحساب الدومين الخاص بك وأدخل لصفحة إدارة الـ DNS'}</span>
+                </li>
+                <li className="wc-step-item">
+                  <div className="wc-step-num">2</div>
+                  <span>{lang === 'en' ? 'Add A Record pointing `@` to IP: 185.199.108.153' : 'أضف سجل A Record واجعل الاسم `@` يشير للعنوان الرقمي IP'}</span>
+                </li>
+                <li className="wc-step-item">
+                  <div className="wc-step-num">3</div>
+                  <span>{lang === 'en' ? 'Add CNAME Record pointing `www` to your store slug' : 'أضف سجل CNAME واجعل الاسم `www` يشير إلى رابط متجرك الأصلي'}</span>
+                </li>
+                <li className="wc-step-item">
+                  <div className="wc-step-num">4</div>
+                  <span>{lang === 'en' ? 'Save DNS changes and wait 15 - 30 mins for propagation.' : 'احفظ التغييرات وانتظر 15-30 دقيقة لاكتمل تفعيل النطاق.'}</span>
+                </li>
+              </ul>
+            </motion.div>
           )}
+
           {activeTab === 'payment' && (
-            <div className="animate-fade-in">
-              <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#fff', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '24px' }}>💳</span> {lang === 'en' ? 'Activate Payment Gateways' : 'تفعيل بوابات الدفع'}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text, #F8FAFC)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <CreditCard size={22} color="#8B5CF6" />
+                <span>{lang === 'en' ? 'Activate Payment Gateways' : 'تفعيل بوابات الدفع الإلكترونية'}</span>
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <div style={{ background: 'rgba(99, 91, 255, 0.1)', border: '1px solid rgba(99, 91, 255, 0.3)', padding: '24px', borderRadius: '16px' }}>
-                  <h4 style={{ fontWeight: '900', color: '#8B5CF6', marginBottom: '8px', fontSize: '18px' }}>Stripe</h4>
-                  <p style={{ color: '#E8EDF5', fontSize: '12px', marginBottom: '16px', lineHeight: '1.6' }}>
-                    {lang === 'en' ? 'The best for credit cards worldwide.' : 'الأفضل للبطاقات الائتمانية حول العالم.'}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                <div className="wc-gateway-card stripe">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <h4 style={{ fontWeight: '900', color: '#8B5CF6', margin: 0, fontSize: '18px' }}>Stripe Checkout</h4>
+                    <span style={{ fontSize: '10px', fontWeight: 800, padding: '3px 10px', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.2)', color: '#C084FC' }}>
+                      {lang === 'en' ? 'Global Cards' : 'عالمي ومعتمد'}
+                    </span>
+                  </div>
+                  <p style={{ color: 'var(--text, #F8FAFC)', fontSize: '13px', margin: 0, lineHeight: '1.6' }}>
+                    {lang === 'en' 
+                      ? 'Supports Credit/Debit Cards, Apple Pay, Google Pay worldwide with maximum security and instant payouts.' 
+                      : 'يدعم الدفع بالبطاقات الائتمانية حول العالم، Apple Pay، و Google Pay بسرعة وأمان عالي.'}
                   </p>
                 </div>
-                <div style={{ background: 'rgba(0, 121, 193, 0.1)', border: '1px solid rgba(0, 121, 193, 0.3)', padding: '24px', borderRadius: '16px' }}>
-                  <h4 style={{ fontWeight: '900', color: '#3B82F6', marginBottom: '8px', fontSize: '18px' }}>PayPal</h4>
-                  <p style={{ color: '#E8EDF5', fontSize: '12px', marginBottom: '16px', lineHeight: '1.6' }}>
-                    {lang === 'en' ? 'Preferred by many customers for its ease.' : 'يفضله الكثير من العملاء لسهولته وأمانه.'}
+
+                <div className="wc-gateway-card paypal">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <h4 style={{ fontWeight: '900', color: '#3B82F6', margin: 0, fontSize: '18px' }}>PayPal Express</h4>
+                    <span style={{ fontSize: '10px', fontWeight: 800, padding: '3px 10px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.2)', color: '#60A5FA' }}>
+                      {lang === 'en' ? 'Instant Trust' : 'محبوب وثقة'}
+                    </span>
+                  </div>
+                  <p style={{ color: 'var(--text, #F8FAFC)', fontSize: '13px', margin: 0, lineHeight: '1.6' }}>
+                    {lang === 'en' 
+                      ? 'Preferred by global buyers for easy 1-click checkout without re-entering card details.' 
+                      : 'يفضله ملايين العملاء حول العالم لسهولته وأمانه في إتمام الدفع بزر واحد.'}
                   </p>
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
+
           {activeTab === 'taxes' && (
-            <div className="animate-fade-in">
-              <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#fff', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '24px' }}>💰</span> {lang === 'en' ? 'Currency & Taxes' : 'العملة والضرائب'}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text, #F8FAFC)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Coins size={22} color="#F59E0B" />
+                <span>{lang === 'en' ? 'Currency & Taxes Configuration' : 'العملة الأساسية والضرائب'}</span>
               </h3>
-              <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', padding: '24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <div>
-                  <h4 style={{ fontWeight: '900', color: '#fff', marginBottom: '8px', fontSize: '14px' }}>
-                    {lang === 'en' ? 'Setting Base Currency:' : 'إعداد العملة الأساسية:'}
-                  </h4>
-                  <p style={{ color: '#8B96A8', fontSize: '12px', lineHeight: '1.6' }}>
-                    {lang === 'en' ? 'From ' : 'من '}<strong>Settings &gt; General</strong>
-                  </p>
-                </div>
-                <div>
-                  <h4 style={{ fontWeight: '900', color: '#fff', marginBottom: '8px', fontSize: '14px' }}>
-                    {lang === 'en' ? 'Tax Rates:' : 'الضرائب (Tax Rates):'}
-                  </h4>
-                  <p style={{ color: '#8B96A8', fontSize: '12px', marginBottom: '12px', lineHeight: '1.6' }}>
-                    {lang === 'en' ? 'From ' : 'من '}<strong>Settings &gt; Taxes</strong>
-                  </p>
-                </div>
-              </div>
-            </div>
+              
+              <ul className="wc-steps-list">
+                <li className="wc-step-item">
+                  <div className="wc-step-num" style={{ background: 'rgba(245, 158, 11, 0.2)', borderColor: '#F59E0B', color: '#F59E0B' }}>1</div>
+                  <div>
+                    <div style={{ fontWeight: 800, color: 'var(--text, #F8FAFC)' }}>
+                      {lang === 'en' ? 'Default Store Currency:' : 'العملة الأساسية للمتجر:'}
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--text2, #8B96A8)' }}>
+                      {lang === 'en' ? 'Set from Settings -> General -> Currency (e.g. USD, SAR, EGP).' : 'يتم الضبط من الإعدادات العامة للمتجر حسب جمهورك المستهدف (USD / SAR / EGP).'}
+                    </div>
+                  </div>
+                </li>
+
+                <li className="wc-step-item">
+                  <div className="wc-step-num" style={{ background: 'rgba(245, 158, 11, 0.2)', borderColor: '#F59E0B', color: '#F59E0B' }}>2</div>
+                  <div>
+                    <div style={{ fontWeight: 800, color: 'var(--text, #F8FAFC)' }}>
+                      {lang === 'en' ? 'Tax Rates (VAT):' : 'ضريبة القيمة المضافة (VAT):'}
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--text2, #8B96A8)' }}>
+                      {lang === 'en' ? 'Enable automatic checkout tax calculation in Settings -> Taxes.' : 'تأكد من تفعيل احتساب الضريبة تلقائياً في صفحة إعدادات الضرائب.'}
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </motion.div>
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 
   // ====== RENDER STEP 3 ======
   const renderStep3 = () => (
-    <div className="animate-fade-in">
-      <div className="td-section-title">
-        <div className="td-section-bar" style={{ background: '#F59E0B' }} />
-        {lang === 'en' ? 'Step 3: Infrastructure Setup' : 'الخطوة 3: البنية التحتية'}
+    <motion.div 
+      key="step3"
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -14 }}
+      transition={{ duration: 0.25 }}
+    >
+      <div className="wc-section-header">
+        <div style={{ width: '4px', height: '22px', borderRadius: '4px', background: '#F59E0B' }} />
+        <div>
+          <h3 className="wc-section-title">
+            <Server size={20} color="#F59E0B" />
+            <span>{lang === 'en' ? 'Step 3: Domain Infrastructure & Matrix' : 'الخطوة 3: البنية التحتية ومصفوفة الدومينات'}</span>
+          </h3>
+          <p className="wc-section-desc">
+            {lang === 'en' 
+              ? 'Generate premium brand domain name combinations and verify setup completion.' 
+              : 'استخرج أفضل نطاقات ودومينات تجارية بناءً على اسم براندك ومجالك للبدء بقوة.'}
+          </p>
+        </div>
       </div>
-      
-      <div className="td-info-panel" style={{ margin: '0 0 36px 0', display: 'flex', flexDirection: 'column', background: 'rgba(13, 18, 32, 0.6)' }}>
-        <h3 style={{ fontSize: '15px', fontWeight: '900', color: '#F59E0B', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span>🌐</span> {lang === 'en' ? 'Smart Domain Matrix' : 'مصفوفة الدومينات الذكية'}
+
+      <div style={{ background: 'var(--bg3, rgba(30, 41, 59, 0.5))', border: '1px solid var(--line, rgba(255,255,255,0.08))', borderRadius: '20px', padding: '24px', marginBottom: '28px' }}>
+        <h3 style={{ fontSize: '16px', fontWeight: '900', color: '#F59E0B', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Sparkles size={20} />
+          <span>{lang === 'en' ? 'Smart Domain Matrix Generator' : 'مولد مصفوفة الدومينات الذكية'}</span>
         </h3>
-        <p style={{ color: '#8B96A8', fontSize: '12px', lineHeight: '1.6', marginBottom: '20px' }}>
-          {lang === 'en' ? `Generate strategic domain models based on your brand (${state?.brandName || 'please select a brand first'}) and your niche (${state?.niche || 'general'}).` : `استخرج نماذج ذكية واستراتيجية للدومينات بناءً على اسم البراند (${state?.brandName || 'يرجى اختيار براند أولاً'}) ومجالك (${state?.niche || 'عام'}).`}
+        <p style={{ color: 'var(--text2, #8B96A8)', fontSize: '13px', lineHeight: '1.6', marginBottom: '20px' }}>
+          {lang === 'en' 
+            ? `Generate strategic domain formats based on your brand (${state?.brandName || 'select brand in identity step'}) and niche (${state?.niche || 'general'}).` 
+            : `استخرج نماذج استراتيجية للدومينات بناءً على اسم البراند (${state?.brandName || 'يرجى تحديد براند في خطوات الهوية'}) ومجالك (${state?.niche || 'عام'}).`}
         </p>
-        {/* Dual Mode Selector */}
-        <div style={{ marginBottom: '16px' }}>
+
+        <div style={{ maxWidth: '560px', width: '100%', marginBottom: '20px' }}>
           <AnalysisModeSelector 
             mode={analysisMode} 
             onChange={setAnalysisMode} 
@@ -714,39 +969,46 @@ export default function WebsiteConstruction({ stepNumber }) {
         <button 
           onClick={generateDomainIdeas}
           disabled={isGeneratingDomain || !state?.brandName}
-          className="td-btn-primary"
-          style={{ background: isGeneratingDomain ? 'rgba(245, 158, 11, 0.2)' : '#F59E0B', color: isGeneratingDomain ? '#8B96A8' : '#000' }}
+          className="wc-btn wc-btn-primary"
+          style={{ background: isGeneratingDomain ? 'rgba(245, 158, 11, 0.3)' : '#F59E0B', color: isGeneratingDomain ? '#FFF' : '#000' }}
         >
           {isGeneratingDomain ? (
             <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
               <span className="td-spinner" style={{ borderColor: 'rgba(0,0,0,0.2)', borderTopColor: '#000' }} /> {lang === 'en' ? 'Analyzing Matrix...' : 'جاري تحليل مصفوفة الدومينات...'}
             </span>
           ) : (
-            <span>🤖 {lang === 'en' ? 'Generate Domain Matrix' : 'توليد مصفوفة الدومينات'}</span>
+            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <Cpu size={18} /> {lang === 'en' ? 'Generate Domain Matrix' : 'توليد مصفوفة الدومينات'}
+            </span>
           )}
         </button>
       </div>
+
       {renderMatrixSection()}
 
-
       <div style={{ marginTop: '36px' }}>
-        <div className="td-info-panel" style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-          <div style={{ fontSize: '40px' }}>✅</div>
-          <div style={{ flex: 1 }}>
-            <h4 style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#F0F4FC' }}>
-              {lang === 'en' ? 'Platform Setup Completed' : 'إتمام تجهيز المنصة'}
+        <div style={{ background: 'var(--bg3, rgba(30, 41, 59, 0.4))', border: '1px solid var(--line, rgba(255,255,255,0.08))', borderRadius: '20px', padding: '24px', display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <CheckSquare size={24} />
+          </div>
+          <div style={{ flex: 1, minWidth: '220px' }}>
+            <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', color: 'var(--text, #F8FAFC)', fontWeight: 900 }}>
+              {lang === 'en' ? 'Website Setup Confirmation' : 'تأكيد جاهزية الموقع'}
             </h4>
-            <p style={{ margin: 0, fontSize: '13px', color: '#8B96A8', lineHeight: 1.6 }}>
-              {lang === 'en' ? 'Confirm that you have finished the basic settings.' : 'قم بالتأكيد بأنك أنهيت الإعدادات الأساسية.'}
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text2, #8B96A8)', lineHeight: 1.6 }}>
+              {lang === 'en' ? 'Confirm that you have generated your website code and reviewed core store settings.' : 'قم بالتأكيد بأنك ولدت كود موقعك وراجعت الإعدادات الأساسية لتحديث حالة الإنجاز.'}
             </p>
           </div>
           <button 
-            onClick={() => dispatch({ type: 'COMPLETE_STEP', payload: 'website-construction' })}
-            className="td-btn-primary"
+            onClick={() => {
+              dispatch({ type: 'COMPLETE_STEP', payload: 'website-construction' });
+              toast(lang === 'en' ? 'Step marked as completed!' : 'تم تأكيد إكمال خطوة بناء الموقع!', 'success');
+            }}
+            className="wc-btn wc-btn-primary"
             style={{ 
               background: state?.completedSteps?.includes('website-construction') ? '#10B981' : '#F59E0B', 
-              color: state?.completedSteps?.includes('website-construction') ? '#fff' : '#000',
-              width: 'auto', padding: '0 32px' 
+              color: state?.completedSteps?.includes('website-construction') ? '#FFF' : '#000',
+              padding: '12px 28px' 
             }}
           >
             {state?.completedSteps?.includes('website-construction') 
@@ -755,7 +1017,7 @@ export default function WebsiteConstruction({ stepNumber }) {
           </button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 
   return (
@@ -767,50 +1029,87 @@ export default function WebsiteConstruction({ stepNumber }) {
       accentColor="#3B82F6"
       timeEstimate="30 - 60"
     >
-      {/* WIZARD NAVIGATION */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '32px' }}>
-        <button 
-          onClick={() => setCurrentStep(1)} 
-          style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', background: currentStep === 1 ? '#3B82F6' : 'rgba(59, 130, 246, 0.1)', color: currentStep === 1 ? '#fff' : '#3B82F6', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}
-        >
-          1. {lang === 'en' ? 'Design' : 'التصميم'}
-        </button>
-        <button 
-          onClick={() => setCurrentStep(2)} 
-          style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', background: currentStep === 2 ? '#10B981' : 'rgba(16, 185, 129, 0.1)', color: currentStep === 2 ? '#fff' : '#10B981', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}
-        >
-          2. {lang === 'en' ? 'Settings' : 'الإعدادات'}
-        </button>
-        <button 
-          onClick={() => setCurrentStep(3)} 
-          style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', background: currentStep === 3 ? '#F59E0B' : 'rgba(245, 158, 11, 0.1)', color: currentStep === 3 ? '#fff' : '#F59E0B', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}
-        >
-          3. {lang === 'en' ? 'Infrastructure' : 'البنية التحتية'}
-        </button>
-      </div>
-
-      {currentStep === 1 && renderStep1()}
-      {currentStep === 2 && renderStep2()}
-      {currentStep === 3 && renderStep3()}
-
-      {/* WIZARD CONTROLS */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '32px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '24px' }}>
-        <button 
-          onClick={() => setCurrentStep(prev => Math.max(1, prev - 1))}
-          style={{ visibility: currentStep === 1 ? 'hidden' : 'visible', padding: '10px 24px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#8B96A8', cursor: 'pointer' }}
-        >
-          {lang === 'en' ? '← Previous Step' : '← الخطوة السابقة'}
-        </button>
-        {currentStep < 3 && (
+      <div className="wc-container" dir={isRtl ? 'rtl' : 'ltr'}>
+        {/* WIZARD NAVIGATION HEADER */}
+        <div className="wc-wizard-header">
           <button 
-            onClick={() => setCurrentStep(prev => Math.min(3, prev + 1))}
-            style={{ padding: '10px 24px', borderRadius: '8px', border: 'none', background: '#3B82F6', color: '#fff', cursor: 'pointer', fontWeight: 'bold' }}
+            className={`wc-wizard-tab ${currentStep === 1 ? 'active' : ''}`}
+            onClick={() => setCurrentStep(1)} 
           >
-            {lang === 'en' ? 'Next Step →' : 'الخطوة التالية →'}
+            {currentStep === 1 && (
+              <motion.div 
+                layoutId="websiteStepTabHighlight" 
+                className="wc-wizard-tab-bg" 
+                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              />
+            )}
+            <Wand2 size={16} style={{ zIndex: 1 }} />
+            <span style={{ zIndex: 1 }}>1. {lang === 'en' ? 'Design & Code' : 'التصميم والكود'}</span>
           </button>
-        )}
-      </div>
 
+          <button 
+            className={`wc-wizard-tab ${currentStep === 2 ? 'active' : ''}`}
+            onClick={() => setCurrentStep(2)} 
+          >
+            {currentStep === 2 && (
+              <motion.div 
+                layoutId="websiteStepTabHighlight" 
+                className="wc-wizard-tab-bg" 
+                style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.3) 0%, rgba(59, 130, 246, 0.25) 100%)', borderColor: 'rgba(16, 185, 129, 0.4)' }}
+                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              />
+            )}
+            <Settings size={16} style={{ zIndex: 1 }} />
+            <span style={{ zIndex: 1 }}>2. {lang === 'en' ? 'Settings & DNS' : 'الإعدادات العامة'}</span>
+          </button>
+
+          <button 
+            className={`wc-wizard-tab ${currentStep === 3 ? 'active' : ''}`}
+            onClick={() => setCurrentStep(3)} 
+          >
+            {currentStep === 3 && (
+              <motion.div 
+                layoutId="websiteStepTabHighlight" 
+                className="wc-wizard-tab-bg" 
+                style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.3) 0%, rgba(236, 72, 153, 0.25) 100%)', borderColor: 'rgba(245, 158, 11, 0.4)' }}
+                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              />
+            )}
+            <Server size={16} style={{ zIndex: 1 }} />
+            <span style={{ zIndex: 1 }}>3. {lang === 'en' ? 'Infrastructure' : 'البنية التحتية'}</span>
+          </button>
+        </div>
+
+        {/* STEP CONTENT WRAPPER */}
+        <div className="wc-panel">
+          <AnimatePresence mode="wait">
+            {currentStep === 1 && renderStep1()}
+            {currentStep === 2 && renderStep2()}
+            {currentStep === 3 && renderStep3()}
+          </AnimatePresence>
+
+          {/* WIZARD CONTROLS */}
+          <div className="wc-controls">
+            <button 
+              onClick={() => setCurrentStep(prev => Math.max(1, prev - 1))}
+              className="wc-btn wc-btn-secondary"
+              style={{ visibility: currentStep === 1 ? 'hidden' : 'visible' }}
+            >
+              {isRtl ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
+              <span>{lang === 'en' ? 'Previous Step' : 'الخطوة السابقة'}</span>
+            </button>
+            {currentStep < 3 && (
+              <button 
+                onClick={() => setCurrentStep(prev => Math.min(3, prev + 1))}
+                className="wc-btn wc-btn-primary"
+              >
+                <span>{lang === 'en' ? 'Next Step' : 'الخطوة التالية'}</span>
+                {isRtl ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
     </ToolDashboardLayout>
   );
 }

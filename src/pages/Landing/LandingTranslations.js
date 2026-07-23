@@ -26,10 +26,10 @@ export const landingTranslations = {
       tag: "المشكلة الحقيقية",
       title: "ليه معظم البراندات تفشل؟",
       cards: [
-        { icon: '😵', title: 'ما يعرفوا يبدأوا', desc: 'آلاف الأفكار بدون خطة واضحة — يضيع الوقت في التفكير بدون تنفيذ' },
-        { icon: '🎨', title: 'براندينج ضعيف', desc: 'اسم عشوائي، ألوان مش متناسقة، رسالة مش واضحة — العميل ما يثق' },
-        { icon: '📝', title: 'محتوى بلا استراتيجية', desc: 'ينشرون كل يوم بدون هدف — ما فيه نتائج ولا نمو حقيقي' },
-        { icon: '💸', title: 'عروض ضعيفة', desc: 'أسعار عشوائية، عروض مش مقنعة — العميل يشوف ويمشي' }
+        { icon: '', title: 'ما يعرفوا يبدأوا', desc: 'آلاف الأفكار بدون خطة واضحة — يضيع الوقت في التفكير بدون تنفيذ' },
+        { icon: '', title: 'براندينج ضعيف', desc: 'اسم عشوائي، ألوان مش متناسقة، رسالة مش واضحة — العميل ما يثق' },
+        { icon: '', title: 'محتوى بلا استراتيجية', desc: 'ينشرون كل يوم بدون هدف — ما فيه نتائج ولا نمو حقيقي' },
+        { icon: '', title: 'عروض ضعيفة', desc: 'أسعار عشوائية، عروض مش مقنعة — العميل يشوف ويمشي' }
       ],
       arrow: "AI Brand Vision بيحل كل ده"
     },
@@ -39,7 +39,7 @@ export const landingTranslations = {
       desc: "لا تبدأ مشروعك عشوائياً. نساعدك على تحليل السوق واكتشاف النيتش (التخصص) الأكثر ربحية والأقل منافسة في ثوانٍ معدودة وببيانات دقيقة.",
       bullet1: "تحليل حجم الطلب العالمي والخليجي",
       bullet2: "قياس معدل المنافسة وصعوبة الاختراق",
-      liveRadar: "🎯 رادار النيش الحي:",
+      liveRadar: "رادار النيش الحي:",
       niches: {
         ecommerce: "E-commerce (التجارة الإلكترونية)",
         saas: "SaaS & Digital Products (المنتجات الرقمية)",
@@ -56,8 +56,8 @@ export const landingTranslations = {
       tag: "02 · الهوية الاحترافية",
       title: "صانع الأسماء والهوية البصرية",
       desc: "ولد اسماً فريداً لبراندك مع باليت ألوان ساحرة ومتناسقة مصممة خصيصاً لجذب انتباه الفئة المستهدفة فوراً ومجاناً بالكامل.",
-      cta: "🪄 ولد هوية عشوائية الآن",
-      liveStudio: "🎨 استوديو الهويات الذكي:",
+      cta: "ولد هوية عشوائية الآن",
+      liveStudio: "استوديو الهويات الذكي:",
       paletteTitle: "باليت الألوان المتناسقة المقترحة:"
     },
     section3: {
@@ -65,21 +65,21 @@ export const landingTranslations = {
       title: "بناء وتصميم المواقع الذكي",
       desc: "بناء صفحة هبوط ذات معدلات تحويل عالية مع ربط الاستضافة، الأكواد، وتجهيز الهيكل المتكامل لمتجرك في دقائق وبأقل مجهود.",
       note: "* تحديث تلقائي للتقدم والمظهر",
-      liveStatus: "💻 حالة تجهيز الموقع الحي:",
+      liveStatus: "حالة تجهيز الموقع الحي:",
       steps: [
         "إعداد وتجهيز الاستضافة والنطاق الدومين",
         "تصميم وبناء الصفحة الرئيسية وواجهة المستخدم",
         "ربط البيكسل وأكواد التتبع للتحليلات"
       ],
-      statusHosting: "📡 جاري ربط خوادم الاستضافة...",
-      statusCss: "🎨 جاري حقن ملفات التنسيق CSS وتوليد الألوان...",
-      statusReady: "⚡ تم تفعيل البيكسل والتحليلات بالكامل!"
+      statusHosting: "جاري ربط خوادم الاستضافة...",
+      statusCss: "جاري حقن ملفات التنسيق CSS وتوليد الألوان...",
+      statusReady: "تم تفعيل البيكسل والتحليلات بالكامل!"
     },
     section4: {
       tag: "04 · المنتج والربحية",
       title: "الحاسبة التفاعلية للأرباح الذكية",
       desc: "اختبر نموذج عملك فوراً! العب بالأرقام، حدد سعر منتجك وتكلفة الإعلانات المستهدفة لتكشف صافي أرباحك وعائد الاستثمار على إعلاناتك بدقة متناهية.",
-      note: "💡 جرب تحريك المؤشرات في الجانب لحساب الأرباح حياً!",
+      note: "جرب تحريك المؤشرات في الجانب لحساب الأرباح حياً!",
       netProfit: "صافي الأرباح المتوقعة شهرياً",
       sellPrice: "سعر بيع المنتج",
       adSpend: "تكلفة الإعلان لكل بيعة",
@@ -93,11 +93,11 @@ export const landingTranslations = {
       title: "مصنع المحتوى الاحترافي",
       desc: "احصل على مئات أفكار المنشورات والإعلانات والنصوص الجاهزة المصممة خصيصاً للنيش الخاص بك مع فلاتر ذكية وسهولة نسخ كاملة لتبدأ النشر فوراً.",
       tabs: {
-        design: "🎨 قوالب تصاميم",
-        ads: "🎥 أفكار إعلانية",
-        writing: "✍️ كتابة نصوص"
+        design: "قوالب تصاميم",
+        ads: "أفكار إعلانية",
+        writing: "كتابة نصوص"
       },
-      liveTemplates: "🖼️ قوالب مصنع المحتوى النشطة:"
+      liveTemplates: "قوالب مصنع المحتوى النشطة:"
     },
     section6: {
       tag: "06 · العمل الحر والمبيعات",
@@ -111,13 +111,13 @@ export const landingTranslations = {
       desc: "استكشف كافة منصات العمل الحر والخدمات المصغرة المصنفة بعناية فائقة. اعرف أين يبحث عملاؤك المثاليون وكيف تؤسس حساباتك بقوة لتتفوق على منافسيك.",
       bullet1: "تصنيفات المنصات حسب نطاق العمل والبلد",
       bullet2: "استراتيجيات التسعير بناءً على الفئات المستهدفة",
-      liveRadar: "🌐 رادار منصات العمل الحر النشطة:"
+      liveRadar: "رادار منصات العمل الحر النشطة:"
     },
     section8: {
       tag: "08 · الأتمتة والمتابعة",
       title: "محرك أتمتة التسويق الذكي",
       desc: "ابنِ سلسلة ترحيب وخدمة عملاء مؤتمتة بنسبة 100%. حوّل المشتركين المهتمين إلى مشترين حقيقيين من خلال نظام رسائل تتابعية وتسويقية ذكية ومخصصة.",
-      note: "🚀 زيادة مبيعاتك بنسبة تصل إلى 35% باستخدام الأتمتة البريدية!",
+      note: "زيادة مبيعاتك بنسبة تصل إلى 35% باستخدام الأتمتة البريدية!",
       steps: [
         { title: 'الخطوة الأولى: تسجيل المشترك الجديد', desc: 'إرسال إيميل الترحيب بالخصم والتحميل الفوري' },
         { title: 'الخطوة الثانية: بعد يومين من الاشتراك', desc: 'إرسال دراسة حالة نجاح لعميل آخر وبناء الثقة' },
@@ -129,8 +129,8 @@ export const landingTranslations = {
       title: "المساعد الشخصي الفوري الذكي",
       desc: "اختبر تجربة الاستشارات والذكاء الاصطناعي بنفسك! قمنا ببرمجة لوحة محاكاة حية لتجرب أداة الذكاء الاصطناعي مباشرة من صفحة الهبوط والحصول على ردود فورية.",
       presets: [
-        { label: "💡 فكرة إعلان ملابس رياضية", query: 'أقترح علي فكرة إعلان فيسبوك لبراند ملابس رياضية؟', response: 'بالتأكيد! إليك فكرة إعلان مميزة: العنوان: "تحدى حدودك!". النص التسويقي: "صممنا مجموعتنا الرياضية الجديدة لتتحرك معك بكل مرونة وقوة. تسوق الآن واحصل على خصم 15% وتوصيل مجاني!"' },
-        { label: "💡 كتابة عرض لعميل تصميم", query: 'كيف أكتب عرض مالي مقنع لعميل خدمات تصميم؟', response: 'العرض المقنع يجب أن يحتوي على: 1. فهم دقيق للتحدي والمشكلة. 2. خطوات العمل وتفاصيل المخرجات. 3. استعراض القيمة المضافة وعائد الاستثمار. 4. خطة الأسعار والضمان.' }
+        { label: "فكرة إعلان ملابس رياضية", query: 'أقترح علي فكرة إعلان فيسبوك لبراند ملابس رياضية؟', response: 'بالتأكيد! إليك فكرة إعلان مميزة: العنوان: "تحدى حدودك!". النص التسويقي: "صممنا مجموعتنا الرياضية الجديدة لتتحرك معك بكل مرونة وقوة. تسوق الآن واحصل على خصم 15% وتوصيل مجاني!"' },
+        { label: "كتابة عرض لعميل تصميم", query: 'كيف أكتب عرض مالي مقنع لعميل خدمات تصميم؟', response: 'العرض المقنع يجب أن يحتوي على: 1. فهم دقيق للتحدي والمشكلة. 2. خطوات العمل وتفاصيل المخرجات. 3. استعراض القيمة المضافة وعائد الاستثمار. 4. خطة الأسعار والضمان.' }
       ],
       welcomeMsg: 'أهلاً بك! أنا مساعدك الذكي لتأسيس البراند. اختر أي استعلام أدناه لرؤية كيف أعمل بشكل فوري!',
       typingMsg: 'جاري صياغة الرد بالذكاء الاصطناعي...'
@@ -155,7 +155,7 @@ export const landingTranslations = {
       bullets: "✓ مجاني · ✓ بدون بطاقة · ✓ عربي كامل"
     },
     footer: {
-      copyright: "© 2026 — مصنوع بـ ❤️",
+      copyright: "© 2026 AI Brand Vision. جميع الحقوق محفوظة.",
       login: "تسجيل الدخول ←"
     },
     whatsapp: {
@@ -189,10 +189,10 @@ export const landingTranslations = {
       tag: "The Real Problem",
       title: "Why Do Most Brands Fail?",
       cards: [
-        { icon: '😵', title: "They Don't Know Where to Start", desc: "Thousands of ideas without a clear plan — time is wasted in thinking without execution" },
-        { icon: '🎨', title: "Weak Branding", desc: "Random name, mismatched colors, unclear message — the customer doesn't trust you" },
-        { icon: '📝', title: "Content Without Strategy", desc: "Publishing every day without a goal — resulting in no impact or real growth" },
-        { icon: '💸', title: "Weak Offers", desc: "Random pricing, unconvincing offers — the customer looks and leaves" }
+        { icon: '', title: "They Don't Know Where to Start", desc: "Thousands of ideas without a clear plan — time is wasted in thinking without execution" },
+        { icon: '', title: "Weak Branding", desc: "Random name, mismatched colors, unclear message — the customer doesn't trust you" },
+        { icon: '', title: "Content Without Strategy", desc: "Publishing every day without a goal — resulting in no impact or real growth" },
+        { icon: '', title: "Weak Offers", desc: "Random pricing, unconvincing offers — the customer looks and leaves" }
       ],
       arrow: "AI Brand Vision Solves All This"
     },
@@ -202,7 +202,7 @@ export const landingTranslations = {
       desc: "Don't start your project randomly. We help you analyze the market and discover the most profitable and least competitive niche in seconds with highly accurate data.",
       bullet1: "Global and regional demand volume analysis",
       bullet2: "Measuring competition rate and entry barriers",
-      liveRadar: "🎯 Live Niche Radar:",
+      liveRadar: "Live Niche Radar:",
       niches: {
         ecommerce: "E-commerce",
         saas: "SaaS & Digital Products",
@@ -219,8 +219,8 @@ export const landingTranslations = {
       tag: "02 · Professional Identity",
       title: "Name Maker & Visual Identity",
       desc: "Generate a unique name for your brand with an enchanting and consistent color palette specifically designed to instantly captivate your target audience, completely for free.",
-      cta: "🪄 Generate Random Identity Now",
-      liveStudio: "🎨 Smart Identity Studio:",
+      cta: "Generate Random Identity Now",
+      liveStudio: "Smart Identity Studio:",
       paletteTitle: "Suggested Harmonious Color Palette:"
     },
     section3: {
@@ -228,21 +228,21 @@ export const landingTranslations = {
       title: "Smart Web Design & Building",
       desc: "Build a high-converting landing page while linking hosting, tracking codes, and setting up the complete structure of your store in minutes with minimal effort.",
       note: "* Automatic progress and appearance updates",
-      liveStatus: "💻 Live Site Setup Status:",
+      liveStatus: "Live Site Setup Status:",
       steps: [
         "Setting up and preparing hosting and domain name",
         "Designing and building the home page and UI",
         "Linking pixel and tracking codes for analytics"
       ],
-      statusHosting: "📡 Linking hosting servers...",
-      statusCss: "🎨 Injecting CSS styles and generating color templates...",
-      statusReady: "⚡ Pixel and analytics have been fully activated!"
+      statusHosting: "Linking hosting servers...",
+      statusCss: "Injecting CSS styles and generating color templates...",
+      statusReady: "Pixel and analytics have been fully activated!"
     },
     section4: {
       tag: "04 · Product & Profitability",
       title: "Smart Interactive Profit Calculator",
       desc: "Test your business model instantly! Adjust numbers, set your product price and target ad costs to calculate your expected net profit and ROAS with high precision.",
-      note: "💡 Adjust the sliders on the side to calculate profits live!",
+      note: "Adjust the sliders on the side to calculate profits live!",
       netProfit: "Expected Monthly Net Profit",
       sellPrice: "Product Selling Price",
       adSpend: "Ad Cost per Purchase",
@@ -256,11 +256,11 @@ export const landingTranslations = {
       title: "Professional Content Factory",
       desc: "Get hundreds of post ideas, ads, and high-converting copy designed specifically for your niche with smart filters and easy copying to start publishing immediately.",
       tabs: {
-        design: "🎨 Design Templates",
-        ads: "🎥 Ad Concepts",
-        writing: "✍️ Copywriting"
+        design: "Design Templates",
+        ads: "Ad Concepts",
+        writing: "Copywriting"
       },
-      liveTemplates: "🖼️ Active Content Factory Templates:"
+      liveTemplates: "Active Content Factory Templates:"
     },
     section6: {
       tag: "06 · Freelancing & Sales",
@@ -274,13 +274,13 @@ export const landingTranslations = {
       desc: "Explore all freelance and microservices platforms carefully categorized. Know where your ideal customers look and how to strongly establish your accounts.",
       bullet1: "Platform classifications by scope and region",
       bullet2: "Pricing strategies tailored to target audiences",
-      liveRadar: "🌐 Active Freelance Platforms Radar:"
+      liveRadar: "Active Freelance Platforms Radar:"
     },
     section8: {
       tag: "08 · Automation & Follow-up",
       title: "Smart Marketing Automation Engine",
       desc: "Build a 100% automated welcome and customer follow-up series. Convert interested leads into active buyers through a smart sequence of tailored messages.",
-      note: "🚀 Boost your sales by up to 35% using automated sequences!",
+      note: "Boost your sales by up to 35% using automated sequences!",
       steps: [
         { title: 'Step One: New Subscriber Registration', desc: 'Sending welcome email with discount and instant download' },
         { title: 'Step Two: Two Days After Subscribing', desc: 'Sending a customer success case study to build trust' },
@@ -292,8 +292,8 @@ export const landingTranslations = {
       title: "Instant Smart AI Assistant",
       desc: "Experience AI consulting for yourself! We programmed a live simulator panel for you to try the AI assistant directly from the landing page and get instant responses.",
       presets: [
-        { label: "💡 Sportswear Ad Idea", query: 'Suggest a Facebook ad idea for a sportswear brand?', response: 'Sure! Here is a great ad idea: Title: "Challenge your limits!". Copy: "We designed our new sportswear collection to move with you with complete flexibility and strength. Shop now and get a 15% discount and free delivery!"' },
-        { label: "💡 Proposal for a Design Client", query: 'How do I write a convincing financial proposal for a design client?', response: 'A convincing proposal should contain: 1. Accurate understanding of the challenge and problem. 2. Action steps and deliverables details. 3. Showcasing added value and ROI. 4. Pricing plan and guarantee.' }
+        { label: "Sportswear Ad Idea", query: 'Suggest a Facebook ad idea for a sportswear brand?', response: 'Sure! Here is a great ad idea: Title: "Challenge your limits!". Copy: "We designed our new sportswear collection to move with you with complete flexibility and strength. Shop now and get a 15% discount and free delivery!"' },
+        { label: "Proposal for a Design Client", query: 'How do I write a convincing financial proposal for a design client?', response: 'A convincing proposal should contain: 1. Accurate understanding of the challenge and problem. 2. Action steps and deliverables details. 3. Showcasing added value and ROI. 4. Pricing plan and guarantee.' }
       ],
       welcomeMsg: 'Welcome! I am your smart brand assistant. Choose any query below to see how I work instantly!',
       typingMsg: 'Drafting response with AI...'
@@ -318,7 +318,7 @@ export const landingTranslations = {
       bullets: "✓ Free · ✓ No Card Required · ✓ Bilingual Support"
     },
     footer: {
-      copyright: "© 2026 — Made with ❤️",
+      copyright: "© 2026 AI Brand Vision. All rights reserved.",
       login: "Login ←"
     },
     whatsapp: {

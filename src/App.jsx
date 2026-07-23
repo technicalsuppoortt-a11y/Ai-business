@@ -38,35 +38,47 @@ export default function App() {
 
   // Apply Brand Theme
   useEffect(() => {
-    // Priority: Specific Brand Page > Admin Portal > Super Admin > User Portal > Default
     const theme = brandData?.themeConfig || adminUserData?.themeConfig || superAdminUserData?.themeConfig || userData?.themeConfig;
+    const isLightMode = document.documentElement.classList.contains('light-mode');
     
     const root = document.documentElement;
     if (theme) {
       if (theme.accent) root.style.setProperty('--accent', theme.accent);
       if (theme.success) root.style.setProperty('--green', theme.success);
-      if (theme.bg) root.style.setProperty('--bg', theme.bg);
-      if (theme.sidebar) root.style.setProperty('--bg2', theme.sidebar);
-      if (theme.text) root.style.setProperty('--text', theme.text);
-      if (theme.line) root.style.setProperty('--line', theme.line);
       if (theme.font) {
         root.style.setProperty('--font-family', `"${theme.font}", sans-serif`);
         root.style.fontFamily = `"${theme.font}", sans-serif`;
       }
+      if (!isLightMode) {
+        if (theme.bg) root.style.setProperty('--bg', theme.bg);
+        if (theme.sidebar) root.style.setProperty('--bg2', theme.sidebar);
+        if (theme.text) root.style.setProperty('--text', theme.text);
+        if (theme.line) root.style.setProperty('--line', theme.line);
+      } else {
+        root.style.removeProperty('--bg');
+        root.style.removeProperty('--bg2');
+        root.style.removeProperty('--text');
+        root.style.removeProperty('--line');
+      }
     } else {
       root.style.setProperty('--accent', '#3B82F6');
       root.style.setProperty('--green', '#10B981');
-      root.style.setProperty('--bg', '#080C14');
-      root.style.setProperty('--bg2', '#0D1220');
-      root.style.setProperty('--text', '#FFFFFF');
-      root.style.setProperty('--line', 'rgba(255,255,255,0.08)');
+      if (!isLightMode) {
+        root.style.setProperty('--bg', '#080C14');
+        root.style.setProperty('--bg2', '#0D1220');
+        root.style.setProperty('--text', '#FFFFFF');
+        root.style.setProperty('--line', 'rgba(255,255,255,0.08)');
+      } else {
+        root.style.removeProperty('--bg');
+        root.style.removeProperty('--bg2');
+        root.style.removeProperty('--text');
+        root.style.removeProperty('--line');
+      }
     }
-    // Always ensure base variables are set if not provided by theme
-    if (!theme?.line) root.style.setProperty('--line', 'rgba(255,255,255,0.08)');
-    if (!theme?.line2) root.style.setProperty('--line2', 'rgba(255,255,255,0.15)');
-    if (!theme?.text) root.style.setProperty('--text', '#FFFFFF');
-    if (!theme?.text2) root.style.setProperty('--text2', '#94A3B8');
-    if (!theme?.text3) root.style.setProperty('--text3', '#64748B');
+
+    root.style.setProperty('--line2', 'rgba(255,255,255,0.15)');
+    root.style.setProperty('--text2', '#94A3B8');
+    root.style.setProperty('--text3', '#64748B');
     root.style.setProperty('--radius', '16px');
     root.style.setProperty('--radius-sm', '10px');
     

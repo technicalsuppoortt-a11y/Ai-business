@@ -238,15 +238,89 @@ Return MUST be valid JSON strictly matching this structure:
     case 'marketing-plan': {
       const { budget, duration, goal, clientLevel } = inputs;
 
-      const systemPrompt = `You are a Chief Marketing Officer (CMO). Write a detailed, actionable Marketing Plan in formatted Markdown.
-${languageInstruction}`;
+      const systemPrompt = `You are an elite Senior Growth Marketer and Performance Advertising Specialist.
+${languageInstruction}
 
-      const userPrompt = `Create a realistic Marketing Plan & Campaign Allocation Strategy for:
+Your task is to generate a highly actionable, structured, and comprehensive Marketing Strategy Plan based on the user's inputs.
+
+OUTPUT FORMAT REQUIREMENTS (STRICT):
+You MUST follow this exact Markdown structure and style. Do not change section titles. Translate section titles and content appropriately to the user's language (${lang === 'en' ? 'English' : 'Arabic'}), maintaining the exact same layout, tables, and emojis.
+
+# 🗺️ ${lang === 'en' ? 'Master Advertising & Marketing Plan' : 'خطة التسويق والإعلانات الشاملة'}
+
+## 📌 ${lang === 'en' ? 'Executive Overview' : 'النظرة العامة والتنفيذية'}
+- **${lang === 'en' ? 'Niche/Industry' : 'النيتش / القطاع'}**: [Niche]
+- **${lang === 'en' ? 'Total Budget' : 'إجمالي الميزانية'}**: [$Budget]
+- **${lang === 'en' ? 'Campaign Duration' : 'مدة الحملة'}**: [Duration Days]
+- **${lang === 'en' ? 'Primary Goal' : 'الهدف الرئيسي'}**: [Goal]
+
+---
+
+## 🎯 ${lang === 'en' ? 'Target Audience & Angles' : 'الجمهور المستهدف وزوايا الإعلان'}
+- **${lang === 'en' ? 'Demographics & Profile' : 'الخصائص الديموغرافية والملف الشخصي'}**: [Detailed age, interests, location, pain points]
+- **${lang === 'en' ? 'High-Priority Targeting Angles' : 'زوايا الاستهداف عالية الأولوية'}**:
+  1. **${lang === 'en' ? 'Direct/Broad' : 'الاستهداف المفتوح (Broad)'}**: [How to leverage broad AI targeting]
+  2. **${lang === 'en' ? 'Interests & Behaviors' : 'الاهتمامات والسلوكيات'}**: [Specific interests or behaviors]
+  3. **${lang === 'en' ? 'Lookalike/Retargeting' : 'الجماهير المشابهة وإعادة الاستهداف'}**: [Retargeting strategy]
+
+---
+
+## 📊 ${lang === 'en' ? 'Budget Allocation Strategy' : 'استراتيجية توزيع الميزانية'}
+| ${lang === 'en' ? 'Marketing Channel / Phase' : 'القناة / المرحلة التسويقية'} | ${lang === 'en' ? 'Budget ($ / %)' : 'الميزانية ($ / %)'} | ${lang === 'en' ? 'Strategic Purpose' : 'الهدف الاستراتيجي'} | ${lang === 'en' ? 'Key Expected Action' : 'الإجراء المتوقع'} |
+| :--- | :--- | :--- | :--- |
+| **${lang === 'en' ? 'Testing Phase (Paid Ads)' : 'مرحلة الاختبار (إعلانات ممولة)'}** | $X (X%) | Test creatives & find winners | Traffic & initial conversion |
+| **${lang === 'en' ? 'Retargeting & Nurturing' : 'إعادة الاستهداف والمتابعة'}** | $X (X%) | Recapture cart abandoners | High ROI conversions |
+| **${lang === 'en' ? 'Content & Email / Organic' : 'المحتوى والإيميل / المطبوعات'}** | $X (X%) | Build authority & email list | Long-term retention |
+
+---
+
+## ⚡ ${lang === 'en' ? 'Step-by-Step Execution Plan' : 'خطة التنفيذ خطوة بخطوة'}
+
+### Phase 1: ${lang === 'en' ? 'Foundation & Tracking Setup' : 'التأسيس والتتبع'}
+- [Key setup task 1]
+- [Key setup task 2]
+
+### Phase 2: ${lang === 'en' ? 'Campaign Strategy & Channels' : 'استراتيجية الحملات والقنوات'}
+- **${lang === 'en' ? 'Paid Social Ads' : 'إعلانات السوشيال ميديا'}**: [Detailed setup]
+- **${lang === 'en' ? 'Email & Direct Nurturing' : 'التسويق بالإيميل والتواصل'}**: [Sequence schedule]
+- **${lang === 'en' ? 'Content Marketing' : 'تسويق المحتوى'}**: [Content angles]
+
+---
+
+## 💡 ${lang === 'en' ? 'Top-Performing Creative Concepts' : 'أفضل المفاهيم الإعلانية أداءً'}
+1. **${lang === 'en' ? 'The "Us vs. Them" Comparison' : 'إعلان المقارنة (نحن ضد الآخرين)'}**
+   - *Format*: Image/Video
+   - *Concept*: [Specific execution]
+2. **${lang === 'en' ? 'The Educational Hook / Problem Solver' : 'الخطاف التعليمي / حل المشكلة'}**
+   - *Format*: Video/Carousel
+   - *Concept*: [Specific execution]
+3. **${lang === 'en' ? 'User-Generated Content (UGC) / Social Proof' : 'محتوى تجربة العميل (UGC) والرمز الاجتماعي'}**
+   - *Format*: Short Video
+   - *Concept*: [Specific execution]
+4. **${lang === 'en' ? 'The Direct Offer & Urgency' : 'العرض المباشر ودافع العجلة'}**
+   - *Format*: Carousel/Single Image
+   - *Concept*: [Specific execution]
+
+---
+
+## 📈 ${lang === 'en' ? 'Critical KPIs & Performance Tracking' : 'مؤشرات الأداء الرئيسية والتحليل'}
+- **${lang === 'en' ? 'Primary Metric' : 'المؤشر الرئيسي'}**: [Target CPA / Target ROAS]
+- **${lang === 'en' ? 'Secondary Metrics' : 'المؤشرات الثانوية'}**:
+  - **Link CTR**: Target > 1.5%
+  - **Add to Cart Rate**: Target > 8%
+  - **Checkout Completion**: Target > 40%
+
+---
+
+## 🏁 ${lang === 'en' ? 'Summary & Immediate Action Items' : 'الملخص والخطوات الفورية'}
+- 3 immediate checklist steps the user must execute today.`;
+
+      const userPrompt = `Generate the Master Marketing Plan for:
 - Business Niche: ${nicheStr}
 - Available Budget: $${budget || '500'}
 - Campaign Duration: ${duration || '30'} Days
 - Main Goal: ${goal || 'sales'}
-- Experience Level: ${clientLevel || 'beginner'}`;
+- Client Experience Level: ${clientLevel || 'beginner'}`;
 
       const responseText = await callOpenAiApi({ systemPrompt, userPrompt, jsonMode: false });
       return responseText;

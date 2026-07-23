@@ -33,18 +33,30 @@
 
 /* --- LIGHT MODE --- */
 :root.light-mode {
-  --bg:       #F8FAFC;
-  --bg2:      #FFFFFF;
-  --bg3:      #F1F5F9;
-  --bg4:      #E2E8F0;
-  --panel:    #FFFFFF;
-  --line:     rgba(0,0,0,0.06);
-  --line2:    rgba(0,0,0,0.10);
-  --text:     #0F172A;
-  --text2:    #475569;
-  --text3:    #94A3B8;
-  --glow:     0 0 40px rgba(59,130,246,0.06);
-  --shadow:   0 20px 60px rgba(0,0,0,0.06);
+  --bg:       #F8FAFC !important;
+  --bg2:      #FFFFFF !important;
+  --bg3:      #F1F5F9 !important;
+  --bg4:      #E2E8F0 !important;
+  --panel:    #FFFFFF !important;
+  --line:     rgba(0, 0, 0, 0.08) !important;
+  --line2:    rgba(0, 0, 0, 0.12) !important;
+  --text:     #0F172A !important;
+  --text2:    #475569 !important;
+  --text3:    #64748B !important;
+  --glow:     0 0 40px rgba(59, 130, 246, 0.06) !important;
+  --shadow:   0 20px 60px rgba(0, 0, 0, 0.06) !important;
+  color-scheme: light;
+}
+
+:root.light-mode body {
+  background-color: #F8FAFC !important;
+  color: #0F172A !important;
+}
+
+:root.light-mode .app-layout,
+:root.light-mode .main-content,
+:root.light-mode .content-area {
+  background-color: #F8FAFC !important;
 }
 
 /* Smooth global transition for light/dark mode */

@@ -1,14 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useApp } from '../../../context/AppContext';
+import { useToast } from '../../../context/ToastContext';
 import { getProductIdeasStructure, getProductIdeasV2 } from '../../../services/contentDbService';
 import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
 import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
 import ToolDashboardLayout from './ToolDashboardLayout';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Package,
+  Target,
+  Sparkles,
+  DollarSign,
+  Award,
+  Zap,
+  TrendingUp,
+  Compass,
+  Layers,
+  Box,
+  ExternalLink,
+  Copy,
+  X,
+  Lightbulb,
+  CheckCircle2,
+  Flame,
+  Star,
+  Gem,
+  Tag,
+  Users
+} from 'lucide-react';
+import './ProductSource.css';
 
 export default function ProductSource({ stepNumber }) {
   const { state, dispatch } = useApp();
+  const toast = useToast();
   const lang = state.language || 'ar';
+  const isRtl = lang === 'ar';
   const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
 
   const [structure, setStructure] = useState(null);
@@ -74,18 +101,21 @@ export default function ProductSource({ stepNumber }) {
           toolId: 'product-source',
           data: { selectedType, selectedNiche, selectedEffort, result: formattedIdeas, mode: 'live' }
         });
+        toast(lang === 'en' ? 'Live AI Ideas generated! ✨' : 'تم توليد الأفكار بالذكاء الاصطناعي الحي! ✨', 'success');
       } else {
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 400));
         const dbResult = await getProductIdeasV2(selectedType, selectedNiche, selectedEffort);
         if (dbResult && dbResult.ideas && dbResult.ideas.length > 0) {
           setIdeas(dbResult.ideas);
+          toast(lang === 'en' ? 'Product ideas found! 🚀' : 'تم العثور على أفكار المنتجات! 🚀', 'success');
         } else {
           setIdeas([]);
+          toast(lang === 'en' ? 'No pre-set ideas found. Try Live AI mode!' : 'لم نجد أفكاراً بالمعطيات المحددة. جرب الوضع الحي!', 'warning');
         }
       }
     } catch (error) {
       console.error(error);
-      alert(lang === 'en' ? 'Error generating product ideas.' : 'حدث خطأ أثناء التوليد.');
+      toast(lang === 'en' ? 'Error generating product ideas.' : 'حدث خطأ أثناء التوليد.', 'error');
     } finally {
       setIsGenerating(false);
     }
@@ -93,38 +123,44 @@ export default function ProductSource({ stepNumber }) {
 
   const copyText = (text) => {
     navigator.clipboard.writeText(text);
-    alert(lang === 'en' ? 'Copied!' : 'تم النسخ!');
+    toast(lang === 'en' ? 'Product details copied! ✅' : 'تم نسخ تفاصيل المنتج إلى الحافظة! ✅', 'success');
   };
 
-  const renderSelector = (title, items, selectedId, setId) => {
+  const renderSelector = (title, items, selectedId, setId, IconComp) => {
     if (!items) return null;
     return (
-      <div style={{ marginBottom: '20px' }}>
-        <label style={{ display: 'block', fontSize: '13px', fontWeight: '900', color: '#F43F5E', marginBottom: '12px' }}>{title}</label>
-        <div style={{ display: 'grid', gridTemplateColumns: items.length <= 3 ? '1fr 1fr 1fr' : '1fr 1fr', gap: '8px' }}>
-          {items.map(item => (
-            <button key={item.id} onClick={() => setId(item.id)} style={{
-              background: selectedId === item.id ? 'rgba(244,63,94,0.15)' : 'rgba(13,18,32,0.6)',
-              border: `1px solid ${selectedId === item.id ? '#F43F5E' : 'rgba(255,255,255,0.05)'}`,
-              color: selectedId === item.id ? '#F0F4FC' : '#8B96A8',
-              padding: '12px 14px', borderRadius: '12px', fontSize: '12px', fontWeight: '800',
-              cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s',
-              boxShadow: selectedId === item.id ? '0 4px 12px rgba(244,63,94,0.1)' : 'none',
-            }}>
-              {lang === 'en' ? item.name_en : item.name_ar}
-            </button>
-          ))}
+      <div className="ps-selector-group">
+        <label className="ps-selector-label">
+          {IconComp && <IconComp size={15} color="#F43F5E" />}
+          <span>{title}</span>
+        </label>
+        <div 
+          className="ps-selector-grid" 
+          style={{ gridTemplateColumns: items.length <= 3 ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)' }}
+        >
+          {items.map(item => {
+            const isSelected = selectedId === item.id;
+            return (
+              <button 
+                key={item.id} 
+                onClick={() => setId(item.id)} 
+                className={`ps-option-btn ${isSelected ? 'active' : ''}`}
+              >
+                <span>{lang === 'en' ? item.name_en : item.name_ar}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
     );
   };
 
   const cardColors = ['#F43F5E', '#10B981', '#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6', '#6366F1', '#EF4444', '#22C55E', '#A855F7', '#F97316', '#06B6D4', '#D946EF', '#84CC16'];
-  const cardIcons = ['📦', '🎯', '💡', '🚀', '⭐', '💎', '🔥', '🏆', '✨', '🎁', '💰', '📊', '🛒', '🧩', '🌟'];
+  const cardLucideIcons = [Package, Target, Sparkles, DollarSign, Award, Zap, TrendingUp, Compass, Layers, Box, Flame, Star, Gem, Tag, Users];
 
   const bottomSections = [
     {
-      icon: '💡',
+      icon: <Lightbulb size={18} color="#F59E0B" />,
       title: lang === 'en' ? 'Where to find PLR products?' : 'أين تجد المنتجات (PLR)؟',
       items: [
         lang === 'en' ? 'Etsy: Search for (PLR eBook) or (PLR Planner).' : 'Etsy: ابحث عن (PLR eBook) أو (PLR Planner) وتأكد من حقوق إعادة البيع.',
@@ -145,253 +181,297 @@ export default function ProductSource({ stepNumber }) {
         timeEstimate="30 - 60"
         bottomSections={bottomSections}
       >
+        <div className="ps-container" dir={isRtl ? 'rtl' : 'ltr'}>
+          <div className="ps-main-grid">
 
-        <div className="td-grid cols-2" style={{ marginBottom: '36px', alignItems: 'start' }}>
-
-          {/* INPUTS */}
-          <div className="td-info-panel" style={{ margin: 0, borderColor: 'rgba(244,63,94,0.2)', background: 'rgba(244,63,94,0.05)' }}>
-            {structure ? (
-              <>
-                {renderSelector(lang === 'en' ? '1. Product Type' : '1. نوع المنتج', structure.productTypes, selectedType, setSelectedType)}
-                {renderSelector(lang === 'en' ? '2. Your Niche' : '2. مجالك', structure.niches, selectedNiche, setSelectedNiche)}
-                {renderSelector(lang === 'en' ? '3. Effort Level' : '3. مستوى المجهود', structure.effortLevels, selectedEffort, setSelectedEffort)}
-              </>
-            ) : (
-              <div style={{ color: '#8B96A8', fontSize: '13px', textAlign: 'center', padding: '40px 0' }}>
-                {lang === 'en' ? 'Loading...' : 'جاري تحميل الهيكل...'}
-              </div>
-            )}
-            {/* Dual Mode Selector */}
-            <AnalysisModeSelector 
-              mode={analysisMode} 
-              onChange={setAnalysisMode} 
-              lang={lang} 
-              accentColor="#F43F5E" 
-            />
-
-            <button onClick={handleGenerate} disabled={isGenerating || !structure} className="td-btn-primary"
-              style={{ background: isGenerating ? 'rgba(244,63,94,0.2)' : '#F43F5E', color: isGenerating ? '#8B96A8' : '#fff', marginTop: '16px', width: '100%' }}>
-              {isGenerating
-                ? <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}><span className="td-spinner" /> {lang === 'en' ? 'Searching...' : 'جاري البحث عن أفكار...'}</span>
-                : <span>✨ {lang === 'en' ? 'Find Product Ideas' : 'ابحث عن أفكار منتجات'}</span>}
-            </button>
-
-            {/* Quick Links */}
-            <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-              <h4 style={{ color: '#8B96A8', fontSize: '12px', fontWeight: 'bold', marginBottom: '12px' }}>
-                {lang === 'en' ? 'Quick Links:' : 'روابط سريعة:'}
-              </h4>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
-                {[{ name: 'Etsy', url: 'https://etsy.com', c: '#F97316' }, { name: 'Gumroad', url: 'https://gumroad.com', c: '#EC4899' }, { name: 'PLR.me', url: 'https://plr.me', c: '#10B981' }].map(link => (
-                  <a key={link.name} href={link.url} target="_blank" rel="noreferrer" style={{ background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '10px', textAlign: 'center', color: '#E8EDF5', fontSize: '11px', fontWeight: 'bold', textDecoration: 'none' }}>
-                    {link.name}
-                  </a>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* OUTPUT */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {!ideas && !isGenerating && (
-              <div className="td-info-panel" style={{ margin: 0, background: 'rgba(13,18,32,0.6)', borderStyle: 'dashed', textAlign: 'center', padding: '60px 20px' }}>
-                <div style={{ fontSize: '40px', marginBottom: '16px', opacity: 0.5 }}>📦</div>
-                <p style={{ color: '#8B96A8', fontSize: '14px', lineHeight: 1.6, margin: 0 }}>
-                  {lang === 'en' ? 'Select your parameters to discover profitable product ideas.' : 'حدد المعطيات لاكتشاف أفكار منتجات مربحة مناسبة لمجالك.'}
-                </p>
-              </div>
-            )}
-
-            {ideas && ideas.length === 0 && (
-              <div className="td-info-panel" style={{ margin: 0, borderColor: 'rgba(239,68,68,0.2)' }}>
-                <p style={{ color: '#EF4444', fontSize: '14px', margin: 0 }}>
-                  {lang === 'en' ? 'No ideas found for this combination yet.' : 'لا توجد أفكار لهذا التكوين بعد. جرب تكويناً آخر.'}
-                </p>
-              </div>
-            )}
-
-            {ideas && ideas.length > 0 && (
-              <>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <h3 style={{ color: '#F43F5E', fontSize: '16px', fontWeight: '900', margin: 0 }}>
-                    {lang === 'en' ? `${ideas.length} Product Ideas Found` : `تم العثور على ${ideas.length} فكرة منتج`}
-                  </h3>
+            {/* ═══════════════ PARAMETERS INPUT PANEL ═══════════════ */}
+            <div className="ps-panel">
+              <div className="ps-panel-header">
+                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(244, 63, 94, 0.12)', color: '#F43F5E', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Package size={20} />
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' }}>
-                  {ideas.map((idea, i) => (
-                    <div
-                      key={i}
-                      onClick={() => setSelectedIdea(idea)}
-                      style={{
-                        background: 'rgba(13,18,32,0.8)',
-                        border: '1px solid rgba(255,255,255,0.06)',
-                        borderRadius: '14px',
-                        padding: '16px',
-                        cursor: 'pointer',
-                        transition: 'all 0.25s ease',
-                        borderTop: `3px solid ${cardColors[i % cardColors.length]}`,
-                        position: 'relative',
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = `0 8px 24px ${cardColors[i % cardColors.length]}22`; e.currentTarget.style.borderColor = cardColors[i % cardColors.length] + '44'; }}
-                      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; }}
+                <div>
+                  <h3 className="ps-panel-title">
+                    <span>{lang === 'en' ? 'Product Target Criteria' : 'معايير واستهداف المنتج'}</span>
+                  </h3>
+                  <p className="ps-panel-subtitle">
+                    {lang === 'en' ? 'Select product parameters to discover relevant product ideas.' : 'حدد نوع المنتج ومجالك ومستوى التفرغ لتوليد الأفكار المناسبة.'}
+                  </p>
+                </div>
+              </div>
+
+              {structure ? (
+                <>
+                  {renderSelector(lang === 'en' ? '1. Product Type' : '1. نوع المنتج', structure.productTypes, selectedType, setSelectedType, Layers)}
+                  {renderSelector(lang === 'en' ? '2. Your Niche' : '2. مجالك المستهدف', structure.niches, selectedNiche, setSelectedNiche, Target)}
+                  {renderSelector(lang === 'en' ? '3. Effort Level' : '3. مستوى المجهود والتفرغ', structure.effortLevels, selectedEffort, setSelectedEffort, Zap)}
+                </>
+              ) : (
+                <div style={{ color: 'var(--text2, #8B96A8)', fontSize: '13px', textAlign: 'center', padding: '40px 0' }}>
+                  {lang === 'en' ? 'Loading structure parameters...' : 'جاري تحميل المعايير...'}
+                </div>
+              )}
+
+              {/* Dual Mode Selector */}
+              <div style={{ marginTop: '16px' }}>
+                <AnalysisModeSelector 
+                  mode={analysisMode} 
+                  onChange={setAnalysisMode} 
+                  lang={lang} 
+                  accentColor="#F43F5E" 
+                />
+              </div>
+
+              <button 
+                onClick={handleGenerate} 
+                disabled={isGenerating || !structure} 
+                className="ps-generate-btn"
+              >
+                {isGenerating ? (
+                  <>
+                    <span className="td-spinner" /> 
+                    <span>{lang === 'en' ? 'Searching Ideas...' : 'جاري البحث عن أفكار...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={16} /> 
+                    <span>{lang === 'en' ? 'Find Product Ideas' : 'ابحث عن أفكار منتجات'}</span>
+                  </>
+                )}
+              </button>
+
+              {/* Quick External Links */}
+              <div className="ps-quick-links">
+                <h4 style={{ color: 'var(--text2, #8B96A8)', fontSize: '12px', fontWeight: '800', margin: '0 0 12px 0' }}>
+                  {lang === 'en' ? 'Quick Marketplaces & Sources:' : 'روابط سريعة لأشهر الأسواق والمنصات:'}
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                  {[
+                    { name: 'Etsy', url: 'https://etsy.com' }, 
+                    { name: 'Gumroad', url: 'https://gumroad.com' }, 
+                    { name: 'PLR.me', url: 'https://plr.me' }
+                  ].map(link => (
+                    <a 
+                      key={link.name} 
+                      href={link.url} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="ps-quick-link-item"
                     >
-                      <div style={{ fontSize: '22px', marginBottom: '10px' }}>{cardIcons[i % cardIcons.length]}</div>
-                      <h4 style={{ color: '#F0F4FC', fontSize: '12px', fontWeight: 800, margin: '0 0 8px', lineHeight: 1.5 }}>
-                        {lang === 'en' && idea.name_en ? idea.name_en : (idea.name_ar || idea.name)}
-                      </h4>
-                      <span style={{ display: 'inline-block', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', padding: '2px 8px', borderRadius: '12px', fontSize: '10px', fontWeight: 800, color: '#10B981' }}>
-                        💰 {lang === 'en' && idea.price_en ? idea.price_en : (idea.price_ar || idea.price)}
-                      </span>
-                      <div style={{ position: 'absolute', top: '12px', left: '12px', width: '6px', height: '6px', borderRadius: '50%', background: cardColors[i % cardColors.length], boxShadow: `0 0 8px ${cardColors[i % cardColors.length]}` }} />
-                    </div>
+                      <span>{link.name}</span>
+                      <ExternalLink size={11} />
+                    </a>
                   ))}
                 </div>
-              </>
-            )}
+              </div>
+            </div>
+
+            {/* ═══════════════ PRODUCT IDEAS DISPLAY ═══════════════ */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {!ideas && !isGenerating && (
+                <div className="ps-panel" style={{ borderStyle: 'dashed', textAlign: 'center', padding: '60px 20px' }}>
+                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(244, 63, 94, 0.1)', color: '#F43F5E', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                    <Box size={28} />
+                  </div>
+                  <p style={{ color: 'var(--text2, #94A3B8)', fontSize: '14px', lineHeight: 1.6, margin: 0 }}>
+                    {lang === 'en' ? 'Select your parameters on the left to discover profitable digital product ideas.' : 'حدد المعطيات والمعايير على اليسار لاكتشاف أفكار منتجات مربحة مناسبة لمجالك.'}
+                  </p>
+                </div>
+              )}
+
+              {ideas && ideas.length === 0 && (
+                <div className="ps-panel" style={{ borderColor: 'rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.05)' }}>
+                  <p style={{ color: '#EF4444', fontSize: '13.5px', margin: 0, fontWeight: 700 }}>
+                    {lang === 'en' ? 'No pre-set ideas found for this exact combination. Try switching to Live AI Mode!' : 'لا توجد أفكار مسجلة لهذا التكوين. جرب التبديل للوضع الحي الذكي!'}
+                  </p>
+                </div>
+              )}
+
+              {ideas && ideas.length > 0 && (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <h3 style={{ color: 'var(--text, #F8FAFC)', fontSize: '16px', fontWeight: '900', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Sparkles size={18} color="#F43F5E" />
+                      <span>{lang === 'en' ? `${ideas.length} Product Ideas Found` : `تم العثور على ${ideas.length} فكرة منتج`}</span>
+                    </h3>
+                  </div>
+
+                  <div className="ps-cards-grid">
+                    <AnimatePresence>
+                      {ideas.map((idea, i) => {
+                        const ItemIcon = cardLucideIcons[i % cardLucideIcons.length];
+                        const currentColor = cardColors[i % cardColors.length];
+                        return (
+                          <motion.div
+                            key={idea.id || i}
+                            onClick={() => setSelectedIdea(idea)}
+                            className="ps-product-card"
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.04 }}
+                            whileHover={{ y: -4 }}
+                            style={{
+                              borderTop: `3px solid ${currentColor}`,
+                            }}
+                          >
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                                <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: `${currentColor}15`, color: currentColor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <ItemIcon size={20} />
+                                </div>
+                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: currentColor, boxShadow: `0 0 8px ${currentColor}` }} />
+                              </div>
+
+                              <h4 className="ps-card-title">
+                                {lang === 'en' && idea.name_en ? idea.name_en : (idea.name_ar || idea.name)}
+                              </h4>
+                            </div>
+
+                            <div>
+                              <span className="ps-price-badge">
+                                <DollarSign size={12} />
+                                <span>{lang === 'en' && idea.price_en ? idea.price_en : (idea.price_ar || idea.price)}</span>
+                              </span>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </AnimatePresence>
+                  </div>
+                </>
+              )}
+            </div>
+
           </div>
-
         </div>
-
-        <style>{`
-          @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-          @keyframes modalSlideUp { from { opacity: 0; transform: translateY(20px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        `}</style>
-
       </ToolDashboardLayout>
 
-      {/* POPUP MODAL - RENDERED VIA PORTAL TO BODY ROOT */}
+      {/* ═══════════════ DETAILED POPUP MODAL VIA PORTAL ═══════════════ */}
       {selectedIdea && createPortal(
-        <div
-          onClick={() => setSelectedIdea(null)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            background: 'rgba(0,0,0,0.85)',
-            backdropFilter: 'blur(10px)',
-            zIndex: 999999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px',
-            animation: 'fadeIn 0.2s ease',
-            margin: 0,
-            direction: lang === 'en' ? 'ltr' : 'rtl'
-          }}
-        >
+        <AnimatePresence>
           <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: 'linear-gradient(180deg, rgba(20,25,45,1) 0%, rgba(13,18,32,1) 100%)',
-              border: '1px solid rgba(244,63,94,0.3)',
-              borderRadius: '24px',
-              width: '100%',
-              maxWidth: '620px',
-              maxHeight: '85vh',
-              overflowY: 'auto',
-              padding: '36px',
-              boxShadow: '0 24px 60px rgba(0,0,0,0.7)',
-              animation: 'modalSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              position: 'relative',
-              fontFamily: 'Cairo, sans-serif'
-            }}
+            className="ps-modal-overlay"
+            onClick={() => setSelectedIdea(null)}
+            dir={isRtl ? 'rtl' : 'ltr'}
           >
-            {/* Close */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(244,63,94,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>📦</div>
-                <div>
-                  <h2 style={{ color: '#F0F4FC', fontSize: '18px', fontWeight: 900, margin: 0, lineHeight: 1.4 }}>
-                    {lang === 'en' && selectedIdea.name_en ? selectedIdea.name_en : (selectedIdea.name_ar || selectedIdea.name)}
-                  </h2>
-                  <span style={{ fontSize: '11px', color: '#8B96A8' }}>{lang === 'en' ? 'Product Details' : 'تفاصيل المنتج'}</span>
+            <motion.div
+              className="ps-modal-card"
+              onClick={e => e.stopPropagation()}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+            >
+              {/* Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '16px', background: 'rgba(244, 63, 94, 0.15)', color: '#F43F5E', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Package size={24} />
+                  </div>
+                  <div>
+                    <h2 style={{ color: 'var(--text, #F8FAFC)', fontSize: '18px', fontWeight: 900, margin: 0, lineHeight: 1.4 }}>
+                      {lang === 'en' && selectedIdea.name_en ? selectedIdea.name_en : (selectedIdea.name_ar || selectedIdea.name)}
+                    </h2>
+                    <span style={{ fontSize: '12px', color: 'var(--text2, #94A3B8)' }}>
+                      {lang === 'en' ? 'Product Specifications & Sourcing Guide' : 'تفاصيل ودليل توريد المنتج'}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <button onClick={() => setSelectedIdea(null)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#8B96A8', width: '36px', height: '36px', borderRadius: '10px', cursor: 'pointer', fontSize: '16px' }}>✕</button>
-            </div>
 
-            {/* Description */}
-            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '14px', padding: '20px', marginBottom: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <h4 style={{ color: '#F43F5E', fontSize: '12px', fontWeight: 800, marginBottom: '10px' }}>📝 {lang === 'en' ? 'Description' : 'الوصف'}</h4>
-              <p style={{ color: '#C4CAD6', fontSize: '14px', lineHeight: 1.8, margin: 0 }}>
-                {lang === 'en' && selectedIdea.desc_en ? selectedIdea.desc_en : (selectedIdea.desc_ar || selectedIdea.desc)}
-              </p>
-            </div>
-
-            {/* Meta Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
-              <div style={{ background: 'rgba(16,185,129,0.06)', borderRadius: '14px', padding: '16px', border: '1px solid rgba(16,185,129,0.15)' }}>
-                <div style={{ fontSize: '10px', color: '#8B96A8', fontWeight: 700, marginBottom: '6px' }}>💰 {lang === 'en' ? 'Price Range' : 'متوسط التسعير'}</div>
-                <div style={{ fontSize: '18px', fontWeight: 900, color: '#10B981' }}>
-                  {lang === 'en' && selectedIdea.price_en ? selectedIdea.price_en : (selectedIdea.price_ar || selectedIdea.price)}
-                </div>
+                <button 
+                  onClick={() => setSelectedIdea(null)} 
+                  className="ps-modal-close-btn"
+                  title={lang === 'en' ? 'Close' : 'إغلاق'}
+                >
+                  <X size={18} />
+                </button>
               </div>
-              <div style={{ background: 'rgba(99,102,241,0.06)', borderRadius: '14px', padding: '16px', border: '1px solid rgba(99,102,241,0.15)' }}>
-                <div style={{ fontSize: '10px', color: '#8B96A8', fontWeight: 700, marginBottom: '6px' }}>📍 {lang === 'en' ? 'Source' : 'المصدر'}</div>
-                <div style={{ fontSize: '14px', fontWeight: 800, color: '#818CF8' }}>
-                  {lang === 'en' && selectedIdea.source_en ? selectedIdea.source_en : (selectedIdea.source_ar || selectedIdea.source)}
-                </div>
-              </div>
-            </div>
 
-            {/* Target Audience */}
-            {selectedIdea.audience && (
-              <div style={{ background: 'rgba(244,63,94,0.04)', borderRadius: '14px', padding: '20px', marginBottom: '20px', border: '1px solid rgba(244,63,94,0.1)' }}>
-                <h4 style={{ color: '#F43F5E', fontSize: '12px', fontWeight: 800, marginBottom: '10px' }}>🎯 {lang === 'en' ? 'Target Audience' : 'الفئة المستهدفة'}</h4>
-                <p style={{ color: '#C4CAD6', fontSize: '13px', lineHeight: 1.7, margin: 0 }}>
-                  {lang === 'en' && selectedIdea.audience_en ? selectedIdea.audience_en : (selectedIdea.audience_ar || selectedIdea.audience)}
+              {/* Description */}
+              <div className="ps-modal-desc-box">
+                <h4 style={{ color: '#F43F5E', fontSize: '12.5px', fontWeight: 800, margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Sparkles size={14} />
+                  <span>{lang === 'en' ? 'Description & Concept' : 'الوصف والأنسب للبيع'}</span>
+                </h4>
+                <p style={{ color: 'var(--text, #F8FAFC)', fontSize: '13.5px', lineHeight: 1.7, margin: 0 }}>
+                  {lang === 'en' && selectedIdea.desc_en ? selectedIdea.desc_en : (selectedIdea.desc_ar || selectedIdea.desc)}
                 </p>
               </div>
-            )}
 
-            {/* Features */}
-            {(lang === 'en' && selectedIdea.features_en ? selectedIdea.features_en : (selectedIdea.features_ar || selectedIdea.features))?.length > 0 && (
-              <div style={{ background: 'rgba(59,130,246,0.04)', borderRadius: '14px', padding: '20px', marginBottom: '20px', border: '1px solid rgba(59,130,246,0.1)' }}>
-                <h4 style={{ color: '#3B82F6', fontSize: '12px', fontWeight: 800, marginBottom: '12px' }}>⭐ {lang === 'en' ? 'Features & Benefits' : 'المميزات والفوائد'}</h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {(lang === 'en' && selectedIdea.features_en ? selectedIdea.features_en : (selectedIdea.features_ar || selectedIdea.features)).map((f, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                      <span style={{ color: '#3B82F6', fontSize: '10px', marginTop: '4px' }}>●</span>
-                      <span style={{ color: '#C4CAD6', fontSize: '13px', lineHeight: 1.6 }}>{f}</span>
-                    </div>
-                  ))}
+              {/* Meta Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ background: 'rgba(16, 185, 129, 0.08)', borderRadius: '14px', padding: '16px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <div style={{ fontSize: '11px', color: '#10B981', fontWeight: 800, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <DollarSign size={14} />
+                    <span>{lang === 'en' ? 'Target Price Range' : 'متوسط التسعير المقترح'}</span>
+                  </div>
+                  <div style={{ fontSize: '17px', fontWeight: 900, color: '#10B981' }}>
+                    {lang === 'en' && selectedIdea.price_en ? selectedIdea.price_en : (selectedIdea.price_ar || selectedIdea.price)}
+                  </div>
+                </div>
+
+                <div style={{ background: 'rgba(99, 102, 241, 0.08)', borderRadius: '14px', padding: '16px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+                  <div style={{ fontSize: '11px', color: '#6366F1', fontWeight: 800, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <Compass size={14} />
+                    <span>{lang === 'en' ? 'Recommended Source' : 'أفضل مصدر للتوريد'}</span>
+                  </div>
+                  <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text, #F8FAFC)' }}>
+                    {lang === 'en' && selectedIdea.source_en ? selectedIdea.source_en : (selectedIdea.source_ar || selectedIdea.source || 'Etsy PLR / Gumroad')}
+                  </div>
                 </div>
               </div>
-            )}
 
-            {/* Tips */}
-            {(lang === 'en' && selectedIdea.tips_en ? selectedIdea.tips_en : (selectedIdea.tips_ar || selectedIdea.tips))?.length > 0 && (
-              <div style={{ background: 'rgba(245,158,11,0.04)', borderRadius: '14px', padding: '20px', marginBottom: '20px', border: '1px solid rgba(245,158,11,0.1)' }}>
-                <h4 style={{ color: '#F59E0B', fontSize: '12px', fontWeight: 800, marginBottom: '12px' }}>💡 {lang === 'en' ? 'Pro Tips' : 'نصائح احترافية'}</h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {(lang === 'en' && selectedIdea.tips_en ? selectedIdea.tips_en : (selectedIdea.tips_ar || selectedIdea.tips)).map((t, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                      <span style={{ color: '#F59E0B', fontSize: '10px', marginTop: '4px' }}>▸</span>
-                      <span style={{ color: '#C4CAD6', fontSize: '13px', lineHeight: 1.6 }}>{t}</span>
-                    </div>
-                  ))}
+              {/* Target Audience */}
+              {selectedIdea.audience && (
+                <div style={{ background: 'rgba(244, 63, 94, 0.06)', borderRadius: '14px', padding: '18px', border: '1px solid rgba(244, 63, 94, 0.2)' }}>
+                  <h4 style={{ color: '#F43F5E', fontSize: '12.5px', fontWeight: 800, margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Target size={14} />
+                    <span>{lang === 'en' ? 'Target Audience' : 'الفئة المستهدفة الشغوفة'}</span>
+                  </h4>
+                  <p style={{ color: 'var(--text, #F8FAFC)', fontSize: '13px', lineHeight: 1.6, margin: 0 }}>
+                    {lang === 'en' && selectedIdea.audience_en ? selectedIdea.audience_en : (selectedIdea.audience_ar || selectedIdea.audience)}
+                  </p>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Copy Button */}
-            <button
-              onClick={() => {
-                const name = lang === 'en' && selectedIdea.name_en ? selectedIdea.name_en : (selectedIdea.name_ar || selectedIdea.name);
-                const price = lang === 'en' && selectedIdea.price_en ? selectedIdea.price_en : (selectedIdea.price_ar || selectedIdea.price);
-                const source = lang === 'en' && selectedIdea.source_en ? selectedIdea.source_en : (selectedIdea.source_ar || selectedIdea.source);
-                const desc = lang === 'en' && selectedIdea.desc_en ? selectedIdea.desc_en : (selectedIdea.desc_ar || selectedIdea.desc);
-                const audience = lang === 'en' && selectedIdea.audience_en ? selectedIdea.audience_en : (selectedIdea.audience_ar || selectedIdea.audience);
-                copyText(`${name}\n${lang === 'en' ? 'Price' : 'السعر'}: ${price}\n${lang === 'en' ? 'Source' : 'المصدر'}: ${source}\n${desc}${audience ? '\n' + (lang === 'en' ? 'Audience' : 'الفئة') + ': ' + audience : ''}`);
-              }}
-              style={{ width: '100%', padding: '14px', background: 'linear-gradient(135deg, #F43F5E, #E11D48)', border: 'none', borderRadius: '14px', color: '#fff', fontSize: '14px', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s' }}
-            >
-              📋 {lang === 'en' ? 'Copy Product Details' : 'نسخ تفاصيل المنتج'}
-            </button>
+              {/* Features List */}
+              {(lang === 'en' && selectedIdea.features_en ? selectedIdea.features_en : (selectedIdea.features_ar || selectedIdea.features))?.length > 0 && (
+                <div style={{ background: 'rgba(59, 130, 246, 0.06)', borderRadius: '14px', padding: '18px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                  <h4 style={{ color: '#3B82F6', fontSize: '12.5px', fontWeight: 800, margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <CheckCircle2 size={14} />
+                    <span>{lang === 'en' ? 'Features & Benefits' : 'المميزات والفوائد الأساسية'}</span>
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {(lang === 'en' && selectedIdea.features_en ? selectedIdea.features_en : (selectedIdea.features_ar || selectedIdea.features)).map((f, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                        <CheckCircle2 size={14} color="#3B82F6" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <span style={{ color: 'var(--text, #F8FAFC)', fontSize: '13px', lineHeight: 1.6 }}>{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Copy Action Button */}
+              <button
+                onClick={() => {
+                  const name = lang === 'en' && selectedIdea.name_en ? selectedIdea.name_en : (selectedIdea.name_ar || selectedIdea.name);
+                  const price = lang === 'en' && selectedIdea.price_en ? selectedIdea.price_en : (selectedIdea.price_ar || selectedIdea.price);
+                  const source = lang === 'en' && selectedIdea.source_en ? selectedIdea.source_en : (selectedIdea.source_ar || selectedIdea.source);
+                  const desc = lang === 'en' && selectedIdea.desc_en ? selectedIdea.desc_en : (selectedIdea.desc_ar || selectedIdea.desc);
+                  const audience = lang === 'en' && selectedIdea.audience_en ? selectedIdea.audience_en : (selectedIdea.audience_ar || selectedIdea.audience);
+                  
+                  copyText(`${name}\n${lang === 'en' ? 'Price' : 'السعر'}: ${price}\n${lang === 'en' ? 'Source' : 'المصدر'}: ${source}\n${desc}${audience ? '\n' + (lang === 'en' ? 'Audience' : 'الفئة') + ': ' + audience : ''}`);
+                }}
+                className="ps-generate-btn"
+                style={{ marginTop: 0 }}
+              >
+                <Copy size={16} />
+                <span>{lang === 'en' ? 'Copy Product Details' : 'نسخ تفاصيل المنتج'}</span>
+              </button>
+            </motion.div>
           </div>
-        </div>,
+        </AnimatePresence>,
         document.body
       )}
     </>

@@ -394,6 +394,98 @@
   box-shadow: 0 12px 32px rgba(99, 102, 241, 0.45);
 }
 
+/* Light Mode Overrides for Onboarding Page */
+:root.light-mode .onboarding-container {
+  color: #0F172A;
+}
+
+:root.light-mode .onboarding-hero-header {
+  background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%);
+  border-color: #E2E8F0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+
+:root.light-mode .onboarding-hero-title {
+  color: #0F172A;
+}
+
+:root.light-mode .onboarding-hero-subtitle {
+  color: #64748B;
+}
+
+:root.light-mode .onboarding-trial-card {
+  background: rgba(16, 185, 129, 0.04);
+  border-color: rgba(16, 185, 129, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.03);
+}
+
+:root.light-mode .onboarding-card-panel {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+}
+
+:root.light-mode .onboarding-card-title {
+  color: #0F172A;
+}
+
+:root.light-mode .onboarding-card-sub {
+  color: #64748B;
+}
+
+:root.light-mode .level-card {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+}
+
+:root.light-mode .level-card:hover {
+  background: #F1F5F9;
+  border-color: #6366F1;
+}
+
+:root.light-mode .level-card.active {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: #6366F1;
+}
+
+:root.light-mode .level-card-title {
+  color: #0F172A;
+}
+
+:root.light-mode .level-card-desc {
+  color: #64748B;
+}
+
+:root.light-mode .custom-dropdown-trigger {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: #0F172A;
+}
+
+:root.light-mode .custom-dropdown-trigger:hover {
+  background: #F1F5F9;
+}
+
+:root.light-mode .custom-dropdown-menu {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+}
+
+:root.light-mode .custom-dropdown-option {
+  color: #475569;
+}
+
+:root.light-mode .custom-dropdown-option:hover {
+  background: #F1F5F9;
+  color: #0F172A;
+}
+
+:root.light-mode .custom-dropdown-option.selected {
+  background: rgba(99, 102, 241, 0.08);
+  color: #4F46E5;
+}
+
 /* RESPONSIVE MEDIA QUERIES */
 @media (max-width: 900px) {
   .levels-grid {

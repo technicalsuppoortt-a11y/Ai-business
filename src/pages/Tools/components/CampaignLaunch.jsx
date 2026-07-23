@@ -1,10 +1,37 @@
 import React, { useState } from 'react';
 import { useApp } from '../../../context/AppContext';
+import { useToast } from '../../../context/ToastContext';
 import ToolDashboardLayout from './ToolDashboardLayout';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Link,
+  Globe,
+  Camera,
+  Video,
+  PlaySquare,
+  Share2,
+  Mail,
+  MousePointerClick,
+  Search,
+  Award,
+  Tag,
+  Sparkles,
+  Copy,
+  CheckCircle2,
+  Rocket,
+  ShieldCheck,
+  HelpCircle,
+  Activity,
+  Layers,
+  ExternalLink
+} from 'lucide-react';
+import './CampaignLaunch.css';
 
 export default function CampaignLaunch({ stepNumber }) {
   const { state, dispatch } = useApp();
+  const toast = useToast();
   const lang = state.language || 'ar';
+  const isRtl = lang === 'ar';
   
   // Inputs
   const [url, setUrl] = useState(state.websiteUrl || '');
@@ -12,21 +39,35 @@ export default function CampaignLaunch({ stepNumber }) {
   const [medium, setMedium] = useState('cpc');
   const [campaignName, setCampaignName] = useState('launch_offer');
 
-  const sources = ['facebook', 'instagram', 'tiktok', 'google', 'snapchat', 'email'];
-  const mediums = ['cpc', 'social', 'email', 'organic', 'affiliate'];
+  const sources = [
+    { id: 'facebook', label: 'Facebook', IconComp: Globe },
+    { id: 'instagram', label: 'Instagram', IconComp: Camera },
+    { id: 'tiktok', label: 'TikTok', IconComp: Video },
+    { id: 'google', label: 'Google', IconComp: Search },
+    { id: 'snapchat', label: 'Snapchat', IconComp: PlaySquare },
+    { id: 'email', label: 'Email', IconComp: Mail }
+  ];
 
-  const generatedUrl = url ? `${url}?utm_source=${source}&utm_medium=${medium}&utm_campaign=${campaignName}` : '';
+  const mediums = [
+    { id: 'cpc', label: 'CPC / Paid', IconComp: MousePointerClick },
+    { id: 'social', label: 'Social', IconComp: Share2 },
+    { id: 'email', label: 'Email', IconComp: Mail },
+    { id: 'organic', label: 'Organic', IconComp: Search },
+    { id: 'affiliate', label: 'Affiliate', IconComp: Award }
+  ];
+
+  const generatedUrl = url ? `${url}${url.includes('?') ? '&' : '?'}utm_source=${source}&utm_medium=${medium}&utm_campaign=${campaignName}` : '';
 
   const handleCopy = () => {
     if (!generatedUrl) return;
     navigator.clipboard.writeText(generatedUrl);
-    alert(lang === 'en' ? 'Link copied! Use it now in your ad campaign.' : 'تم نسخ الرابط! استخدمه الآن في حملتك الإعلانية.');
+    toast(lang === 'en' ? 'Tracking URL copied! Ready to launch. 🚀' : 'تم نسخ رابط التتبع بنجاح! جاهز للإطلاق. 🚀', 'success');
     dispatch({ type: 'COMPLETE_STEP', payload: 'campaign-launch' });
   };
 
   const bottomSections = [
     {
-      icon: '🔗',
+      icon: <Link size={18} color="#10B981" />,
       title: lang === 'en' ? 'What are UTM Links?' : 'ما هي روابط الـ UTM؟',
       items: [
         lang === 'en' ? 'They are small additions placed at the end of your site link to tell you exactly where the customer came from.' : 'هي إضافات صغيرة توضع في نهاية رابط موقعك لتخبرك من أين جاء العميل بالتحديد.',
@@ -35,7 +76,7 @@ export default function CampaignLaunch({ stepNumber }) {
       ]
     },
     {
-      icon: '📈',
+      icon: <Rocket size={18} color="#F59E0B" />,
       title: lang === 'en' ? 'Post-Launch Tips' : 'نصائح بعد الإطلاق',
       items: [
         lang === 'en' ? 'Do not touch the ad in the first 48 hours! The algorithm needs time to learn and find potential buyers.' : 'لا تلمس الإعلان في أول 48 ساعة! الخوارزمية تحتاج وقتاً لتتعلم وتجد المشترين المحتملين.',
@@ -55,113 +96,194 @@ export default function CampaignLaunch({ stepNumber }) {
       timeEstimate="20 - 40"
       bottomSections={bottomSections}
     >
-
-      <div className="td-grid cols-2" style={{ marginBottom: '36px' }}>
-        
-        {/* ═══════════════ INPUTS FORM ═══════════════ */}
-        <div className="td-info-panel" style={{ margin: 0, borderColor: 'rgba(16, 185, 129, 0.2)', background: 'rgba(16, 185, 129, 0.05)' }}>
+      <div className="cl-container" dir={isRtl ? 'rtl' : 'ltr'}>
+        <div className="cl-main-grid">
           
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: '#10B981', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
-              {lang === 'en' ? 'Landing Page URL' : 'رابط صفحة الهبوط (URL)'}
-            </label>
-            <input 
-              type="text" 
-              className="td-input"
-              dir="ltr"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://yourstore.com/offer"
-              style={{ textAlign: 'left', borderColor: url ? '#10B981' : 'rgba(255, 255, 255, 0.08)' }}
-            />
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: '#10B981', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
-                {lang === 'en' ? 'Source' : 'المصدر (Source)'}
-              </label>
-              <select 
-                className="td-input"
-                value={source}
-                onChange={(e) => setSource(e.target.value)}
-                style={{ appearance: 'none', background: 'rgba(0,0,0,0.3) url("data:image/svg+xml;utf8,<svg fill=\'%238B96A8\' height=\'24\' viewBox=\'0 0 24 24\' width=\'24\' xmlns=\'http://www.w3.org/2000/svg\'><path d=\'M7 10l5 5 5-5z\'/><path d=\'M0 0h24v24H0z\' fill=\'none\'/></svg>") no-repeat right 12px center' }}
-              >
-                {sources.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: '#10B981', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
-                {lang === 'en' ? 'Medium' : 'الوسيط (Medium)'}
-              </label>
-              <select 
-                className="td-input"
-                value={medium}
-                onChange={(e) => setMedium(e.target.value)}
-                style={{ appearance: 'none', background: 'rgba(0,0,0,0.3) url("data:image/svg+xml;utf8,<svg fill=\'%238B96A8\' height=\'24\' viewBox=\'0 0 24 24\' width=\'24\' xmlns=\'http://www.w3.org/2000/svg\'><path d=\'M7 10l5 5 5-5z\'/><path d=\'M0 0h24v24H0z\' fill=\'none\'/></svg>") no-repeat right 12px center' }}
-              >
-                {mediums.map(m => <option key={m} value={m}>{m}</option>)}
-              </select>
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: '#10B981', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
-              {lang === 'en' ? 'Campaign Name' : 'اسم الحملة (Campaign Name)'}
-            </label>
-            <input 
-              type="text" 
-              className="td-input"
-              dir="ltr"
-              value={campaignName}
-              onChange={(e) => setCampaignName(e.target.value.replace(/\s+/g, '_'))}
-              placeholder="summer_sale"
-              style={{ textAlign: 'left', borderColor: campaignName ? '#10B981' : 'rgba(255, 255, 255, 0.08)' }}
-            />
-          </div>
-
-        </div>
-
-        {/* ═══════════════ OUTPUT PANEL ═══════════════ */}
-        <div className="td-info-panel" style={{ margin: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(13, 18, 32, 0.6)' }}>
-          
-          {!url && (
-            <div style={{ textAlign: 'center', opacity: 0.4 }}>
-              <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>🔗</span>
-              <p style={{ fontSize: '14px', fontWeight: 'bold', color: '#E8EDF5' }}>
-                {lang === 'en' ? 'Enter your site URL to generate the tracking link' : 'أدخل رابط موقعك لإنشاء رابط التتبع'}
-              </p>
-            </div>
-          )}
-
-          {url && (
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '24px', alignItems: 'center' }}>
-              
-              <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#10B981', textAlign: 'center' }}>
-                {lang === 'en' ? 'Ready link for the ad:' : 'الرابط الجاهز للإعلان:'}
-              </h3>
-              
-              <div style={{ background: '#000', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', width: '100%', overflowX: 'auto' }}>
-                <code style={{ color: '#E8EDF5', fontSize: '13px', whiteSpace: 'nowrap' }} dir="ltr">
-                  {generatedUrl}
-                </code>
+          {/* ═══════════════ INPUTS FORM PANEL ═══════════════ */}
+          <div className="cl-panel">
+            <div className="cl-panel-header">
+              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.12)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Rocket size={20} />
               </div>
-
-              <button 
-                onClick={handleCopy}
-                className="td-btn-primary"
-                style={{ background: '#10B981', color: '#fff', width: '100%' }}
-              >
-                📋 {lang === 'en' ? 'Copy Link and Launch!' : 'نسخ الرابط والانطلاق!'}
-              </button>
-
+              <div>
+                <h3 className="cl-panel-title">
+                  <span>{lang === 'en' ? 'UTM Tracking Parameters' : 'معايير روابط التتبع (UTM)'}</span>
+                </h3>
+                <p className="cl-panel-subtitle">
+                  {lang === 'en' ? 'Configure landing page URL, ad platform source, and campaign tag.' : 'أدخل رابط موقعك واختر المنصة واسم الحملة لإنشاء رابط التتبع.'}
+                </p>
+              </div>
             </div>
-          )}
+
+            {/* Landing Page URL */}
+            <div className="cl-form-group">
+              <label className="cl-label">
+                <Link size={14} color="#10B981" />
+                <span>{lang === 'en' ? 'Landing Page URL' : 'رابط صفحة الهبوط (URL)'}</span>
+              </label>
+              <div className="cl-input-wrap">
+                <ExternalLink size={16} className="cl-input-icon" />
+                <input 
+                  type="text" 
+                  className="cl-input"
+                  dir="ltr"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="https://yourstore.com/offer"
+                />
+              </div>
+            </div>
+
+            {/* Source Platform Grid */}
+            <div className="cl-form-group">
+              <label className="cl-label">
+                <Globe size={14} color="#10B981" />
+                <span>{lang === 'en' ? 'Source (Platform)' : 'المصدر (Source)'}</span>
+              </label>
+
+              <div className="cl-source-grid">
+                {sources.map(s => {
+                  const SourceIcon = s.IconComp;
+                  const isActive = source === s.id;
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => setSource(s.id)}
+                      className={`cl-source-btn ${isActive ? 'active' : ''}`}
+                    >
+                      <SourceIcon size={14} color={isActive ? '#10B981' : 'var(--text2, #94A3B8)'} />
+                      <span>{s.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Medium Selector */}
+            <div className="cl-form-group">
+              <label className="cl-label">
+                <MousePointerClick size={14} color="#10B981" />
+                <span>{lang === 'en' ? 'Medium (Traffic Type)' : 'الوسيط (Medium)'}</span>
+              </label>
+
+              <div className="cl-source-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))' }}>
+                {mediums.map(m => {
+                  const MediumIcon = m.IconComp;
+                  const isActive = medium === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => setMedium(m.id)}
+                      className={`cl-source-btn ${isActive ? 'active' : ''}`}
+                    >
+                      <MediumIcon size={14} color={isActive ? '#10B981' : 'var(--text2, #94A3B8)'} />
+                      <span>{m.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Campaign Name */}
+            <div className="cl-form-group" style={{ marginBottom: 0 }}>
+              <label className="cl-label">
+                <Tag size={14} color="#10B981" />
+                <span>{lang === 'en' ? 'Campaign Name' : 'اسم الحملة (Campaign Name)'}</span>
+              </label>
+              <div className="cl-input-wrap">
+                <Tag size={16} className="cl-input-icon" />
+                <input 
+                  type="text" 
+                  className="cl-input"
+                  dir="ltr"
+                  value={campaignName}
+                  onChange={(e) => setCampaignName(e.target.value.replace(/\s+/g, '_'))}
+                  placeholder="summer_sale_2026"
+                />
+              </div>
+            </div>
+
+          </div>
+
+          {/* ═══════════════ OUTPUT URL PANEL ═══════════════ */}
+          <div className="cl-panel">
+            <div className="cl-panel-header">
+              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.12)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CheckCircle2 size={20} />
+              </div>
+              <div>
+                <h3 className="cl-panel-title">
+                  <span>{lang === 'en' ? 'Generated Tracking URL' : 'رابط التتبع الجاهز للإعلانات'}</span>
+                </h3>
+                <p className="cl-panel-subtitle">
+                  {lang === 'en' ? 'Use this full link in your ad creatives to track conversion sources.' : 'استخدم هذا الرابط في إعلاناتك لمتابعة المصدر بالتحليلات.'}
+                </p>
+              </div>
+            </div>
+
+            <div style={{ minHeight: '320px', display: 'flex', flexDirection: 'column' }}>
+              {!url ? (
+                <div style={{ margin: 'auto', textAlign: 'center', padding: '40px 20px' }}>
+                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                    <Link size={28} />
+                  </div>
+                  <p style={{ fontSize: '14.5px', fontWeight: '800', color: 'var(--text, #F8FAFC)', margin: '0 0 6px 0' }}>
+                    {lang === 'en' ? 'Enter your site URL to generate the tracking link' : 'أدخل رابط موقعك لإنشاء رابط التتبع'}
+                  </p>
+                  <p style={{ fontSize: '12.5px', color: 'var(--text2, #94A3B8)', margin: 0 }}>
+                    {lang === 'en' ? 'Track exactly which ad creative and platform brings your orders.' : 'تتبع بالضبط الإعلان والمنصة التي تجلب لك المبيعات.'}
+                  </p>
+                </div>
+              ) : (
+                <AnimatePresence mode="wait">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '20px', margin: 'auto 0' }}
+                  >
+                    {/* Live URL Box */}
+                    <div className="cl-url-box">
+                      <code className="cl-url-code" dir="ltr">
+                        {generatedUrl}
+                      </code>
+                    </div>
+
+                    {/* Breakdown Badges */}
+                    <div className="cl-badge-grid">
+                      <div className="cl-utm-badge">
+                        <span>Source:</span>
+                        <strong>{source}</strong>
+                      </div>
+                      <div className="cl-utm-badge">
+                        <span>Medium:</span>
+                        <strong>{medium}</strong>
+                      </div>
+                      <div className="cl-utm-badge">
+                        <span>Campaign:</span>
+                        <strong>{campaignName}</strong>
+                      </div>
+                    </div>
+
+                    {/* Copy Button */}
+                    <button 
+                      onClick={handleCopy}
+                      className="cl-copy-btn"
+                    >
+                      <Copy size={16} />
+                      <span>{lang === 'en' ? 'Copy Link and Complete Step!' : 'نسخ الرابط وإكمال الخطوة!'}</span>
+                    </button>
+
+                  </motion.div>
+                </AnimatePresence>
+              )}
+            </div>
+
+          </div>
 
         </div>
-
       </div>
-
     </ToolDashboardLayout>
   );
 }

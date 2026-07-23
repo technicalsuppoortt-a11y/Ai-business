@@ -1,0 +1,357 @@
+/* ==========================================================================
+   Product Ideas Matrix (Product Source) — Professional Design System
+   Full Light Mode & Dark Mode Support via CSS variables
+   ========================================================================== */
+
+.ps-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}
+
+.ps-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Glassmorphic Panel Base */
+.ps-panel {
+  background: var(--bg2, rgba(15, 23, 42, 0.65));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  border-radius: 24px;
+  padding: 28px;
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow, 0 12px 40px rgba(0, 0, 0, 0.3));
+}
+
+.ps-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+}
+
+.ps-panel-title {
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--text, #F8FAFC);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ps-panel-subtitle {
+  font-size: 12.5px;
+  color: var(--text2, #94A3B8);
+  margin: 4px 0 0 0;
+  line-height: 1.5;
+}
+
+/* Parameter Selector Groups */
+.ps-selector-group {
+  margin-bottom: 22px;
+}
+
+.ps-selector-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 900;
+  color: #F43F5E;
+  margin-bottom: 10px;
+}
+
+.ps-selector-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.ps-option-btn {
+  background: var(--bg3, rgba(30, 41, 59, 0.6));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  color: var(--text2, #94A3B8);
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.ps-option-btn:hover {
+  background: var(--bg4, rgba(30, 41, 59, 0.85));
+  color: var(--text, #F8FAFC);
+  border-color: rgba(244, 63, 94, 0.3);
+}
+
+.ps-option-btn.active {
+  background: rgba(244, 63, 94, 0.15);
+  border-color: #F43F5E;
+  color: var(--text, #F8FAFC);
+  box-shadow: 0 4px 16px rgba(244, 63, 94, 0.15);
+}
+
+/* Primary Action Button */
+.ps-generate-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  background: #F43F5E;
+  border: none;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 20px rgba(244, 63, 94, 0.35);
+  margin-top: 16px;
+}
+
+.ps-generate-btn:hover:not(:disabled) {
+  background: #E11D48;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(244, 63, 94, 0.45);
+}
+
+.ps-generate-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Quick Links Bar */
+.ps-quick-links {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+}
+
+.ps-quick-link-item {
+  background: var(--bg3, rgba(30, 41, 59, 0.5));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  padding: 10px 12px;
+  border-radius: 10px;
+  text-align: center;
+  color: var(--text, #F8FAFC);
+  font-size: 11.5px;
+  font-weight: 800;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.ps-quick-link-item:hover {
+  background: var(--bg4, rgba(30, 41, 59, 0.85));
+  border-color: rgba(244, 63, 94, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Product Cards Grid */
+.ps-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 14px;
+}
+
+.ps-product-card {
+  background: var(--bg3, rgba(30, 41, 59, 0.5));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  border-radius: 16px;
+  padding: 18px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ps-product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.ps-card-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--text, #F8FAFC);
+  margin: 0 0 8px 0;
+  line-height: 1.5;
+}
+
+.ps-price-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #10B981;
+}
+
+/* Glassmorphic Portal Modal Overlay */
+.ps-modal-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(12px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.ps-modal-card {
+  background: var(--bg2, #0F172A);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 32px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ps-modal-desc-box {
+  background: var(--bg3, rgba(30, 41, 59, 0.5));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  border-radius: 16px;
+  padding: 18px 20px;
+}
+
+.ps-modal-close-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+  background: var(--bg3, rgba(255, 255, 255, 0.05));
+  color: var(--text2, #94A3B8);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.ps-modal-close-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #EF4444;
+}
+
+/* Light Mode Overrides for Complete Visual Excellence */
+:root.light-mode .ps-panel {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+}
+
+:root.light-mode .ps-panel-title {
+  color: #0F172A;
+}
+
+:root.light-mode .ps-panel-subtitle {
+  color: #64748B;
+}
+
+:root.light-mode .ps-option-btn {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: #475569;
+}
+
+:root.light-mode .ps-option-btn:hover {
+  background: #F1F5F9;
+  color: #0F172A;
+}
+
+:root.light-mode .ps-option-btn.active {
+  background: rgba(244, 63, 94, 0.08);
+  border-color: #F43F5E;
+  color: #E11D48;
+}
+
+:root.light-mode .ps-quick-link-item {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: #0F172A;
+}
+
+:root.light-mode .ps-quick-link-item:hover {
+  background: #F1F5F9;
+}
+
+:root.light-mode .ps-product-card {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+}
+
+:root.light-mode .ps-card-title {
+  color: #0F172A;
+}
+
+:root.light-mode .ps-modal-card {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+}
+
+:root.light-mode .ps-modal-desc-box {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+}
+
+:root.light-mode .ps-modal-close-btn {
+  background: #F1F5F9;
+  border-color: #E2E8F0;
+  color: #64748B;
+}
+
+/* RESPONSIVE MEDIA QUERIES */
+@media (max-width: 960px) {
+  .ps-main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .ps-panel {
+    padding: 20px 16px;
+    border-radius: 18px;
+  }
+  .ps-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}

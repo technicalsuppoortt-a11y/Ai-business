@@ -1,19 +1,39 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { collection, getDocs } from 'firebase/firestore';
 import { libraryDb } from '../../../firebaseLibrary';
 import { useApp } from '../../../context/AppContext';
 import { useAuth } from '../../../context/AuthContext';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  BookOpen,
+  Layers,
+  FileCode,
+  Bot,
+  FileText,
+  ExternalLink,
+  ChevronRight,
+  ChevronLeft,
+  X,
+  Sparkles,
+  FolderOpen,
+  Eye,
+  Download,
+  Search
+} from 'lucide-react';
+import './BrandLibrary.css';
 
 export default function BrandLibrary({ isMobile }) {
   const { state } = useApp();
   const { userData } = useAuth();
   const lang = state.language || 'ar';
+  const isRtl = lang === 'ar';
 
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('الكل');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [selectedAutomationImages, setSelectedAutomationImages] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -45,9 +65,18 @@ export default function BrandLibrary({ isMobile }) {
 
   const categories = ['الكل', ...new Set(brands.map(b => b.category).filter(Boolean))];
 
-  const filteredBrands = selectedCategory === 'الكل' 
-    ? brands 
-    : brands.filter(b => b.category === selectedCategory);
+  const filteredBrands = brands.filter(b => {
+    const matchesCategory = selectedCategory === 'الكل' || b.category === selectedCategory;
+    if (!searchQuery.trim()) return matchesCategory;
+
+    const q = searchQuery.toLowerCase().trim();
+    const title = (b.title || b.name || '').toLowerCase();
+    const desc = (b.description || '').toLowerCase();
+    const category = (b.category || '').toLowerCase();
+
+    const matchesSearch = title.includes(q) || desc.includes(q) || category.includes(q);
+    return matchesCategory && matchesSearch;
+  });
 
   const getCategoryLabel = (cat) => {
     if (lang === 'en') {
@@ -57,6 +86,12 @@ export default function BrandLibrary({ isMobile }) {
       return cat;
     }
     return cat;
+  };
+
+  const getCategoryIcon = (cat) => {
+    if (cat === 'كتاب') return BookOpen;
+    if (cat === 'قوالب') return FileCode;
+    return Layers;
   };
 
   const openAutomation = (images) => {
@@ -79,327 +114,349 @@ export default function BrandLibrary({ isMobile }) {
   };
 
   return (
-    <div className="tool-content" style={{ padding: isMobile ? 8 : 20, paddingBottom: 100 }}>
-      <div className="tool-header" style={{ marginBottom: 16 }}>
-        <h1 className="tool-title" style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>
-          {lang === 'en' ? '📚 Product Library' : '📚 مكتبة المنتجات'}
+    <div className="bl-container" dir={isRtl ? 'rtl' : 'ltr'}>
+      
+      {/* ═══════════════ HEADER ═══════════════ */}
+      <div className="bl-header">
+        <h1 className="bl-title">
+          <BookOpen size={24} color="#3B82F6" />
+          <span>{lang === 'en' ? 'Product & Resource Library' : 'مكتبة المنتجات والأتوميشن'}</span>
         </h1>
-        <p className="tool-desc" style={{ fontSize: 13, color: 'var(--text2)', maxWidth: 600 }}>
+        <p className="bl-subtitle">
           {lang === 'en' 
-            ? 'Browse available files and automation templates to grow your business.' 
-            : 'استعرض الملفات المتاحة وقوالب الأتوميشن لتطوير عملك.'}
+            ? 'Browse available ready-to-use digital products, guidebooks, and automation templates to scale your business.' 
+            : 'استعرض المنتجات الرقمية، أدلة العمل، وقوالب الأتوميشن الجاهزة لتطوير عملك وسرعة النمو.'}
         </p>
       </div>
 
-      {/* Filter Bar */}
+      {/* ═══════════════ ADVANCED SEARCH BAR ═══════════════ */}
       {!loading && brands.length > 0 && (
-        <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', overflowX: 'auto', paddingBottom: 4 }}>
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              style={{
-                padding: '8px 16px',
-                borderRadius: 20,
-                fontSize: 12,
-                fontWeight: 700,
-                background: selectedCategory === cat ? 'var(--accent)' : 'var(--bg2)',
-                color: selectedCategory === cat ? '#fff' : 'var(--text2)',
-                border: `1px solid ${selectedCategory === cat ? 'var(--accent)' : 'var(--line)'}`,
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              {getCategoryLabel(cat)}
+        <div className="bl-search-wrap">
+          <Search size={16} className="bl-search-icon" />
+          <input 
+            type="text"
+            className="bl-search-input"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={lang === 'en' ? 'Search products, books, automation templates...' : 'ابحث في المنتجات، الكتب، وقوالب الأتوميشن...'}
+          />
+          {searchQuery && (
+            <button className="bl-search-clear-btn" onClick={() => setSearchQuery('')} title={lang === 'en' ? 'Clear search' : 'مسح البحث'}>
+              <X size={14} />
             </button>
-          ))}
+          )}
         </div>
       )}
 
+      {/* ═══════════════ FILTER BAR ═══════════════ */}
+      {!loading && brands.length > 0 && (
+        <div className="bl-filter-bar">
+          {categories.map(cat => {
+            const CatIcon = getCategoryIcon(cat);
+            const isActive = selectedCategory === cat;
+
+            return (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`bl-filter-pill ${isActive ? 'active' : ''}`}
+              >
+                <CatIcon size={14} />
+                <span>{getCategoryLabel(cat)}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ═══════════════ GRID CONTENT STATES ═══════════════ */}
       {loading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+        <div className="bl-grid">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} style={{ background: 'var(--bg2)', border: '1px solid var(--line)', borderRadius: 16, overflow: 'hidden', height: 380, display: 'flex', flexDirection: 'column', opacity: 0.8 }} className="skeleton-shimmer">
-              <div style={{ height: 180, background: 'var(--bg3)' }} />
-              <div style={{ padding: 20, flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={{ height: 20, background: 'var(--bg3)', borderRadius: 4, width: '60%' }} />
-                <div style={{ height: 14, background: 'var(--bg3)', borderRadius: 4, width: '80%' }} />
-                <div style={{ height: 14, background: 'var(--bg3)', borderRadius: 4, width: '40%' }} />
-                <div style={{ height: 40, background: 'var(--bg3)', borderRadius: 8, marginTop: 'auto' }} />
+            <div key={i} className="bl-card skeleton-shimmer" style={{ height: 380, opacity: 0.7 }}>
+              <div style={{ height: 190, background: 'var(--bg3, rgba(30, 41, 59, 0.6))' }} />
+              <div style={{ padding: 20, flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ height: 20, background: 'var(--bg3, rgba(30, 41, 59, 0.6))', borderRadius: 6, width: '65%' }} />
+                <div style={{ height: 14, background: 'var(--bg3, rgba(30, 41, 59, 0.6))', borderRadius: 6, width: '85%' }} />
+                <div style={{ height: 14, background: 'var(--bg3, rgba(30, 41, 59, 0.6))', borderRadius: 6, width: '45%' }} />
+                <div style={{ height: 42, background: 'var(--bg3, rgba(30, 41, 59, 0.6))', borderRadius: 12, marginTop: 'auto' }} />
               </div>
             </div>
           ))}
         </div>
       ) : error ? (
-        <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--red)', padding: 24, borderRadius: 12, textAlign: 'center', fontWeight: 600 }}>
+        <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', padding: 24, borderRadius: 16, textAlign: 'center', fontWeight: 800, border: '1px solid rgba(239, 68, 68, 0.2)' }}>
           {error}
         </div>
-      ) : brands.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 60, background: 'var(--bg2)', borderRadius: 16, border: '1px solid var(--line)' }}>
-          <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.5 }}>📂</div>
-          <div style={{ color: 'var(--text2)', fontWeight: 600 }}>
-            {lang === 'en' ? 'The library is currently empty' : 'المكتبة فارغة حالياً'}
+      ) : filteredBrands.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '60px 20px', background: 'var(--bg2, rgba(15, 23, 42, 0.6))', borderRadius: 24, border: '1px solid var(--line, rgba(255, 255, 255, 0.08))' }}>
+          <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+            <FolderOpen size={28} />
           </div>
+          <div style={{ color: 'var(--text, #F8FAFC)', fontWeight: 800, fontSize: '15px' }}>
+            {searchQuery 
+              ? (lang === 'en' ? `No results found for "${searchQuery}"` : `لا توجد نتائج تطابق "${searchQuery}"`)
+              : (lang === 'en' ? 'The library is currently empty' : 'المكتبة فارغة حالياً')}
+          </div>
+          <p style={{ color: 'var(--text2, #94A3B8)', fontSize: '12.5px', marginTop: 4 }}>
+            {searchQuery 
+              ? (lang === 'en' ? 'Try searching with different keywords or clear the search.' : 'جرب البحث بكلمات أخرى أو قم بإلغاء البحث.')
+              : (lang === 'en' ? 'New digital resources will be uploaded soon.' : 'سيتم إضافة موارد رقمية وقوالب جديدة قريباً.')}
+          </p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-          {filteredBrands.map(brand => (
-            <div key={brand.id} style={{
-              background: 'var(--bg2)',
-              border: '1px solid var(--line)',
-              borderRadius: 16,
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-              transition: 'transform 0.3s, box-shadow 0.3s',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.transform = 'translateY(-4px)';
-              e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.1)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.transform = 'none';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-            >
-              <div 
-                style={{ height: 180, background: '#111', position: 'relative', cursor: 'pointer' }}
-                onClick={() => setSelectedBrandDetails(brand)}
-              >
-                <img 
-                  src={brand.imageUrl} 
-                  alt={brand.title || brand.name} 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                  onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#555;font-weight:bold;font-size:24px;">' + (brand.title || brand.name || '?').charAt(0) + '</div>'; }}
-                />
-                {brand.type === 'automation' && (
-                   <div style={{ position: 'absolute', top: 12, right: 12, background: 'var(--accent)', color: '#fff', fontSize: 10, fontWeight: 800, padding: '4px 8px', borderRadius: 6 }}>
-                      {lang === 'en' ? '🤖 Automation Template' : '🤖 قالب أتوميشن'}
-                   </div>
-                )}
-              </div>
-              <div style={{ padding: 20, flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <AnimatePresence mode="wait">
+          <motion.div 
+            className="bl-grid"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            {filteredBrands.map(brand => (
+              <div key={brand.id} className="bl-card">
+                
+                {/* Image Thumbnail */}
                 <div 
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, cursor: 'pointer' }}
+                  className="bl-card-thumb-wrap"
                   onClick={() => setSelectedBrandDetails(brand)}
                 >
-                   <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)' }}>{brand.title || brand.name}</h3>
-                   <span style={{ fontSize: 10, color: 'var(--text3)', background: 'var(--bg3)', padding: '2px 6px', borderRadius: 4 }}>
-                     {getCategoryLabel(brand.category)}
-                   </span>
+                  <img 
+                    src={brand.imageUrl} 
+                    alt={brand.title || brand.name} 
+                    onError={(e) => { 
+                      e.target.style.display = 'none'; 
+                      e.target.parentElement.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#64748B;font-weight:900;font-size:28px;">${(brand.title || brand.name || '?').charAt(0)}</div>`; 
+                    }}
+                  />
+
+                  {brand.type === 'automation' && (
+                    <div className="bl-badge-automation">
+                      <Bot size={12} />
+                      <span>{lang === 'en' ? 'Automation Template' : 'قالب أتوميشن'}</span>
+                    </div>
+                  )}
                 </div>
-                <div 
-                  style={{ cursor: 'pointer', flex: 1, marginBottom: 24 }}
-                  onClick={() => setSelectedBrandDetails(brand)}
-                >
-                  <p style={{ 
-                    fontSize: 13, color: 'var(--text2)', lineHeight: 1.6, margin: 0,
-                    display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', textOverflow: 'ellipsis'
-                  }}>
+
+                {/* Card Content Body */}
+                <div className="bl-card-body">
+                  <div 
+                    className="bl-card-header"
+                    onClick={() => setSelectedBrandDetails(brand)}
+                  >
+                    <h3 className="bl-card-item-title">{brand.title || brand.name}</h3>
+                    <span className="bl-category-tag">
+                      {getCategoryLabel(brand.category)}
+                    </span>
+                  </div>
+
+                  <p 
+                    className="bl-card-desc"
+                    onClick={() => setSelectedBrandDetails(brand)}
+                  >
                     {brand.description}
                   </p>
-                  <span style={{ fontSize: 11, color: 'var(--accent)', marginTop: 4, display: 'inline-block', fontWeight: 600 }}>
-                    {lang === 'en' ? 'Read more' : 'قراءة المزيد'}
-                  </span>
-                </div>
-                
-                {brand.type === 'automation' ? (
-                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      <button 
-                        onClick={() => openAutomation(brand.automationImages)}
-                        style={{
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                          background: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent)',
-                          padding: '12px', borderRadius: 8, border: '1px solid rgba(59, 130, 246, 0.2)',
-                          fontWeight: 700, fontSize: 14, cursor: 'pointer', transition: 'all 0.2s'
-                        }}
-                      >
-                        <span>🤖</span> {lang === 'en' ? 'View Automation Template' : 'عرض قالب الأتوميشن'}
-                      </button>
-                      
-                      {brand.pdfUrl && (
-                         <a 
-                           href={brand.pdfUrl} 
-                           target="_blank" 
-                           rel="noreferrer"
-                           style={{
-                             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                             background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text2)',
-                             padding: '10px', borderRadius: 8, border: '1px solid var(--line)',
-                             textDecoration: 'none', fontWeight: 600, fontSize: 12, transition: 'all 0.2s'
-                           }}
-                         >
-                           <span>📄</span> {lang === 'en' ? 'Download Explanation (PDF)' : 'تحميل ملف الشرح (PDF)'}
-                         </a>
-                      )}
-                   </div>
-                ) : (
-                  <a 
-                    href={brand.pdfUrl} 
-                    target="_blank" 
-                    rel="noreferrer"
-                    style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                      background: 'rgba(16, 185, 129, 0.1)', color: 'var(--green)',
-                      padding: '12px', borderRadius: 8, border: '1px solid rgba(16, 185, 129, 0.2)',
-                      textDecoration: 'none', fontWeight: 700, fontSize: 14, transition: 'all 0.2s'
-                    }}
+
+                  <button 
+                    className="bl-read-more-btn"
+                    onClick={() => setSelectedBrandDetails(brand)}
                   >
-                    <span>📄</span> {lang === 'en' ? 'View or Download PDF' : 'عرض أو تحميل الـ PDF'}
-                  </a>
-                )}
+                    <span>{lang === 'en' ? 'Read Details' : 'عرض التفاصيل'}</span>
+                    {isRtl ? <ChevronLeft size={13} /> : <ChevronRight size={13} />}
+                  </button>
+
+                  <div style={{ marginTop: 'auto' }}>
+                    {brand.type === 'automation' ? (
+                      <>
+                        <button 
+                          onClick={() => openAutomation(brand.automationImages)}
+                          className="bl-btn-primary-action"
+                        >
+                          <Bot size={16} />
+                          <span>{lang === 'en' ? 'View Automation Template' : 'عرض قالب الأتوميشن'}</span>
+                        </button>
+                        
+                        {brand.pdfUrl && (
+                          <a 
+                            href={brand.pdfUrl} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="bl-btn-secondary-action"
+                          >
+                            <FileText size={14} />
+                            <span>{lang === 'en' ? 'Download Guide (PDF)' : 'تحميل ملف الشرح (PDF)'}</span>
+                          </a>
+                        )}
+                      </>
+                    ) : (
+                      <a 
+                        href={brand.pdfUrl} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="bl-btn-pdf-action"
+                      >
+                        <FileText size={16} />
+                        <span>{lang === 'en' ? 'View or Download PDF' : 'عرض أو تحميل الـ PDF'}</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </motion.div>
+        </AnimatePresence>
       )}
 
-      {/* Brand Details Modal */}
+      {/* ═══════════════ BRAND DETAILS MODAL ═══════════════ */}
       {selectedBrandDetails && createPortal((
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.85)', zIndex: 9999,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
-          backdropFilter: 'blur(5px)'
-        }} onClick={() => setSelectedBrandDetails(null)}>
-          <div style={{
-            background: 'var(--panel)', width: '100%', maxWidth: 500, borderRadius: 20,
-            overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
-            display: 'flex', flexDirection: 'column'
-          }} onClick={e => e.stopPropagation()}>
-            <div style={{ height: 200, background: '#111', position: 'relative' }}>
+        <div 
+          className="bl-modal-overlay"
+          onClick={() => setSelectedBrandDetails(null)}
+        >
+          <div 
+            className="bl-modal-card"
+            onClick={e => e.stopPropagation()}
+            dir={isRtl ? 'rtl' : 'ltr'}
+          >
+            <div style={{ height: 210, background: '#0F172A', position: 'relative' }}>
               <img 
                 src={selectedBrandDetails.imageUrl} 
                 alt={selectedBrandDetails.title || selectedBrandDetails.name} 
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#555;font-weight:bold;font-size:24px;">' + (selectedBrandDetails.title || selectedBrandDetails.name || '?').charAt(0) + '</div>'; }}
+                onError={(e) => { 
+                  e.target.style.display = 'none'; 
+                  e.target.parentElement.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#64748B;font-weight:900;font-size:32px;">${(selectedBrandDetails.title || selectedBrandDetails.name || '?').charAt(0)}</div>`; 
+                }}
               />
-              <button onClick={() => setSelectedBrandDetails(null)} style={{
-                position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.5)', border: 'none',
-                color: '#fff', width: 32, height: 32, borderRadius: '50%', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20
-              }}>×</button>
+              <button 
+                onClick={() => setSelectedBrandDetails(null)} 
+                className="bl-modal-close-btn"
+              >
+                <X size={18} />
+              </button>
             </div>
+
             <div style={{ padding: 24, display: 'flex', flexDirection: 'column', maxHeight: '60vh', overflowY: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                 <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', margin: 0 }}>{selectedBrandDetails.title || selectedBrandDetails.name}</h2>
-                 <span style={{ fontSize: 12, color: 'var(--text3)', background: 'var(--bg3)', padding: '4px 8px', borderRadius: 4, fontWeight: 600 }}>
-                   {getCategoryLabel(selectedBrandDetails.category)}
-                 </span>
+                <h2 style={{ fontSize: 20, fontWeight: 900, color: 'var(--text, #F8FAFC)', margin: 0 }}>
+                  {selectedBrandDetails.title || selectedBrandDetails.name}
+                </h2>
+                <span className="bl-category-tag">
+                  {getCategoryLabel(selectedBrandDetails.category)}
+                </span>
               </div>
-              <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.8, marginBottom: 24, whiteSpace: 'pre-wrap' }}>
+
+              <p style={{ fontSize: 13.5, color: 'var(--text2, #94A3B8)', lineHeight: 1.8, marginBottom: 24, whiteSpace: 'pre-wrap' }}>
                 {selectedBrandDetails.description}
               </p>
               
-              {selectedBrandDetails.type === 'automation' ? (
-                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 'auto' }}>
+              <div style={{ marginTop: 'auto' }}>
+                {selectedBrandDetails.type === 'automation' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <button 
                       onClick={() => openAutomation(selectedBrandDetails.automationImages)}
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                        background: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent)',
-                        padding: '14px', borderRadius: 12, border: '1px solid rgba(59, 130, 246, 0.2)',
-                        fontWeight: 700, fontSize: 15, cursor: 'pointer', transition: 'all 0.2s'
-                      }}
+                      className="bl-btn-primary-action"
                     >
-                      <span>🤖</span> {lang === 'en' ? 'View Automation Template' : 'عرض قالب الأتوميشن'}
+                      <Bot size={16} />
+                      <span>{lang === 'en' ? 'View Automation Template' : 'عرض قالب الأتوميشن'}</span>
                     </button>
                     
                     {selectedBrandDetails.pdfUrl && (
-                       <a 
-                         href={selectedBrandDetails.pdfUrl} 
-                         target="_blank" 
-                         rel="noreferrer"
-                         style={{
-                           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                           background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text2)',
-                           padding: '14px', borderRadius: 12, border: '1px solid var(--line)',
-                           textDecoration: 'none', fontWeight: 600, fontSize: 14, transition: 'all 0.2s'
-                         }}
-                       >
-                         <span>📄</span> {lang === 'en' ? 'Download Explanation (PDF)' : 'تحميل ملف الشرح (PDF)'}
-                       </a>
+                      <a 
+                        href={selectedBrandDetails.pdfUrl} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="bl-btn-secondary-action"
+                      >
+                        <FileText size={14} />
+                        <span>{lang === 'en' ? 'Download Guide (PDF)' : 'تحميل ملف الشرح (PDF)'}</span>
+                      </a>
                     )}
-                 </div>
-              ) : (
-                <a 
-                  href={selectedBrandDetails.pdfUrl} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    background: 'rgba(16, 185, 129, 0.1)', color: 'var(--green)', marginTop: 'auto',
-                    padding: '14px', borderRadius: 12, border: '1px solid rgba(16, 185, 129, 0.2)',
-                    textDecoration: 'none', fontWeight: 700, fontSize: 15, transition: 'all 0.2s'
-                  }}
-                >
-                  <span>📄</span> {lang === 'en' ? 'View or Download PDF' : 'عرض أو تحميل الـ PDF'}
-                </a>
-              )}
+                  </div>
+                ) : (
+                  <a 
+                    href={selectedBrandDetails.pdfUrl} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="bl-btn-pdf-action"
+                  >
+                    <FileText size={16} />
+                    <span>{lang === 'en' ? 'View or Download PDF' : 'عرض أو تحميل الـ PDF'}</span>
+                  </a>
+                )}
+              </div>
             </div>
           </div>
         </div>
       ), document.body)}
 
-      {/* Automation Viewer Modal */}
+      {/* ═══════════════ AUTOMATION VIEWER MODAL ═══════════════ */}
       {selectedAutomationImages && createPortal((
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.95)', zIndex: 10000,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
-        }} onClick={closeAutomation}>
-          
-          <button style={{
-            position: 'absolute', top: 20, right: 20, background: 'none', border: 'none',
-            color: '#fff', fontSize: 32, cursor: 'pointer', zIndex: 2001
-          }} onClick={closeAutomation}>×</button>
+        <div 
+          className="bl-modal-overlay" 
+          style={{ background: 'rgba(0, 0, 0, 0.95)', zIndex: 10000 }}
+          onClick={closeAutomation}
+        >
+          <button 
+            style={{
+              position: 'absolute', top: 20, insetInlineEnd: 20, background: 'rgba(255, 255, 255, 0.1)', border: 'none',
+              color: '#fff', width: 40, height: 40, borderRadius: '50%', cursor: 'pointer', zIndex: 2001,
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }} 
+            onClick={closeAutomation}
+          >
+            <X size={20} />
+          </button>
 
-          <div style={{ position: 'relative', maxWidth: '90%', maxHeight: '90%', display: 'flex', alignItems: 'center' }} onClick={e => e.stopPropagation()}>
-            
+          <div 
+            style={{ position: 'relative', maxWidth: '90%', maxHeight: '90%', display: 'flex', alignItems: 'center' }} 
+            onClick={e => e.stopPropagation()}
+          >
             {selectedAutomationImages.length > 1 && (
-               <button style={{
-                  position: 'absolute', left: -60, background: 'rgba(255,255,255,0.1)',
+              <button 
+                style={{
+                  position: 'absolute', insetInlineStart: -56, background: 'rgba(255, 255, 255, 0.15)',
                   border: 'none', color: '#fff', width: 44, height: 44, borderRadius: '50%',
-                  cursor: 'pointer', fontSize: 20, display: 'flex', alignItems: 'center', justifyContent: 'center'
-               }} onClick={prevImage}>❮</button>
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  backdropFilter: 'blur(8px)'
+                }} 
+                onClick={prevImage}
+              >
+                {isRtl ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+              </button>
             )}
 
             <img 
               src={selectedAutomationImages[currentImageIndex]} 
               alt="Automation Step" 
-              style={{ maxWidth: '100%', maxHeight: '80vh', borderRadius: 12, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }} 
+              style={{ maxWidth: '100%', maxHeight: '80vh', borderRadius: 16, boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }} 
             />
 
             {selectedAutomationImages.length > 1 && (
-               <button style={{
-                  position: 'absolute', right: -60, background: 'rgba(255,255,255,0.1)',
+              <button 
+                style={{
+                  position: 'absolute', insetInlineEnd: -56, background: 'rgba(255, 255, 255, 0.15)',
                   border: 'none', color: '#fff', width: 44, height: 44, borderRadius: '50%',
-                  cursor: 'pointer', fontSize: 20, display: 'flex', alignItems: 'center', justifyContent: 'center'
-               }} onClick={nextImage}>❯</button>
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  backdropFilter: 'blur(8px)'
+                }} 
+                onClick={nextImage}
+              >
+                {isRtl ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+              </button>
             )}
 
             <div style={{
-               position: 'absolute', bottom: -40, left: 0, right: 0, textAlign: 'center',
-               color: '#fff', fontSize: 14, fontWeight: 700
+              position: 'absolute', bottom: -36, left: 0, right: 0, textAlign: 'center',
+              color: '#fff', fontSize: 13, fontWeight: 800
             }}>
-               {currentImageIndex + 1} / {selectedAutomationImages.length}
+              {currentImageIndex + 1} / {selectedAutomationImages.length}
             </div>
           </div>
         </div>
       ), document.body)}
 
-      <style dangerouslySetInnerHTML={{ __html: `
-         .sa-submit-spinner {
-            width: 24px; height: 24px;
-            border: 3px solid rgba(255,255,255,0.1);
-            border-top: 3px solid #fff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-         }
-         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-      `}} />
     </div>
   );
 }
-

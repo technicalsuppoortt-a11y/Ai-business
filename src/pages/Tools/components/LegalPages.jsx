@@ -1,18 +1,225 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../../context/AppContext';
+import { useToast } from '../../../context/ToastContext';
 import ToolDashboardLayout from './ToolDashboardLayout';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Shield,
+  FileText,
+  RotateCcw,
+  Globe,
+  Mail,
+  Building,
+  Check,
+  CheckCircle2,
+  Copy,
+  Sparkles,
+  AlertTriangle,
+  ChevronDown,
+  Sliders,
+  Scale,
+  Lock,
+  ArrowRight,
+  ArrowLeft,
+  BookOpen,
+  Search,
+  PenTool
+} from 'lucide-react';
+import './LegalPages.css';
+
+// Glassmorphic Searchable & Editable Dropdown for Country Selection
+function SearchableCountryDropdown({ value, onChange, options, label, icon: Icon, placeholder, lang }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isCustomInputMode, setIsCustomInputMode] = useState(false);
+  const dropdownRef = useRef(null);
+  const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && searchInputRef.current) {
+      setTimeout(() => searchInputRef.current?.focus(), 50);
+    } else {
+      setSearchQuery('');
+    }
+  }, [isOpen]);
+
+  const selectedOption = options.find(o => String(o.value) === String(value)) || { value, label: value };
+
+  const filteredOptions = options.filter(opt => 
+    opt.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    opt.value.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleSelect = (val) => {
+    onChange(val);
+    setIsOpen(false);
+    setIsCustomInputMode(false);
+  };
+
+  return (
+    <div className="lp-dropdown-container" ref={dropdownRef}>
+      {label && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+          <label className="lp-label" style={{ margin: 0 }}>
+            {Icon && <Icon size={14} color="#8B5CF6" />}
+            <span>{label}</span>
+          </label>
+          <button 
+            type="button"
+            onClick={() => setIsCustomInputMode(!isCustomInputMode)}
+            style={{ 
+              background: 'transparent', 
+              border: 'none', 
+              color: '#8B5CF6', 
+              fontSize: '11px', 
+              fontWeight: 800, 
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4
+            }}
+          >
+            {isCustomInputMode ? (
+              <>
+                <ChevronDown size={12} />
+                <span>{lang === 'en' ? 'Select from list' : 'اختر من القائمة'}</span>
+              </>
+            ) : (
+              <>
+                <PenTool size={11} />
+                <span>{lang === 'en' ? '+ Write custom country' : '+ كتابة دولة مخصصة'}</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      {isCustomInputMode ? (
+        <input 
+          type="text"
+          className="lp-input"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={lang === 'en' ? 'Type country name manually...' : 'اكتب اسم الدولة يدوياً...'}
+          autoFocus
+        />
+      ) : (
+        <div 
+          className={`lp-dropdown-trigger ${isOpen ? 'open' : ''}`}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <span>{selectedOption?.label || value || placeholder}</span>
+          <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+            <ChevronDown size={16} color="var(--text2, #94A3B8)" />
+          </motion.div>
+        </div>
+      )}
+
+      <AnimatePresence>
+        {isOpen && !isCustomInputMode && (
+          <motion.div 
+            className="lp-dropdown-menu"
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            transition={{ duration: 0.15 }}
+          >
+            {/* Advanced Search Bar inside Dropdown Menu */}
+            <div className="lp-search-box">
+              <Search size={14} color="var(--text2, #94A3B8)" />
+              <input 
+                ref={searchInputRef}
+                type="text" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={lang === 'en' ? 'Search country (e.g. Egypt, Saudi, USA)...' : 'بحث عن دولة (مثال: مصر، السعودية، الإمارات)...'}
+              />
+            </div>
+
+            {/* Custom option when user types a search query */}
+            {searchQuery.trim() && (
+              <div 
+                className="lp-dropdown-option custom-add-option"
+                onClick={() => handleSelect(searchQuery.trim())}
+              >
+                <span style={{ color: '#8B5CF6', fontWeight: 800 }}>
+                  ✨ {lang === 'en' ? `Use typed: "${searchQuery}"` : `استخدام الدولة المدخلة: "${searchQuery}"`}
+                </span>
+                <Check size={14} color="#8B5CF6" />
+              </div>
+            )}
+
+            {filteredOptions.length === 0 && !searchQuery.trim() ? (
+              <div style={{ padding: '12px', textAlign: 'center', color: 'var(--text2, #94A3B8)', fontSize: '12px' }}>
+                {lang === 'en' ? 'No countries found.' : 'لم يتم العثور على دول.'}
+              </div>
+            ) : (
+              filteredOptions.map(opt => (
+                <div
+                  key={String(opt.value)}
+                  className={`lp-dropdown-option ${String(opt.value) === String(value) ? 'selected' : ''}`}
+                  onClick={() => handleSelect(opt.value)}
+                >
+                  <span>{opt.label}</span>
+                  {String(opt.value) === String(value) && <Check size={14} color="#8B5CF6" />}
+                </div>
+              ))
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export default function LegalPages({ stepNumber }) {
   const { state } = useApp();
+  const toast = useToast();
   const lang = state.language || 'ar';
+  const isRtl = lang === 'ar';
   
   // Inputs
   const [brandName, setBrandName] = useState(state.brandName || '');
   const [contactEmail, setContactEmail] = useState(state.contactEmail || '');
   const [websiteUrl, setWebsiteUrl] = useState(state.websiteUrl || '');
   const [country, setCountry] = useState(state.country || (lang === 'en' ? 'USA' : 'مصر'));
+  const [validationError, setValidationError] = useState('');
   
   const [activeTab, setActiveTab] = useState('privacy'); // privacy, terms, refund
+
+  // Pre-configured popular country options
+  const countryOptions = [
+    { value: lang === 'en' ? 'Egypt' : 'مصر', label: lang === 'en' ? 'Egypt (مصر)' : 'مصر (Egypt)' },
+    { value: lang === 'en' ? 'Saudi Arabia' : 'المملكة العربية السعودية', label: lang === 'en' ? 'Saudi Arabia (السعودية)' : 'المملكة العربية السعودية (Saudi Arabia)' },
+    { value: lang === 'en' ? 'United Arab Emirates' : 'الإمارات العربية المتحدة', label: lang === 'en' ? 'United Arab Emirates (الإمارات)' : 'الإمارات العربية المتحدة (UAE)' },
+    { value: lang === 'en' ? 'Kuwait' : 'الكويت', label: lang === 'en' ? 'Kuwait (الكويت)' : 'الكويت (Kuwait)' },
+    { value: lang === 'en' ? 'Qatar' : 'قطر', label: lang === 'en' ? 'Qatar (قطر)' : 'قطر (Qatar)' },
+    { value: lang === 'en' ? 'Bahrain' : 'البحرين', label: lang === 'en' ? 'Bahrain (البحرين)' : 'البحرين (Bahrain)' },
+    { value: lang === 'en' ? 'Oman' : 'سلطنة عمان', label: lang === 'en' ? 'Oman (عمان)' : 'سلطنة عمان (Oman)' },
+    { value: lang === 'en' ? 'Jordan' : 'الأردن', label: lang === 'en' ? 'Jordan (الأردن)' : 'الأردن (Jordan)' },
+    { value: lang === 'en' ? 'Morocco' : 'المغرب', label: lang === 'en' ? 'Morocco (المغرب)' : 'المغرب (Morocco)' },
+    { value: lang === 'en' ? 'Algeria' : 'الجزائر', label: lang === 'en' ? 'Algeria (الجزائر)' : 'الجزائر (Algeria)' },
+    { value: lang === 'en' ? 'Tunisia' : 'تونس', label: lang === 'en' ? 'Tunisia (تونس)' : 'تونس (Tunisia)' },
+    { value: lang === 'en' ? 'Iraq' : 'العراق', label: lang === 'en' ? 'Iraq (العراق)' : 'العراق (Iraq)' },
+    { value: lang === 'en' ? 'Lebanon' : 'لبنان', label: lang === 'en' ? 'Lebanon (لبنان)' : 'لبنان (Lebanon)' },
+    { value: lang === 'en' ? 'United States' : 'الولايات المتحدة الأمريكية', label: lang === 'en' ? 'United States (USA)' : 'الولايات المتحدة الأمريكية (USA)' },
+    { value: lang === 'en' ? 'United Kingdom' : 'المملكة المتحدة', label: lang === 'en' ? 'United Kingdom (UK)' : 'المملكة المتحدة (UK)' },
+    { value: lang === 'en' ? 'Canada' : 'كندا', label: lang === 'en' ? 'Canada (كندا)' : 'كندا (Canada)' },
+    { value: lang === 'en' ? 'Germany' : 'ألمانيا', label: lang === 'en' ? 'Germany (ألمانيا)' : 'ألمانيا (Germany)' },
+    { value: lang === 'en' ? 'France' : 'فرنسا', label: lang === 'en' ? 'France (فرنسا)' : 'فرنسا (France)' },
+    { value: lang === 'en' ? 'Turkey' : 'تركيا', label: lang === 'en' ? 'Turkey (تركيا)' : 'تركيا (Turkey)' },
+    { value: lang === 'en' ? 'Spain' : 'إسبانيا', label: lang === 'en' ? 'Spain (إسبانيا)' : 'إسبانيا (Spain)' }
+  ];
 
   const generatePrivacyPolicy = () => {
     if (lang === 'en') {
@@ -191,9 +398,29 @@ To submit a return request, please contact us via email at ${contactEmail || '[E
   const currentContent = getContent();
 
   const handleCopy = () => {
+    if (!brandName.trim() || !contactEmail.trim() || !websiteUrl.trim()) {
+      setValidationError(
+        lang === 'en' 
+          ? 'Notice: Some fields (Brand Name, Email, or Website) are empty. Please fill them out to generate custom terms.' 
+          : 'تنبيه: بعض الحقول (اسم البراند، البريد الإلكتروني أو رابط الموقع) فارغة. يرجى استكمالها لتخصيص الوثيقة.'
+      );
+      toast(
+        lang === 'en' ? 'Please complete the brand details for customized terms.' : 'يرجى استكمال بيانات البراند لتخصيص الشروط.', 
+        'warning'
+      );
+    } else {
+      setValidationError('');
+    }
+
     navigator.clipboard.writeText(currentContent);
-    alert(lang === 'en' ? 'Text copied successfully!' : 'تم نسخ النص بنجاح!');
+    toast(lang === 'en' ? 'Document copied to clipboard! ✅' : 'تم نسخ الوثيقة القانونية إلى الحافظة! ✅', 'success');
   };
+
+  const tabsList = [
+    { id: 'privacy', label_ar: 'سياسة الخصوصية', label_en: 'Privacy Policy', IconComp: Shield },
+    { id: 'terms', label_ar: 'الشروط والأحكام', label_en: 'Terms & Conditions', IconComp: FileText },
+    { id: 'refund', label_ar: 'سياسة الاسترجاع', label_en: 'Refund Policy', IconComp: RotateCcw }
+  ];
 
   return (
     <ToolDashboardLayout
@@ -204,118 +431,186 @@ To submit a return request, please contact us via email at ${contactEmail || '[E
       accentColor="#8B5CF6"
       timeEstimate="10 - 15"
     >
-
-      <div className="td-grid cols-2" style={{ marginBottom: '36px' }}>
-        
-        {/* ═══════════════ INPUTS FORM ═══════════════ */}
-        <div className="td-info-panel" style={{ margin: 0, borderColor: 'rgba(139, 92, 246, 0.2)', background: 'rgba(139, 92, 246, 0.05)' }}>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: '#8B5CF6', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
-              {lang === 'en' ? 'Brand / Company Name' : 'اسم البراند / الشركة'}
-            </label>
-            <input 
-              type="text" 
-              className="td-input"
-              value={brandName}
-              onChange={(e) => setBrandName(e.target.value)}
-              placeholder={lang === 'en' ? "e.g. UpKlick" : "مثال: UpKlick"}
-              style={{ borderColor: brandName ? '#8B5CF6' : 'rgba(255, 255, 255, 0.08)' }}
-            />
-          </div>
-
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: '#8B5CF6', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
-              {lang === 'en' ? 'Website URL' : 'رابط الموقع (Domain)'}
-            </label>
-            <input 
-              type="text" 
-              className="td-input"
-              dir="ltr"
-              value={websiteUrl}
-              onChange={(e) => setWebsiteUrl(e.target.value)}
-              placeholder="https://example.com"
-              style={{ textAlign: 'left' }}
-            />
-          </div>
-
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: '#8B5CF6', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
-              {lang === 'en' ? 'Support Email' : 'إيميل الدعم الفني'}
-            </label>
-            <input 
-              type="email" 
-              className="td-input"
-              dir="ltr"
-              value={contactEmail}
-              onChange={(e) => setContactEmail(e.target.value)}
-              placeholder="support@example.com"
-              style={{ textAlign: 'left' }}
-            />
-          </div>
-
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: '#8B5CF6', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
-              {lang === 'en' ? 'Country (For Governing Law)' : 'الدولة (للقوانين المطبقة)'}
-            </label>
-            <input 
-              type="text" 
-              className="td-input"
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-              placeholder={lang === 'en' ? "e.g. USA, UK, UAE" : "مثال: مصر، السعودية، الإمارات"}
-            />
-          </div>
-        </div>
-
-        {/* ═══════════════ GENERATED DOCUMENTS ═══════════════ */}
-        <div className="td-info-panel" style={{ margin: 0, display: 'flex', flexDirection: 'column', background: 'rgba(13, 18, 32, 0.6)' }}>
+      <div className="lp-container" dir={isRtl ? 'rtl' : 'ltr'}>
+        <div className="lp-main-grid">
           
-          {/* Document Tabs */}
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '16px' }}>
-            {[
-              { id: 'privacy', label_ar: 'الخصوصية', label_en: 'Privacy Policy' },
-              { id: 'terms', label_ar: 'الشروط والأحكام', label_en: 'Terms & Conditions' },
-              { id: 'refund', label_ar: 'الاسترجاع', label_en: 'Refund Policy' }
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  background: activeTab === tab.id ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
-                  color: activeTab === tab.id ? '#8B5CF6' : '#8B96A8',
-                  border: 'none',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                {lang === 'en' ? tab.label_en : tab.label_ar}
-              </button>
-            ))}
-          </div>
+          {/* ═══════════════ INPUTS FORM PANEL ═══════════════ */}
+          <div className="lp-panel">
+            <div className="lp-panel-header">
+              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.12)', color: '#8B5CF6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Scale size={20} />
+              </div>
+              <div>
+                <h3 className="lp-panel-title">
+                  <span>{lang === 'en' ? 'Business Legal Details' : 'البيانات القانونية للمشروع'}</span>
+                </h3>
+                <p className="lp-panel-subtitle">
+                  {lang === 'en' ? 'Provide your company parameters to generate dynamic legal documents.' : 'أدخل بيانات شركتك لتخصيص وثائق الخصوصية والشروط تلقائياً.'}
+                </p>
+              </div>
+            </div>
 
-          {/* Output Display */}
-          <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column' }}>
-            <button 
-              onClick={handleCopy}
-              style={{ position: 'absolute', top: 0, left: lang === 'en' ? 'auto' : 0, right: lang === 'en' ? 0 : 'auto', background: '#8B5CF6', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer', zIndex: 10 }}
-            >
-              📋 {lang === 'en' ? 'Copy' : 'نسخ'}
-            </button>
-            <div className="td-raw-output" style={{ margin: 0, flex: 1, borderTop: '3px solid #8B5CF6' }}>
-              <pre style={{ margin: 0, whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '12px', color: '#E8EDF5', lineHeight: '1.8', direction: lang === 'en' ? 'ltr' : 'rtl', textAlign: lang === 'en' ? 'left' : 'right' }}>
-                {currentContent}
-              </pre>
+            {/* Validation Warning Alert */}
+            <AnimatePresence>
+              {validationError && (
+                <motion.div 
+                  className="lp-validation-alert"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  <AlertTriangle size={18} flexShrink={0} />
+                  <span>{validationError}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="lp-form-group">
+              <label className="lp-label">
+                <Building size={14} color="#8B5CF6" />
+                <span>{lang === 'en' ? 'Brand / Company Name' : 'اسم البراند / الشركة'}</span>
+                <span className="lp-label-accent">*</span>
+              </label>
+              <input 
+                type="text" 
+                className={`lp-input ${validationError && !brandName ? 'error' : ''}`}
+                value={brandName}
+                onChange={(e) => {
+                  setBrandName(e.target.value);
+                  if (e.target.value.trim()) setValidationError('');
+                }}
+                placeholder={lang === 'en' ? "e.g. UpKlick Ltd." : "مثال: شركة أب كليك"}
+              />
+            </div>
+
+            <div className="lp-form-group">
+              <label className="lp-label">
+                <Globe size={14} color="#8B5CF6" />
+                <span>{lang === 'en' ? 'Website Domain URL' : 'رابط الموقع (Domain)'}</span>
+                <span className="lp-label-accent">*</span>
+              </label>
+              <input 
+                type="text" 
+                className={`lp-input ${validationError && !websiteUrl ? 'error' : ''}`}
+                dir="ltr"
+                value={websiteUrl}
+                onChange={(e) => {
+                  setWebsiteUrl(e.target.value);
+                  if (e.target.value.trim()) setValidationError('');
+                }}
+                placeholder="https://example.com"
+                style={{ textAlign: isRtl ? 'right' : 'left' }}
+              />
+            </div>
+
+            <div className="lp-form-group">
+              <label className="lp-label">
+                <Mail size={14} color="#8B5CF6" />
+                <span>{lang === 'en' ? 'Support Contact Email' : 'إيميل الدعم الفني والقانوني'}</span>
+                <span className="lp-label-accent">*</span>
+              </label>
+              <input 
+                type="email" 
+                className={`lp-input ${validationError && !contactEmail ? 'error' : ''}`}
+                dir="ltr"
+                value={contactEmail}
+                onChange={(e) => {
+                  setContactEmail(e.target.value);
+                  if (e.target.value.trim()) setValidationError('');
+                }}
+                placeholder="support@example.com"
+                style={{ textAlign: isRtl ? 'right' : 'left' }}
+              />
+            </div>
+
+            <div className="lp-form-group" style={{ marginBottom: 0 }}>
+              <SearchableCountryDropdown 
+                label={lang === 'en' ? 'Country (For Governing Law)' : 'الدولة (للقوانين والنزاعات المطبقة)'}
+                icon={Lock}
+                value={country}
+                onChange={setCountry}
+                options={countryOptions}
+                placeholder={lang === 'en' ? 'Select or Search Governing Jurisdiction...' : 'اختر أو ابحث عن الدولة المطبقة لقوانين المتجر...'}
+                lang={lang}
+              />
             </div>
           </div>
-          
+
+          {/* ═══════════════ GENERATED DOCUMENTS PANEL ═══════════════ */}
+          <div className="lp-panel">
+            <div className="lp-panel-header" style={{ justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.12)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <BookOpen size={20} />
+                </div>
+                <div>
+                  <h3 className="lp-panel-title">
+                    <span>{lang === 'en' ? 'Generated Legal Documents' : 'الوثائق القانونية المولدة'}</span>
+                  </h3>
+                  <p className="lp-panel-subtitle">
+                    {lang === 'en' ? 'Ready to copy & paste into your website footer.' : 'جاهزة للنسخ المباشر واللصق في تذييل موقعك.'}
+                  </p>
+                </div>
+              </div>
+
+              <button 
+                onClick={handleCopy}
+                className="lp-copy-header-btn"
+                title={lang === 'en' ? 'Copy Document' : 'نسخ الوثيقة'}
+              >
+                <Copy size={14} />
+                <span>{lang === 'en' ? 'Copy Document' : 'نسخ الوثيقة'}</span>
+              </button>
+            </div>
+
+            {/* Document Segmented Tabs with Framer Motion Highlight */}
+            <div className="lp-doc-tabs">
+              {tabsList.map(tab => {
+                const IconComponent = tab.IconComp;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    className={`lp-doc-tab-btn ${isActive ? 'active' : ''}`}
+                    onClick={() => setActiveTab(tab.id)}
+                  >
+                    {isActive && (
+                      <motion.div 
+                        layoutId="activeLegalTabHighlight" 
+                        className="lp-doc-tab-bg" 
+                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                      />
+                    )}
+                    <IconComponent size={15} style={{ zIndex: 1 }} />
+                    <span style={{ zIndex: 1 }}>{lang === 'en' ? tab.label_en : tab.label_ar}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Output Text Viewer */}
+            <div className="lp-output-container">
+              <AnimatePresence mode="wait">
+                <motion.pre 
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.2 }}
+                  style={{ 
+                    direction: lang === 'en' ? 'ltr' : 'rtl', 
+                    textAlign: lang === 'en' ? 'left' : 'right' 
+                  }}
+                >
+                  {currentContent}
+                </motion.pre>
+              </AnimatePresence>
+            </div>
+
+          </div>
+
         </div>
-
       </div>
-
     </ToolDashboardLayout>
   );
 }

@@ -420,3 +420,75 @@
   box-shadow: 0 6px 20px rgba(239, 68, 68, 0.45);
 }
 
+/* Light Mode Overrides for Top Dashboard Navbar */
+:root.light-mode .db-navbar {
+  background: #FFFFFF;
+  border-bottom-color: #E2E8F0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+:root.light-mode .db-navbar-page-title {
+  color: #0F172A;
+}
+
+:root.light-mode .db-nav-chip-btn {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: #0F172A;
+}
+
+:root.light-mode .db-nav-chip-btn:hover {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+}
+
+:root.light-mode .db-nav-icon-btn {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: #475569;
+}
+
+:root.light-mode .db-nav-icon-btn:hover {
+  background: #F1F5F9;
+  color: #0F172A;
+}
+
+:root.light-mode .db-nav-dropdown {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+}
+
+:root.light-mode .db-dropdown-item {
+  color: #475569;
+}
+
+:root.light-mode .db-dropdown-item:hover {
+  background: #F1F5F9;
+  color: #0F172A;
+}
+
+:root.light-mode .db-user-email {
+  color: #64748B;
+}
+
+:root.light-mode .nav-logout-modal-box {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.12) !important;
+}
+
+:root.light-mode .nav-logout-modal-title {
+  color: #0F172A;
+}
+
+:root.light-mode .nav-logout-modal-desc {
+  color: #475569;
+}
+
+:root.light-mode .nav-logout-cancel-btn {
+  background: #F1F5F9;
+  border-color: #E2E8F0;
+  color: #0F172A;
+}
+

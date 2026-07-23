@@ -1,18 +1,114 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../../context/AppContext';
+import { useToast } from '../../../context/ToastContext';
 import ToolDashboardLayout from './ToolDashboardLayout';
 import { getLandingMatrixSection } from '../../../services/contentDbService';
 import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
 import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Sparkles,
+  Target,
+  Layers,
+  ShoppingBag,
+  Users,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  Copy,
+  Zap,
+  AlertTriangle,
+  Sliders,
+  DollarSign,
+  HeartPulse,
+  FileText,
+  Layout,
+  Award,
+  Cpu,
+  Coins,
+  ArrowRight,
+  HelpCircle,
+  Bookmark
+} from 'lucide-react';
+import './LandingPageContent.css';
+
+// Glassmorphic Animated Custom Dropdown
+function CustomDropdown({ value, onChange, options, label, icon: Icon, placeholder, lang }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(o => String(o.value) === String(value)) || options[0];
+
+  return (
+    <div className="lpc-dropdown-container" ref={dropdownRef}>
+      {label && (
+        <label className="lpc-label" style={{ marginBottom: '8px' }}>
+          {Icon && <Icon size={14} color="#F43F5E" />}
+          <span>{label}</span>
+        </label>
+      )}
+      
+      <div 
+        className={`lpc-dropdown-trigger ${isOpen ? 'open' : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span>{selectedOption?.label || placeholder}</span>
+        <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          <ChevronDown size={16} color="var(--text2, #94A3B8)" />
+        </motion.div>
+      </div>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            className="lpc-dropdown-menu"
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            transition={{ duration: 0.15 }}
+          >
+            {options.map(opt => (
+              <div
+                key={String(opt.value)}
+                className={`lpc-dropdown-option ${String(opt.value) === String(value) ? 'selected' : ''}`}
+                onClick={() => {
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+              >
+                <span>{opt.label}</span>
+                {String(opt.value) === String(value) && <Check size={14} color="#F43F5E" />}
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export default function LandingPageContent({ stepNumber }) {
   const { state, dispatch } = useApp();
+  const toast = useToast();
   const lang = state.language || 'ar';
+  const isRtl = lang === 'ar';
+  
   const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
   
   // Base Inputs
   const [productName, setProductName] = useState('');
   const [audience, setAudience] = useState(state.niche || '');
+  const [validationError, setValidationError] = useState('');
   
   // Matrix Dropdowns
   const [objective, setObjective] = useState('direct_sales');
@@ -23,11 +119,47 @@ export default function LandingPageContent({ stepNumber }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState(null);
 
+  // Dropdown Options Definitions
+  const objectiveOptions = [
+    { value: 'direct_sales', label: lang === 'en' ? 'Direct Sales (Sell Product)' : 'بيع مباشر (منتج / دورة)' },
+    { value: 'lead_gen', label: lang === 'en' ? 'Lead Generation (Collect Data)' : 'جمع بيانات العملاء (Lead Gen)' },
+    { value: 'booking', label: lang === 'en' ? 'Booking / Consultation Call' : 'حجز استشارة / مكالمة مبيعات' }
+  ];
+
+  const awarenessOptions = [
+    { value: 'unaware', label: lang === 'en' ? 'Unaware (Needs Problem Education)' : 'غير واعي (يحتاج توعية بالمشكلة)' },
+    { value: 'problem_aware', label: lang === 'en' ? 'Problem Aware (Knows Pain)' : 'واعي بالمشكلة وألمها' },
+    { value: 'solution_aware', label: lang === 'en' ? 'Solution Aware (Comparing Options)' : 'واعي بالحلول (يقارن الخيارات)' },
+    { value: 'product_aware', label: lang === 'en' ? 'Product Aware (Already Knows You)' : 'واعي بالمنتج (يعرف علامتك)' }
+  ];
+
+  const pricePointOptions = [
+    { value: 'low_ticket', label: lang === 'en' ? 'Free / Low Ticket ($0 - $50)' : 'مجاني / سعر منخفض ($0 - $50)' },
+    { value: 'mid_ticket', label: lang === 'en' ? 'Mid Ticket ($50 - $300)' : 'سعر متوسط ($50 - $300)' },
+    { value: 'high_ticket', label: lang === 'en' ? 'High Ticket / Premium ($300+)' : 'سعر مرتفع / فاخر ($300+)' }
+  ];
+
+  const emotionOptions = [
+    { value: 'urgency', label: lang === 'en' ? 'Urgency & Scarcity (FOMO)' : 'إلحاح وندرة (Urgency & Scarcity)' },
+    { value: 'aspirational', label: lang === 'en' ? 'Aspirational & Social Status' : 'طموح ومكانة اجتماعية' },
+    { value: 'logical', label: lang === 'en' ? 'Logical & ROI Data-Driven' : 'منطقي ولغة أرقام وعائد' },
+    { value: 'empathetic', label: lang === 'en' ? 'Empathetic & Pain-Relief' : 'تعاطف وتخفيف الألم' }
+  ];
+
   const handleGenerate = async () => {
-    if (!productName || !audience) {
-      alert(lang === 'en' ? 'Please enter Product Name and Target Audience.' : 'يرجى إدخال اسم المنتج والجمهور المستهدف.');
+    if (!productName.trim() || !audience.trim()) {
+      setValidationError(
+        lang === 'en' 
+          ? 'Please enter both the Product/Offer Name and Target Audience before generating.' 
+          : 'يرجى كتابة اسم المنتج والجمهور المستهدف قبل بدء التوليد.'
+      );
+      toast(
+        lang === 'en' ? 'Please fill in the required fields.' : 'يرجى ملء الحقول المطلوبة.', 
+        'warning'
+      );
       return;
     }
+    setValidationError('');
     setIsGenerating(true);
     setGeneratedContent(null);
 
@@ -65,22 +197,20 @@ export default function LandingPageContent({ stepNumber }) {
           toolId: 'landing-page-content',
           data: { productName, audience, objective, awareness, pricePoint, emotion, result: liveResult, mode: 'live' }
         });
+        toast(lang === 'en' ? 'Intelligent landing page content generated via Live AI!' : 'تم توليد محتوى صفحة الهبوط بالذكاء الاصطناعي بنجاح!', 'success');
       } else {
-        // Fetch matrix from Firebase
         const heroMatrix = await getLandingMatrixSection('hero_sections');
         const problemMatrix = await getLandingMatrixSection('problem_sections');
         const offerMatrix = await getLandingMatrixSection('offer_sections');
         const proofMatrix = await getLandingMatrixSection('proof_sections');
         const ctaMatrix = await getLandingMatrixSection('cta_sections');
 
-        // Keys to lookup
         const heroKey = `${awareness}_${emotion}`;
         const problemKey = `${awareness}`;
         const offerKey = `${pricePoint}_${emotion}`;
         const proofKey = `${pricePoint}_${objective}`;
         const ctaKey = `${objective}_${emotion}`;
 
-        // Helper to safely get ideas array
         const getIdeas = (matrix, key) => {
           if (!matrix) return [];
           if (matrix[key] && matrix[key].ideas) return matrix[key].ideas;
@@ -88,7 +218,6 @@ export default function LandingPageContent({ stepNumber }) {
           return matrix[firstKey]?.ideas || [];
         };
 
-        // Helper to replace variables
         const replaceVars = (text) => {
           if (!text) return '';
           return text
@@ -133,10 +262,11 @@ export default function LandingPageContent({ stepNumber }) {
           toolId: 'landing-page-content',
           data: { productName, audience, objective, awareness, pricePoint, emotion, result: content, mode: 'fast' }
         });
+        toast(lang === 'en' ? 'Landing page matrix content generated!' : 'تم توليد مصفوفة محتوى صفحة الهبوط بنجاح!', 'success');
       }
     } catch (err) {
       console.error(err);
-      alert(lang === 'en' ? 'Error generating content' : 'حدث خطأ أثناء التوليد');
+      toast(lang === 'en' ? 'Error generating content' : 'حدث خطأ أثناء التوليد', 'error');
     } finally {
       setIsGenerating(false);
     }
@@ -144,7 +274,7 @@ export default function LandingPageContent({ stepNumber }) {
 
   const copySection = (text) => {
     navigator.clipboard.writeText(text);
-    alert(lang === 'en' ? 'Section copied!' : 'تم نسخ القسم!');
+    toast(lang === 'en' ? 'Section text copied to clipboard!' : 'تم نسخ نص القسم إلى الحافظة!', 'success');
   };
 
   return (
@@ -156,153 +286,237 @@ export default function LandingPageContent({ stepNumber }) {
       accentColor="#F43F5E"
       timeEstimate="10 - 20"
     >
-      <div className="td-grid cols-2" style={{ marginBottom: '36px', alignItems: 'start' }}>
-        
-        {/* ═══════════════ INPUTS FORM ═══════════════ */}
-        <div className="td-info-panel" style={{ margin: 0, borderColor: 'rgba(244, 63, 94, 0.2)', background: 'rgba(244, 63, 94, 0.05)' }}>
+      <div className="lpc-container" dir={isRtl ? 'rtl' : 'ltr'}>
+        <div className="lpc-main-grid">
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: '#F43F5E', textTransform: 'uppercase', marginBottom: '8px' }}>
-                {lang === 'en' ? 'Product / Offer Name' : 'اسم المنتج أو العرض'}
-              </label>
-              <input 
-                type="text" 
-                className="td-input"
-                value={productName}
-                onChange={(e) => setProductName(e.target.value)}
-                placeholder={lang === 'en' ? 'e.g., The Profit System' : 'مثال: نظام الأرباح'}
+          {/* ═══════════════ INPUTS FORM PANEL ═══════════════ */}
+          <div className="lpc-panel">
+            <div className="lpc-panel-header">
+              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(244, 63, 94, 0.12)', color: '#F43F5E', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Sliders size={20} />
+              </div>
+              <div>
+                <h3 className="lpc-panel-title">
+                  <span>{lang === 'en' ? '4-Dimensional Matrix Inputs' : 'مدخلات المصفوفة رباعية الأبعاد'}</span>
+                </h3>
+                <p className="lpc-panel-subtitle">
+                  {lang === 'en' ? 'Configure offer specs & psychological drivers.' : 'حدد مواصفات العرض والأبعاد النفسية لجمهورك.'}
+                </p>
+              </div>
+            </div>
+
+            {/* Validation Alert Box */}
+            <AnimatePresence>
+              {validationError && (
+                <motion.div 
+                  className="lpc-validation-alert"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  <AlertTriangle size={18} flexShrink={0} />
+                  <span>{validationError}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Base Text Inputs */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+              <div className="lpc-form-group">
+                <label className="lpc-label">
+                  <ShoppingBag size={14} color="#F43F5E" />
+                  <span>{lang === 'en' ? 'Product / Offer Name' : 'اسم المنتج أو العرض'}</span>
+                  <span className="lpc-label-accent">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  className={`lpc-input ${validationError && !productName ? 'error' : ''}`}
+                  value={productName}
+                  onChange={(e) => {
+                    setProductName(e.target.value);
+                    if (e.target.value.trim() && audience.trim()) setValidationError('');
+                  }}
+                  placeholder={lang === 'en' ? 'e.g., The Profit System' : 'مثال: نظام الأرباح الإلكترونية'}
+                />
+              </div>
+
+              <div className="lpc-form-group">
+                <label className="lpc-label">
+                  <Users size={14} color="#F43F5E" />
+                  <span>{lang === 'en' ? 'Target Audience' : 'الجمهور المستهدف'}</span>
+                  <span className="lpc-label-accent">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  className={`lpc-input ${validationError && !audience ? 'error' : ''}`}
+                  value={audience}
+                  onChange={(e) => {
+                    setAudience(e.target.value);
+                    if (productName.trim() && e.target.value.trim()) setValidationError('');
+                  }}
+                  placeholder={lang === 'en' ? 'e.g., Freelancers & Agencies' : 'مثال: أصحاب الوكالات والمستقلين'}
+                />
+              </div>
+            </div>
+
+            {/* 4 Psychological Dimension Dropdowns */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+              <CustomDropdown 
+                label={lang === 'en' ? '1. Page Objective' : '1. الهدف من الصفحة'}
+                icon={Target}
+                value={objective}
+                onChange={setObjective}
+                options={objectiveOptions}
+                lang={lang}
+              />
+
+              <CustomDropdown 
+                label={lang === 'en' ? '2. Audience Awareness' : '2. مستوى وعي الجمهور'}
+                icon={Sparkles}
+                value={awareness}
+                onChange={setAwareness}
+                options={awarenessOptions}
+                lang={lang}
+              />
+
+              <CustomDropdown 
+                label={lang === 'en' ? '3. Price/Complexity' : '3. الفئة السعرية / التعقيد'}
+                icon={DollarSign}
+                value={pricePoint}
+                onChange={setPricePoint}
+                options={pricePointOptions}
+                lang={lang}
+              />
+
+              <CustomDropdown 
+                label={lang === 'en' ? '4. Emotional Driver' : '4. الدافع العاطفي (Tone)'}
+                icon={HeartPulse}
+                value={emotion}
+                onChange={setEmotion}
+                options={emotionOptions}
+                lang={lang}
               />
             </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: '#F43F5E', textTransform: 'uppercase', marginBottom: '8px' }}>
-                {lang === 'en' ? 'Target Audience' : 'الجمهور المستهدف'}
-              </label>
-              <input 
-                type="text" 
-                className="td-input"
-                value={audience}
-                onChange={(e) => setAudience(e.target.value)}
-                placeholder={lang === 'en' ? 'e.g., Graphic Designers' : 'مثال: المصممين'}
+
+            {/* Dual Mode Selector */}
+            <div style={{ marginBottom: '20px' }}>
+              <AnalysisModeSelector 
+                mode={analysisMode} 
+                onChange={setAnalysisMode} 
+                lang={lang} 
+                accentColor="#F43F5E" 
               />
             </div>
+
+            <button 
+              onClick={handleGenerate}
+              disabled={isGenerating}
+              className="td-btn-primary"
+              style={{ background: isGenerating ? 'rgba(244, 63, 94, 0.3)' : '#F43F5E', width: '100%' }}
+            >
+              {isGenerating ? (
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                  <span className="td-spinner" /> {lang === 'en' ? 'Assembling Matrix...' : 'جاري تجميع محتوى الصفحة...'}
+                </span>
+              ) : (
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  <Sparkles size={18} /> {lang === 'en' ? 'Generate Intelligent Content' : 'توليد محتوى ذكي وموجه'}
+                </span>
+              )}
+            </button>
           </div>
 
-          <hr style={{ border: 'none', borderTop: '1px solid rgba(244, 63, 94, 0.2)', margin: '20px 0' }} />
-
-          {/* 4 Dropdowns */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-            {/* Objective */}
-            <div>
-              <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: '#F43F5E', marginBottom: '8px' }}>
-                1. {lang === 'en' ? 'Page Objective' : 'الهدف من الصفحة'}
-              </label>
-              <select className="td-input" value={objective} onChange={(e) => setObjective(e.target.value)} style={{ padding: '10px' }}>
-                <option value="direct_sales">{lang === 'en' ? 'Direct Sales (Sell Product)' : 'بيع مباشر (منتج/دورة)'}</option>
-                <option value="lead_gen">{lang === 'en' ? 'Lead Generation (Collect Data)' : 'جمع بيانات (Lead Gen)'}</option>
-                <option value="booking">{lang === 'en' ? 'Booking / Consultation' : 'حجز استشارة / مكالمة'}</option>
-              </select>
+          {/* ═══════════════ OUTPUT DISPLAY PANEL ═══════════════ */}
+          <div className="lpc-panel">
+            <div className="lpc-panel-header">
+              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.12)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Layout size={20} />
+              </div>
+              <div>
+                <h3 className="lpc-panel-title">
+                  <span>{lang === 'en' ? 'Generated Landing Page Copy' : 'محتوى صفحة الهبوط المولد'}</span>
+                </h3>
+                <p className="lpc-panel-subtitle">
+                  {lang === 'en' ? 'Multi-section targeted copy ready to paste into your website builder.' : 'هيكل محتوى متكامل جاهز للنسخ في موقعك.'}
+                </p>
+              </div>
             </div>
 
-            {/* Awareness */}
-            <div>
-              <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: '#F43F5E', marginBottom: '8px' }}>
-                2. {lang === 'en' ? 'Audience Awareness' : 'مستوى وعي الجمهور'}
-              </label>
-              <select className="td-input" value={awareness} onChange={(e) => setAwareness(e.target.value)} style={{ padding: '10px' }}>
-                <option value="unaware">{lang === 'en' ? 'Unaware (No idea)' : 'غير واعي (يحتاج توعية)'}</option>
-                <option value="problem_aware">{lang === 'en' ? 'Problem Aware' : 'واعي بالمشكلة'}</option>
-                <option value="solution_aware">{lang === 'en' ? 'Solution Aware (Comparing)' : 'واعي بالحلول (يقارن)'}</option>
-                <option value="product_aware">{lang === 'en' ? 'Product Aware (Knows you)' : 'واعي بالمنتج (يعرفك)'}</option>
-              </select>
-            </div>
-
-            {/* Price Point */}
-            <div>
-              <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: '#F43F5E', marginBottom: '8px' }}>
-                3. {lang === 'en' ? 'Offer Price/Complexity' : 'الفئة السعرية / التعقيد'}
-              </label>
-              <select className="td-input" value={pricePoint} onChange={(e) => setPricePoint(e.target.value)} style={{ padding: '10px' }}>
-                <option value="low_ticket">{lang === 'en' ? 'Free / Low Ticket' : 'مجاني / سعر منخفض'}</option>
-                <option value="mid_ticket">{lang === 'en' ? 'Mid Ticket' : 'سعر متوسط'}</option>
-                <option value="high_ticket">{lang === 'en' ? 'High Ticket / Premium' : 'سعر مرتفع (فاخر)'}</option>
-              </select>
-            </div>
-
-            {/* Emotional Driver */}
-            <div>
-              <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: '#F43F5E', marginBottom: '8px' }}>
-                4. {lang === 'en' ? 'Emotional Driver' : 'الدافع العاطفي (Tone)'}
-              </label>
-              <select className="td-input" value={emotion} onChange={(e) => setEmotion(e.target.value)} style={{ padding: '10px' }}>
-                <option value="urgency">{lang === 'en' ? 'Urgency & FOMO' : 'إلحاح وندرة (Urgency)'}</option>
-                <option value="aspirational">{lang === 'en' ? 'Aspirational & Status' : 'طموح ومكانة'}</option>
-                <option value="logical">{lang === 'en' ? 'Logical & Data' : 'منطقي ولغة أرقام'}</option>
-                <option value="empathetic">{lang === 'en' ? 'Empathetic / Pain-Relief' : 'تعاطف وحل ألم'}</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Dual Mode Selector */}
-          <AnalysisModeSelector 
-            mode={analysisMode} 
-            onChange={setAnalysisMode} 
-            lang={lang} 
-            accentColor="#F43F5E" 
-          />
-
-          <button 
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            className="td-btn-primary"
-            style={{ background: isGenerating ? 'rgba(244, 63, 94, 0.2)' : '#F43F5E', color: isGenerating ? '#8B96A8' : '#fff' }}
-          >
-            {isGenerating ? (
-              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-                <span className="td-spinner" /> {lang === 'en' ? 'Assembling Matrix...' : 'جاري تجميع المصفوفة...'}
-              </span>
+            {!generatedContent && !isGenerating ? (
+              <div style={{ textAlign: 'center', padding: '48px 16px' }}>
+                <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(244, 63, 94, 0.1)', color: '#F43F5E', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
+                  <FileText size={32} />
+                </div>
+                <h4 style={{ fontSize: '15px', fontWeight: '900', color: 'var(--text, #F8FAFC)', marginBottom: '6px' }}>
+                  {lang === 'en' ? 'Set 4 dimensions & click generate' : 'حدد الأبعاد الأربعة ثم اضغط توليد المحتوى'}
+                </h4>
+                <p style={{ fontSize: '12.5px', color: 'var(--text2, #8B96A8)', maxWidth: '360px', margin: '0 auto', lineHeight: '1.6' }}>
+                  {lang === 'en' ? 'Our matrix adapts Hero, Problem, Offer, Social Proof, and CTA to match your scenario.' : 'يقوم نظامنا بتطوير الهيكل الكامل من البطل والمشكلة والعرض حتى زر الإجراء ليناسب مشروعك.'}
+                </p>
+              </div>
+            ) : isGenerating ? (
+              <div style={{ textAlign: 'center', padding: '48px 16px' }}>
+                <div className="td-spinner" style={{ width: '42px', height: '42px', borderWidth: '4px', borderColor: 'rgba(244, 63, 94, 0.2)', borderTopColor: '#F43F5E', margin: '0 auto 20px auto' }}></div>
+                <h4 style={{ color: '#F43F5E', fontWeight: '900', fontSize: '15px', marginBottom: '6px' }}>
+                  {lang === 'en' ? 'Assembling psychological matrix...' : 'جاري تجميع الأنماط النفسية المطابقة...'}
+                </h4>
+                <p style={{ fontSize: '12px', color: 'var(--text2, #8B96A8)' }}>
+                  {lang === 'en' ? 'Structuring Hero, Offer, Proof, and CTA copy.' : 'يتم تجهيز كافة الأقسام التخصصية لصفحة الهبوط.'}
+                </p>
+              </div>
             ) : (
-              <span>✨ {lang === 'en' ? 'Generate Intelligent Content' : 'توليد محتوى ذكي وموجه'}</span>
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}
+              >
+                <ContentSection 
+                  icon={Sparkles}
+                  title={lang === 'en' ? '1. Hero Section (Headline & Subtitle)' : '1. قسم البطل (العنوان الرئيسي والفرعي)'} 
+                  ideas={generatedContent.hero} 
+                  onCopy={copySection} 
+                  lang={lang} 
+                />
+                <ContentSection 
+                  icon={AlertTriangle}
+                  title={lang === 'en' ? '2. The Problem / Agitation' : '2. توضيح المشكلة والألم'} 
+                  ideas={generatedContent.problem} 
+                  onCopy={copySection} 
+                  lang={lang} 
+                />
+                <ContentSection 
+                  icon={Award}
+                  title={lang === 'en' ? '3. The Offer & Benefits' : '3. العرض والفوائد الأساسية'} 
+                  ideas={generatedContent.offer} 
+                  onCopy={copySection} 
+                  lang={lang} 
+                />
+                <ContentSection 
+                  icon={Users}
+                  title={lang === 'en' ? '4. Social Proof & Credibility' : '4. الإثبات الاجتماعي والمصداقية'} 
+                  ideas={generatedContent.proof} 
+                  onCopy={copySection} 
+                  lang={lang} 
+                />
+                <ContentSection 
+                  icon={Zap}
+                  title={lang === 'en' ? '5. Call to Action (CTA)' : '5. النداء لاتخاذ إجراء (CTA)'} 
+                  ideas={generatedContent.cta} 
+                  onCopy={copySection} 
+                  lang={lang} 
+                />
+              </motion.div>
             )}
-          </button>
-        </div>
+          </div>
 
-        {/* ═══════════════ OUTPUT DISPLAY ═══════════════ */}
-        <div className="td-info-panel" style={{ margin: 0, background: 'rgba(13, 18, 32, 0.6)' }}>
-          {!generatedContent && !isGenerating ? (
-             <div style={{ textAlign: 'center', opacity: 0.4, padding: '40px 0' }}>
-               <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>🧩</span>
-               <p style={{ fontSize: '14px', fontWeight: 'bold', color: '#E8EDF5' }}>
-                 {lang === 'en' ? 'Set the 4 dimensions to generate the perfect structure' : 'حدد الأبعاد الأربعة لتوليد الهيكل المثالي'}
-               </p>
-               <p style={{ fontSize: '12px', color: '#8B96A8', marginTop: '8px' }}>
-                 {lang === 'en' ? 'Our matrix adapts Hero, Problem, Offer, and CTA to match your scenario.' : 'مصفوفتنا تقوم بتعديل العناوين، المشكلة، والعرض ليطابق السيناريو الخاص بك.'}
-               </p>
-             </div>
-          ) : isGenerating ? (
-             <div style={{ textAlign: 'center', padding: '40px 0' }}>
-               <div className="td-spinner" style={{ width: '40px', height: '40px', borderWidth: '4px', borderColor: 'rgba(244, 63, 94, 0.2)', borderTopColor: '#F43F5E', marginBottom: '16px' }}></div>
-               <p style={{ color: '#F43F5E', fontWeight: 'bold', fontSize: '14px' }}>
-                 {lang === 'en' ? 'Extracting matching patterns from database...' : 'يتم استخراج الأنماط المطابقة من قاعدة البيانات...'}
-               </p>
-             </div>
-          ) : (
-             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-               <ContentSection title={lang === 'en' ? '1. Hero Section (Headline & Sub)' : '1. قسم البطل (العنوان الرئيسي)'} ideas={generatedContent.hero} onCopy={copySection} lang={lang} />
-               <ContentSection title={lang === 'en' ? '2. The Problem / Agitation' : '2. توضيح المشكلة والألم'} ideas={generatedContent.problem} onCopy={copySection} lang={lang} />
-               <ContentSection title={lang === 'en' ? '3. The Offer & Benefits' : '3. العرض والفوائد الأساسية'} ideas={generatedContent.offer} onCopy={copySection} lang={lang} />
-               <ContentSection title={lang === 'en' ? '4. Social Proof / Credibility' : '4. الإثبات الاجتماعي والمصداقية'} ideas={generatedContent.proof} onCopy={copySection} lang={lang} />
-               <ContentSection title={lang === 'en' ? '5. Call to Action (CTA)' : '5. النداء لاتخاذ إجراء (CTA)'} ideas={generatedContent.cta} onCopy={copySection} lang={lang} />
-             </div>
-          )}
         </div>
-
       </div>
     </ToolDashboardLayout>
   );
 }
 
-function ContentSection({ title, ideas, onCopy, lang }) {
+function ContentSection({ icon: Icon, title, ideas, onCopy, lang }) {
   const [activeTab, setActiveTab] = useState(0);
 
   if (!ideas) return null;
@@ -310,38 +524,36 @@ function ContentSection({ title, ideas, onCopy, lang }) {
   if (ideasList.length === 0 || (ideasList.length === 1 && !ideasList[0])) return null;
 
   return (
-    <div style={{ border: '1px solid rgba(244, 63, 94, 0.2)', borderRadius: '12px', overflow: 'hidden' }}>
-      <div style={{ background: 'rgba(244, 63, 94, 0.1)', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h4 style={{ color: '#F43F5E', margin: 0, fontSize: '13px', fontWeight: '800' }}>{title}</h4>
-        <div style={{ display: 'flex', gap: '4px' }}>
-          {ideasList.map((_, i) => (
-            <button 
-              key={i} 
-              onClick={() => setActiveTab(i)}
-              style={{ 
-                background: activeTab === i ? '#F43F5E' : 'transparent', 
-                color: activeTab === i ? '#fff' : '#F43F5E',
-                border: '1px solid #F43F5E',
-                borderRadius: '4px',
-                fontSize: '10px',
-                padding: '2px 8px',
-                cursor: 'pointer'
-              }}
-            >
-              {lang === 'en' ? `Idea ${i+1}` : `فكرة ${i+1}`}
-            </button>
-          ))}
+    <div className="lpc-output-card">
+      <div className="lpc-output-header">
+        <h4 className="lpc-output-title">
+          {Icon && <Icon size={16} />}
+          <span>{title}</span>
+        </h4>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            {ideasList.map((_, i) => (
+              <button 
+                key={i} 
+                onClick={() => setActiveTab(i)}
+                className={`lpc-tab-pill ${activeTab === i ? 'active' : ''}`}
+              >
+                {lang === 'en' ? `Idea ${i+1}` : `فكرة ${i+1}`}
+              </button>
+            ))}
+          </div>
+          <button 
+            onClick={() => onCopy(ideasList[activeTab])}
+            className="lpc-copy-btn-header"
+            title={lang === 'en' ? 'Copy Text' : 'نسخ النص'}
+          >
+            <Copy size={13} />
+            <span>{lang === 'en' ? 'Copy' : 'نسخ'}</span>
+          </button>
         </div>
       </div>
-      <div style={{ padding: '16px', position: 'relative' }}>
-        <button 
-          onClick={() => onCopy(ideasList[activeTab])}
-          style={{ position: 'absolute', top: '16px', right: lang === 'ar' ? 'auto' : '16px', left: lang === 'ar' ? '16px' : 'auto', background: 'transparent', border: 'none', cursor: 'pointer', opacity: 0.6 }}
-          title="Copy"
-        >
-          📋
-        </button>
-        <pre style={{ margin: 0, whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '13px', color: '#E8EDF5', lineHeight: '1.7', paddingRight: lang === 'en' ? '30px' : '0', paddingLeft: lang === 'ar' ? '30px' : '0' }}>
+      <div className="lpc-output-body">
+        <pre>
           {ideasList[activeTab]}
         </pre>
       </div>

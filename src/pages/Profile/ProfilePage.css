@@ -651,6 +651,53 @@
   cursor: pointer;
 }
 
+/* Light Mode Overrides for Profile Page */
+:root.light-mode .profile-page {
+  color: #0F172A;
+}
+
+:root.light-mode .profile-hero-card {
+  background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%);
+  border-color: #E2E8F0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+
+:root.light-mode .profile-name {
+  color: #0F172A;
+}
+
+:root.light-mode .profile-stat-card,
+:root.light-mode .profile-section-card {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+}
+
+:root.light-mode .profile-stat-title,
+:root.light-mode .profile-section-title {
+  color: #0F172A;
+}
+
+:root.light-mode .profile-stat-value {
+  color: #0F172A;
+}
+
+:root.light-mode .profile-activity-item,
+:root.light-mode .profile-badge-card {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+}
+
+:root.light-mode .profile-badge-title {
+  color: #0F172A;
+}
+
+:root.light-mode .profile-modal-content {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.12);
+}
+
 /* RESPONSIVE MEDIA QUERIES */
 @media (max-width: 1024px) {
   .profile-stats-grid {

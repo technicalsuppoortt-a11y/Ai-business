@@ -1,0 +1,323 @@
+/* ==========================================================================
+   Email Setup & Authentication — Professional Design System
+   Full Light Mode & Dark Mode Support via CSS variables
+   ========================================================================== */
+
+.es-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}
+
+.es-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Glassmorphic Panel Base */
+.es-panel {
+  background: var(--bg2, rgba(15, 23, 42, 0.65));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  border-radius: 24px;
+  padding: 28px;
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow, 0 12px 40px rgba(0, 0, 0, 0.3));
+}
+
+.es-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+}
+
+.es-panel-title {
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--text, #F8FAFC);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.es-panel-subtitle {
+  font-size: 12.5px;
+  color: var(--text2, #94A3B8);
+  margin: 4px 0 0 0;
+  line-height: 1.5;
+}
+
+/* Form Groups & Inputs */
+.es-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.es-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text, #F8FAFC);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.es-input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--bg3, rgba(30, 41, 59, 0.6));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+  color: var(--text, #F8FAFC);
+  font-size: 13.5px;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.es-input:focus {
+  border-color: #F59E0B;
+  background: var(--bg4, rgba(30, 41, 59, 0.9));
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+}
+
+/* Verification Guide Box */
+.es-guide-box {
+  background: var(--bg3, rgba(30, 41, 59, 0.5));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.es-guide-box h4 {
+  font-size: 13.5px;
+  font-weight: 900;
+  color: var(--text, #F8FAFC);
+  margin: 0 0 14px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.es-guide-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.es-guide-steps li {
+  font-size: 12.5px;
+  color: var(--text2, #94A3B8);
+  line-height: 1.6;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.es-guide-step-bullet {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.15);
+  color: #F59E0B;
+  font-size: 11px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* DNS Record Cards */
+.es-record-card {
+  background: var(--bg3, rgba(30, 41, 59, 0.5));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.es-record-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.es-record-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.es-record-title {
+  font-size: 14px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.es-type-badge {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--bg4, rgba(255, 255, 255, 0.08));
+  color: var(--text, #F8FAFC);
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+}
+
+.es-record-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg2, rgba(15, 23, 42, 0.8));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.06));
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  gap: 12px;
+}
+
+.es-record-key {
+  color: var(--text2, #94A3B8);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.es-record-val {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  color: var(--text, #FFFFFF);
+  word-break: break-all;
+  direction: ltr;
+  text-align: end;
+}
+
+.es-record-val.accent {
+  color: #10B981;
+}
+
+.es-copy-mini-btn {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #F59E0B;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.es-copy-mini-btn:hover {
+  background: #F59E0B;
+  color: #FFFFFF;
+}
+
+/* Light Mode Overrides for Complete Visual Excellence */
+:root.light-mode .es-panel {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+}
+
+:root.light-mode .es-panel-title {
+  color: #0F172A;
+}
+
+:root.light-mode .es-panel-subtitle {
+  color: #64748B;
+}
+
+:root.light-mode .es-label {
+  color: #0F172A;
+}
+
+:root.light-mode .es-input {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: #0F172A;
+}
+
+:root.light-mode .es-input:focus {
+  background: #FFFFFF;
+  border-color: #F59E0B;
+}
+
+:root.light-mode .es-guide-box {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+}
+
+:root.light-mode .es-guide-box h4 {
+  color: #0F172A;
+}
+
+:root.light-mode .es-guide-steps li {
+  color: #475569;
+}
+
+:root.light-mode .es-record-card {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+}
+
+:root.light-mode .es-record-row {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+}
+
+:root.light-mode .es-record-key {
+  color: #64748B;
+}
+
+:root.light-mode .es-record-val {
+  color: #0F172A;
+}
+
+:root.light-mode .es-type-badge {
+  background: #E2E8F0;
+  color: #0F172A;
+  border-color: #CBD5E1;
+}
+
+/* RESPONSIVE MEDIA QUERIES */
+@media (max-width: 960px) {
+  .es-main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .es-panel {
+    padding: 20px 16px;
+    border-radius: 18px;
+  }
+  .es-record-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .es-record-val {
+    text-align: start;
+  }
+}

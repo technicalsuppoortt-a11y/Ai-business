@@ -30,6 +30,50 @@ import {
 } from 'lucide-react';
 import './SettingsPage.css';
 
+// Reusable Professional Custom Dropdown Component
+function CustomDropdown({ options, value, onChange, placeholder }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedOption = options.find(o => String(o.value) === String(value));
+
+  return (
+    <div className={`custom-dropdown-container ${isOpen ? 'is-open' : ''}`}>
+      <div 
+        className={`custom-dropdown-trigger ${isOpen ? 'open' : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span>{selectedOption ? selectedOption.label : placeholder}</span>
+        <ChevronDown size={16} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
+      </div>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            className="custom-dropdown-menu"
+            initial={{ opacity: 0, y: 6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 4, scale: 0.98 }}
+            transition={{ duration: 0.15 }}
+          >
+            {options.map(opt => (
+              <div
+                key={String(opt.value)}
+                className={`custom-dropdown-option ${String(opt.value) === String(value) ? 'selected' : ''}`}
+                onClick={() => {
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+              >
+                <span>{opt.label}</span>
+                {String(opt.value) === String(value) && <Check size={14} color="#6366F1" />}
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const { state, dispatch } = useApp();
   const { userData } = useAuth();
@@ -125,6 +169,32 @@ export default function SettingsPage() {
 
   const completionPct = calculateCompletion();
 
+  // Dropdown Options
+  const languageOptions = [
+    { value: 'ar', label: 'العربية (Arabic)' },
+    { value: 'en', label: 'English (الإنجليزية)' }
+  ];
+
+  const countryOptions = [
+    { value: 'Saudi Arabia', label: 'Saudi Arabia (المملكة العربية السعودية)' },
+    { value: 'United Arab Emirates', label: 'United Arab Emirates (الإمارات العربية المتحدة)' },
+    { value: 'Egypt', label: 'Egypt (جمهورية مصر العربية)' },
+    { value: 'Kuwait', label: 'Kuwait (دولة الكويت)' },
+    { value: 'Qatar', label: 'Qatar (دولة قطر)' },
+    { value: 'International', label: 'International / Other (دولي / أخرى)' }
+  ];
+
+  const logoDisplayOptions = [
+    { value: 'both', label: lang === 'en' ? 'Logo + Brand Name' : 'اللوجو واسم البراند معاً' },
+    { value: 'logo', label: lang === 'en' ? 'Logo Only' : 'اللوجو فقط' },
+    { value: 'text', label: lang === 'en' ? 'Brand Name Only' : 'الاسم فقط' }
+  ];
+
+  const whatsappOptions = [
+    { value: 'true', label: lang === 'en' ? 'Yes, Show WhatsApp Button' : 'نعم، إظهار زر الواتساب' },
+    { value: 'false', label: lang === 'en' ? 'No, Hide WhatsApp Button' : 'لا، إخفاء زر الواتساب' }
+  ];
+
   return (
     <>
       <Topbar
@@ -151,7 +221,7 @@ export default function SettingsPage() {
           </div>
 
           <div className="banner-progress-right">
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 800, color: '#fff', marginBottom: 6 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 800, color: 'var(--text, #fff)', marginBottom: 6 }}>
               <span>{lang === 'en' ? 'Configuration Progress' : 'نسبة إكمال الإعدادات'}</span>
               <span>{completionPct}%</span>
             </div>
@@ -265,7 +335,7 @@ export default function SettingsPage() {
                   />
                 </div>
 
-                {/* Field 5: Language Professional Custom Select */}
+                {/* Field 5: Language Professional Custom Dropdown */}
                 <div className="setting-field-group">
                   <label className="setting-field-label">
                     <div className="setting-field-label-left">
@@ -273,20 +343,15 @@ export default function SettingsPage() {
                       <span>{lang === 'en' ? 'Default Platform Language' : 'اللغة الافتراضية للمنصة'}</span>
                     </div>
                   </label>
-                  <div className="pro-select-wrapper">
-                    <select
-                      className="setting-field-input"
-                      value={defaultLanguage}
-                      onChange={e => setDefaultLanguage(e.target.value)}
-                    >
-                      <option value="ar">العربية (Arabic)</option>
-                      <option value="en">English (الإنجليزية)</option>
-                    </select>
-                    <ChevronDown className="pro-select-arrow" size={16} />
-                  </div>
+                  <CustomDropdown 
+                    options={languageOptions} 
+                    value={defaultLanguage} 
+                    onChange={setDefaultLanguage} 
+                    placeholder="Select Language"
+                  />
                 </div>
 
-                {/* Field 6: Country Professional Custom Select */}
+                {/* Field 6: Country Professional Custom Dropdown */}
                 <div className="setting-field-group">
                   <label className="setting-field-label">
                     <div className="setting-field-label-left">
@@ -294,20 +359,15 @@ export default function SettingsPage() {
                       <span>{lang === 'en' ? 'Country / Region' : 'الدولة / المنطقة'}</span>
                     </div>
                   </label>
-                  <div className="pro-select-wrapper">
-                    <select className="setting-field-input" value={country} onChange={e => setCountry(e.target.value)}>
-                      <option value="Saudi Arabia">Saudi Arabia (المملكة العربية السعودية)</option>
-                      <option value="United Arab Emirates">United Arab Emirates (الإمارات العربية المتحدة)</option>
-                      <option value="Egypt">Egypt (جمهورية مصر العربية)</option>
-                      <option value="Kuwait">Kuwait (دولة الكويت)</option>
-                      <option value="Qatar">Qatar (دولة قطر)</option>
-                      <option value="International">International / Other</option>
-                    </select>
-                    <ChevronDown className="pro-select-arrow" size={16} />
-                  </div>
+                  <CustomDropdown 
+                    options={countryOptions} 
+                    value={country} 
+                    onChange={setCountry} 
+                    placeholder="Select Country"
+                  />
                 </div>
 
-                {/* Field 7: Brand Display Style Professional Custom Select */}
+                {/* Field 7: Brand Display Style Professional Custom Dropdown */}
                 <div className="setting-field-group">
                   <label className="setting-field-label">
                     <div className="setting-field-label-left">
@@ -315,21 +375,15 @@ export default function SettingsPage() {
                       <span>{lang === 'en' ? 'Brand Display Style' : 'شكل عرض البراند (اللوجو والاسم)'}</span>
                     </div>
                   </label>
-                  <div className="pro-select-wrapper">
-                    <select
-                      className="setting-field-input"
-                      value={logoDisplayMode}
-                      onChange={e => setLogoDisplayMode(e.target.value)}
-                    >
-                      <option value="both">{lang === 'en' ? 'Logo + Brand Name' : 'اللوجو واسم البراند معاً'}</option>
-                      <option value="logo">{lang === 'en' ? 'Logo Only' : 'اللوجو فقط'}</option>
-                      <option value="text">{lang === 'en' ? 'Brand Name Only' : 'الاسم فقط'}</option>
-                    </select>
-                    <ChevronDown className="pro-select-arrow" size={16} />
-                  </div>
+                  <CustomDropdown 
+                    options={logoDisplayOptions} 
+                    value={logoDisplayMode} 
+                    onChange={setLogoDisplayMode} 
+                    placeholder="Select Display Style"
+                  />
                 </div>
 
-                {/* Field 8: WhatsApp Button Professional Custom Select */}
+                {/* Field 8: WhatsApp Button Professional Custom Dropdown */}
                 <div className="setting-field-group">
                   <label className="setting-field-label">
                     <div className="setting-field-label-left">
@@ -337,17 +391,12 @@ export default function SettingsPage() {
                       <span>{lang === 'en' ? 'Show WhatsApp Login Button' : 'إظهار زر الواتساب في صفحة الدخول'}</span>
                     </div>
                   </label>
-                  <div className="pro-select-wrapper">
-                    <select
-                      className="setting-field-input"
-                      value={showWhatsappLoginBtn ? 'true' : 'false'}
-                      onChange={e => setShowWhatsappLoginBtn(e.target.value === 'true')}
-                    >
-                      <option value="true">{lang === 'en' ? 'Yes, Show WhatsApp Button' : 'نعم، إظهار زر الواتساب'}</option>
-                      <option value="false">{lang === 'en' ? 'No, Hide WhatsApp Button' : 'لا، إخفاء زر الواتساب'}</option>
-                    </select>
-                    <ChevronDown className="pro-select-arrow" size={16} />
-                  </div>
+                  <CustomDropdown 
+                    options={whatsappOptions} 
+                    value={showWhatsappLoginBtn ? 'true' : 'false'} 
+                    onChange={(val) => setShowWhatsappLoginBtn(val === 'true')} 
+                    placeholder="Select Option"
+                  />
                 </div>
 
               </div>
@@ -385,19 +434,23 @@ export default function SettingsPage() {
                 </label>
 
                 <div className="key-input-wrapper">
-                  <input
-                    type={showApiKey ? 'text' : 'password'}
-                    className="key-input-field"
-                    value={apiKeyInput}
-                    onChange={e => setApiKeyInput(e.target.value)}
-                    placeholder="AIzaSy..."
-                  />
-                  <button className="eye-toggle-btn" onClick={() => setShowApiKey(!showApiKey)}>
-                    {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
+                  <div className="key-input-container">
+                    <input
+                      type={showApiKey ? 'text' : 'password'}
+                      className="key-input-field"
+                      value={apiKeyInput}
+                      onChange={e => setApiKeyInput(e.target.value)}
+                      placeholder="AIzaSy..."
+                    />
+                    <button className="eye-toggle-btn" onClick={() => setShowApiKey(!showApiKey)}>
+                      {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+
                   <button className="btn btn-secondary" style={{ padding: '10px 14px' }} onClick={handleCopyKey} title={lang === 'en' ? 'Copy Key' : 'نسخ المفتاح'}>
                     <Copy size={14} />
                   </button>
+
                   <button className="btn btn-green" onClick={handleSaveApiKey}>
                     {lang === 'en' ? 'Save Key' : 'حفظ المفتاح'}
                   </button>

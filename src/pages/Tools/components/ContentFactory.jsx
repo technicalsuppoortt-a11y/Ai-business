@@ -1,25 +1,55 @@
 import React, { useState } from 'react';
 import { useApp } from '../../../context/AppContext';
+import { useToast } from '../../../context/ToastContext';
 import { getContentPlan, getCanonicalNiche } from '../../../services/contentDbService';
 import { generatePostContent } from '../../../services/seedPart9_contentPlans';
 import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
 import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
 import ToolDashboardLayout from './ToolDashboardLayout';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Users,
+  Briefcase,
+  HeartHandshake,
+  GraduationCap,
+  Globe,
+  Video,
+  Layers,
+  FileText,
+  Camera,
+  Share2,
+  PlaySquare,
+  Zap,
+  Sparkles,
+  Copy,
+  CheckCircle2,
+  Wrench,
+  BookOpen,
+  Lightbulb,
+  MessageSquare,
+  Layers3,
+  Flame,
+  ShieldCheck,
+  Languages
+} from 'lucide-react';
+import './ContentFactory.css';
 
 export default function ContentFactory({ stepNumber }) {
   const { state, dispatch } = useApp();
+  const toast = useToast();
   const lang = state.language || 'ar';
+  const isRtl = lang === 'ar';
   
   const savedState = state.toolResults['content-factory'] || {};
 
   const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
   
   const audiences = [
-    { id: 'beginners', label_ar: 'المبتدئين / الهواة', label_en: 'Beginners / Amateurs' },
-    { id: 'professionals', label_ar: 'المحترفين / أصحاب الأعمال', label_en: 'Professionals / Business Owners' },
-    { id: 'parents', label_ar: 'الآباء والأمهات', label_en: 'Parents' },
-    { id: 'students', label_ar: 'الطلاب / الخريجين', label_en: 'Students / Grads' },
-    { id: 'general', label_ar: 'الجمهور العام', label_en: 'General Audience' }
+    { id: 'beginners', label_ar: 'المبتدئين / الهواة', label_en: 'Beginners / Amateurs', IconComp: GraduationCap },
+    { id: 'professionals', label_ar: 'المحترفين / أصحاب الأعمال', label_en: 'Professionals / Business Owners', IconComp: Briefcase },
+    { id: 'parents', label_ar: 'الآباء والأمهات', label_en: 'Parents', IconComp: HeartHandshake },
+    { id: 'students', label_ar: 'الطلاب / الخريجين', label_en: 'Students / Grads', IconComp: Users },
+    { id: 'general', label_ar: 'الجمهور العام', label_en: 'General Audience', IconComp: Globe }
   ];
 
   const dialects = [
@@ -37,20 +67,20 @@ export default function ContentFactory({ stepNumber }) {
   const [result, setResult] = useState(savedState.result || '');
 
   const platforms = [
-    { id: 'instagram', label_ar: 'إنستجرام', label_en: 'Instagram' },
-    { id: 'tiktok', label_ar: 'تيك توك', label_en: 'TikTok' },
-    { id: 'linkedin', label_ar: 'لينكد إن', label_en: 'LinkedIn' },
-    { id: 'twitter', label_ar: 'إكس (تويتر)', label_en: 'X (Twitter)' },
-    { id: 'facebook', label_ar: 'فيسبوك', label_en: 'Facebook' },
-    { id: 'youtube', label_ar: 'يوتيوب', label_en: 'YouTube' },
-    { id: 'snapchat', label_ar: 'سناب شات', label_en: 'Snapchat' },
-    { id: 'pinterest', label_ar: 'بينتريست', label_en: 'Pinterest' }
+    { id: 'instagram', label_ar: 'إنستجرام', label_en: 'Instagram', IconComp: Camera },
+    { id: 'tiktok', label_ar: 'تيك توك', label_en: 'TikTok', IconComp: Video },
+    { id: 'linkedin', label_ar: 'لينكد إن', label_en: 'LinkedIn', IconComp: Briefcase },
+    { id: 'twitter', label_ar: 'إكس (تويتر)', label_en: 'X (Twitter)', IconComp: Share2 },
+    { id: 'facebook', label_ar: 'فيسبوك', label_en: 'Facebook', IconComp: Globe },
+    { id: 'youtube', label_ar: 'يوتيوب', label_en: 'YouTube', IconComp: PlaySquare },
+    { id: 'snapchat', label_ar: 'سناب شات', label_en: 'Snapchat', IconComp: Zap },
+    { id: 'pinterest', label_ar: 'بينتريست', label_en: 'Pinterest', IconComp: Layers }
   ];
 
   const formats = [
-    { id: 'video', label_ar: 'فيديو قصير (Reels/Shorts)', label_en: 'Short Video (Reels/Shorts)', icon: '📱' },
-    { id: 'carousel', label_ar: 'صور متعددة (Carousel)', label_en: 'Multiple Images (Carousel)', icon: '🖼️' },
-    { id: 'text', label_ar: 'نص مقروء (بوست عادي)', label_en: 'Text Post (Standard)', icon: '📝' }
+    { id: 'video', label_ar: 'فيديو قصير (Reels/Shorts)', label_en: 'Short Video (Reels/Shorts)', IconComp: Video },
+    { id: 'carousel', label_ar: 'صور متعددة (Carousel)', label_en: 'Multiple Images (Carousel)', IconComp: Layers },
+    { id: 'text', label_ar: 'نص مقروء (بوست عادي)', label_en: 'Text Post (Standard)', IconComp: FileText }
   ];
 
   const handleGenerate = async () => {
@@ -67,8 +97,9 @@ export default function ContentFactory({ stepNumber }) {
           context: { niche: state.niche, user: state.user },
           lang
         });
+        toast(lang === 'en' ? 'Live AI Content Plan generated! ✨' : 'تم توليد خطة المحتوى بالذكاء الاصطناعي الحي! ✨', 'success');
       } else {
-        await new Promise(r => setTimeout(r, 600));
+        await new Promise(r => setTimeout(r, 400));
 
         dbResult = await getContentPlan(state.niche || 'general', platform, contentFormat, targetAudience);
         
@@ -95,6 +126,7 @@ export default function ContentFactory({ stepNumber }) {
             ]
           };
         }
+        toast(lang === 'en' ? 'Content plan ready! 🚀' : 'خطة المحتوى جاهزة للإنتاج! 🚀', 'success');
       }
       
       if (dbResult && dbResult.posts && dbResult.posts.length > 0) {
@@ -113,11 +145,11 @@ export default function ContentFactory({ stepNumber }) {
         });
       } else {
         setResult(null);
-        alert(lang === 'en' ? "No specific content plan found for this platform/format yet." : "لم يتم العثور على خطة محتوى مخصصة لهذه المنصة/النوع بعد.");
+        toast(lang === 'en' ? "No specific content plan found for this configuration." : "لم يتم العثور على خطة محتوى مخصصة لهذا التكوين بعد.", 'warning');
       }
     } catch (error) {
       console.error(error);
-      alert(lang === 'en' ? 'Error generating ideas. Try again.' : 'حدث خطأ أثناء التوليد. حاول مرة أخرى.');
+      toast(lang === 'en' ? 'Error generating ideas. Try again.' : 'حدث خطأ أثناء التوليد. حاول مرة أخرى.', 'error');
     } finally {
       setIsGenerating(false);
     }
@@ -135,16 +167,16 @@ export default function ContentFactory({ stepNumber }) {
     if (result.hooks && result.hooks.length > 0) {
       text += `---\n### 🎣 ${lang === 'en' ? 'Bonus Hooks' : 'خطافات (Hooks) إضافية'}\n`;
       result.hooks.forEach(h => {
-         text += `- ${lang === 'en' ? h.en : h[`ar_${selectedDialect}`]}\n`;
+         text += `- ${lang === 'en' ? (h.en || h.ar) : (h[`ar_${selectedDialect}`] || h.ar)}\n`;
       });
     }
     navigator.clipboard.writeText(text);
-    alert(lang === 'en' ? 'Copied successfully!' : 'تم النسخ بنجاح!');
+    toast(lang === 'en' ? 'Content plan copied to clipboard! ✅' : 'تم نسخ خطة المحتوى إلى الحافظة! ✅', 'success');
   };
 
   const bottomSections = [
     {
-      icon: '🧠',
+      icon: <Lightbulb size={18} color="#14B8A6" />,
       title: lang === 'en' ? 'Content Creator Mindset' : 'عقلية صانع المحتوى',
       items: [
         lang === 'en' ? 'Consistency beats intermittent high quality. Post regularly.' : 'الاستمرارية تهزم الجودة العالية المتقطعة. انشر بشكل دوري.',
@@ -153,7 +185,7 @@ export default function ContentFactory({ stepNumber }) {
       ]
     },
     {
-      icon: '⚙️',
+      icon: <Wrench size={18} color="#F59E0B" />,
       title: lang === 'en' ? 'Production Speed Tips' : 'نصائح لسرعة الإنتاج',
       items: [
         lang === 'en' ? 'Dedicate one day a week to shoot or design the entire week\'s content (Batching).' : 'خصّص يوماً واحداً في الأسبوع لتصوير أو تصميم محتوى الأسبوع بالكامل (Batching).',
@@ -173,224 +205,245 @@ export default function ContentFactory({ stepNumber }) {
       timeEstimate="60 - 120"
       bottomSections={bottomSections}
     >
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '36px' }}>
-        
-        {/* ═══════════════ INPUTS FORM ═══════════════ */}
-        <div className="td-info-panel" style={{ margin: 0, borderColor: 'rgba(20, 184, 166, 0.2)', background: 'rgba(20, 184, 166, 0.05)' }}>
+      <div className="cf-container" dir={isRtl ? 'rtl' : 'ltr'}>
+        <div className="cf-main-grid">
           
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: '#14B8A6', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
-              {lang === 'en' ? 'Who is your target audience?' : 'من هو جمهورك المستهدف؟'}
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px' }}>
-              {audiences.map(aud => (
-                <button
-                  key={aud.id}
-                  onClick={() => setTargetAudience(aud.id)}
-                  style={{
-                    padding: '12px',
-                    borderRadius: '12px',
-                    background: targetAudience === aud.id ? 'rgba(20, 184, 166, 0.2)' : 'rgba(0,0,0,0.3)',
-                    border: `1px solid ${targetAudience === aud.id ? '#14B8A6' : 'rgba(255,255,255,0.05)'}`,
-                    color: targetAudience === aud.id ? '#fff' : '#8B96A8',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    textAlign: 'center'
-                  }}
-                >
-                  {lang === 'en' ? aud.label_en : aud.label_ar}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: '#14B8A6', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
-              {lang === 'en' ? 'Dialect' : 'اللهجة'}
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '8px' }}>
-              {dialects.map(d => (
-                <button
-                  key={d.id}
-                  onClick={() => setSelectedDialect(d.id)}
-                  style={{
-                    padding: '12px',
-                    borderRadius: '12px',
-                    background: selectedDialect === d.id ? 'rgba(20, 184, 166, 0.2)' : 'rgba(0,0,0,0.3)',
-                    border: `1px solid ${selectedDialect === d.id ? '#14B8A6' : 'rgba(255,255,255,0.05)'}`,
-                    color: selectedDialect === d.id ? '#fff' : '#8B96A8',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    textAlign: 'center'
-                  }}
-                >
-                  {lang === 'en' ? d.label_en : d.label_ar}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: '#14B8A6', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>
-              {lang === 'en' ? 'Target Platform' : 'المنصة المستهدفة'}
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '8px' }}>
-              {platforms.map(p => (
-                <button
-                  key={p.id}
-                  onClick={() => setPlatform(p.id)}
-                  style={{
-                    padding: '12px',
-                    borderRadius: '12px',
-                    background: platform === p.id ? 'rgba(20, 184, 166, 0.2)' : 'rgba(0,0,0,0.3)',
-                    border: `1px solid ${platform === p.id ? '#14B8A6' : 'rgba(255,255,255,0.05)'}`,
-                    color: platform === p.id ? '#fff' : '#8B96A8',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {lang === 'en' ? p.label_en : p.label_ar}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: '#14B8A6', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>
-              {lang === 'en' ? 'Content Format' : 'نوع المحتوى (Format)'}
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
-              {formats.map(f => (
-                <label key={f.id} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  padding: '12px 16px',
-                  borderRadius: '12px',
-                  background: contentFormat === f.id ? 'rgba(20, 184, 166, 0.2)' : 'rgba(0,0,0,0.3)',
-                  border: `1px solid ${contentFormat === f.id ? '#14B8A6' : 'rgba(255,255,255,0.05)'}`,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  textAlign: 'center'
-                }}>
-                  <input 
-                    type="radio" 
-                    name="format" 
-                    value={f.id}
-                    checked={contentFormat === f.id}
-                    onChange={() => setContentFormat(f.id)}
-                    style={{ display: 'none' }}
-                  />
-                  <span style={{ fontSize: '18px' }}>{f.icon}</span>
-                  <span style={{ fontWeight: 'bold', fontSize: '12px', color: contentFormat === f.id ? '#fff' : '#8B96A8' }}>
-                    {lang === 'en' ? f.label_en : f.label_ar}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Dual Mode Selector */}
-          <AnalysisModeSelector 
-            mode={analysisMode} 
-            onChange={setAnalysisMode} 
-            lang={lang} 
-            accentColor="#14B8A6" 
-          />
-
-          <button 
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            className="td-btn-primary"
-            style={{ 
-              background: isGenerating ? 'rgba(20, 184, 166, 0.2)' : '#14B8A6',
-              color: isGenerating ? '#8B96A8' : '#fff'
-            }}
-          >
-            {isGenerating ? (
-              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-                <span className="td-spinner" /> {lang === 'en' ? 'Brainstorming (AI)...' : 'جاري العصف الذهني (AI)...'}
-              </span>
-            ) : (
-              <span>✨ {lang === 'en' ? 'Generate 6 Strong Content Ideas' : 'توليد 6 أفكار محتوى قوية'}</span>
-            )}
-          </button>
-        </div>
-
-        {/* ═══════════════ AI OUTPUT ═══════════════ */}
-        <div className="td-info-panel" style={{ margin: 0, display: 'flex', flexDirection: 'column', background: 'rgba(13, 18, 32, 0.6)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: '900', color: '#14B8A6', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>📝</span> {lang === 'en' ? 'Content Plan (Week 1)' : 'خطة المحتوى (الأسبوع الأول)'}
-            </h3>
-            {result && !isGenerating && (
-              <button 
-                onClick={handleCopy}
-                style={{ background: '#14B8A6', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}
-              >
-                📋 {lang === 'en' ? 'Copy Ideas' : 'نسخ الأفكار'}
-              </button>
-            )}
-          </div>
-
-          <div style={{ flex: 1, display: 'flex', alignItems: result && !isGenerating ? 'flex-start' : 'center', justifyContent: result && !isGenerating ? 'flex-start' : 'center' }}>
-            {!result && !isGenerating ? (
-              <div style={{ textAlign: 'center', opacity: 0.4 }}>
-                <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>🖼️</span>
-                <p style={{ fontSize: '14px', fontWeight: 'bold', color: '#E8EDF5' }}>
-                  {lang === 'en' ? 'Select your audience and platform to generate the week\'s ideas' : 'حدد جمهورك ومنصتك لنولد لك أفكار الأسبوع'}
-                </p>
-                <p style={{ fontSize: '12px', color: '#8B96A8', marginTop: '8px' }}>
-                  {lang === 'en' ? 'Diverse ideas that suit algorithms and attract customers.' : 'أفكار متنوعة تناسب الخوارزميات وتجذب العملاء.'}
+          {/* ═══════════════ INPUTS FORM PANEL ═══════════════ */}
+          <div className="cf-panel">
+            <div className="cf-panel-header">
+              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(20, 184, 166, 0.12)', color: '#14B8A6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Layers3 size={20} />
+              </div>
+              <div>
+                <h3 className="cf-panel-title">
+                  <span>{lang === 'en' ? 'Content Factory Parameters' : 'معايير وإنتاج المحتوى'}</span>
+                </h3>
+                <p className="cf-panel-subtitle">
+                  {lang === 'en' ? 'Specify target audience, platform format, and dialect.' : 'حدد الجمهور والمنصة والصيغة واللهجة لإنشاء سكريبتات فيرال.'}
                 </p>
               </div>
-            ) : isGenerating ? (
-               <div style={{ textAlign: 'center' }}>
-                 <div className="td-spinner" style={{ width: '40px', height: '40px', borderWidth: '4px', borderColor: 'rgba(20, 184, 166, 0.2)', borderTopColor: '#14B8A6', marginBottom: '16px' }}></div>
-                 <p style={{ color: '#14B8A6', fontWeight: 'bold', fontSize: '14px' }}>
-                   {lang === 'en' ? 'Designing viral content tailored to your niche...' : 'يتم الآن تصميم محتوى فيرال مخصص لنيشك...'}
-                 </p>
-               </div>
-            ) : (
-             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-               {result.posts && result.posts.map((post, index) => (
-                 <div key={index} style={{ background: 'rgba(20, 184, 166, 0.05)', border: '1px solid rgba(20, 184, 166, 0.2)', borderRadius: '12px', padding: '16px' }}>
-                   <h4 style={{ color: '#14B8A6', fontSize: '14px', marginBottom: '8px', fontWeight: 'bold' }}>
-                     💡 {lang === 'en' ? `Idea ${index + 1}` : `فكرة ${index + 1}`}: {lang === 'en' && post.title_en ? post.title_en : (post[`title_ar_${selectedDialect}`] || post.title_ar_egy || post.title_ar)}
-                   </h4>
-                   <div style={{ background: 'rgba(0,0,0,0.3)', padding: '12px', borderRadius: '8px', color: '#E8EDF5', fontSize: '13px', lineHeight: '1.6', whiteSpace: 'pre-wrap', border: '1px solid rgba(255,255,255,0.05)' }}>
-                     {lang === 'en' && post.caption_en ? post.caption_en : (post[`caption_ar_${selectedDialect}`] || post.caption_ar_egy || post.caption_ar)}
-                   </div>
-                 </div>
-               ))}
-               
-               {result.hooks && result.hooks.length > 0 && (
-                 <div style={{ background: 'rgba(244, 63, 94, 0.05)', border: '1px solid rgba(244, 63, 94, 0.2)', borderRadius: '12px', padding: '16px', marginTop: '8px' }}>
-                   <h4 style={{ color: '#F43F5E', fontSize: '14px', marginBottom: '8px', fontWeight: 'bold' }}>
-                     🎣 {lang === 'en' ? 'Bonus Hooks' : 'خطافات إضافية (Hooks)'}
-                   </h4>
-                   <ul style={{ paddingInlineStart: '20px', color: '#E8EDF5', fontSize: '13px', lineHeight: '1.6', margin: 0 }}>
-                     {result.hooks.map((h, i) => (
-                       <li key={i} style={{ marginBottom: '6px' }}>{lang === 'en' ? (h.en || h.ar) : h.ar}</li>
-                     ))}
-                   </ul>
-                 </div>
-               )}
-             </div>
-            )}
+            </div>
+
+            {/* Target Audience */}
+            <div className="cf-section-group">
+              <label className="cf-section-label">
+                <Users size={14} color="#14B8A6" />
+                <span>{lang === 'en' ? '1. Who is your target audience?' : '1. من هو جمهورك المستهدف؟'}</span>
+              </label>
+
+              <div className="cf-option-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))' }}>
+                {audiences.map(aud => {
+                  const AudIcon = aud.IconComp;
+                  const isActive = targetAudience === aud.id;
+                  return (
+                    <button
+                      key={aud.id}
+                      onClick={() => setTargetAudience(aud.id)}
+                      className={`cf-option-btn ${isActive ? 'active' : ''}`}
+                    >
+                      <AudIcon size={15} />
+                      <span>{lang === 'en' ? aud.label_en : aud.label_ar}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Dialect */}
+            <div className="cf-section-group">
+              <label className="cf-section-label">
+                <Languages size={14} color="#14B8A6" />
+                <span>{lang === 'en' ? '2. Dialect' : '2. اللهجة المستخدمة'}</span>
+              </label>
+
+              <div className="cf-option-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                {dialects.map(d => {
+                  const isActive = selectedDialect === d.id;
+                  return (
+                    <button
+                      key={d.id}
+                      onClick={() => setSelectedDialect(d.id)}
+                      className={`cf-option-btn ${isActive ? 'active' : ''}`}
+                    >
+                      <span>{lang === 'en' ? d.label_en : d.label_ar}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Target Platform */}
+            <div className="cf-section-group">
+              <label className="cf-section-label">
+                <Share2 size={14} color="#14B8A6" />
+                <span>{lang === 'en' ? '3. Target Platform' : '3. المنصة المستهدفة'}</span>
+              </label>
+
+              <div className="cf-option-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))' }}>
+                {platforms.map(p => {
+                  const PlatIcon = p.IconComp;
+                  const isActive = platform === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => setPlatform(p.id)}
+                      className={`cf-option-btn ${isActive ? 'active' : ''}`}
+                    >
+                      <PlatIcon size={14} />
+                      <span>{lang === 'en' ? p.label_en : p.label_ar}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Content Format */}
+            <div className="cf-section-group">
+              <label className="cf-section-label">
+                <Video size={14} color="#14B8A6" />
+                <span>{lang === 'en' ? '4. Content Format' : '4. نوع المحتوى (Format)'}</span>
+              </label>
+
+              <div className="cf-option-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
+                {formats.map(f => {
+                  const FormatIcon = f.IconComp;
+                  const isActive = contentFormat === f.id;
+                  return (
+                    <button
+                      key={f.id}
+                      onClick={() => setContentFormat(f.id)}
+                      className={`cf-option-btn ${isActive ? 'active' : ''}`}
+                    >
+                      <FormatIcon size={16} />
+                      <span>{lang === 'en' ? f.label_en : f.label_ar}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Dual Mode Selector */}
+            <div style={{ marginTop: '16px' }}>
+              <AnalysisModeSelector 
+                mode={analysisMode} 
+                onChange={setAnalysisMode} 
+                lang={lang} 
+                accentColor="#14B8A6" 
+              />
+            </div>
+
+            <button 
+              onClick={handleGenerate}
+              disabled={isGenerating}
+              className="cf-generate-btn"
+            >
+              {isGenerating ? (
+                <>
+                  <span className="td-spinner" /> 
+                  <span>{lang === 'en' ? 'Brainstorming Content Plan...' : 'جاري العصف الذهني (AI)...'}</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles size={16} />
+                  <span>{lang === 'en' ? 'Generate 6 Strong Content Ideas' : 'توليد 6 أفكار محتوى قوية'}</span>
+                </>
+              )}
+            </button>
           </div>
+
+          {/* ═══════════════ AI CONTENT OUTPUT PANEL ═══════════════ */}
+          <div className="cf-panel">
+            <div className="cf-panel-header" style={{ justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(20, 184, 166, 0.12)', color: '#14B8A6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <FileText size={20} />
+                </div>
+                <div>
+                  <h3 className="cf-panel-title">
+                    <span>{lang === 'en' ? 'Content Plan (Week 1)' : 'خطة المحتوى (الأسبوع الأول)'}</span>
+                  </h3>
+                  <p className="cf-panel-subtitle">
+                    {lang === 'en' ? '6 production-ready post concepts and viral scripts.' : '6 أفكار وتطبيقات جاهزة للإنتاج مباشرة.'}
+                  </p>
+                </div>
+              </div>
+
+              {result && !isGenerating && (
+                <button onClick={handleCopy} className="sp-copy-btn" style={{ background: '#14B8A6' }} title={lang === 'en' ? 'Copy Ideas' : 'نسخ الأفكار'}>
+                  <Copy size={14} />
+                  <span>{lang === 'en' ? 'Copy Ideas' : 'نسخ الأفكار'}</span>
+                </button>
+              )}
+            </div>
+
+            <div style={{ minHeight: '380px', display: 'flex', flexDirection: 'column' }}>
+              {!result && !isGenerating ? (
+                <div style={{ margin: 'auto', textAlign: 'center', padding: '40px 20px' }}>
+                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(20, 184, 166, 0.1)', color: '#14B8A6', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                    <Layers size={28} />
+                  </div>
+                  <p style={{ fontSize: '14.5px', fontWeight: '800', color: 'var(--text, #F8FAFC)', margin: '0 0 6px 0' }}>
+                    {lang === 'en' ? 'Select your parameters to generate the week\'s ideas' : 'حدد جمهورك ومنصتك لنولد لك أفكار الأسبوع'}
+                  </p>
+                  <p style={{ fontSize: '12.5px', color: 'var(--text2, #94A3B8)', margin: 0 }}>
+                    {lang === 'en' ? 'Diverse ideas engineered to rank on algorithms.' : 'أفكار متنوعة تناسب الخوارزميات وتجذب العملاء.'}
+                  </p>
+                </div>
+              ) : isGenerating ? (
+                <div style={{ margin: 'auto', textAlign: 'center', padding: '40px 20px' }}>
+                  <div className="td-spinner" style={{ width: '42px', height: '42px', borderWidth: '4px', borderColor: 'rgba(20, 184, 166, 0.2)', borderTopColor: '#14B8A6', margin: '0 auto 16px' }} />
+                  <p style={{ color: '#14B8A6', fontWeight: '800', fontSize: '14px', margin: 0 }}>
+                    {lang === 'en' ? 'Designing viral content tailored to your niche...' : 'يتم الآن تصميم محتوى فيرال مخصص لنيشك...'}
+                  </p>
+                </div>
+              ) : (
+                <AnimatePresence mode="wait">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
+                  >
+                    {result.posts && result.posts.map((post, index) => (
+                      <div key={index} className="cf-post-card">
+                        <h4 className="cf-post-title">
+                          <Sparkles size={16} />
+                          <span>
+                            {lang === 'en' ? `Idea ${index + 1}` : `فكرة ${index + 1}`}: {lang === 'en' && post.title_en ? post.title_en : (post[`title_ar_${selectedDialect}`] || post.title_ar_egy || post.title_ar)}
+                          </span>
+                        </h4>
+
+                        <div className="cf-post-content">
+                          {lang === 'en' && post.caption_en ? post.caption_en : (post[`caption_ar_${selectedDialect}`] || post.caption_ar_egy || post.caption_ar)}
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {result.hooks && result.hooks.length > 0 && (
+                      <div className="cf-hooks-box">
+                        <h4 style={{ color: '#F43F5E', fontSize: '14px', margin: '0 0 10px 0', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <Flame size={16} />
+                          <span>{lang === 'en' ? 'Bonus Viral Hooks' : 'خطافات إضافية (Bonus Hooks)'}</span>
+                        </h4>
+
+                        <ul style={{ paddingInlineStart: '20px', color: 'var(--text, #F8FAFC)', fontSize: '13px', lineHeight: '1.7', margin: 0 }}>
+                          {result.hooks.map((h, i) => (
+                            <li key={i} style={{ marginBottom: '6px' }}>
+                              {lang === 'en' ? (h.en || h.ar) : (h[`ar_${selectedDialect}`] || h.ar)}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              )}
+            </div>
+          </div>
+
         </div>
-
       </div>
-
     </ToolDashboardLayout>
   );
 }

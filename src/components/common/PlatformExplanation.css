@@ -420,3 +420,122 @@
         padding: 24px 18px;
     }
 }
+
+/* Light Mode Overrides for Platform Explanation & Tutorial Page */
+:root.light-mode .platform-explanation-section {
+  color: #0F172A;
+}
+
+:root.light-mode .pe-badge {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.2);
+  color: #2563EB;
+}
+
+:root.light-mode .pe-title {
+  color: #0F172A;
+  background: none;
+  -webkit-background-clip: unset;
+  -webkit-text-fill-color: initial;
+}
+
+:root.light-mode .pe-subtitle {
+  color: #64748B;
+}
+
+:root.light-mode .pe-video-wrapper {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+}
+
+:root.light-mode .pe-video-topbar {
+  background: #F8FAFC;
+  border-bottom-color: #E2E8F0;
+}
+
+:root.light-mode .pe-video-title-badge {
+  color: #0F172A;
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+}
+
+:root.light-mode .pe-video-meta {
+  color: #64748B;
+}
+
+:root.light-mode .pe-section-heading {
+  color: #0F172A;
+}
+
+:root.light-mode .pe-section-sub {
+  color: #64748B;
+}
+
+:root.light-mode .pe-filter-pill {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: #475569;
+}
+
+:root.light-mode .pe-filter-pill:hover {
+  background: #F1F5F9;
+  color: #0F172A;
+}
+
+:root.light-mode .pe-filter-pill.active {
+  background: #2563EB;
+  border-color: #2563EB;
+  color: #FFFFFF;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.25);
+}
+
+:root.light-mode .pe-card {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+}
+
+:root.light-mode .pe-card:hover {
+  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.06);
+}
+
+:root.light-mode .pe-card-title {
+  color: #0F172A;
+}
+
+:root.light-mode .pe-card-desc {
+  color: #475569;
+}
+
+:root.light-mode .pe-tag {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: #0F172A;
+}
+
+:root.light-mode .pe-card:hover .pe-tag {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+}
+
+:root.light-mode .pe-footer-card {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.04), rgba(59, 130, 246, 0.04));
+  border-color: rgba(16, 185, 129, 0.2);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.04);
+}
+
+:root.light-mode .pe-footer-card h4 {
+  color: #0F172A;
+}
+
+:root.light-mode .pe-footer-card p {
+  color: #475569;
+}
+
+:root.light-mode .pe-foot-badge {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  color: #0F172A;
+}

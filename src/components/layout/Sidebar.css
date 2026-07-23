@@ -529,3 +529,83 @@
   box-shadow: 0 6px 20px rgba(239, 68, 68, 0.45);
 }
 
+/* Light Mode Overrides for Collapsible Sidebar */
+:root.light-mode .sidebar {
+  background: #FFFFFF;
+  border-inline-end-color: #E2E8F0;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.03);
+}
+
+:root.light-mode .sidebar-logo-bar,
+:root.light-mode .sidebar-progress {
+  border-bottom-color: #E2E8F0;
+}
+
+:root.light-mode .nav-label {
+  color: #64748B;
+}
+
+:root.light-mode .nav-section-divider {
+  background: #E2E8F0;
+}
+
+:root.light-mode .nav-item {
+  color: #475569;
+}
+
+:root.light-mode .nav-item:hover {
+  color: #0F172A;
+  background: #F1F5F9;
+}
+
+:root.light-mode .nav-item.active {
+  background: rgba(99, 102, 241, 0.1);
+  color: #4F46E5;
+  border-color: rgba(99, 102, 241, 0.25);
+}
+
+:root.light-mode .nav-icon-badge {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: #64748B;
+}
+
+:root.light-mode .nav-item:hover .nav-icon-badge {
+  background: #F1F5F9;
+  border-color: #6366F1;
+  color: #6366F1;
+}
+
+:root.light-mode .sidebar-user-card {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+}
+
+:root.light-mode .sidebar-user-name {
+  color: #0F172A;
+}
+
+:root.light-mode .sidebar-user-role {
+  color: #64748B;
+}
+
+:root.light-mode .sidebar-logout-modal-box {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.12) !important;
+}
+
+:root.light-mode .logout-modal-title {
+  color: #0F172A;
+}
+
+:root.light-mode .logout-modal-desc {
+  color: #475569;
+}
+
+:root.light-mode .logout-cancel-btn {
+  background: #F1F5F9;
+  border-color: #E2E8F0;
+  color: #0F172A;
+}
+

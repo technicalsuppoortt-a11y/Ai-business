@@ -10,6 +10,7 @@ import {
   query,
   where,
   doc,
+  getDoc,
   setDoc,
   deleteDoc,
   updateDoc,
@@ -555,7 +556,227 @@ export default function AdminDashboardPage() {
     6: false,
   });
 
-  // Payment Methods
+  // Payment Methods Standardized State & DEFAULTS
+  const [paymentMethods, setPaymentMethods] = useState({
+    instapay: { enabled: false, address: "" },
+    vodafoneCash: { enabled: false, number: "" },
+    stripe: {
+      enabled: false,
+      publishableKey: "",
+      secretKey: "",
+      paymentLink: "",
+      paymentLinkAnnual: "",
+    },
+    paypal: { enabled: false, email: "" },
+    paddle: {
+      enabled: false,
+      connected: false,
+      sellerId: "",
+      vendorId: "",
+      clientToken: "",
+      priceIdMonthly: "",
+      priceIdAnnual: "",
+    },
+  });
+  const [paymentSaving, setPaymentSaving] = useState(false);
+  const [paymentSaved, setPaymentSaved] = useState(false);
+  const [showPaddleManual, setShowPaddleManual] = useState(false);
+
+  // Tenant Payment Methods Firestore Sync & OAuth Callback
+  useEffect(() => {
+    const fetchTenantPaymentMethods = async () => {
+      const uid = userData?.uid || state?.user?.uid;
+      if (!uid) return;
+
+      const DEFAULTS = {
+        instapay: { enabled: false, address: "" },
+        vodafoneCash: { enabled: false, number: "" },
+        stripe: {
+          enabled: false,
+          publishableKey: "",
+          secretKey: "",
+          paymentLink: "",
+          paymentLinkAnnual: "",
+        },
+        paypal: { enabled: false, email: "" },
+        paddle: {
+          enabled: false,
+          connected: false,
+          sellerId: "",
+          vendorId: "",
+          clientToken: "",
+          priceIdMonthly: "",
+          priceIdAnnual: "",
+        },
+      };
+
+      try {
+        const tenantRef = doc(db, "tenants", uid);
+        const snap = await getDoc(tenantRef);
+
+        const searchParams = new URLSearchParams(window.location.search);
+        const isPaddleOAuth =
+          searchParams.get("code") === "pdl_auth_mock123456" &&
+          searchParams.get("state") === "PADDLE_OAUTH";
+
+        let loadedPM = DEFAULTS;
+
+        if (snap.exists() && snap.data()?.paymentMethods) {
+          const pmData = snap.data().paymentMethods;
+          loadedPM = {
+            instapay: { ...DEFAULTS.instapay, ...(pmData.instapay || {}) },
+            vodafoneCash: {
+              ...DEFAULTS.vodafoneCash,
+              ...(pmData.vodafoneCash || {}),
+            },
+            stripe: { ...DEFAULTS.stripe, ...(pmData.stripe || {}) },
+            paypal: { ...DEFAULTS.paypal, ...(pmData.paypal || {}) },
+            paddle: { ...DEFAULTS.paddle, ...(pmData.paddle || {}) },
+          };
+        }
+
+        if (isPaddleOAuth) {
+          loadedPM = {
+            ...loadedPM,
+            paddle: {
+              ...loadedPM.paddle,
+              enabled: true,
+              connected: true,
+              sellerId: loadedPM.paddle.sellerId || "987654",
+              vendorId: loadedPM.paddle.vendorId || "987654",
+              clientToken:
+                loadedPM.paddle.clientToken ||
+                "pt_mock_token_paddle_xyz789",
+              priceIdMonthly:
+                loadedPM.paddle.priceIdMonthly ||
+                "pri_01h8m3v4x5y6z7a8b9c0d1e2f3",
+              priceIdAnnual:
+                loadedPM.paddle.priceIdAnnual ||
+                "pri_01h8m3v4x5y6z7a8b9c0d1e2f4",
+            },
+          };
+
+          await setDoc(
+            tenantRef,
+            { paymentMethods: loadedPM, updatedAt: serverTimestamp() },
+            { merge: true },
+          );
+
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, document.title, newUrl);
+          toast(
+            state.language === "en"
+              ? "Paddle Connected Successfully!"
+              : "تم ربط حساب Paddle بنجاح!",
+            "success",
+          );
+        }
+
+        setPaymentMethods(loadedPM);
+      } catch (err) {
+        console.error("Error fetching tenant payment methods:", err);
+      }
+    };
+
+    fetchTenantPaymentMethods();
+  }, [userData, state?.user]);
+
+  const handleSavePaymentMethods = async () => {
+    const uid = userData?.uid || state?.user?.uid;
+    if (!uid) return;
+
+    setPaymentSaving(true);
+    setPaymentSaved(false);
+
+    try {
+      const tenantRef = doc(db, "tenants", uid);
+      await setDoc(
+        tenantRef,
+        { paymentMethods, updatedAt: serverTimestamp() },
+        { merge: true },
+      );
+
+      setPaymentSaved(true);
+      toast(
+        state.language === "en"
+          ? "Payment settings saved successfully!"
+          : "تم حفظ إعدادات طرق الدفع بنجاح!",
+        "success",
+      );
+      setTimeout(() => setPaymentSaved(false), 3000);
+    } catch (err) {
+      console.error("Error saving payment methods:", err);
+      toast(
+        state.language === "en"
+          ? "Failed to save settings"
+          : "فشل حفظ الإعدادات",
+        "error",
+      );
+    } finally {
+      setPaymentSaving(false);
+    }
+  };
+
+  const handlePaddleConnect = () => {
+    const mockOAuthUrl = `${window.location.pathname}?code=pdl_auth_mock123456&state=PADDLE_OAUTH`;
+    window.location.href = mockOAuthUrl;
+  };
+
+  const handlePaddleDisconnect = async () => {
+    const DEFAULTS = {
+      instapay: { enabled: false, address: "" },
+      vodafoneCash: { enabled: false, number: "" },
+      stripe: {
+        enabled: false,
+        publishableKey: "",
+        secretKey: "",
+        paymentLink: "",
+        paymentLinkAnnual: "",
+      },
+      paypal: { enabled: false, email: "" },
+      paddle: {
+        enabled: false,
+        connected: false,
+        sellerId: "",
+        vendorId: "",
+        clientToken: "",
+        priceIdMonthly: "",
+        priceIdAnnual: "",
+      },
+    };
+
+    const updatedPM = {
+      ...paymentMethods,
+      paddle: {
+        ...DEFAULTS.paddle,
+        enabled: false,
+        connected: false,
+      },
+    };
+    setPaymentMethods(updatedPM);
+    setShowPaddleManual(false);
+
+    const uid = userData?.uid || state?.user?.uid;
+    if (uid) {
+      try {
+        await setDoc(
+          doc(db, "tenants", uid),
+          { paymentMethods: updatedPM, updatedAt: serverTimestamp() },
+          { merge: true },
+        );
+        toast(
+          state.language === "en"
+            ? "Paddle disconnected"
+            : "تم إلغاء ربط Paddle",
+          "info",
+        );
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
+  // Legacy Payment Methods
   const [vodafoneWallet, setVodafoneWallet] = useState("");
   const [etisalatWallet, setEtisalatWallet] = useState("");
   const [orangeWallet, setOrangeWallet] = useState("");
@@ -7188,435 +7409,879 @@ export default function AdminDashboardPage() {
               {/* Sub-Tab 3: Payment Gateways Section */}
               {paymentsSubTab === "gateways" && (
                 <div className="ad-table-card" style={{ padding: "24px" }} dir={state.language === "en" ? "ltr" : "rtl"}>
+                  {/* Header & Save Button Bar */}
                   <div
                     style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: "16px",
                       marginBottom: "24px",
                       borderBottom: "1px solid var(--line)",
                       paddingBottom: "16px",
                     }}
                   >
-                    <div
+                    <div>
+                      <div
+                        style={{
+                          fontSize: "18px",
+                          fontWeight: "800",
+                          color: "#fff",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <CreditCard size={20} style={{ color: "var(--accent)" }} />
+                        <span>
+                          {state.language === "en"
+                            ? "Payment Gateways & Methods Settings"
+                            : "إعدادات طرق وبوابات الدفع"}
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "12px",
+                          color: "var(--text3)",
+                          marginTop: "4px",
+                        }}
+                      >
+                        {state.language === "en"
+                          ? "Configure InstaPay, Vodafone Cash, Stripe, PayPal, and Paddle credentials."
+                          : "قم بضبط إعدادات ومفاتيح طرق الدفع: انستا باي، فودافون كاش، سترايب، باي بال، وبادِل."}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleSavePaymentMethods}
+                      disabled={paymentSaving}
+                      className="btn btn-primary"
                       style={{
-                        fontSize: "18px",
-                        fontWeight: "800",
-                        color: "#fff",
-                        display: "flex",
+                        height: "42px",
+                        padding: "0 22px",
+                        borderRadius: "12px",
+                        fontSize: "13px",
+                        fontWeight: "700",
+                        display: "inline-flex",
                         alignItems: "center",
                         gap: "8px",
+                        background: paymentSaved
+                          ? "#10B981"
+                          : "linear-gradient(135deg, #6366F1, #4F46E5)",
+                        boxShadow: "0 4px 14px rgba(99, 102, 241, 0.3)",
+                        color: "#fff",
+                        border: "none",
+                        cursor: paymentSaving ? "not-allowed" : "pointer",
                       }}
                     >
-                      <CreditCard
-                        size={20}
-                        style={{ color: "var(--accent)" }}
-                      />
-                      <span>
-                        {state.language === "en"
-                          ? "Online Payment Gateways"
-                          : "بوابات الدفع البنكي الإلكترونية"}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "12px",
-                        color: "var(--text3)",
-                        marginTop: "4px",
-                      }}
-                    >
-                      {state.language === "en"
-                        ? "Configure Stripe and Paddle payment integrations for automated client checkout and subscriptions."
-                        : "قم بإعداد مفاتيح وتكامل بوابتي Stripe و Paddle لتفعيل الاشتراكات التلقائية بالبطاقات البنكية."}
-                    </div>
+                      {paymentSaving ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          <span>{state.language === "en" ? "Saving..." : "جاري الحفظ..."}</span>
+                        </>
+                      ) : paymentSaved ? (
+                        <>
+                          <Check size={16} />
+                          <span>{state.language === "en" ? "Saved!" : "تم الحفظ!"}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save size={16} />
+                          <span>{state.language === "en" ? "Save Settings" : "حفظ الإعدادات"}</span>
+                        </>
+                      )}
+                    </button>
                   </div>
 
-                  {/* Gateway Status Cards */}
+                  {/* Gateway Cards Grid */}
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns:
-                        "repeat(auto-fit, minmax(320px, 1fr))",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
                       gap: "24px",
                     }}
                   >
-                    {/* Stripe Gateway Card */}
+                    {/* 1. InstaPay Card */}
                     <div
                       style={{
-                        background: "rgba(13, 18, 32, 0.8)",
-                        border: "1px solid rgba(103, 114, 229, 0.3)",
-                        borderRadius: "16px",
+                        background: "linear-gradient(135deg, rgba(17, 24, 39, 0.85), rgba(13, 18, 32, 0.95))",
+                        border: "1px solid rgba(245, 158, 11, 0.3)",
+                        borderRadius: "18px",
                         padding: "24px",
                         display: "flex",
                         flexDirection: "column",
-                        justifyContent: "space-between",
+                        gap: "18px",
+                        boxShadow: "0 10px 30px -10px rgba(245, 158, 11, 0.1)",
+                        backdropFilter: "blur(12px)",
                       }}
                     >
-                      <div>
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            marginBottom: "16px",
-                          }}
-                        >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                           <div
                             style={{
+                              width: 44,
+                              height: 44,
+                              borderRadius: "14px",
+                              background: "radial-gradient(circle, rgba(245, 158, 11, 0.25) 0%, rgba(245, 158, 11, 0.05) 100%)",
+                              border: "1px solid rgba(245, 158, 11, 0.4)",
                               display: "flex",
                               alignItems: "center",
-                              gap: "10px",
+                              justifyContent: "center",
+                              color: "#F59E0B",
+                              boxShadow: "0 0 15px rgba(245, 158, 11, 0.15)",
                             }}
                           >
-                            <div
-                              style={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: "12px",
-                                background: "rgba(103, 114, 229, 0.15)",
-                                border: "1px solid rgba(103, 114, 229, 0.3)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                color: "#6772E5",
-                              }}
-                            >
-                              <CreditCard size={22} />
+                            <Zap size={22} color="#F59E0B" />
+                          </div>
+                          <div>
+                            <div style={{ fontSize: "16px", fontWeight: "800", color: "#fff", letterSpacing: "0.2px" }}>
+                              InstaPay
                             </div>
-                            <div>
-                              <div
-                                style={{
-                                  fontSize: "16px",
-                                  fontWeight: "800",
-                                  color: "#fff",
-                                }}
-                              >
-                                Stripe Gateway
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: "11px",
-                                  color: "var(--text3)",
-                                }}
-                              >
-                                Credit Cards & Apple Pay
-                              </div>
+                            <div style={{ fontSize: "11px", color: "var(--text3)", fontWeight: "600" }}>
+                              {state.language === "en" ? "Instant Bank Transfer" : "تحويل بنكي لحظي"}
                             </div>
                           </div>
-
-                          {stripeSecretKey && stripePublishableKey ? (
-                            <span
-                              style={{
-                                fontSize: "11px",
-                                fontWeight: "800",
-                                color: "var(--green)",
-                                background: "rgba(16, 185, 129, 0.15)",
-                                padding: "4px 10px",
-                                borderRadius: "12px",
-                                border: "1px solid rgba(16, 185, 129, 0.3)",
-                              }}
-                            >
-                              🟢{" "}
-                              {state.language === "en" ? "Connected" : "متصل"}
-                            </span>
-                          ) : (
-                            <span
-                              style={{
-                                fontSize: "11px",
-                                fontWeight: "800",
-                                color: "var(--red)",
-                                background: "rgba(239, 68, 68, 0.15)",
-                                padding: "4px 10px",
-                                borderRadius: "12px",
-                                border: "1px solid rgba(239, 68, 68, 0.3)",
-                              }}
-                            >
-                              🔴{" "}
-                              {state.language === "en"
-                                ? "Disconnected"
-                                : "غير متصل"}
-                            </span>
-                          )}
                         </div>
 
-                        {/* Key Mask View */}
                         <div
+                          onClick={() =>
+                            setPaymentMethods((prev) => ({
+                              ...prev,
+                              instapay: { ...prev.instapay, enabled: !prev.instapay?.enabled },
+                            }))
+                          }
                           style={{
-                            background: "rgba(0,0,0,0.3)",
-                            border: "1px solid rgba(255,255,255,0.06)",
-                            borderRadius: "10px",
-                            padding: "12px",
-                            marginBottom: "20px",
+                            width: "48px",
+                            height: "26px",
+                            borderRadius: "13px",
+                            background: paymentMethods.instapay?.enabled
+                              ? "linear-gradient(135deg, #10B981, #059669)"
+                              : "rgba(255, 255, 255, 0.1)",
+                            border: `1px solid ${paymentMethods.instapay?.enabled ? "#10B981" : "rgba(255, 255, 255, 0.15)"}`,
+                            position: "relative",
+                            transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                            cursor: "pointer",
+                            boxShadow: paymentMethods.instapay?.enabled ? "0 0 12px rgba(16, 185, 129, 0.3)" : "none",
                           }}
                         >
                           <div
                             style={{
-                              fontSize: "11px",
-                              color: "var(--text3)",
-                              marginBottom: "4px",
+                              width: "20px",
+                              height: "20px",
+                              borderRadius: "50%",
+                              background: "#FFF",
+                              position: "absolute",
+                              top: "2px",
+                              left: paymentMethods.instapay?.enabled ? "25px" : "2px",
+                              transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                              boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
                             }}
-                          >
-                            {state.language === "en"
-                              ? "Publishable Key Mask:"
-                              : "مفتاح Stripe المعلن:"}
-                          </div>
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                            }}
-                          >
-                            <span
-                              dir="ltr"
-                              style={{
-                                fontFamily: "monospace",
-                                fontSize: "12px",
-                                color: "#6772E5",
-                                fontWeight: "700",
-                              }}
-                            >
-                              {showStripeKey
-                                ? stripePublishableKey || "pk_test_not_set"
-                                : stripePublishableKey
-                                  ? stripePublishableKey.slice(0, 8) +
-                                    "••••••••" +
-                                    stripePublishableKey.slice(-4)
-                                  : "pk_test_••••••••"}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => setShowStripeKey(!showStripeKey)}
-                              style={{
-                                background: "transparent",
-                                border: "none",
-                                color: "var(--text2)",
-                                cursor: "pointer",
-                              }}
-                            >
-                              {showStripeKey ? (
-                                <EyeOff size={16} />
-                              ) : (
-                                <Eye size={16} />
-                              )}
-                            </button>
-                          </div>
+                          />
                         </div>
                       </div>
 
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => setIsStripeSettingsModalOpen(true)}
-                        style={{
-                          width: "100%",
-                          height: "44px",
-                          background: "#6772E5",
-                          color: "#fff",
-                          border: "none",
-                          borderRadius: "10px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "8px",
-                          fontWeight: "bold",
-                          fontSize: "13px",
-                        }}
-                      >
-                        <Settings size={16} />
-                        <span>
-                          {state.language === "en"
-                            ? "Configure Stripe Credentials"
-                            : "تعديل إعدادات Stripe"}
-                        </span>
-                      </button>
+                      <div>
+                        <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text3)", display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
+                          <Send size={12} style={{ color: "#F59E0B" }} />
+                          <span>{state.language === "en" ? "InstaPay Address (IPA)" : "عنوان انستا باي المالي"}</span>
+                        </label>
+                        <input
+                          type="text"
+                          dir="ltr"
+                          placeholder="username@instapay"
+                          value={paymentMethods.instapay?.address || ""}
+                          onChange={(e) =>
+                            setPaymentMethods((prev) => ({
+                              ...prev,
+                              instapay: { ...prev.instapay, address: e.target.value },
+                            }))
+                          }
+                          className="input"
+                          style={{
+                            width: "100%",
+                            height: "42px",
+                            background: "rgba(0,0,0,0.35)",
+                            border: "1px solid rgba(245, 158, 11, 0.2)",
+                            borderRadius: "10px",
+                            color: "#fff",
+                            padding: "0 12px",
+                            fontSize: "13px",
+                            fontWeight: "600",
+                          }}
+                        />
+                      </div>
                     </div>
 
-                    {/* Paddle Gateway Card */}
+                    {/* 2. Vodafone Cash Card */}
                     <div
                       style={{
-                        background: "rgba(13, 18, 32, 0.8)",
-                        border: "1px solid rgba(0, 191, 255, 0.3)",
-                        borderRadius: "16px",
+                        background: "linear-gradient(135deg, rgba(17, 24, 39, 0.85), rgba(13, 18, 32, 0.95))",
+                        border: "1px solid rgba(239, 68, 68, 0.3)",
+                        borderRadius: "18px",
                         padding: "24px",
                         display: "flex",
                         flexDirection: "column",
-                        justifyContent: "space-between",
+                        gap: "18px",
+                        boxShadow: "0 10px 30px -10px rgba(239, 68, 68, 0.1)",
+                        backdropFilter: "blur(12px)",
                       }}
                     >
-                      <div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          <div
+                            style={{
+                              width: 44,
+                              height: 44,
+                              borderRadius: "14px",
+                              background: "radial-gradient(circle, rgba(239, 68, 68, 0.25) 0%, rgba(239, 68, 68, 0.05) 100%)",
+                              border: "1px solid rgba(239, 68, 68, 0.4)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: "#EF4444",
+                              boxShadow: "0 0 15px rgba(239, 68, 68, 0.15)",
+                            }}
+                          >
+                            <Smartphone size={22} color="#EF4444" />
+                          </div>
+                          <div>
+                            <div style={{ fontSize: "16px", fontWeight: "800", color: "#fff", letterSpacing: "0.2px" }}>
+                              Vodafone Cash
+                            </div>
+                            <div style={{ fontSize: "11px", color: "var(--text3)", fontWeight: "600" }}>
+                              {state.language === "en" ? "Mobile Money Wallet" : "محفظة فودافون كاش"}
+                            </div>
+                          </div>
+                        </div>
+
                         <div
+                          onClick={() =>
+                            setPaymentMethods((prev) => ({
+                              ...prev,
+                              vodafoneCash: {
+                                ...prev.vodafoneCash,
+                                enabled: !prev.vodafoneCash?.enabled,
+                              },
+                            }))
+                          }
                           style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            marginBottom: "16px",
+                            width: "48px",
+                            height: "26px",
+                            borderRadius: "13px",
+                            background: paymentMethods.vodafoneCash?.enabled
+                              ? "linear-gradient(135deg, #10B981, #059669)"
+                              : "rgba(255, 255, 255, 0.1)",
+                            border: `1px solid ${paymentMethods.vodafoneCash?.enabled ? "#10B981" : "rgba(255, 255, 255, 0.15)"}`,
+                            position: "relative",
+                            transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                            cursor: "pointer",
+                            boxShadow: paymentMethods.vodafoneCash?.enabled ? "0 0 12px rgba(16, 185, 129, 0.3)" : "none",
                           }}
                         >
                           <div
                             style={{
+                              width: "20px",
+                              height: "20px",
+                              borderRadius: "50%",
+                              background: "#FFF",
+                              position: "absolute",
+                              top: "2px",
+                              left: paymentMethods.vodafoneCash?.enabled ? "25px" : "2px",
+                              transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                              boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text3)", display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
+                          <Smartphone size={12} style={{ color: "#EF4444" }} />
+                          <span>{state.language === "en" ? "Vodafone Cash Number" : "رقم محفظة فودافون كاش"}</span>
+                        </label>
+                        <input
+                          type="text"
+                          dir="ltr"
+                          placeholder="010XXXXXXXX"
+                          value={paymentMethods.vodafoneCash?.number || ""}
+                          onChange={(e) =>
+                            setPaymentMethods((prev) => ({
+                              ...prev,
+                              vodafoneCash: {
+                                ...prev.vodafoneCash,
+                                number: e.target.value.replace(/[^0-9]/g, ""),
+                              },
+                            }))
+                          }
+                          className="input"
+                          style={{
+                            width: "100%",
+                            height: "42px",
+                            background: "rgba(0,0,0,0.35)",
+                            border: "1px solid rgba(239, 68, 68, 0.2)",
+                            borderRadius: "10px",
+                            color: "#fff",
+                            padding: "0 12px",
+                            fontSize: "13px",
+                            fontWeight: "600",
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* 3. Stripe Card */}
+                    <div
+                      style={{
+                        background: "linear-gradient(135deg, rgba(17, 24, 39, 0.85), rgba(13, 18, 32, 0.95))",
+                        border: "1px solid rgba(99, 102, 241, 0.3)",
+                        borderRadius: "18px",
+                        padding: "24px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "18px",
+                        boxShadow: "0 10px 30px -10px rgba(99, 102, 241, 0.1)",
+                        backdropFilter: "blur(12px)",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          <div
+                            style={{
+                              width: 44,
+                              height: 44,
+                              borderRadius: "14px",
+                              background: "radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, rgba(99, 102, 241, 0.05) 100%)",
+                              border: "1px solid rgba(99, 102, 241, 0.4)",
                               display: "flex",
                               alignItems: "center",
-                              gap: "10px",
+                              justifyContent: "center",
+                              color: "#6366F1",
+                              boxShadow: "0 0 15px rgba(99, 102, 241, 0.15)",
+                            }}
+                          >
+                            <ShieldCheck size={22} color="#6366F1" />
+                          </div>
+                          <div>
+                            <div style={{ fontSize: "16px", fontWeight: "800", color: "#fff", letterSpacing: "0.2px" }}>
+                              Stripe Gateway
+                            </div>
+                            <div style={{ fontSize: "11px", color: "var(--text3)", fontWeight: "600" }}>
+                              {state.language === "en" ? "Credit Cards & Links" : "بطاقات بنكية وروابط دفع"}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div
+                          onClick={() =>
+                            setPaymentMethods((prev) => ({
+                              ...prev,
+                              stripe: { ...prev.stripe, enabled: !prev.stripe?.enabled },
+                            }))
+                          }
+                          style={{
+                            width: "48px",
+                            height: "26px",
+                            borderRadius: "13px",
+                            background: paymentMethods.stripe?.enabled
+                              ? "linear-gradient(135deg, #10B981, #059669)"
+                              : "rgba(255, 255, 255, 0.1)",
+                            border: `1px solid ${paymentMethods.stripe?.enabled ? "#10B981" : "rgba(255, 255, 255, 0.15)"}`,
+                            position: "relative",
+                            transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                            cursor: "pointer",
+                            boxShadow: paymentMethods.stripe?.enabled ? "0 0 12px rgba(16, 185, 129, 0.3)" : "none",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "20px",
+                              height: "20px",
+                              borderRadius: "50%",
+                              background: "#FFF",
+                              position: "absolute",
+                              top: "2px",
+                              left: paymentMethods.stripe?.enabled ? "25px" : "2px",
+                              transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                              boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                        <div>
+                          <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text3)", display: "flex", alignItems: "center", gap: "5px", marginBottom: "4px" }}>
+                            <Key size={11} style={{ color: "#6366F1" }} />
+                            <span>{state.language === "en" ? "Publishable Key" : "المفتاح العام (Publishable Key)"}</span>
+                          </label>
+                          <input
+                            type="text"
+                            dir="ltr"
+                            placeholder="pk_live_..."
+                            value={paymentMethods.stripe?.publishableKey || ""}
+                            onChange={(e) =>
+                              setPaymentMethods((prev) => ({
+                                ...prev,
+                                stripe: { ...prev.stripe, publishableKey: e.target.value },
+                              }))
+                            }
+                            className="input"
+                            style={{ width: "100%", height: "38px", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(99, 102, 241, 0.2)", borderRadius: "8px", color: "#fff", padding: "0 10px", fontSize: "12px" }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text3)", display: "flex", alignItems: "center", gap: "5px", marginBottom: "4px" }}>
+                            <Lock size={11} style={{ color: "#6366F1" }} />
+                            <span>{state.language === "en" ? "Secret Key" : "المفتاح السري (Secret Key)"}</span>
+                          </label>
+                          <input
+                            type="password"
+                            dir="ltr"
+                            placeholder="sk_live_..."
+                            value={paymentMethods.stripe?.secretKey || ""}
+                            onChange={(e) =>
+                              setPaymentMethods((prev) => ({
+                                ...prev,
+                                stripe: { ...prev.stripe, secretKey: e.target.value },
+                              }))
+                            }
+                            className="input"
+                            style={{ width: "100%", height: "38px", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(99, 102, 241, 0.2)", borderRadius: "8px", color: "#fff", padding: "0 10px", fontSize: "12px" }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text3)", display: "flex", alignItems: "center", gap: "5px", marginBottom: "4px" }}>
+                            <CreditCard size={11} style={{ color: "#6366F1" }} />
+                            <span>{state.language === "en" ? "Payment Link (Monthly)" : "رابط الدفع (شهري)"}</span>
+                          </label>
+                          <input
+                            type="text"
+                            dir="ltr"
+                            placeholder="https://buy.stripe.com/..."
+                            value={paymentMethods.stripe?.paymentLink || ""}
+                            onChange={(e) =>
+                              setPaymentMethods((prev) => ({
+                                ...prev,
+                                stripe: { ...prev.stripe, paymentLink: e.target.value },
+                              }))
+                            }
+                            className="input"
+                            style={{ width: "100%", height: "38px", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(99, 102, 241, 0.2)", borderRadius: "8px", color: "#fff", padding: "0 10px", fontSize: "12px" }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text3)", display: "flex", alignItems: "center", gap: "5px", marginBottom: "4px" }}>
+                            <CreditCard size={11} style={{ color: "#6366F1" }} />
+                            <span>{state.language === "en" ? "Payment Link (Annual)" : "رابط الدفع (سنوي)"}</span>
+                          </label>
+                          <input
+                            type="text"
+                            dir="ltr"
+                            placeholder="https://buy.stripe.com/..."
+                            value={paymentMethods.stripe?.paymentLinkAnnual || ""}
+                            onChange={(e) =>
+                              setPaymentMethods((prev) => ({
+                                ...prev,
+                                stripe: { ...prev.stripe, paymentLinkAnnual: e.target.value },
+                              }))
+                            }
+                            className="input"
+                            style={{ width: "100%", height: "38px", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(99, 102, 241, 0.2)", borderRadius: "8px", color: "#fff", padding: "0 10px", fontSize: "12px" }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 4. PayPal Card */}
+                    <div
+                      style={{
+                        background: "linear-gradient(135deg, rgba(17, 24, 39, 0.85), rgba(13, 18, 32, 0.95))",
+                        border: "1px solid rgba(59, 130, 246, 0.3)",
+                        borderRadius: "18px",
+                        padding: "24px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "18px",
+                        boxShadow: "0 10px 30px -10px rgba(59, 130, 246, 0.1)",
+                        backdropFilter: "blur(12px)",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          <div
+                            style={{
+                              width: 44,
+                              height: 44,
+                              borderRadius: "14px",
+                              background: "radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, rgba(59, 130, 246, 0.05) 100%)",
+                              border: "1px solid rgba(59, 130, 246, 0.4)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: "#3B82F6",
+                              boxShadow: "0 0 15px rgba(59, 130, 246, 0.15)",
+                            }}
+                          >
+                            <Globe size={22} color="#3B82F6" />
+                          </div>
+                          <div>
+                            <div style={{ fontSize: "16px", fontWeight: "800", color: "#fff", letterSpacing: "0.2px" }}>
+                              PayPal
+                            </div>
+                            <div style={{ fontSize: "11px", color: "var(--text3)", fontWeight: "600" }}>
+                              {state.language === "en" ? "Global Payments" : "مدفوعات باي بال العالمية"}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div
+                          onClick={() =>
+                            setPaymentMethods((prev) => ({
+                              ...prev,
+                              paypal: { ...prev.paypal, enabled: !prev.paypal?.enabled },
+                            }))
+                          }
+                          style={{
+                            width: "48px",
+                            height: "26px",
+                            borderRadius: "13px",
+                            background: paymentMethods.paypal?.enabled
+                              ? "linear-gradient(135deg, #10B981, #059669)"
+                              : "rgba(255, 255, 255, 0.1)",
+                            border: `1px solid ${paymentMethods.paypal?.enabled ? "#10B981" : "rgba(255, 255, 255, 0.15)"}`,
+                            position: "relative",
+                            transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                            cursor: "pointer",
+                            boxShadow: paymentMethods.paypal?.enabled ? "0 0 12px rgba(16, 185, 129, 0.3)" : "none",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "20px",
+                              height: "20px",
+                              borderRadius: "50%",
+                              background: "#FFF",
+                              position: "absolute",
+                              top: "2px",
+                              left: paymentMethods.paypal?.enabled ? "25px" : "2px",
+                              transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                              boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text3)", display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
+                          <Mail size={12} style={{ color: "#3B82F6" }} />
+                          <span>{state.language === "en" ? "PayPal Email Address" : "بريد باي بال الإلكتروني"}</span>
+                        </label>
+                        <input
+                          type="email"
+                          dir="ltr"
+                          placeholder="account@paypal.com"
+                          value={paymentMethods.paypal?.email || ""}
+                          onChange={(e) =>
+                            setPaymentMethods((prev) => ({
+                              ...prev,
+                              paypal: { ...prev.paypal, email: e.target.value },
+                            }))
+                          }
+                          className="input"
+                          style={{
+                            width: "100%",
+                            height: "42px",
+                            background: "rgba(0,0,0,0.35)",
+                            border: "1px solid rgba(59, 130, 246, 0.2)",
+                            borderRadius: "10px",
+                            color: "#fff",
+                            padding: "0 12px",
+                            fontSize: "13px",
+                            fontWeight: "600",
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* 5. Paddle Card */}
+                    <div
+                      style={{
+                        background: "linear-gradient(135deg, rgba(17, 24, 39, 0.85), rgba(13, 18, 32, 0.95))",
+                        border: "1px solid rgba(6, 182, 212, 0.3)",
+                        borderRadius: "18px",
+                        padding: "24px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "18px",
+                        gridColumn: "1 / -1",
+                        boxShadow: "0 10px 30px -10px rgba(6, 182, 212, 0.1)",
+                        backdropFilter: "blur(12px)",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          <div
+                            style={{
+                              width: 44,
+                              height: 44,
+                              borderRadius: "14px",
+                              background: "radial-gradient(circle, rgba(6, 182, 212, 0.25) 0%, rgba(6, 182, 212, 0.05) 100%)",
+                              border: "1px solid rgba(6, 182, 212, 0.4)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: "#06B6D4",
+                              boxShadow: "0 0 15px rgba(6, 182, 212, 0.15)",
+                            }}
+                          >
+                            <Layers size={22} color="#06B6D4" />
+                          </div>
+                          <div>
+                            <div style={{ fontSize: "16px", fontWeight: "800", color: "#fff", letterSpacing: "0.2px" }}>
+                              Paddle Billing
+                            </div>
+                            <div style={{ fontSize: "11px", color: "var(--text3)", fontWeight: "600" }}>
+                              {state.language === "en" ? "Merchant of Record Integration" : "تكامل نظام بادِل للدفع الدولي"}
+                            </div>
+                          </div>
+                        </div>
+
+                        {(paymentMethods.paddle?.connected || showPaddleManual) && (
+                          <div
+                            onClick={() =>
+                              setPaymentMethods((prev) => ({
+                                ...prev,
+                                paddle: { ...prev.paddle, enabled: !prev.paddle?.enabled },
+                              }))
+                            }
+                            style={{
+                              width: "48px",
+                              height: "26px",
+                              borderRadius: "13px",
+                              background: paymentMethods.paddle?.enabled
+                                ? "linear-gradient(135deg, #10B981, #059669)"
+                                : "rgba(255, 255, 255, 0.1)",
+                              border: `1px solid ${paymentMethods.paddle?.enabled ? "#10B981" : "rgba(255, 255, 255, 0.15)"}`,
+                              position: "relative",
+                              transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                              cursor: "pointer",
+                              boxShadow: paymentMethods.paddle?.enabled ? "0 0 12px rgba(16, 185, 129, 0.3)" : "none",
                             }}
                           >
                             <div
                               style={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: "12px",
-                                background: "rgba(0, 191, 255, 0.15)",
-                                border: "1px solid rgba(0, 191, 255, 0.3)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                color: "#00bfff",
+                                width: "20px",
+                                height: "20px",
+                                borderRadius: "50%",
+                                background: "#FFF",
+                                position: "absolute",
+                                top: "2px",
+                                left: paymentMethods.paddle?.enabled ? "25px" : "2px",
+                                transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                                boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
                               }}
-                            >
-                              <CreditCard size={22} />
-                            </div>
-                            <div>
-                              <div
-                                style={{
-                                  fontSize: "16px",
-                                  fontWeight: "800",
-                                  color: "#fff",
-                                }}
-                              >
-                                Paddle Billing (v3)
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: "11px",
-                                  color: "var(--text3)",
-                                }}
-                              >
-                                International Cards & PayPal
-                              </div>
-                            </div>
+                            />
                           </div>
+                        )}
+                      </div>
 
-                          {paddleEnabled && paddleApiKey ? (
-                            <span
-                              style={{
-                                fontSize: "11px",
-                                fontWeight: "800",
-                                color: "var(--green)",
-                                background: "rgba(16, 185, 129, 0.15)",
-                                padding: "4px 10px",
-                                borderRadius: "12px",
-                                border: "1px solid rgba(16, 185, 129, 0.3)",
-                              }}
-                            >
-                              🟢{" "}
-                              {state.language === "en" ? "Connected" : "متصل"}
-                            </span>
-                          ) : (
-                            <span
-                              style={{
-                                fontSize: "11px",
-                                fontWeight: "800",
-                                color: "var(--red)",
-                                background: "rgba(239, 68, 68, 0.15)",
-                                padding: "4px 10px",
-                                borderRadius: "12px",
-                                border: "1px solid rgba(239, 68, 68, 0.3)",
-                              }}
-                            >
-                              🔴{" "}
-                              {state.language === "en"
-                                ? "Disconnected"
-                                : "غير متصل"}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Key Mask View */}
-                        <div
-                          style={{
-                            background: "rgba(0,0,0,0.3)",
-                            border: "1px solid rgba(255,255,255,0.06)",
-                            borderRadius: "10px",
-                            padding: "12px",
-                            marginBottom: "20px",
-                          }}
-                        >
-                          <div
-                            style={{
-                              fontSize: "11px",
-                              color: "var(--text3)",
-                              marginBottom: "4px",
-                            }}
-                          >
+                      {!paymentMethods.paddle?.connected && !showPaddleManual ? (
+                        /* Unconnected State */
+                        <div style={{ display: "flex", flexDirection: "column", gap: "12px", background: "rgba(0,0,0,0.25)", padding: "18px", borderRadius: "14px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                          <p style={{ margin: 0, fontSize: "13px", color: "var(--text3)", lineHeight: "1.6" }}>
                             {state.language === "en"
-                              ? "Paddle Vendor / API Key:"
-                              : "مفتاح Paddle البنكي:"}
-                          </div>
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                            }}
-                          >
-                            <span
-                              dir="ltr"
-                              style={{
-                                fontFamily: "monospace",
-                                fontSize: "12px",
-                                color: "#00bfff",
-                                fontWeight: "700",
-                              }}
-                            >
-                              {showPaddleKey
-                                ? paddleApiKey || "p_api_not_set"
-                                : paddleApiKey
-                                  ? paddleApiKey.slice(0, 6) +
-                                    "••••••••" +
-                                    paddleApiKey.slice(-4)
-                                  : "p_api_••••••••"}
-                            </span>
+                              ? "Connect your Paddle account automatically via OAuth or enter configuration tokens manually."
+                              : "قم بربط حساب Paddle تلقائياً عبر OAuth أو إدخال رموز الإعداد يدوياً."}
+                          </p>
+                          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "4px" }}>
                             <button
                               type="button"
-                              onClick={() => setShowPaddleKey(!showPaddleKey)}
+                              className="btn btn-primary"
+                              onClick={handlePaddleConnect}
                               style={{
-                                background: "transparent",
+                                height: "40px",
+                                padding: "0 18px",
+                                background: "linear-gradient(135deg, #06B6D4, #0891B2)",
+                                color: "#fff",
                                 border: "none",
-                                color: "var(--text2)",
+                                borderRadius: "10px",
+                                fontWeight: "700",
+                                fontSize: "13px",
+                                cursor: "pointer",
+                                boxShadow: "0 4px 12px rgba(6, 182, 212, 0.3)",
+                              }}
+                            >
+                              {state.language === "en" ? "Connect with Paddle (OAuth)" : "ربط حساب Paddle تلقائياً"}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              onClick={() => setShowPaddleManual(true)}
+                              style={{
+                                height: "40px",
+                                padding: "0 18px",
+                                background: "rgba(255,255,255,0.08)",
+                                color: "#fff",
+                                border: "1px solid var(--line)",
+                                borderRadius: "10px",
+                                fontWeight: "700",
+                                fontSize: "13px",
                                 cursor: "pointer",
                               }}
                             >
-                              {showPaddleKey ? (
-                                <EyeOff size={16} />
-                              ) : (
-                                <Eye size={16} />
-                              )}
+                              {state.language === "en" ? "Enter Manually" : "إدخال المفاتيح يدوياً"}
                             </button>
                           </div>
                         </div>
-                      </div>
+                      ) : (
+                        /* Connected or Manual Configured State */
+                        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                          {paymentMethods.paddle?.connected && (
+                            <div
+                              style={{
+                                padding: "12px 16px",
+                                borderRadius: "12px",
+                                background: "rgba(16, 185, 129, 0.12)",
+                                border: "1px solid rgba(16, 185, 129, 0.3)",
+                                color: "#10B981",
+                                fontSize: "12px",
+                                fontWeight: "700",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                              }}
+                            >
+                              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                <CheckCircle2 size={16} />
+                                <span>{state.language === "en" ? "Account Connected Successfully" : "تم ربط حساب Paddle بنجاح"}</span>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={handlePaddleDisconnect}
+                                style={{
+                                  background: "rgba(239, 68, 68, 0.15)",
+                                  border: "1px solid rgba(239, 68, 68, 0.3)",
+                                  color: "#EF4444",
+                                  padding: "5px 12px",
+                                  borderRadius: "8px",
+                                  fontSize: "11px",
+                                  cursor: "pointer",
+                                  fontWeight: "700",
+                                }}
+                              >
+                                {state.language === "en" ? "Disconnect" : "إلغاء الربط"}
+                              </button>
+                            </div>
+                          )}
 
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => setIsPaddleSettingsModalOpen(true)}
-                        style={{
-                          width: "100%",
-                          height: "44px",
-                          background: "#00bfff",
-                          color: "#fff",
-                          border: "none",
-                          borderRadius: "10px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "8px",
-                          fontWeight: "bold",
-                          fontSize: "13px",
-                        }}
-                      >
-                        <Settings size={16} />
-                        <span>
-                          {state.language === "en"
-                            ? "Configure Paddle Credentials"
-                            : "تعديل إعدادات Paddle"}
-                        </span>
-                      </button>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px" }}>
+                            <div>
+                              <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text3)", display: "block", marginBottom: "4px" }}>
+                                Seller ID
+                              </label>
+                              <input
+                                type="text"
+                                dir="ltr"
+                                placeholder="Seller ID"
+                                value={paymentMethods.paddle?.sellerId || ""}
+                                onChange={(e) =>
+                                  setPaymentMethods((prev) => ({
+                                    ...prev,
+                                    paddle: { ...prev.paddle, sellerId: e.target.value },
+                                  }))
+                                }
+                                className="input"
+                                style={{ width: "100%", height: "38px", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(6, 182, 212, 0.2)", borderRadius: "8px", color: "#fff", padding: "0 10px", fontSize: "12px" }}
+                              />
+                            </div>
+
+                            <div>
+                              <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text3)", display: "block", marginBottom: "4px" }}>
+                                Vendor ID
+                              </label>
+                              <input
+                                type="text"
+                                dir="ltr"
+                                placeholder="Vendor ID"
+                                value={paymentMethods.paddle?.vendorId || ""}
+                                onChange={(e) =>
+                                  setPaymentMethods((prev) => ({
+                                    ...prev,
+                                    paddle: { ...prev.paddle, vendorId: e.target.value },
+                                  }))
+                                }
+                                className="input"
+                                style={{ width: "100%", height: "38px", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(6, 182, 212, 0.2)", borderRadius: "8px", color: "#fff", padding: "0 10px", fontSize: "12px" }}
+                              />
+                            </div>
+
+                            <div>
+                              <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text3)", display: "block", marginBottom: "4px" }}>
+                                Client Token
+                              </label>
+                              <input
+                                type="text"
+                                dir="ltr"
+                                placeholder="Client Token"
+                                value={paymentMethods.paddle?.clientToken || ""}
+                                onChange={(e) =>
+                                  setPaymentMethods((prev) => ({
+                                    ...prev,
+                                    paddle: { ...prev.paddle, clientToken: e.target.value },
+                                  }))
+                                }
+                                className="input"
+                                style={{ width: "100%", height: "38px", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(6, 182, 212, 0.2)", borderRadius: "8px", color: "#fff", padding: "0 10px", fontSize: "12px" }}
+                              />
+                            </div>
+
+                            <div>
+                              <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text3)", display: "block", marginBottom: "4px" }}>
+                                Price ID (Monthly)
+                              </label>
+                              <input
+                                type="text"
+                                dir="ltr"
+                                placeholder="pri_..."
+                                value={paymentMethods.paddle?.priceIdMonthly || ""}
+                                onChange={(e) =>
+                                  setPaymentMethods((prev) => ({
+                                    ...prev,
+                                    paddle: { ...prev.paddle, priceIdMonthly: e.target.value },
+                                  }))
+                                }
+                                className="input"
+                                style={{ width: "100%", height: "38px", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(6, 182, 212, 0.2)", borderRadius: "8px", color: "#fff", padding: "0 10px", fontSize: "12px" }}
+                              />
+                            </div>
+
+                            <div>
+                              <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text3)", display: "block", marginBottom: "4px" }}>
+                                Price ID (Annual)
+                              </label>
+                              <input
+                                type="text"
+                                dir="ltr"
+                                placeholder="pri_..."
+                                value={paymentMethods.paddle?.priceIdAnnual || ""}
+                                onChange={(e) =>
+                                  setPaymentMethods((prev) => ({
+                                    ...prev,
+                                    paddle: { ...prev.paddle, priceIdAnnual: e.target.value },
+                                  }))
+                                }
+                                className="input"
+                                style={{ width: "100%", height: "38px", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(6, 182, 212, 0.2)", borderRadius: "8px", color: "#fff", padding: "0 10px", fontSize: "12px" }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

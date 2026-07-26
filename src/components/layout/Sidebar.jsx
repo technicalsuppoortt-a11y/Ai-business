@@ -200,11 +200,11 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
             className={`nav-icon-badge ${isActive ? "active" : ""} ${isDone ? "done" : ""} ${isLocked ? "locked" : ""}`}
           >
             {isLocked ? (
-              <Lock size={14} />
+              <Lock size={14} strokeWidth={1.5} />
             ) : isDone ? (
-              <CheckCircle2 size={14} />
+              <CheckCircle2 size={14} strokeWidth={1.5} />
             ) : (
-              <IconComponent size={16} />
+              <IconComponent size={14} strokeWidth={1.5} />
             )}
           </div>
 

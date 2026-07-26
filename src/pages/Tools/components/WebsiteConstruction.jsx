@@ -1,99 +1,388 @@
-import React, { useState, useEffect } from 'react';
-import { useApp } from '../../../context/AppContext';
-import { useToast } from '../../../context/ToastContext';
-import { getWebsiteTemplate, getAllWebsiteGalleryTemplates, getDomainIdeasTemplate } from '../../../services/contentDbService';
-import { parseTemplate } from '../../../utils/templateParser';
-import { callGemini } from '../../../services/geminiService';
-import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
-import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
-import { useNavigate } from 'react-router-dom';
-import ToolDashboardLayout from './ToolDashboardLayout';
-import { motion, AnimatePresence } from 'framer-motion';
+// WebsiteConstruction.tsx
+import React, { useState, useEffect, useRef } from "react";
+import { useApp } from "../../../context/AppContext";
+import { useToast } from "../../../context/ToastContext";
+import {
+  getAllWebsiteGalleryTemplates,
+  getDomainIdeasTemplate,
+} from "../../../services/contentDbService";
+import { parseTemplate } from "../../../utils/templateParser";
+import {
+  subscribeStep2Data,
+  updateGatewayStatus,
+  updateVatStatus,
+} from "../../../services/websiteConstructionService";
+import AnalysisModeSelector from "../../../components/common/AnalysisModeSelector";
+import { dispatchLiveAiAnalysis } from "../../../services/liveAiService";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import ToolDashboardLayout from "./ToolDashboardLayout";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Layout,
   Wand2,
-  Palette,
   Globe,
   CreditCard,
-  Coins,
   Code,
   Copy,
   Eye,
   Sparkles,
   CheckCircle2,
-  Key,
   Settings,
   Server,
   ArrowLeft,
   ArrowRight,
-  ExternalLink,
   ShieldCheck,
   Layers,
   Zap,
-  RefreshCw,
-  SlidersHorizontal,
-  Check,
   AlertTriangle,
   FolderOpen,
-  DollarSign,
   Cpu,
+  CheckSquare,
+  Truck,
+  SlidersHorizontal,
+  Building,
+  ChevronDown,
+  Check,
+  X,
+  Activity,
+  HardDrive,
+  Smartphone,
   Monitor,
-  CheckSquare
-} from 'lucide-react';
-import './WebsiteConstruction.css';
+  RefreshCw,
+  ExternalLink,
+} from "lucide-react";
+import "./WebsiteConstruction.css";
+
+// Custom Glassmorphic Select Dropdown Component for Step 2
+function CustomGlassSelect({ options, value, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const selectedOpt = options.find((o) => o.value === value) || options[0];
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div ref={dropdownRef} style={{ position: "relative", width: "100%" }}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          width: "100%",
+          padding: "10px 14px",
+          borderRadius: "10px",
+          background: "rgba(7, 10, 16, 0.75)",
+          border: isOpen
+            ? "1px solid #6366F1"
+            : "1px solid rgba(255, 255, 255, 0.12)",
+          color: "#FFFFFF",
+          fontSize: "12.5px",
+          fontWeight: "600",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          cursor: "pointer",
+          backdropFilter: "blur(12px)",
+          transition: "all 0.2s ease",
+          boxShadow: isOpen ? "0 0 16px rgba(99, 102, 241, 0.35)" : "none",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          {selectedOpt?.icon && <span>{selectedOpt.icon}</span>}
+          <span>{selectedOpt?.label}</span>
+        </div>
+        <ChevronDown
+          size={14}
+          color="#94A3B8"
+          style={{
+            transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+            transition: "transform 0.2s ease",
+          }}
+        />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.98 }}
+            transition={{ duration: 0.15 }}
+            style={{
+              position: "absolute",
+              top: "calc(100% + 6px)",
+              left: 0,
+              right: 0,
+              zIndex: 100,
+              background: "rgba(11, 15, 23, 0.95)",
+              border: "1px solid rgba(255, 255, 255, 0.14)",
+              borderRadius: "12px",
+              padding: "6px",
+              backdropFilter: "blur(20px)",
+              boxShadow: "0 12px 32px rgba(0, 0, 0, 0.6)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "2px",
+            }}
+          >
+            {options.map((opt) => {
+              const isSelected = opt.value === value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  }}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    background: isSelected
+                      ? "rgba(99, 102, 241, 0.2)"
+                      : "transparent",
+                    color: isSelected ? "#FFFFFF" : "#94A3B8",
+                    fontSize: "12px",
+                    fontWeight: "500",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    border: "none",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                    textAlign: "left",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.background =
+                        "rgba(255, 255, 255, 0.05)";
+                      e.currentTarget.style.color = "#FFFFFF";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.style.color = "#94A3B8";
+                    }
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    {opt.icon && <span>{opt.icon}</span>}
+                    <span>{opt.label}</span>
+                  </div>
+                  {isSelected && <Check size={13} color="#6366F1" />}
+                </button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export default function WebsiteConstruction({ stepNumber }) {
   const { state, dispatch } = useApp();
-  const toast = useToast();
+  const toastContext = useToast();
+  const toast =
+    typeof toastContext === "function"
+      ? toastContext
+      : toastContext?.toast || ((msg) => console.log(msg));
 
-  const lang = state.language || 'ar';
-  const isRtl = lang === 'ar';
-  
-  // -- Wizard State --
+  const lang = state.language || "ar";
+  const isRtl = lang === "ar";
+
+  // -- URL Search Params for Tab State Persistence --
   const navigate = useNavigate();
-  const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
-  const [currentStep, setCurrentStep] = useState(1); // 1: Design, 2: Settings, 3: Infrastructure
+  const [searchParams, setSearchParams] = useSearchParams();
+  const stepParam = searchParams.get("step");
+
+  const getStepFromParam = (param) => {
+    if (param === "settings") return 2;
+    if (param === "infrastructure") return 3;
+    return 1;
+  };
+
+  const [currentStep, setCurrentStep] = useState(getStepFromParam(stepParam));
+  const [analysisMode, setAnalysisMode] = useState("fast"); // 'fast' | 'live'
+
+  // Node Map Inspection Focus State
+  const [activeNode, setActiveNode] = useState(null); // null | 1 | 2 | 3 | 4
+
+  // Close inspector on ESC key press
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") setActiveNode(null);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Update step and sync URL search params
+  const changeStep = (stepNum) => {
+    setCurrentStep(stepNum);
+    const stepName =
+      stepNum === 2 ? "settings" : stepNum === 3 ? "infrastructure" : "design";
+    setSearchParams({ step: stepName }, { replace: true });
+  };
+
+  // Sync state if user navigates back/forward in browser history
+  useEffect(() => {
+    const targetStep = getStepFromParam(stepParam);
+    if (targetStep !== currentStep) {
+      setCurrentStep(targetStep);
+    }
+  }, [stepParam]);
 
   // -- API Key Handling --
   const [apiKeyError, setApiKeyError] = useState(false);
-  const [tempApiKey, setTempApiKey] = useState('');
+  const [tempApiKey, setTempApiKey] = useState("");
   const [isSavingKey, setIsSavingKey] = useState(false);
 
   // -- Step 1: Design State --
-  const [method, setMethod] = useState(null);
+  const [method, setMethod] = useState("gemini"); // 'gemini' | 'template'
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedCode, setGeneratedCode] = useState('');
+  const [generatedCode, setGeneratedCode] = useState("");
   const [galleryTemplates, setGalleryTemplates] = useState([]);
   const [selectedGalleryTemplate, setSelectedGalleryTemplate] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [viewportMode, setViewportMode] = useState("desktop"); // 'desktop' | 'mobile'
+  const [mobileStudioTab, setMobileStudioTab] = useState("code"); // 'code' | 'canvas'
 
-  // -- Step 2: Settings State --
-  const [activeTab, setActiveTab] = useState('domain');
-  const tabs = [
-    { 
-      id: 'domain', 
-      label_ar: 'ربط الدومين', 
-      label_en: 'Domain Connection', 
-      desc_ar: 'ربط نطاق خاص بمتجرك', 
-      desc_en: 'Connect custom store domain',
-      IconComp: Globe 
+  // -- Step 2: Store Configuration State --
+  const [storeConfig, setStoreConfig] = useState({
+    storeName: state.brandName || "",
+    currency: "USD",
+    language: "ar",
+    stripePublishableKey: "",
+    stripeSecretKey: "",
+    paypalClientId: "",
+    enablePaypal: true,
+    enableStripe: true,
+    enableCod: true,
+    shippingFlatRate: "15.00",
+    taxRate: "14",
+    enableAutoTax: true,
+  });
+
+  // Step 2 Side Tabs State
+  const [activeStep2Tab, setActiveStep2Tab] = useState("domain");
+  const step2SideTabs = [
+    {
+      id: "domain",
+      title_ar: "ربط الدومين",
+      sub_ar: "ربط نطاق خاص بمتجرك",
+      title_en: "Domain Connection",
+      sub_en: "Link custom store domain",
+      icon: <Globe size={18} />,
     },
-    { 
-      id: 'payment', 
-      label_ar: 'بوابات الدفع', 
-      label_en: 'Payment Gateways', 
-      desc_ar: 'تفعيل Stripe و PayPal', 
-      desc_en: 'Enable Stripe & PayPal',
-      IconComp: CreditCard 
+    {
+      id: "payment",
+      title_ar: "بوابات الدفع",
+      sub_ar: "تفعيل Stripe و PayPal",
+      title_en: "Payment Gateways",
+      sub_en: "Enable Stripe & PayPal",
+      icon: <CreditCard size={18} />,
     },
-    { 
-      id: 'taxes', 
-      label_ar: 'العملة والضرائب', 
-      label_en: 'Currency & Taxes', 
-      desc_ar: 'ضبط إعدادات المبيعات', 
-      desc_en: 'Configure store sales setup',
-      IconComp: Coins 
+    {
+      id: "currency",
+      title_ar: "العملة والضرائب",
+      sub_ar: "ضبط إعدادات المبيعات",
+      title_en: "Currency & Taxes",
+      sub_en: "Configure sales parameters",
+      icon: <SlidersHorizontal size={18} />,
+    },
+  ];
+
+  // Step 2 Dynamic Firestore Seeding & Real-Time Sync State
+  const [step2Data, setStep2Data] = useState(null);
+  const [loadingStep2Data, setLoadingStep2Data] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = subscribeStep2Data((data) => {
+      setStep2Data(data);
+      setLoadingStep2Data(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Handler to toggle Payment Gateway enabled state directly in Firestore using updateGatewayStatus
+  const handleToggleGatewayInFirestore = async (gatewayId) => {
+    if (!step2Data || !step2Data.paymentGateways) return;
+    const targetGateway = (step2Data.paymentGateways.gateways || []).find(
+      (g) => g.id === gatewayId,
+    );
+    if (!targetGateway) return;
+    const newStatus = !targetGateway.enabled;
+
+    try {
+      await updateGatewayStatus(gatewayId, newStatus);
+      toast(
+        lang === "en"
+          ? `Payment Gateway ${gatewayId} updated in Firestore! ✅`
+          : `تم تحديث حالة بوابة الدفع ${gatewayId} في قاعدة البيانات! ✅`,
+        "success",
+      );
+    } catch (err) {
+      toast(
+        lang === "en"
+          ? "Failed to update gateway status in Firestore"
+          : "فشل تحديث حالة بوابة الدفع في قاعدة البيانات",
+        "error",
+      );
     }
+  };
+
+  // Handler to toggle VAT calculation state directly in Firestore using updateVatStatus
+  const handleToggleVatInFirestore = async () => {
+    if (!step2Data || !step2Data.currencyAndTaxes) return;
+    const currentVatState = step2Data.currencyAndTaxes.vatItem?.enabled ?? true;
+    const newStatus = !currentVatState;
+
+    try {
+      await updateVatStatus(newStatus);
+      toast(
+        lang === "en"
+          ? "VAT tax calculation state updated in Firestore! ✅"
+          : "تم تحديث حالة احتساب الضريبة في قاعدة البيانات! ✅",
+        "success",
+      );
+    } catch (err) {
+      toast(
+        lang === "en"
+          ? "Failed to update VAT tax state in Firestore"
+          : "فشل تحديث حالة الضريبة في قاعدة البيانات",
+        "error",
+      );
+    }
+  };
+
+  // Currency options for custom glass select
+  const currencyOptions = [
+    { value: "USD", label: "USD ($) - US Dollar", icon: "💵" },
+    { value: "SAR", label: "SAR (ر.س) - Saudi Riyal", icon: "🇸🇦" },
+    { value: "EGP", label: "EGP (ج.م) - Egyptian Pound", icon: "🇪🇬" },
+    { value: "AED", label: "AED (د.إ) - UAE Dirham", icon: "🇦🇪" },
+    { value: "EUR", label: "EUR (€) - Euro", icon: "🇪🇺" },
+  ];
+
+  const languageOptions = [
+    { value: "ar", label: "العربية (Arabic)", icon: "🌐" },
+    { value: "en", label: "English (English)", icon: "🇺🇸" },
   ];
 
   // -- Step 3: Infrastructure State --
@@ -108,17 +397,66 @@ export default function WebsiteConstruction({ stepNumber }) {
     loadGallery();
   }, []);
 
+  // Safe Copy helper
+  const safeCopyToClipboard = (text, successMsgEn, successMsgAr) => {
+    const copyPromise =
+      navigator.clipboard && navigator.clipboard.writeText
+        ? navigator.clipboard.writeText(text)
+        : new Promise((resolve, reject) => {
+            try {
+              const textarea = document.createElement("textarea");
+              textarea.value = text;
+              textarea.style.position = "fixed";
+              textarea.style.opacity = "0";
+              document.body.appendChild(textarea);
+              textarea.select();
+              document.execCommand("copy");
+              document.body.removeChild(textarea);
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          });
+
+    copyPromise
+      .then(() => {
+        toast(lang === "en" ? successMsgEn : successMsgAr, "success");
+      })
+      .catch((err) => {
+        console.error(err);
+        toast(
+          lang === "en"
+            ? "Failed to copy to clipboard"
+            : "تعذر النسخ إلى الحافظة",
+          "error",
+        );
+      });
+  };
+
   // ====== STEP 1 METHODS ======
   const handleSaveApiKey = async () => {
     if (!tempApiKey.trim()) return;
     setIsSavingKey(true);
     try {
-      if (tempApiKey.length < 20) throw new Error('Invalid API Key');
-      dispatch({ type: 'UPDATE_USER_DATA', payload: { apiKey: tempApiKey.trim() } });
+      if (tempApiKey.length < 20) throw new Error("Invalid API Key");
+      dispatch({
+        type: "UPDATE_USER_DATA",
+        payload: { apiKey: tempApiKey.trim() },
+      });
       setApiKeyError(false);
-      toast(lang === 'en' ? 'API Key saved successfully! ✅' : 'تم حفظ مفتاح الـ API بنجاح! ✅', 'success');
+      toast(
+        lang === "en"
+          ? "API Key saved successfully! ✅"
+          : "تم حفظ مفتاح الـ API بنجاح! ✅",
+        "success",
+      );
     } catch (err) {
-      toast(lang === 'en' ? 'Invalid API key format.' : 'صيغة مفتاح الـ API غير صحيحة.', 'error');
+      toast(
+        lang === "en"
+          ? "Invalid API key format."
+          : "صيغة مفتاح الـ API غير صحيحة.",
+        "error",
+      );
     } finally {
       setIsSavingKey(false);
     }
@@ -126,54 +464,72 @@ export default function WebsiteConstruction({ stepNumber }) {
 
   const generateAILandingPage = async () => {
     setIsGenerating(true);
-    setGeneratedCode('');
+    setGeneratedCode("");
     try {
-      if (analysisMode === 'live') {
-        const brandName = state.brandName || (lang === 'en' ? 'My Brand' : 'براندي');
-        const colorHex = state.primaryColor || '#10B981';
-        const secondaryColor = state.secondaryColor || '#0f172a';
-        const nicheName = state.subNiche || state.niche || (lang === 'en' ? 'Business' : 'أعمال');
+      if (analysisMode === "live") {
+        const brandName =
+          state.brandName || (lang === "en" ? "My Brand" : "براندي");
+        const colorHex = state.primaryColor || "#6366F1";
+        const secondaryColor = state.secondaryColor || "#0B0F17";
+        const nicheName =
+          state.subNiche ||
+          state.niche ||
+          (lang === "en" ? "Business" : "أعمال");
 
         const liveHtml = await dispatchLiveAiAnalysis({
-          toolId: 'website-construction',
+          toolId: "website-construction",
           inputs: { brandName, colorHex, secondaryColor, nicheName },
           context: { niche: state.niche, brandName: state.brandName },
-          lang
+          lang,
         });
 
         if (!liveHtml || !liveHtml.trim()) {
-          toast(lang === 'en' ? 'No website code returned. Please try again.' : 'لم يتم توليد أي كود. يرجى إعادة المحاولة.', 'warning');
+          toast(
+            lang === "en"
+              ? "No website code returned. Please try again."
+              : "لم يتم توليد أي كود. يرجى إعادة المحاولة.",
+            "warning",
+          );
           return;
         }
 
-        const cleanedHtml = liveHtml.replace(/```html|```/g, '').trim();
+        const cleanedHtml = liveHtml.replace(/```html|```/g, "").trim();
         setGeneratedCode(`\`\`\`html\n${cleanedHtml}\n\`\`\``);
         setApiKeyError(false);
-        toast(lang === 'en' ? 'Website code generated dynamically! ✅' : 'تم توليد كود الموقع بالذكاء الاصطناعي بنجاح! ✅', 'success');
+        toast(
+          lang === "en"
+            ? "Website code generated dynamically! ✅"
+            : "تم توليد كود الموقع بالذكاء الاصطناعي بنجاح! ✅",
+          "success",
+        );
       } else {
         const key = state.apiKey || tempApiKey;
         if (!key) {
           setApiKeyError(true);
           toast(
-            lang === 'en' 
-              ? 'Gemini API Key is missing! Please enter your API key below or switch to Live mode.' 
-              : 'مفتاح الـ API لـ Gemini غير متوفر! يرجى أدناه إدخال المفتاح أو التبديل للوضع المباشر.', 
-            'warning'
+            lang === "en"
+              ? "Gemini API Key is missing! Please enter your API key below or switch to Live mode."
+              : "مفتاح الـ API لـ Gemini غير متوفر! يرجى أدناه إدخال المفتاح أو التبديل للوضع المباشر.",
+            "warning",
           );
           return;
         }
 
-        const brandName = state.brandName || (lang === 'en' ? 'My Brand' : 'براندي');
-        const colorHex = state.primaryColor || '#10B981';
-        const secondaryColor = state.secondaryColor || '#0f172a';
-        const nicheName = state.subNiche || state.niche || (lang === 'en' ? 'Business' : 'أعمال');
-        const logoUrl = state.logoUrl || state.logo || state.photoURL || '';
+        const brandName =
+          state.brandName || (lang === "en" ? "My Brand" : "براندي");
+        const colorHex = state.primaryColor || "#6366F1";
+        const secondaryColor = state.secondaryColor || "#0B0F17";
+        const nicheName =
+          state.subNiche ||
+          state.niche ||
+          (lang === "en" ? "Business" : "أعمال");
+        const logoUrl = state.logoUrl || state.logo || state.photoURL || "";
 
         const prompt = `
           You are a world-class landing page designer and developer. 
           Generate a single-file HTML landing page using Tailwind CSS for a brand called "${brandName}" in the "${nicheName}" niche.
           Primary Color: ${colorHex}, Secondary Color: ${secondaryColor}.
-          Brand Logo URL: ${logoUrl ? logoUrl : 'None provided, use text logo'}. Please use this logo image URL in the navigation bar.
+          Brand Logo URL: ${logoUrl ? logoUrl : "None provided, use text logo"}. Please use this logo image URL in the navigation bar.
           The design should be modern, mobile-responsive, and high-converting.
           Include:
           - A Hero section with a strong headline and CTA.
@@ -185,48 +541,50 @@ export default function WebsiteConstruction({ stepNumber }) {
         `;
 
         const aiResponse = await callGemini(prompt, key);
-        
+
         if (!aiResponse || !aiResponse.trim()) {
           toast(
-            lang === 'en' 
-              ? 'No website code returned from API. Please verify your API key or prompt.' 
-              : 'لم يتم إرجاع كود من المفتاح. يرجى التحقق من مفتاح الـ API.', 
-            'warning'
+            lang === "en"
+              ? "No website code returned from API. Please verify your API key or prompt."
+              : "لم يتم إرجاع كود من المفتاح. يرجى التحقق من مفتاح الـ API.",
+            "warning",
           );
           return;
         }
 
-        const cleanedHtml = aiResponse.replace(/```html|```/g, '').trim();
+        const cleanedHtml = aiResponse.replace(/```html|```/g, "").trim();
         setGeneratedCode(`\`\`\`html\n${cleanedHtml}\n\`\`\``);
         setApiKeyError(false);
-        toast(lang === 'en' ? 'Website code generated dynamically! ✅' : 'تم توليد كود الموقع بالذكاء الاصطناعي بنجاح! ✅', 'success');
+        toast(
+          lang === "en"
+            ? "Website code generated dynamically! ✅"
+            : "تم توليد كود الموقع بالذكاء الاصطناعي بنجاح! ✅",
+          "success",
+        );
       }
     } catch (error) {
-      console.error('Gemini Website Generation Error:', error);
-      const errorStr = (error.message || '').toLowerCase();
-      
-      if (errorStr.includes('quota') || errorStr.includes('rate limit') || errorStr.includes('429') || errorStr.includes('limit: 0')) {
+      console.error("Gemini Website Generation Error:", error);
+      const errorStr = (error.message || "").toLowerCase();
+
+      if (
+        errorStr.includes("quota") ||
+        errorStr.includes("rate limit") ||
+        errorStr.includes("429") ||
+        errorStr.includes("limit: 0")
+      ) {
         setApiKeyError(true);
         toast(
-          lang === 'en' 
-            ? 'Quota exceeded for this Gemini API Key! Please wait a minute or try another API key, or switch to Live mode.' 
-            : 'تم تجاوز حد استخدام مفتاح Gemini (Quota Exceeded)! يرجى التمهل دقيقة أو استخدام مفتاح جديد أو التبديل للوضع المباشر.', 
-          'warning'
-        );
-      } else if (errorStr.includes('api key') || errorStr.includes('key') || errorStr.includes('invalid')) {
-        setApiKeyError(true);
-        toast(
-          lang === 'en' 
-            ? 'Invalid or missing Gemini API Key. Please enter a valid API key below.' 
-            : 'مفتاح الـ API لـ Gemini غير صحيح أو مفقود. يرجى أدناه كتابة مفتاح صالح.', 
-          'error'
+          lang === "en"
+            ? "Quota exceeded for this Gemini API Key! Please wait a minute or try another API key, or switch to Live mode."
+            : "تم تجاوز حد استخدام مفتاح Gemini (Quota Exceeded)! يرجى التمهل دقيقة أو استخدام مفتاح جديد أو التبديل للوضع المباشر.",
+          "warning",
         );
       } else {
         toast(
-          lang === 'en' 
-            ? `Error generating code: ${error.message || 'Unexpected failure'}` 
-            : `حدث خطأ أثناء توليد الكود: ${error.message || 'خطأ غير متوقع'}`, 
-          'error'
+          lang === "en"
+            ? `Error generating code: ${error.message || "Unexpected failure"}`
+            : `حدث خطأ أثناء توليد الكود: ${error.message || "خطأ غير متوقع"}`,
+          "error",
         );
       }
     } finally {
@@ -236,875 +594,1980 @@ export default function WebsiteConstruction({ stepNumber }) {
 
   const handleSelectGalleryTemplate = (template) => {
     setSelectedGalleryTemplate(template);
-    const brandName = state.brandName || (lang === 'en' ? 'My Brand' : 'براندي');
-    const colorHex = state.primaryColor || '#10B981';
-    const secondaryColor = state.secondaryColor || '#0f172a';
-    const nicheName = state.subNiche || state.niche || (lang === 'en' ? 'Business' : 'أعمال');
-    const logoUrl = state.logoUrl || state.logo || state.photoURL || '';
-    const brandLogoHtml = logoUrl 
+    const brandName =
+      state.brandName || (lang === "en" ? "My Brand" : "براندي");
+    const colorHex = state.primaryColor || "#6366F1";
+    const secondaryColor = state.secondaryColor || "#0B0F17";
+    const nicheName =
+      state.subNiche || state.niche || (lang === "en" ? "Business" : "أعمال");
+    const logoUrl = state.logoUrl || state.logo || state.photoURL || "";
+    const brandLogoHtml = logoUrl
       ? `<img src="${logoUrl}" alt="${brandName}" style="max-height: 40px; width: auto; object-fit: contain;">`
       : `<div class="font-black text-2xl" style="color: ${colorHex};">${brandName}</div>`;
 
-    const templateRawStr = lang === 'en' ? template.code_en : template.code_ar;
-    const rawHtml = parseTemplate(templateRawStr, { brandName, colorHex, secondaryColor, nicheName, logoUrl, brandLogoHtml });
+    const templateRawStr = lang === "en" ? template.code_en : template.code_ar;
+    const rawHtml = parseTemplate(templateRawStr, {
+      brandName,
+      colorHex,
+      secondaryColor,
+      nicheName,
+      logoUrl,
+      brandLogoHtml,
+    });
     setGeneratedCode(`\`\`\`html\n${rawHtml}\n\`\`\``);
-    toast(lang === 'en' ? `Loaded "${template.name_en || template.name_ar}" template!` : `تم تحميل قالب "${template.name_ar || template.name_en}"!`, 'info');
+    toast(
+      lang === "en"
+        ? `Loaded "${template.name_en || template.name_ar}" template!`
+        : `تم تحميل قالب "${template.name_ar || template.name_en}"!`,
+      "info",
+    );
   };
 
-  const copyToClipboard = () => {
-    const codeToCopy = generatedCode.replace(/^\`\`\`html\n/, '').replace(/\n\`\`\`$/, '');
-    navigator.clipboard.writeText(codeToCopy);
-    toast(lang === 'en' ? 'Code copied successfully to clipboard!' : 'تم نسخ الكود بنجاح إلى الحافظة!', 'success');
+  const copyCodeToClipboard = () => {
+    const codeToCopy = generatedCode
+      .replace(/^\`\`\`html\n/, "")
+      .replace(/\n\`\`\`$/, "");
+    safeCopyToClipboard(
+      codeToCopy,
+      "Code copied successfully to clipboard! ✅",
+      "تم نسخ الكود بنجاح إلى الحافظة! ✅",
+    );
   };
 
   const handlePreview = () => {
-    const codeToPreview = generatedCode.replace(/^\`\`\`html\n/, '').replace(/\n\`\`\`$/, '');
-    const previewWindow = window.open('', '_blank');
-    previewWindow.document.write(codeToPreview);
-    previewWindow.document.close();
+    const codeToPreview = generatedCode
+      .replace(/^\`\`\`html\n/, "")
+      .replace(/\n\`\`\`$/, "");
+    const previewWindow = window.open("", "_blank");
+    if (previewWindow) {
+      previewWindow.document.write(codeToPreview);
+      previewWindow.document.close();
+    } else {
+      toast(
+        lang === "en"
+          ? "Pop-up blocked. Please allow popups for live preview."
+          : "تم حظر النافذة المنبثقة. يرجى السماح بالنوافذ المنبثقة.",
+        "warning",
+      );
+    }
   };
 
   // ====== STEP 3 METHODS ======
   const generateDomainIdeas = async () => {
     if (!state?.brandName) {
-      toast(lang === 'en' ? 'Please choose a brand name first in Step 1 of identity.' : 'الرجاء اختيار اسم البراند أولاً.', 'warning');
+      toast(
+        lang === "en"
+          ? "Please choose a brand name first in identity step."
+          : "الرجاء اختيار اسم البراند أولاً في خطوات الهوية.",
+        "warning",
+      );
       return;
     }
     setIsGeneratingDomain(true);
     setDomainMatrix(null);
     try {
-      if (analysisMode === 'live') {
+      if (analysisMode === "live") {
         const liveResult = await dispatchLiveAiAnalysis({
-          toolId: 'domain-matrix',
+          toolId: "domain-matrix",
           inputs: { brandName: state.brandName },
           context: { niche: state.niche, brandName: state.brandName },
-          lang
+          lang,
         });
-        if (typeof liveResult === 'object' && liveResult.classic) {
+        if (typeof liveResult === "object" && liveResult.classic) {
           setDomainMatrix(liveResult);
         } else {
-          setDomainMatrix({ error: typeof liveResult === 'string' ? liveResult : JSON.stringify(liveResult) });
+          setDomainMatrix({
+            error:
+              typeof liveResult === "string"
+                ? liveResult
+                : JSON.stringify(liveResult),
+          });
         }
       } else {
-        await new Promise(r => setTimeout(r, 600));
-        const dbResult = await getDomainIdeasTemplate(state.niche || 'general');
+        await new Promise((r) => setTimeout(r, 600));
+        const dbResult = await getDomainIdeasTemplate(state.niche || "general");
         if (dbResult && dbResult.matrix) {
           setDomainMatrix(dbResult.matrix);
         } else {
-          setDomainMatrix({ error: lang === 'en' ? 'Domain matrix not found.' : 'لم يتم العثور على مصفوفة الدومينات.' });
+          setDomainMatrix({
+            error:
+              lang === "en"
+                ? "Domain matrix not found."
+                : "لم يتم العثور على مصفوفة الدومينات.",
+          });
         }
       }
-      toast(lang === 'en' ? 'Domain ideas generated!' : 'تم التوصل لأقوى اقتراحات الدومينات!', 'success');
+      toast(
+        lang === "en"
+          ? "Domain matrix generated!"
+          : "تم التوصل لأقوى اقتراحات مصفوفة الدومينات!",
+        "success",
+      );
     } catch (error) {
       console.error(error);
-      toast(lang === 'en' ? 'Error suggesting domains.' : 'حدث خطأ. يرجى إعادة المحاولة.', 'error');
+      toast(
+        lang === "en"
+          ? "Error suggesting domains."
+          : "حدث خطأ. يرجى إعادة المحاولة.",
+        "error",
+      );
     } finally {
       setIsGeneratingDomain(false);
     }
   };
 
   const cleanBrand = (name) => {
-    if (!name) return '';
-    let cleaned = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-    if (!cleaned) return 'yourbrand';
+    if (!name) return "yourbrand";
+    let cleaned = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (!cleaned) return "yourbrand";
     return cleaned;
   };
 
-  const renderDomainCard = (domainText, description, color) => {
+  const formatDomainDescription = (desc, domainText) => {
+    if (!desc) return lang === "en" ? "Official Standard" : "معياري رسمي";
+    let cleaned = desc.trim();
+
+    // Clean up raw verbose strings like "Modern corporate fitness dot-co"
+    if (
+      cleaned.toLowerCase().includes("dot-co") ||
+      domainText?.endsWith(".co")
+    ) {
+      return lang === "en" ? "Official .CO Extension" : "امتداد .CO الرسمي";
+    }
+    if (
+      cleaned.toLowerCase().includes("fitness") ||
+      cleaned.toLowerCase().includes("corporate")
+    ) {
+      return lang === "en" ? "Corporate Standard" : "النطاق المعياري للشركة";
+    }
+    if (cleaned.length > 22) {
+      const words = cleaned.split(" ");
+      return words.slice(0, 3).join(" ");
+    }
+    return cleaned;
+  };
+
+  const renderDomainCard = (domainText, description) => {
     const extMatch = domainText.match(/\.[a-z0-9]+$/i);
-    const ext = extMatch ? extMatch[0] : '';
-    const rgbVal = color === '#10B981' ? '16, 185, 129' : color === '#3B82F6' ? '59, 130, 246' : '139, 92, 246';
+    const ext = extMatch ? extMatch[0] : "";
+    const cleanDesc = formatDomainDescription(description, domainText);
 
     return (
-      <motion.div 
-        key={domainText} 
+      <motion.div
+        key={domainText}
         className="wc-domain-card"
-        whileHover={{ y: -4, scale: 1.02 }}
+        whileHover={{ y: -3, scale: 1.01 }}
         whileTap={{ scale: 0.98 }}
-        style={{ 
-          '--card-accent': color,
-          '--accent-rgb': rgbVal,
-          borderInlineStart: `4px solid ${color}`
-        }}
         onClick={() => {
-          navigator.clipboard.writeText(domainText);
-          toast(lang === 'en' ? `Domain "${domainText}" copied to clipboard! ✅` : `تم نسخ الدومين "${domainText}" إلى الحافظة! ✅`, 'success');
+          safeCopyToClipboard(
+            domainText,
+            `Domain "${domainText}" copied to clipboard! ✅`,
+            `تم نسخ الدومين "${domainText}" إلى الحافظة! ✅`,
+          );
         }}
-        title={lang === 'en' ? 'Click to copy domain' : 'اضغط لنسخ الدومين'}
       >
-        <div className="wc-domain-card-top">
-          <div className="wc-domain-name-block">
-            <span className="wc-domain-name">{domainText}</span>
-            {ext && (
-              <span className="wc-domain-ext-badge" style={{ color: color, borderColor: `${color}40`, backgroundColor: `${color}15` }}>
-                {ext}
-              </span>
-            )}
+        {/* Header Rail: Icon + Extension Badge + Quick Copy Button */}
+        <div className="wc-domain-card-header-v2">
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div className="wc-domain-globe-icon">
+              <Globe size={14} />
+            </div>
+            {ext && <span className="wc-domain-ext-badge">{ext}</span>}
           </div>
-          <button 
-            className="wc-domain-copy-btn"
-            style={{ color: color, borderColor: `${color}35`, backgroundColor: `${color}12` }}
+
+          <button
+            type="button"
+            className="wc-domain-copy-btn-icon"
             onClick={(e) => {
               e.stopPropagation();
-              navigator.clipboard.writeText(domainText);
-              toast(lang === 'en' ? `Domain "${domainText}" copied to clipboard! ✅` : `تم نسخ الدومين "${domainText}" إلى الحافظة! ✅`, 'success');
+              safeCopyToClipboard(
+                domainText,
+                `Domain "${domainText}" copied to clipboard! ✅`,
+                `تم نسخ الدومين "${domainText}" إلى الحافظة! ✅`,
+              );
             }}
+            title={lang === "en" ? "Copy Domain" : "نسخ الدومين"}
           >
             <Copy size={13} />
-            <span>{lang === 'en' ? 'Copy' : 'نسخ'}</span>
           </button>
         </div>
 
-        {description && (
-          <div className="wc-domain-desc">
-            <CheckCircle2 size={13} color={color} style={{ flexShrink: 0 }} />
-            <span>{description}</span>
+        {/* Full Domain Text Display Box (Always Shows Full Value) */}
+        <div className="wc-domain-full-value">{domainText}</div>
+
+        {/* Footer Rail: Description + Availability Tag */}
+        <div className="wc-domain-card-footer">
+          <div className="wc-domain-desc-tag">
+            <CheckCircle2 size={12} color="#10B981" style={{ flexShrink: 0 }} />
+            <span>{cleanDesc}</span>
           </div>
-        )}
+          <span className="wc-domain-avail-tag">AVAILABLE ⚡</span>
+        </div>
       </motion.div>
     );
   };
 
-  const renderMatrixSection = () => {
-    if (!domainMatrix || domainMatrix.error) {
-      return domainMatrix?.error ? <div className="wc-code-box" style={{ color: '#EF4444' }}>{domainMatrix.error}</div> : null;
-    }
-    const bn = cleanBrand(state.brandName);
-    
-    let classicList = [];
-    if (domainMatrix.classic) {
-      if (Array.isArray(domainMatrix.classic.domains)) {
-        classicList = domainMatrix.classic.domains;
-      } else if (Array.isArray(domainMatrix.classic.formats) && Array.isArray(domainMatrix.classic.extensions)) {
-        domainMatrix.classic.formats.forEach(fmt => {
-          domainMatrix.classic.extensions.forEach(ext => {
-            let dom = fmt.replace('{{brandName}}', bn).replace('{ext}', ext);
-            classicList.push({ domain: dom, desc: lang === 'en' ? 'Standard Professional' : 'دومين احترافي ومعتمد' });
-          });
-        });
-      }
-    }
-
-    let actionList = [];
-    if (domainMatrix.action) {
-      if (Array.isArray(domainMatrix.action.domains)) {
-        actionList = domainMatrix.action.domains;
-      } else if (Array.isArray(domainMatrix.action.prefixesEn) && Array.isArray(domainMatrix.action.extensions) && Array.isArray(domainMatrix.action.formats)) {
-        const { prefixesEn, prefixesAr = [], extensions, formats } = domainMatrix.action;
-        prefixesEn.forEach((pref, i) => {
-          let ext = extensions[Math.floor(Math.random() * extensions.length)];
-          let dom = formats[0].replace('{prefix}', pref).replace('{{brandName}}', bn).replace('{ext}', ext);
-          let meaning = lang === 'en' ? `Action: ${pref}` : `بمعنى: ${prefixesAr[i] || pref}`;
-          actionList.push({ domain: dom, desc: meaning });
-        });
-      }
-    }
-
-    let nicheList = [];
-    if (domainMatrix.niche) {
-      if (Array.isArray(domainMatrix.niche.domains)) {
-        nicheList = domainMatrix.niche.domains;
-      } else if (Array.isArray(domainMatrix.niche.extensions) && Array.isArray(domainMatrix.niche.formats)) {
-        domainMatrix.niche.extensions.forEach(ext => {
-          let dom = domainMatrix.niche.formats[0].replace('{{brandName}}', bn).replace('{ext}', ext);
-          nicheList.push({ domain: dom, desc: lang === 'en' ? domainMatrix.niche.desc_en : domainMatrix.niche.desc_ar });
-        });
-      }
-    }
+  // ====== RENDER TAB 1: DESIGN & CODE (DUAL-PANE IN-LINE WORKBENCH) ======
+  const renderStep1 = () => {
+    const cleanHtmlCode = generatedCode
+      ? generatedCode.replace(/^```html\n/, "").replace(/\n```$/, "")
+      : "";
 
     return (
-      <div className="wc-domain-section">
-        {classicList.length > 0 && (
-          <div className="wc-domain-group">
-            <div className="wc-domain-group-title" style={{ color: '#10B981' }}>
-              <Sparkles size={18} />
-              <span>{lang === 'en' ? domainMatrix.classic.title_en : domainMatrix.classic.title_ar}</span>
-            </div>
-            <div className="wc-domain-grid">
-              {classicList.slice(0, 6).map(item => renderDomainCard(item.domain, item.desc, '#10B981'))}
-            </div>
-          </div>
-        )}
-
-        {actionList.length > 0 && (
-          <div className="wc-domain-group">
-            <div className="wc-domain-group-title" style={{ color: '#3B82F6' }}>
-              <Zap size={18} />
-              <span>{lang === 'en' ? domainMatrix.action.title_en : domainMatrix.action.title_ar}</span>
-            </div>
-            <div className="wc-domain-grid">
-              {actionList.map(item => renderDomainCard(item.domain, item.desc, '#3B82F6'))}
-            </div>
-          </div>
-        )}
-
-        {nicheList.length > 0 && (
-          <div className="wc-domain-group">
-            <div className="wc-domain-group-title" style={{ color: '#8B5CF6' }}>
-              <Layers size={18} />
-              <span>{lang === 'en' ? domainMatrix.niche.title_en : domainMatrix.niche.title_ar}</span>
-            </div>
-            <div className="wc-domain-grid">
-              {nicheList.map(item => renderDomainCard(item.domain, item.desc, '#8B5CF6'))}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // ====== RENDER STEP 1 ======
-  const renderStep1 = () => (
-    <motion.div 
-      key="step1"
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -14 }}
-      transition={{ duration: 0.25 }}
-    >
-      <div className="wc-section-header">
-        <div style={{ width: '4px', height: '22px', borderRadius: '4px', background: '#3B82F6' }} />
-        <div>
-          <h3 className="wc-section-title">
-            <Wand2 size={20} color="#3B82F6" />
-            <span>{lang === 'en' ? 'Step 1: Select Website Building Strategy' : 'الخطوة 1: اختر طريقة البناء والبرمجة'}</span>
-          </h3>
-          <p className="wc-section-desc">
-            {lang === 'en' 
-              ? 'Choose whether to dynamically generate code with AI or select from pre-built premium Tailwind landing page templates.' 
-              : 'اختر بين البناء الديناميكي التلقائي لكود الموقع بالذكاء الاصطناعي، أو تصفح القوالب الجاهزة المبرمجة لـ Tailwind CSS.'}
-          </p>
-        </div>
-      </div>
-
-      <div className="wc-method-grid">
-        <motion.div 
-          className={`wc-method-card ${method === 'gemini' ? 'active' : ''}`}
-          onClick={() => { setMethod('gemini'); setGeneratedCode(''); setSelectedGalleryTemplate(null); }}
-          whileHover={{ y: -3 }}
-          whileTap={{ scale: 0.98 }}
-          style={{ '--accent-color': '#10B981', '--accent-rgb': '16, 185, 129' }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div className="wc-method-icon-wrap">
-              <Cpu size={26} />
-            </div>
-            <div>
-              <div className="wc-method-badge">
-                {lang === 'en' ? 'AI Dynamic Generator' : 'البناء بالذكاء الاصطناعي'}
-              </div>
-              <h4 style={{ color: 'var(--text, #F8FAFC)', fontSize: '16px', fontWeight: '900', margin: 0 }}>
-                {lang === 'en' ? 'Custom AI Website Code' : 'توليد كود مخصص بالكامل'}
-              </h4>
-            </div>
-          </div>
-          <p style={{ color: 'var(--text2, #8B96A8)', fontSize: '13px', lineHeight: '1.7', margin: 0 }}>
-            {lang === 'en' 
-              ? 'Generate a single-file Tailwind CSS landing page tailored to your niche, logo, and primary colors using Gemini or Live AI.' 
-              : 'استخدم الذكاء الاصطناعي لكتابة كود صفحة هبوط متكاملة بـ Tailwind CSS بناءً على هويتك، ألوانك ومجالك.'}
-          </p>
-        </motion.div>
-
-        <motion.div 
-          className={`wc-method-card ${method === 'template' ? 'active' : ''}`}
-          onClick={() => { setMethod('template'); setGeneratedCode(''); setSelectedGalleryTemplate(null); }}
-          whileHover={{ y: -3 }}
-          whileTap={{ scale: 0.98 }}
-          style={{ '--accent-color': '#C084FC', '--accent-rgb': '192, 132, 252' }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div className="wc-method-icon-wrap">
-              <Layout size={26} />
-            </div>
-            <div>
-              <div className="wc-method-badge" style={{ color: '#C084FC' }}>
-                {lang === 'en' ? 'Pre-built Templates' : 'معرض القوالب الاحترافية'}
-              </div>
-              <h4 style={{ color: 'var(--text, #F8FAFC)', fontSize: '16px', fontWeight: '900', margin: 0 }}>
-                {lang === 'en' ? 'Premium Template Library' : 'اختر من القوالب الجاهزة'}
-              </h4>
-            </div>
-          </div>
-          <p style={{ color: 'var(--text2, #8B96A8)', fontSize: '13px', lineHeight: '1.7', margin: 0 }}>
-            {lang === 'en' 
-              ? 'Browse high-converting, fully responsive landing page models for E-commerce, SaaS, Agencies, and Digital Products.' 
-              : 'تصفح مكتبتنا الغنية القاطعة الجاهزة المبرمجة بـ Tailwind لجميع قطاعات الأعمال والتجارة.'}
-          </p>
-        </motion.div>
-      </div>
-
-      {method === 'gemini' && (
-        <div className="wc-code-panel">
-          <div className="wc-code-header">
-            <h3 style={{ fontSize: '16px', fontWeight: '900', color: '#10B981', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
-              <Code size={20} />
-              <span>{lang === 'en' ? 'Custom Website Code (Tailwind CSS)' : 'الكود البرمجي لموقعك (Tailwind CSS)'}</span>
+      <motion.div
+        key="step1"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -12 }}
+        transition={{ duration: 0.2 }}
+      >
+        {/* Header Section */}
+        <div className="wc-section-header">
+          <div
+            style={{
+              width: "4px",
+              height: "24px",
+              borderRadius: "4px",
+              background: "#6366F1",
+            }}
+          />
+          <div>
+            <h3 className="wc-section-title">
+              <Wand2 size={18} color="#6366F1" />
+              <span>
+                {lang === "en"
+                  ? "Step 1: AI Code Studio & Live Sandbox Workbench"
+                  : "الخطوة 1: استوديو الذكاء الاصطناعي ومعاينة الكود المباشر"}
+              </span>
             </h3>
-            {generatedCode && !isGenerating && !apiKeyError && (
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button onClick={handlePreview} className="wc-btn wc-btn-secondary" style={{ padding: '8px 16px', fontSize: '12px' }}>
-                  <Eye size={14} /> {lang === 'en' ? 'Preview Live' : 'معاينة مباشرة'}
-                </button>
-                <button onClick={copyToClipboard} className="wc-btn wc-btn-primary" style={{ background: '#10B981', padding: '8px 16px', fontSize: '12px' }}>
-                  <Copy size={14} /> {lang === 'en' ? 'Copy Code' : 'نسخ الكود'}
-                </button>
+            <p className="wc-section-desc">
+              {lang === "en"
+                ? "Generate custom Tailwind CSS landing page code using AI or pick from pre-built templates, with real-time in-line live canvas preview."
+                : "اختر بين البناء التلقائي التخصصي لكود موقعك بالذكاء الاصطناعي أو تصفح معرض القوالب، مع المعاينة المباشرة التفاعلية جنبًا إلى جنب."}
+            </p>
+          </div>
+        </div>
+
+        {/* Sleek Top Segmented Control Toggle Bar */}
+        <div className="wc-segmented-toggle-bar">
+          <button
+            type="button"
+            className={`wc-segmented-btn ${method === "gemini" ? "active" : ""}`}
+            onClick={() => {
+              setMethod("gemini");
+              setGeneratedCode("");
+              setSelectedGalleryTemplate(null);
+            }}
+          >
+            <Cpu size={16} />
+            <span>
+              {lang === "en"
+                ? "AI Custom Code Generator"
+                : "التوليد بالذكاء الاصطناعي (AI Studio)"}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className={`wc-segmented-btn ${method === "template" ? "active" : ""}`}
+            onClick={() => {
+              setMethod("template");
+              setGeneratedCode("");
+              setSelectedGalleryTemplate(null);
+            }}
+          >
+            <Layout size={16} />
+            <span>
+              {lang === "en"
+                ? "Template Library Workbench"
+                : "معرض القوالب الجاهزة (Library)"}
+            </span>
+          </button>
+        </div>
+
+        {/* Mobile Tab Switcher (< 1024px) */}
+        <div className="wc-mobile-studio-tabs">
+          <button
+            type="button"
+            className={`wc-mobile-tab-btn ${mobileStudioTab === "code" ? "active" : ""}`}
+            onClick={() => setMobileStudioTab("code")}
+          >
+            <Code size={14} />
+            <span>{lang === "en" ? "Code Editor" : "محرر الكود"}</span>
+          </button>
+          <button
+            type="button"
+            className={`wc-mobile-tab-btn ${mobileStudioTab === "canvas" ? "active" : ""}`}
+            onClick={() => setMobileStudioTab("canvas")}
+          >
+            <Eye size={14} />
+            <span>{lang === "en" ? "Live Canvas" : "المعاينة المباشرة"}</span>
+            {cleanHtmlCode && <span className="wc-live-badge-dot" />}
+          </button>
+        </div>
+
+        {/* DUAL-PANE IN-LINE WORKBENCH CONTAINER */}
+        <div className="wc-studio-workbench">
+          
+          {/* ════════════ LEFT PANE: CONTROLS & CODE EDITOR ════════════ */}
+          <div className={`wc-studio-left-pane ${mobileStudioTab !== "code" ? "mobile-hidden" : ""}`}>
+            
+            {/* METHOD 1: AI GEMINI GENERATOR */}
+            {method === "gemini" && (
+              <div className="wc-studio-pane-inner">
+                <div className="wc-pane-header">
+                  <h4 className="wc-pane-title">
+                    <Code size={16} color="#818CF8" />
+                    <span>
+                      {lang === "en"
+                        ? "AI Code Controls & Workbench"
+                        : "لوحة التحكم والكود البرمجي"}
+                    </span>
+                  </h4>
+                  {generatedCode && !isGenerating && !apiKeyError && (
+                    <div style={{ display: "flex", gap: "6px" }}>
+                      <button
+                        type="button"
+                        onClick={copyCodeToClipboard}
+                        className="wc-btn wc-btn-primary"
+                        style={{ fontSize: "11px", padding: "6px 12px" }}
+                      >
+                        <Copy size={12} /> {lang === "en" ? "Copy Code" : "نسخ الكود"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {apiKeyError ? (
+                  <div className="wc-api-key-card">
+                    <AlertTriangle size={28} color="#EF4444" style={{ marginBottom: "8px" }} />
+                    <h4 className="wc-api-title">
+                      {lang === "en" ? "Gemini API Key Required" : "مفتاح API الخاص بـ Gemini مطلوب"}
+                    </h4>
+                    <p className="wc-api-desc">
+                      {lang === "en"
+                        ? "To use dynamic AI building in Fast mode, please provide a valid Google Gemini API Key below or switch to Live AI Analysis mode."
+                        : "لاستخدام البناء السريع بالذكاء الاصطناعي، يرجى إدخال مفتاح API لـ Google Gemini أدناه أو التبديل لنمط الذكاء الاصطناعي المباشر."}
+                    </p>
+
+                    <div className="wc-api-input-wrap">
+                      <input
+                        type="password"
+                        className="wc-form-input"
+                        placeholder="AIzaSy..."
+                        value={tempApiKey}
+                        onChange={(e) => setTempApiKey(e.target.value)}
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        onClick={handleSaveApiKey}
+                        disabled={isSavingKey || !tempApiKey.trim()}
+                        className="wc-btn wc-btn-primary"
+                        style={{ padding: "0 16px", fontSize: "12px" }}
+                      >
+                        {isSavingKey ? "..." : lang === "en" ? "Save" : "حفظ"}
+                      </button>
+                    </div>
+
+                    <div style={{ display: "flex", justifyContent: "center", gap: "14px" }}>
+                      <button
+                        onClick={() => navigate("/dashboard/settings")}
+                        style={{
+                          background: "transparent",
+                          color: "#818CF8",
+                          border: "none",
+                          fontSize: "12px",
+                          fontWeight: "700",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4,
+                        }}
+                      >
+                        <Settings size={13} /> {lang === "en" ? "Go to Settings" : "الذهاب للإعدادات"}
+                      </button>
+                      <button
+                        onClick={() => setApiKeyError(false)}
+                        style={{
+                          background: "transparent",
+                          color: "#94A3B8",
+                          border: "none",
+                          fontSize: "12px",
+                          fontWeight: "700",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {lang === "en" ? "Cancel" : "إلغاء"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Mode Selector & Generator Action */}
+                    <div className="wc-ai-controls-box">
+                      <AnalysisModeSelector
+                        mode={analysisMode}
+                        onChange={setAnalysisMode}
+                        lang={lang}
+                        accentColor="#6366F1"
+                      />
+
+                      <button
+                        onClick={generateAILandingPage}
+                        disabled={isGenerating}
+                        className="wc-btn wc-btn-primary"
+                        style={{ width: "100%", marginTop: "12px" }}
+                      >
+                        {isGenerating ? (
+                          <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                            <span className="td-spinner" />
+                            {lang === "en" ? "Coding Landing Page..." : "جاري كتابة كود الموقع..."}
+                          </span>
+                        ) : (
+                          <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                            <Sparkles size={16} />
+                            {lang === "en" ? (generatedCode ? "Re-generate Code" : "Generate Landing Page Code") : (generatedCode ? "إعادة توليد الكود" : "توليد كود صفحة الهبوط")}
+                          </span>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Code Output Viewer */}
+                    {generatedCode && (
+                      <div className="wc-code-box">
+                        <pre>{generatedCode}</pre>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* METHOD 2: TEMPLATE GALLERY WORKBENCH */}
+            {method === "template" && (
+              <div className="wc-studio-pane-inner">
+                {!selectedGalleryTemplate ? (
+                  <>
+                    <div style={{ marginBottom: "12px" }}>
+                      <h4 style={{ fontSize: "14px", fontWeight: "800", color: "#FFFFFF", margin: "0 0 4px 0" }}>
+                        {lang === "en" ? "Filter by Category" : "تصفية القوالب حسب المجال"}
+                      </h4>
+                      <p style={{ fontSize: "11.5px", color: "#94A3B8", margin: 0 }}>
+                        {lang === "en" ? "Select industry to view tailored designs." : "اختر التخصص المطلوب لعرض التصاميم المجهزة للقطاع."}
+                      </p>
+                    </div>
+
+                    <div className="wc-category-pills">
+                      <button
+                        className={`wc-category-pill ${selectedCategory === "All" ? "active" : ""}`}
+                        onClick={() => setSelectedCategory("All")}
+                      >
+                        <FolderOpen size={13} />
+                        <span>{lang === "en" ? "All" : "الكل"}</span>
+                      </button>
+                      {[...new Set(galleryTemplates.map((t) => t.category).filter(Boolean))].map((cat) => (
+                        <button
+                          key={cat}
+                          className={`wc-category-pill ${selectedCategory === cat ? "active" : ""}`}
+                          onClick={() => setSelectedCategory(cat)}
+                        >
+                          <Layers size={13} />
+                          <span>{cat}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="wc-template-grid">
+                      {galleryTemplates
+                        .filter((tpl) => selectedCategory === "All" || tpl.category === selectedCategory)
+                        .map((tpl) => (
+                          <motion.div
+                            key={tpl.id}
+                            className="wc-template-card"
+                            onClick={() => handleSelectGalleryTemplate(tpl)}
+                            whileHover={{ y: -2 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <div className="wc-template-icon">{tpl.icon}</div>
+                            <h4 style={{ color: "#FFFFFF", fontSize: "13px", fontWeight: "800", margin: "0 0 2px 0" }}>
+                              {lang === "en" ? tpl.name_en : tpl.name_ar}
+                            </h4>
+                            <p style={{ color: "#94A3B8", fontSize: "11px", lineHeight: "1.4", margin: 0 }}>
+                              {lang === "en" ? tpl.description_en : tpl.description_ar}
+                            </p>
+                          </motion.div>
+                        ))}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="wc-pane-header">
+                      <button
+                        onClick={() => setSelectedGalleryTemplate(null)}
+                        className="wc-btn wc-btn-secondary"
+                        style={{ padding: "5px 10px", fontSize: "11px" }}
+                      >
+                        {isRtl ? <ArrowRight size={13} /> : <ArrowLeft size={13} />}
+                        <span>{lang === "en" ? "Back to Templates" : "العودة للقوالب"}</span>
+                      </button>
+                      
+                      <button
+                        type="button"
+                        onClick={copyCodeToClipboard}
+                        className="wc-btn wc-btn-primary"
+                        style={{ padding: "5px 12px", fontSize: "11px" }}
+                      >
+                        <Copy size={12} /> {lang === "en" ? "Copy Code" : "نسخ الكود"}
+                      </button>
+                    </div>
+
+                    <div className="wc-code-box">
+                      <pre>{generatedCode}</pre>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
 
-          {apiKeyError ? (
-            <div style={{ textAlign: 'center', padding: '24px', background: 'rgba(239, 68, 68, 0.08)', borderRadius: '16px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-              <AlertTriangle size={36} color="#EF4444" style={{ marginBottom: '12px' }} />
-              <h4 style={{ color: '#EF4444', fontSize: '15px', fontWeight: '900', marginBottom: '8px' }}>
-                {lang === 'en' ? 'Gemini API Key Required' : 'مفتاح API الخاص بـ Gemini مطلوب'}
-              </h4>
-              <p style={{ color: 'var(--text2, #8B96A8)', fontSize: '13px', marginBottom: '20px', lineHeight: '1.6', maxWidth: '500px', marginInline: 'auto' }}>
-                {lang === 'en' 
-                  ? 'To use dynamic AI building in Fast mode, please provide a valid Google Gemini API Key below or switch to Live AI Analysis mode.' 
-                  : 'لاستخدام البناء السريع بالذكاء الاصطناعي، يرجى إدخال مفتاح API لـ Google Gemini أدناه أو التبديل لنمط الذكاء الاصطناعي المباشر.'}
-              </p>
-              
-              <div style={{ maxWidth: '420px', margin: '0 auto 16px auto', display: 'flex', gap: '10px' }}>
-                <input 
-                  type="password"
-                  className="td-input"
-                  placeholder="AIzaSy..."
-                  value={tempApiKey}
-                  onChange={e => setTempApiKey(e.target.value)}
-                  style={{ flex: 1, margin: 0, padding: '10px 16px', fontSize: '13px' }}
-                />
-                <button 
-                  onClick={handleSaveApiKey}
-                  disabled={isSavingKey || !tempApiKey.trim()}
-                  className="wc-btn wc-btn-primary"
-                  style={{ background: '#10B981', padding: '0 20px', fontSize: '13px' }}
-                >
-                  {isSavingKey ? '...' : (lang === 'en' ? 'Save' : 'حفظ')}
-                </button>
+          {/* ════════════ RIGHT PANE: INTEGRATED LIVE CANVAS SANDBOX (NO POPUPS) ════════════ */}
+          <div className={`wc-studio-right-pane ${mobileStudioTab !== "canvas" ? "mobile-hidden" : ""}`}>
+            {/* Canvas Header & Toolbar */}
+            <div className="wc-canvas-toolbar">
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Eye size={16} color="#6366F1" />
+                <span style={{ fontSize: "13px", fontWeight: "800", color: "#FFFFFF" }}>
+                  {lang === "en" ? "Live Canvas Sandbox" : "المعاينة المباشرة الحية"}
+                </span>
+                {cleanHtmlCode && <span className="wc-live-badge-status">LIVE ⚡</span>}
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
-                <button 
-                  onClick={() => navigate('/dashboard/settings')}
-                  style={{ background: 'transparent', color: '#3B82F6', border: 'none', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
-                >
-                  <Settings size={14} /> {lang === 'en' ? 'Go to Settings' : 'الذهاب للإعدادات'}
-                </button>
-                <button 
-                  onClick={() => setApiKeyError(false)}
-                  style={{ background: 'transparent', color: 'var(--text2, #8B96A8)', border: 'none', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}
-                >
-                  {lang === 'en' ? 'Cancel' : 'إلغاء'}
-                </button>
-              </div>
-            </div>
-          ) : !generatedCode || isGenerating ? (
-            <div style={{ textAlign: 'center', padding: '24px 0' }}>
-              <div style={{ maxWidth: '560px', width: '100%', margin: '0 auto 20px auto' }}>
-                <AnalysisModeSelector 
-                  mode={analysisMode} 
-                  onChange={setAnalysisMode} 
-                  lang={lang} 
-                  accentColor="#10B981" 
-                />
-              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                {/* Device Frame Viewport Toggle */}
+                <div className="wc-device-toggle-group">
+                  <button
+                    type="button"
+                    className={`wc-device-btn ${viewportMode === "desktop" ? "active" : ""}`}
+                    onClick={() => setViewportMode("desktop")}
+                    title={lang === "en" ? "Desktop View" : "عرض الكمبيوتر"}
+                  >
+                    <Monitor size={13} />
+                    <span>{lang === "en" ? "Desktop" : "حاسوب"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`wc-device-btn ${viewportMode === "mobile" ? "active" : ""}`}
+                    onClick={() => setViewportMode("mobile")}
+                    title={lang === "en" ? "Mobile View" : "عرض الجوال"}
+                  >
+                    <Smartphone size={13} />
+                    <span>{lang === "en" ? "Mobile" : "جوال"}</span>
+                  </button>
+                </div>
 
-              <button 
-                onClick={generateAILandingPage} 
-                disabled={isGenerating} 
-                className="wc-btn wc-btn-primary" 
-                style={{ background: isGenerating ? 'rgba(16, 185, 129, 0.3)' : '#10B981', maxWidth: '320px', margin: '0 auto', width: '100%' }}
-              >
-                {isGenerating ? (
-                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-                    <span className="td-spinner" /> {lang === 'en' ? 'Coding Landing Page...' : 'جاري كتابة كود الموقع...'}
-                  </span>
-                ) : (
-                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                    <Sparkles size={18} /> {lang === 'en' ? 'Generate Landing Page Code' : 'توليد كود صفحة الهبوط'}
-                  </span>
+                {/* Popout Live Preview Window Button */}
+                {cleanHtmlCode && (
+                  <button
+                    type="button"
+                    onClick={handlePreview}
+                    className="wc-icon-btn-ghost"
+                    title={lang === "en" ? "Popout to New Window" : "فتح في نافذة جديدة"}
+                  >
+                    <ExternalLink size={14} />
+                  </button>
                 )}
-              </button>
+              </div>
             </div>
-          ) : (
-            <div className="wc-code-box">
-              <pre>{generatedCode}</pre>
-            </div>
-          )}
-        </div>
-      )}
 
-      {method === 'template' && (
-        <div className="wc-code-panel" style={{ borderColor: 'rgba(192, 132, 252, 0.2)' }}>
-          {!selectedGalleryTemplate ? (
-            <>
-              {!selectedCategory ? (
-                <>
-                  <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                    <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#C084FC', margin: '0 0 6px 0' }}>
-                      {lang === 'en' ? 'Select Template Category' : 'اختر القسم التخصصي لمشروعك'}
-                    </h3>
-                    <p style={{ fontSize: '13px', color: 'var(--text2, #8B96A8)', margin: 0 }}>
-                      {lang === 'en' ? 'Filter templates by business industry and type.' : 'قم بتصفية القوالب البرمجية حسب تخصص نشاطك التجاري.'}
+            {/* Canvas Frame Container */}
+            <div className="wc-canvas-frame-wrap">
+              {cleanHtmlCode ? (
+                <iframe
+                  className="wc-live-canvas-iframe"
+                  srcDoc={cleanHtmlCode}
+                  title="Live Workbench Canvas"
+                  style={{
+                    width: viewportMode === "mobile" ? "375px" : "100%",
+                    margin: "0 auto",
+                  }}
+                />
+              ) : (
+                /* Glowing Blueprint Placeholder */
+                <div className="wc-canvas-blueprint-placeholder">
+                  <div className="wc-blueprint-icon-halo">
+                    <Wand2 size={32} color="#6366F1" />
+                  </div>
+                  <h4 style={{ color: "#FFFFFF", fontSize: "15px", fontWeight: "800", margin: "8px 0 2px 0" }}>
+                    {lang === "en" ? "Interactive Live Canvas Sandbox" : "منصة المعاينة التفاعلية المباشرة"}
+                  </h4>
+                  <p style={{ color: "#94A3B8", fontSize: "12px", maxWidth: "340px", margin: 0, lineHeight: "1.5" }}>
+                    {lang === "en"
+                      ? "Generate code via AI or select a template from the left pane to render live interactive output instantly."
+                      : "قم بتوليد الكود بالذكاء الاصطناعي أو اختر قالباً من القائمة لعرض الموقع المباشر فوراً."}
+                  </p>
+                  <span className="wc-blueprint-status-pill">
+                    AWAITING CODE GENERATION ⚡
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+        </div>
+      </motion.div>
+    );
+  };
+
+  // ====== RENDER STEP 2: PURE DYNAMIC FIRESTORE BINDING ======
+  const renderStep2 = () => {
+    // Pure Skeleton Loading State while fetching from Firestore
+    if (loadingStep2Data || !step2Data) {
+      return (
+        <motion.div
+          key="step2-loading"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <div className="wc-section-header">
+            <div
+              style={{
+                width: "4px",
+                height: "24px",
+                borderRadius: "4px",
+                background: "#6366F1",
+              }}
+            />
+            <div>
+              <h3 className="wc-section-title">
+                <SlidersHorizontal size={18} color="#6366F1" />
+                <span>
+                  {lang === "en"
+                    ? "Step 2: General Settings & Setup"
+                    : "الخطوة 2: الضبط والتهيئة العامة"}
+                </span>
+              </h3>
+            </div>
+          </div>
+          <div className="wc-step2-layout-2030">
+            <div className="wc-step2-sidebar">
+              <div className="wc-step2-skeleton" style={{ height: "64px" }} />
+              <div className="wc-step2-skeleton" style={{ height: "64px" }} />
+              <div className="wc-step2-skeleton" style={{ height: "64px" }} />
+            </div>
+            <div className="wc-step2-content-card">
+              <div
+                className="wc-step2-skeleton"
+                style={{ height: "32px", width: "60%", marginBottom: "16px" }}
+              />
+              <div
+                className="wc-step2-skeleton"
+                style={{ height: "54px", marginBottom: "12px" }}
+              />
+              <div
+                className="wc-step2-skeleton"
+                style={{ height: "54px", marginBottom: "12px" }}
+              />
+              <div className="wc-step2-skeleton" style={{ height: "54px" }} />
+            </div>
+          </div>
+        </motion.div>
+      );
+    }
+
+    // Direct Dynamic Values from Firestore (NO INLINE HARDCODED ARRAY FALLBACKS IN JSX)
+    const headerTitle =
+      step2Data.header?.[lang === "en" ? "title_en" : "title_ar"];
+    const headerSubtitle =
+      step2Data.header?.[lang === "en" ? "subtitle_en" : "subtitle_ar"];
+
+    const domainTitle =
+      step2Data.domainSettings?.[lang === "en" ? "title_en" : "title_ar"];
+    const domainDesc =
+      step2Data.domainSettings?.[lang === "en" ? "desc_en" : "desc_ar"];
+    const domainSteps = step2Data.domainSettings?.steps;
+
+    const paymentTitle =
+      step2Data.paymentGateways?.[lang === "en" ? "title_en" : "title_ar"];
+    const paymentDesc =
+      step2Data.paymentGateways?.[lang === "en" ? "desc_en" : "desc_ar"];
+    const gatewaysList = step2Data.paymentGateways?.gateways;
+
+    const currencyTitle =
+      step2Data.currencyAndTaxes?.[lang === "en" ? "title_en" : "title_ar"];
+    const currencyDesc =
+      step2Data.currencyAndTaxes?.[lang === "en" ? "desc_en" : "desc_ar"];
+    const currencyItem = step2Data.currencyAndTaxes?.currencyItem;
+    const vatItem = step2Data.currencyAndTaxes?.vatItem;
+
+    return (
+      <motion.div
+        key="step2"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -12 }}
+        transition={{ duration: 0.2 }}
+      >
+        {/* Header */}
+        <div className="wc-section-header">
+          <div
+            style={{
+              width: "4px",
+              height: "24px",
+              borderRadius: "4px",
+              background: "#6366F1",
+            }}
+          />
+          <div>
+            <h3 className="wc-section-title">
+              <SlidersHorizontal size={18} color="#6366F1" />
+              <span>{headerTitle}</span>
+            </h3>
+            <p className="wc-section-desc">{headerSubtitle}</p>
+          </div>
+        </div>
+
+        {/* Two-Column Split Workspace */}
+        <div className="wc-step2-layout-2030">
+          {/* Side Selector Tabs */}
+          <div className="wc-step2-sidebar">
+            {step2SideTabs.map((tab) => {
+              const isActive = activeStep2Tab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveStep2Tab(tab.id)}
+                  className={`wc-step2-tab-btn ${isActive ? "active" : ""}`}
+                >
+                  <div className="wc-step2-tab-icon">{tab.icon}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontSize: "13.5px",
+                        fontWeight: "800",
+                        color: isActive ? "#FFFFFF" : "#CBD5E1",
+                      }}
+                    >
+                      {lang === "en" ? tab.title_en : tab.title_ar}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "11px",
+                        color: isActive ? "#818CF8" : "#94A3B8",
+                        marginTop: "2px",
+                      }}
+                    >
+                      {lang === "en" ? tab.sub_en : tab.sub_ar}
+                    </div>
+                  </div>
+                  {isActive && (
+                    <span
+                      style={{
+                        width: "6px",
+                        height: "6px",
+                        borderRadius: "50%",
+                        background: "#6366F1",
+                        boxShadow: "0 0 8px #6366F1",
+                      }}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Left Content Area (Active Tab Details) */}
+          <div className="wc-step2-content-card">
+            {/* TAB 1: Domain Connection (DNS Settings) */}
+            {activeStep2Tab === "domain" && (
+              <motion.div
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    marginBottom: "8px",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "10px",
+                      background: "rgba(99, 102, 241, 0.15)",
+                      color: "#818CF8",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Globe size={16} />
+                  </div>
+                  <h4
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: "800",
+                      color: "#FFFFFF",
+                      margin: 0,
+                    }}
+                  >
+                    {domainTitle}
+                  </h4>
+                </div>
+
+                <p
+                  style={{
+                    fontSize: "12px",
+                    color: "#94A3B8",
+                    lineHeight: "1.6",
+                    marginBottom: "20px",
+                  }}
+                >
+                  {domainDesc}
+                </p>
+
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "10px",
+                  }}
+                >
+                  {domainSteps &&
+                    domainSteps.map((s, idx) => (
+                      <div key={s.id || idx} className="wc-step2-step-item">
+                        <span
+                          style={{
+                            color: "#818CF8",
+                            fontFamily: "monospace",
+                            fontWeight: "900",
+                          }}
+                        >
+                          {s.num || `0${idx + 1}`}
+                        </span>
+                        <span>{lang === "en" ? s.text_en : s.text_ar}</span>
+                      </div>
+                    ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* TAB 2: Payment Gateways */}
+            {activeStep2Tab === "payment" && (
+              <motion.div
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    marginBottom: "8px",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "10px",
+                      background: "rgba(99, 102, 241, 0.15)",
+                      color: "#818CF8",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <CreditCard size={16} />
+                  </div>
+                  <h4
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: "800",
+                      color: "#FFFFFF",
+                      margin: 0,
+                    }}
+                  >
+                    {paymentTitle}
+                  </h4>
+                </div>
+
+                <p
+                  style={{
+                    fontSize: "12px",
+                    color: "#94A3B8",
+                    lineHeight: "1.6",
+                    marginBottom: "20px",
+                  }}
+                >
+                  {paymentDesc}
+                </p>
+
+                {/* Render Pure Dynamic Gateways from Firestore */}
+                {gatewaysList &&
+                  gatewaysList.map((gw) => (
+                    <div key={gw.id} className="wc-step2-gateway-card">
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        <h4
+                          style={{
+                            fontSize: "15px",
+                            fontWeight: "800",
+                            color: "#FFFFFF",
+                            margin: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                          }}
+                        >
+                          <CreditCard size={16} color="#818CF8" />
+                          <span>{gw.title}</span>
+                        </h4>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "10px",
+                          }}
+                        >
+                          <span className="wc-step2-badge-indigo">
+                            {lang === "en" ? gw.badge_en : gw.badge_ar}
+                          </span>
+                        </div>
+                      </div>
+                      <p
+                        style={{
+                          fontSize: "12px",
+                          color: "#94A3B8",
+                          lineHeight: "1.6",
+                          margin: 0,
+                        }}
+                      >
+                        {lang === "en" ? gw.desc_en : gw.desc_ar}
+                      </p>
+                    </div>
+                  ))}
+              </motion.div>
+            )}
+
+            {/* TAB 3: Currency & Tax Parameters */}
+            {activeStep2Tab === "currency" && (
+              <motion.div
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    marginBottom: "8px",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "10px",
+                      background: "rgba(99, 102, 241, 0.15)",
+                      color: "#818CF8",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <SlidersHorizontal size={16} />
+                  </div>
+                  <h4
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: "800",
+                      color: "#FFFFFF",
+                      margin: 0,
+                    }}
+                  >
+                    {currencyTitle}
+                  </h4>
+                </div>
+
+                <p
+                  style={{
+                    fontSize: "12px",
+                    color: "#94A3B8",
+                    lineHeight: "1.6",
+                    marginBottom: "20px",
+                  }}
+                >
+                  {currencyDesc}
+                </p>
+
+                {/* Item 1: Base Currency */}
+                {currencyItem && (
+                  <div className="wc-step2-gateway-card">
+                    <h4
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: "800",
+                        color: "#FFFFFF",
+                        margin: "0 0 6px 0",
+                      }}
+                    >
+                      {lang === "en"
+                        ? currencyItem.title_en
+                        : currencyItem.title_ar}
+                    </h4>
+                    <p
+                      style={{
+                        fontSize: "12px",
+                        color: "#94A3B8",
+                        lineHeight: "1.6",
+                        margin: 0,
+                      }}
+                    >
+                      {lang === "en"
+                        ? currencyItem.desc_en
+                        : currencyItem.desc_ar}
                     </p>
                   </div>
-                  <div className="wc-category-pills" style={{ justifyContent: 'center' }}>
-                    <button 
-                      className="wc-category-pill active"
-                      onClick={() => setSelectedCategory('All')}
+                )}
+
+                {/* Item 2: VAT Tax */}
+                {vatItem && (
+                  <div
+                    className="wc-step2-gateway-card"
+                    style={{ marginBottom: 0 }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: "6px",
+                      }}
                     >
-                      <FolderOpen size={16} />
-                      <span>{lang === 'en' ? 'All Templates' : 'جميع القوالب'}</span>
-                    </button>
-                    {[...new Set(galleryTemplates.map(t => t.category).filter(Boolean))].map(cat => (
-                      <button 
-                        key={cat}
-                        className="wc-category-pill"
-                        onClick={() => setSelectedCategory(cat)}
+                      <h4
+                        style={{
+                          fontSize: "14px",
+                          fontWeight: "800",
+                          color: "#FFFFFF",
+                          margin: 0,
+                        }}
                       >
-                        <Layers size={16} />
-                        <span>{cat}</span>
-                      </button>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-                    <button 
-                      onClick={() => setSelectedCategory(null)}
-                      className="wc-btn wc-btn-secondary"
-                      style={{ padding: '8px 16px', fontSize: '12px' }}
-                    >
-                      {isRtl ? <ArrowRight size={14} /> : <ArrowLeft size={14} />}
-                      <span>{lang === 'en' ? 'Back to Categories' : 'العودة للأقسام'}</span>
-                    </button>
-                    <h3 style={{ fontSize: '17px', fontWeight: '900', color: '#C084FC', margin: 0 }}>
-                      {selectedCategory === 'All' ? (lang === 'en' ? 'All Templates' : 'جميع القوالب') : selectedCategory}
-                    </h3>
-                  </div>
-                  {galleryTemplates.filter(t => selectedCategory === 'All' || t.category === selectedCategory).length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text2, #8B96A8)' }}>
-                      {lang === 'en' ? 'No templates in this category yet.' : 'لا توجد قوالب في هذا القسم حالياً.'}
+                        {lang === "en" ? vatItem.title_en : vatItem.title_ar}
+                      </h4>
                     </div>
-                  ) : (
-                    <div className="wc-template-grid">
-                      {galleryTemplates
-                        .filter(tpl => selectedCategory === 'All' || tpl.category === selectedCategory)
-                        .map(tpl => (
-                        <motion.div 
-                          key={tpl.id}
-                          className="wc-template-card"
-                          onClick={() => handleSelectGalleryTemplate(tpl)}
-                          whileHover={{ y: -4 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <div className="wc-template-icon">{tpl.icon}</div>
-                          <h4 style={{ color: 'var(--text, #F8FAFC)', fontSize: '15px', fontWeight: '900', marginBottom: '6px' }}>
-                            {lang === 'en' ? tpl.name_en : tpl.name_ar}
-                          </h4>
-                          <p style={{ color: 'var(--text2, #8B96A8)', fontSize: '12px', lineHeight: '1.5', margin: 0 }}>
-                            {lang === 'en' ? tpl.description_en : tpl.description_ar}
-                          </p>
-                        </motion.div>
-                      ))}
+                    <p
+                      style={{
+                        fontSize: "12px",
+                        color: "#94A3B8",
+                        lineHeight: "1.6",
+                        margin: 0,
+                      }}
+                    >
+                      {lang === "en" ? vatItem.desc_en : vatItem.desc_ar}
+                    </p>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
+  // ====== RENDER TAB 3: VISUAL INTERACTIVE NODE WORKSPACE ======
+  const renderStep3 = () => (
+    <motion.div
+      key="step3"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -12 }}
+      transition={{ duration: 0.2 }}
+    >
+      <div className="wc-section-header">
+        <div
+          style={{
+            width: "4px",
+            height: "24px",
+            borderRadius: "4px",
+            background: "#6366F1",
+          }}
+        />
+        <div>
+          <h3 className="wc-section-title">
+            <Server size={18} color="#6366F1" />
+            <span>
+              {lang === "en"
+                ? "Step 3: Domain Infrastructure & Node Matrix"
+                : "الخطوة 3: البنية التحتية ومصفوفة العقد (Node Matrix)"}
+            </span>
+          </h3>
+          <p className="wc-section-desc">
+            {lang === "en"
+              ? "Verify DNS connectivity matrix, SSL security status, and generate AI brand domain extensions."
+              : "استعرض حالة اتصالات الـ DNS، شهادة الأمان SSL، واستخرج أفضل نطاقات ودومينات تجارية لبراندك."}
+          </p>
+        </div>
+      </div>
+
+      {/* Top Minimalist Status Rail */}
+      <div className="wc-status-rail-2030">
+        <div className="wc-status-rail-item">
+          <Activity size={14} color="#10B981" />
+          <span>
+            {lang === "en" ? "System Status:" : "حالة النظام:"}{" "}
+            <strong>{lang === "en" ? "Online 🟢" : "متصل 🟢"}</strong>
+          </span>
+        </div>
+        <div className="wc-status-rail-item">
+          <ShieldCheck size={14} color="#10B981" />
+          <span>
+            {lang === "en" ? "Encryption:" : "التشفير:"}{" "}
+            <strong>
+              {lang === "en" ? "TLS 1.3 Active 🔒" : "مفعل 🔒 (256-bit)"}
+            </strong>
+          </span>
+        </div>
+        <div className="wc-status-rail-item">
+          <Zap size={14} color="#818CF8" />
+          <span>
+            {lang === "en" ? "DNS Propagation:" : "انتشار DNS:"}{" "}
+            <strong>{lang === "en" ? "Ready ⚡" : "جاهز ⚡"}</strong>
+          </span>
+        </div>
+      </div>
+
+      {/* Central Interactive Visual Node Map Canvas */}
+      <div className="wc-node-map-canvas">
+        {/* Central Core Node */}
+        <motion.div className="wc-node-central" whileHover={{ scale: 1.05 }}>
+          <Globe size={28} />
+          <h4 className="wc-node-central-title">
+            {state?.brandName || "Brand Core"}
+          </h4>
+          <span className="wc-node-central-sub">
+            {cleanBrand(state.brandName)}.store
+          </span>
+        </motion.div>
+
+        {/* 4 Connected Peripheral Nodes */}
+        <div className="wc-peripheral-nodes-grid">
+          {/* Node 1 */}
+          <motion.div
+            className="wc-node-card"
+            whileHover={{ y: -3 }}
+            onClick={() => setActiveNode(1)}
+          >
+            <div className="wc-node-info">
+              <div className="wc-node-icon-wrap">
+                <Globe size={20} />
+              </div>
+              <div>
+                <h4 className="wc-node-title">
+                  {lang === "en"
+                    ? "1. System Connectivity & SSL"
+                    : "1. حالة الاتصال والتشفير الأمني"}
+                </h4>
+                <p className="wc-node-desc">
+                  {lang === "en"
+                    ? "Click to inspect IP & TLS status"
+                    : "اضغط لمعاينة الـ IP وشهادة SSL"}
+                </p>
+              </div>
+            </div>
+            <span className="wc-command-pill-tag">ONLINE</span>
+          </motion.div>
+
+          {/* Node 2 */}
+          <motion.div
+            className="wc-node-card"
+            whileHover={{ y: -3 }}
+            onClick={() => setActiveNode(2)}
+          >
+            <div className="wc-node-info">
+              <div
+                className="wc-node-icon-wrap"
+                style={{
+                  background: "rgba(99, 102, 241, 0.2)",
+                  color: "#818CF8",
+                }}
+              >
+                <Sparkles size={20} />
+              </div>
+              <div>
+                <h4 className="wc-node-title">
+                  {lang === "en"
+                    ? "2. Smart AI Domain Generator"
+                    : "2. مولد مصفوفة الدومينات الذكية"}
+                </h4>
+                <p className="wc-node-desc">
+                  {lang === "en"
+                    ? "Click to generate AI extensions"
+                    : "اضغط لاستخراج دومينات ذكية"}
+                </p>
+              </div>
+            </div>
+            <span className="wc-command-pill-tag">AI ACTIVE</span>
+          </motion.div>
+
+          {/* Node 3 */}
+          <motion.div
+            className="wc-node-card"
+            whileHover={{ y: -3 }}
+            onClick={() => setActiveNode(3)}
+          >
+            <div className="wc-node-info">
+              <div className="wc-node-icon-wrap">
+                <Code size={20} />
+              </div>
+              <div>
+                <h4 className="wc-node-title">
+                  {lang === "en"
+                    ? "3. DNS Records Configuration"
+                    : "3. جدول إعدادات الـ DNS"}
+                </h4>
+                <p className="wc-node-desc">
+                  {lang === "en"
+                    ? "Click to copy A & CNAME records"
+                    : "اضغط لنسخ سجلات الـ DNS"}
+                </p>
+              </div>
+            </div>
+            <span className="wc-command-pill-tag">MATRIX READY</span>
+          </motion.div>
+
+          {/* Node 4 */}
+          <motion.div
+            className="wc-node-card"
+            whileHover={{ y: -3 }}
+            onClick={() => setActiveNode(4)}
+          >
+            <div className="wc-node-info">
+              <div className="wc-node-icon-wrap">
+                <CheckSquare size={20} />
+              </div>
+              <div>
+                <h4 className="wc-node-title">
+                  {lang === "en"
+                    ? "4. Setup Confirmation"
+                    : "4. تأكيد جاهزية إعدادات الموقع"}
+                </h4>
+                <p className="wc-node-desc">
+                  {lang === "en"
+                    ? "Click to confirm step completion"
+                    : "اضغط لتأكيد الإنجاز"}
+                </p>
+              </div>
+            </div>
+            <span className="wc-command-pill-tag">CONFIRMATION</span>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Focus Mode Inspector Overlay (On-Click Node Inspection) */}
+      <AnimatePresence>
+        {activeNode !== null && (
+          <motion.div
+            className="wc-node-inspector-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setActiveNode(null)}
+          >
+            <motion.div
+              className="wc-node-inspector-card"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 350, damping: 30 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="wc-node-inspector-header">
+                <h3
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: 800,
+                    color: "#FFFFFF",
+                    margin: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <HardDrive size={18} color="#6366F1" />
+                  <span>
+                    {activeNode === 1 &&
+                      (lang === "en"
+                        ? "Node 1: System Connectivity & Security Status"
+                        : "العقدة 1: حالة اتصال النظام والربط الأمني")}
+                    {activeNode === 2 &&
+                      (lang === "en"
+                        ? "Node 2: Smart AI Domain Matrix Generator"
+                        : "العقدة 2: مولد مصفوفة الدومينات الذكية")}
+                    {activeNode === 3 &&
+                      (lang === "en"
+                        ? "Node 3: DNS Records Configuration Matrix"
+                        : "العقدة 3: جدول ربط إعدادات الـ DNS للدومين المخصص")}
+                    {activeNode === 4 &&
+                      (lang === "en"
+                        ? "Node 4: Website Setup Confirmation"
+                        : "العقدة 4: تأكيد جاهزية إعدادات الموقع")}
+                  </span>
+                </h3>
+                <button
+                  onClick={() => setActiveNode(null)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "#94A3B8",
+                    cursor: "pointer",
+                    padding: 4,
+                  }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Node 1 Content: Connectivity & SSL Health */}
+              {activeNode === 1 && (
+                <div
+                  className="wc-infra-health-grid"
+                  style={{ marginTop: "10px" }}
+                >
+                  <motion.div
+                    className="wc-infra-health-card"
+                    whileHover={{ y: -2, scale: 1.01 }}
+                  >
+                    <div className="wc-infra-health-icon">
+                      <Globe size={18} color="#6366F1" />
+                    </div>
+                    <div>
+                      <div
+                        style={{
+                          fontSize: "10px",
+                          color: "#64748B",
+                          fontWeight: "700",
+                          textTransform: "uppercase",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 5,
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: "50%",
+                            background: "#10B981",
+                            boxShadow: "0 0 6px #10B981",
+                          }}
+                        />
+                        <span>
+                          {lang === "en" ? "A RECORD IP" : "عنوان IP (سجل A)"}
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "12.5px",
+                          fontWeight: "800",
+                          color: "#FFFFFF",
+                          fontFamily: "monospace",
+                        }}
+                      >
+                        185.199.108.153
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    className="wc-infra-health-card"
+                    whileHover={{ y: -2, scale: 1.01 }}
+                  >
+                    <div
+                      className="wc-infra-health-icon"
+                      style={{
+                        background: "rgba(16, 185, 129, 0.15)",
+                        color: "#10B981",
+                      }}
+                    >
+                      <ShieldCheck size={18} />
+                    </div>
+                    <div>
+                      <div
+                        style={{
+                          fontSize: "10px",
+                          color: "#64748B",
+                          fontWeight: "700",
+                          textTransform: "uppercase",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 5,
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: "50%",
+                            background: "#10B981",
+                            boxShadow: "0 0 6px #10B981",
+                          }}
+                        />
+                        <span>
+                          {lang === "en"
+                            ? "SSL ENCRYPTION"
+                            : "شهادة الأمان SSL"}
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "12.5px",
+                          fontWeight: "800",
+                          color: "#10B981",
+                        }}
+                      >
+                        {lang === "en"
+                          ? "TLS 1.3 Active 🔒"
+                          : "مفعلة 🔒 (256-bit)"}
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    className="wc-infra-health-card"
+                    whileHover={{ y: -2, scale: 1.01 }}
+                  >
+                    <div
+                      className="wc-infra-health-icon"
+                      style={{
+                        background: "rgba(129, 140, 248, 0.15)",
+                        color: "#818CF8",
+                      }}
+                    >
+                      <Zap size={18} />
+                    </div>
+                    <div>
+                      <div
+                        style={{
+                          fontSize: "10px",
+                          color: "#64748B",
+                          fontWeight: "700",
+                          textTransform: "uppercase",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 5,
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: "50%",
+                            background: "#818CF8",
+                            boxShadow: "0 0 6px #818CF8",
+                          }}
+                        />
+                        <span>
+                          {lang === "en"
+                            ? "GLOBAL CDN EDGE"
+                            : "شبكة التسريع CDN"}
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "12.5px",
+                          fontWeight: "800",
+                          color: "#818CF8",
+                        }}
+                      >
+                        {lang === "en"
+                          ? "Cloudflare Anycast"
+                          : "Cloudflare عالمي"}
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+
+              {/* Node 2 Content: Smart AI Domain Matrix Generator */}
+              {activeNode === 2 && (
+                <div>
+                  <h4
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: "800",
+                      color: "#FFFFFF",
+                      marginBottom: "8px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <Sparkles size={18} color="#6366F1" />
+                    <span>
+                      {lang === "en"
+                        ? "Smart AI Domain Matrix Generator"
+                        : "مولد مصفوفة الدومينات الذكية"}
+                    </span>
+                  </h4>
+                  <p
+                    style={{
+                      color: "#94A3B8",
+                      fontSize: "12px",
+                      lineHeight: "1.6",
+                      marginBottom: "18px",
+                    }}
+                  >
+                    {lang === "en"
+                      ? `Generate domain combinations for brand (${state?.brandName || "Select brand in identity step"}) in niche (${state?.niche || "General"}).`
+                      : `استخرج نماذج استراتيجية للدومينات بناءً على اسم البراند (${state?.brandName || "حدد براند في خطوات الهوية"}) ومجالك (${state?.niche || "عام"}).`}
+                  </p>
+
+                  <div
+                    style={{
+                      maxWidth: "480px",
+                      width: "100%",
+                      marginBottom: "16px",
+                    }}
+                  >
+                    <AnalysisModeSelector
+                      mode={analysisMode}
+                      onChange={setAnalysisMode}
+                      lang={lang}
+                      accentColor="#6366F1"
+                    />
+                  </div>
+
+                  <button
+                    onClick={generateDomainIdeas}
+                    disabled={isGeneratingDomain || !state?.brandName}
+                    className="wc-btn wc-btn-primary"
+                    style={{ width: "100%", maxWidth: "320px" }}
+                  >
+                    {isGeneratingDomain ? (
+                      <span
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 8,
+                        }}
+                      >
+                        <span className="td-spinner" />{" "}
+                        {lang === "en"
+                          ? "Analyzing Domain Matrix..."
+                          : "جاري تحليل مصفوفة الدومينات..."}
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 8,
+                        }}
+                      >
+                        <Cpu size={16} />{" "}
+                        {lang === "en"
+                          ? "Generate Domain Suggestions"
+                          : "توليد اقتراحات الدومينات"}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Render Generated Matrix Cards */}
+                  {domainMatrix && !domainMatrix.error && (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "16px",
+                        marginTop: "20px",
+                      }}
+                    >
+                      {domainMatrix.classic && (
+                        <div>
+                          <div className="wc-domain-group-title">
+                            <Sparkles size={15} color="#6366F1" />
+                            <span>
+                              {lang === "en"
+                                ? domainMatrix.classic.title_en
+                                : domainMatrix.classic.title_ar}
+                            </span>
+                          </div>
+                          <div className="wc-domain-grid">
+                            {(Array.isArray(domainMatrix.classic.domains)
+                              ? domainMatrix.classic.domains
+                              : [
+                                  {
+                                    domain: `${cleanBrand(state.brandName)}.com`,
+                                    desc: "Official Standard",
+                                  },
+                                  {
+                                    domain: `get${cleanBrand(state.brandName)}.com`,
+                                    desc: "Action Standard",
+                                  },
+                                ]
+                            ).map((item) =>
+                              renderDomainCard(item.domain, item.desc),
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
-                </>
+                </div>
               )}
-            </>
-          ) : (
-            <>
-              <div className="wc-code-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <button 
-                    onClick={() => setSelectedGalleryTemplate(null)}
-                    className="wc-btn wc-btn-secondary"
-                    style={{ padding: '8px 16px', fontSize: '12px' }}
+
+              {/* Node 3 Content: DNS Table */}
+              {activeNode === 3 && (
+                <div>
+                  <h4
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "800",
+                      color: "#FFFFFF",
+                      marginBottom: "14px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
                   >
-                    {isRtl ? <ArrowRight size={14} /> : <ArrowLeft size={14} />}
-                    <span>{lang === 'en' ? 'Back to Gallery' : 'العودة للمعرض'}</span>
-                  </button>
-                  <h3 style={{ fontSize: '16px', fontWeight: '900', color: '#C084FC', margin: 0 }}>
-                    {selectedGalleryTemplate.icon} {lang === 'en' ? selectedGalleryTemplate.name_en : selectedGalleryTemplate.name_ar}
-                  </h3>
-                </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button onClick={handlePreview} className="wc-btn wc-btn-secondary" style={{ padding: '8px 16px', fontSize: '12px' }}>
-                    <Eye size={14} /> {lang === 'en' ? 'Preview Live' : 'معاينة مباشرة'}
-                  </button>
-                  <button onClick={copyToClipboard} className="wc-btn wc-btn-primary" style={{ background: '#C084FC', padding: '8px 16px', fontSize: '12px' }}>
-                    <Copy size={14} /> {lang === 'en' ? 'Copy Code' : 'نسخ الكود'}
-                  </button>
-                </div>
-              </div>
-              <div className="wc-code-box">
-                <pre>{generatedCode}</pre>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-    </motion.div>
-  );
-
-  // ====== RENDER STEP 2 ======
-  const renderStep2 = () => (
-    <motion.div 
-      key="step2"
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -14 }}
-      transition={{ duration: 0.25 }}
-    >
-      <div className="wc-section-header">
-        <div style={{ width: '4px', height: '22px', borderRadius: '4px', background: '#10B981' }} />
-        <div>
-          <h3 className="wc-section-title">
-            <SlidersHorizontal size={20} color="#10B981" />
-            <span>{lang === 'en' ? 'Step 2: Core Store Configurations' : 'الخطوة 2: الضبط والتهيئة العامة'}</span>
-          </h3>
-          <p className="wc-section-desc">
-            {lang === 'en' 
-              ? 'Configure domain connection, global payment gateways, and tax/currency defaults.' 
-              : 'خطوات عملية وتوجيهية لربط اسم النطاق الخاص بك، تفعيل بوابات الدفع، وتحديد العملة والضرائب.'}
-          </p>
-        </div>
-      </div>
-
-      <div className="wc-settings-layout">
-        <div className="wc-settings-sidebar">
-          {tabs.map(tab => {
-            const IconComponent = tab.IconComp;
-            const isActive = activeTab === tab.id;
-            return (
-              <motion.button
-                key={tab.id}
-                className={`wc-settings-nav-btn ${isActive ? 'active' : ''}`}
-                onClick={() => setActiveTab(tab.id)}
-                whileHover={{ x: isRtl ? -4 : 4 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <div style={{ 
-                  width: '36px', 
-                  height: '36px', 
-                  borderRadius: '10px', 
-                  background: isActive ? '#10B981' : 'rgba(255,255,255,0.05)', 
-                  color: isActive ? '#FFF' : '#10B981',
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center' 
-                }}>
-                  <IconComponent size={18} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '14px', fontWeight: '900', color: isActive ? '#FFF' : 'var(--text, #F8FAFC)' }}>
-                    {lang === 'en' ? tab.label_en : tab.label_ar}
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'var(--text2, #8B96A8)' }}>
-                    {lang === 'en' ? tab.desc_en : tab.desc_ar}
-                  </div>
-                </div>
-                {isActive && <CheckCircle2 size={18} color="#10B981" />}
-              </motion.button>
-            );
-          })}
-        </div>
-
-        <div className="wc-settings-content">
-          {activeTab === 'domain' && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text, #F8FAFC)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Globe size={22} color="#3B82F6" />
-                <span>{lang === 'en' ? 'Connect Custom Domain (DNS Setup)' : 'ربط الدومين المخصص (إعدادات الـ DNS)'}</span>
-              </h3>
-              <p style={{ color: 'var(--text2, #8B96A8)', fontSize: '13.5px', marginBottom: '24px', lineHeight: '1.6' }}>
-                {lang === 'en' 
-                  ? 'Follow these 4 simple steps in your domain registrar (Namecheap, GoDaddy, Cloudflare) to link your domain.' 
-                  : 'اتبع هذه الخطوات الـ 4 في لوحة تحكم شركة الدومين الخاصة بك (مثل Namecheap أو GoDaddy) لربط متجرك.'}
-              </p>
-
-              <ul className="wc-steps-list">
-                <li className="wc-step-item">
-                  <div className="wc-step-num">1</div>
-                  <span>{lang === 'en' ? 'Log in to your Domain Registrar -> DNS Management Settings' : 'سجل الدخول لحساب الدومين الخاص بك وأدخل لصفحة إدارة الـ DNS'}</span>
-                </li>
-                <li className="wc-step-item">
-                  <div className="wc-step-num">2</div>
-                  <span>{lang === 'en' ? 'Add A Record pointing `@` to IP: 185.199.108.153' : 'أضف سجل A Record واجعل الاسم `@` يشير للعنوان الرقمي IP'}</span>
-                </li>
-                <li className="wc-step-item">
-                  <div className="wc-step-num">3</div>
-                  <span>{lang === 'en' ? 'Add CNAME Record pointing `www` to your store slug' : 'أضف سجل CNAME واجعل الاسم `www` يشير إلى رابط متجرك الأصلي'}</span>
-                </li>
-                <li className="wc-step-item">
-                  <div className="wc-step-num">4</div>
-                  <span>{lang === 'en' ? 'Save DNS changes and wait 15 - 30 mins for propagation.' : 'احفظ التغييرات وانتظر 15-30 دقيقة لاكتمل تفعيل النطاق.'}</span>
-                </li>
-              </ul>
-            </motion.div>
-          )}
-
-          {activeTab === 'payment' && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text, #F8FAFC)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <CreditCard size={22} color="#8B5CF6" />
-                <span>{lang === 'en' ? 'Activate Payment Gateways' : 'تفعيل بوابات الدفع الإلكترونية'}</span>
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-                <div className="wc-gateway-card stripe">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <h4 style={{ fontWeight: '900', color: '#8B5CF6', margin: 0, fontSize: '18px' }}>Stripe Checkout</h4>
-                    <span style={{ fontSize: '10px', fontWeight: 800, padding: '3px 10px', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.2)', color: '#C084FC' }}>
-                      {lang === 'en' ? 'Global Cards' : 'عالمي ومعتمد'}
+                    <Code size={16} color="#818CF8" />
+                    <span>
+                      {lang === "en"
+                        ? "DNS Records Configuration Matrix"
+                        : "جدول ربط إعدادات الـ DNS للدومين المخصص"}
                     </span>
+                  </h4>
+
+                  <div style={{ overflowX: "auto" }}>
+                    <table
+                      style={{
+                        width: "100%",
+                        borderCollapse: "collapse",
+                        fontSize: "12px",
+                        textAlign: isRtl ? "right" : "left",
+                      }}
+                    >
+                      <thead>
+                        <tr
+                          style={{
+                            borderBottom: "1px solid var(--wc-border)",
+                            color: "#64748B",
+                            fontSize: "11px",
+                          }}
+                        >
+                          <th style={{ padding: "10px 12px" }}>TYPE</th>
+                          <th style={{ padding: "10px 12px" }}>HOST / NAME</th>
+                          <th style={{ padding: "10px 12px" }}>TARGET VALUE</th>
+                          <th style={{ padding: "10px 12px" }}>TTL</th>
+                          <th style={{ padding: "10px 12px" }}>ACTION</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr
+                          style={{
+                            borderBottom: "1px solid rgba(255,255,255,0.05)",
+                            color: "#FFFFFF",
+                          }}
+                        >
+                          <td
+                            style={{
+                              padding: "12px",
+                              fontFamily: "monospace",
+                              fontWeight: "bold",
+                              color: "#818CF8",
+                            }}
+                          >
+                            A Record
+                          </td>
+                          <td
+                            style={{ padding: "12px", fontFamily: "monospace" }}
+                          >
+                            @
+                          </td>
+                          <td
+                            style={{ padding: "12px", fontFamily: "monospace" }}
+                          >
+                            185.199.108.153
+                          </td>
+                          <td style={{ padding: "12px", color: "#94A3B8" }}>
+                            3600 (Automatic)
+                          </td>
+                          <td style={{ padding: "12px" }}>
+                            <button
+                              className="wc-domain-copy-btn"
+                              onClick={() =>
+                                safeCopyToClipboard(
+                                  "185.199.108.153",
+                                  "IP copied!",
+                                  "تم نسخ IP!",
+                                )
+                              }
+                            >
+                              <Copy size={11} />{" "}
+                              <span>
+                                {lang === "en" ? "Copy IP" : "نسخ IP"}
+                              </span>
+                            </button>
+                          </td>
+                        </tr>
+                        <tr style={{ color: "#FFFFFF" }}>
+                          <td
+                            style={{
+                              padding: "12px",
+                              fontFamily: "monospace",
+                              fontWeight: "bold",
+                              color: "#818CF8",
+                            }}
+                          >
+                            CNAME
+                          </td>
+                          <td
+                            style={{ padding: "12px", fontFamily: "monospace" }}
+                          >
+                            www
+                          </td>
+                          <td
+                            style={{ padding: "12px", fontFamily: "monospace" }}
+                          >
+                            {cleanBrand(state.brandName)}.creatify.store
+                          </td>
+                          <td style={{ padding: "12px", color: "#94A3B8" }}>
+                            3600 (Automatic)
+                          </td>
+                          <td style={{ padding: "12px" }}>
+                            <button
+                              className="wc-domain-copy-btn"
+                              onClick={() =>
+                                safeCopyToClipboard(
+                                  `${cleanBrand(state.brandName)}.creatify.store`,
+                                  "CNAME copied!",
+                                  "تم نسخ CNAME!",
+                                )
+                              }
+                            >
+                              <Copy size={11} />{" "}
+                              <span>
+                                {lang === "en" ? "Copy CNAME" : "نسخ CNAME"}
+                              </span>
+                            </button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
-                  <p style={{ color: 'var(--text, #F8FAFC)', fontSize: '13px', margin: 0, lineHeight: '1.6' }}>
-                    {lang === 'en' 
-                      ? 'Supports Credit/Debit Cards, Apple Pay, Google Pay worldwide with maximum security and instant payouts.' 
-                      : 'يدعم الدفع بالبطاقات الائتمانية حول العالم، Apple Pay، و Google Pay بسرعة وأمان عالي.'}
-                  </p>
                 </div>
+              )}
 
-                <div className="wc-gateway-card paypal">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <h4 style={{ fontWeight: '900', color: '#3B82F6', margin: 0, fontSize: '18px' }}>PayPal Express</h4>
-                    <span style={{ fontSize: '10px', fontWeight: 800, padding: '3px 10px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.2)', color: '#60A5FA' }}>
-                      {lang === 'en' ? 'Instant Trust' : 'محبوب وثقة'}
-                    </span>
+              {/* Node 4 Content: Setup Confirmation */}
+              {activeNode === 4 && (
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "16px",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    marginTop: "10px",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "40px",
+                      height: "40px",
+                      borderRadius: "12px",
+                      background: "rgba(99, 102, 241, 0.15)",
+                      color: "#818CF8",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <CheckSquare size={20} />
                   </div>
-                  <p style={{ color: 'var(--text, #F8FAFC)', fontSize: '13px', margin: 0, lineHeight: '1.6' }}>
-                    {lang === 'en' 
-                      ? 'Preferred by global buyers for easy 1-click checkout without re-entering card details.' 
-                      : 'يفضله ملايين العملاء حول العالم لسهولته وأمانه في إتمام الدفع بزر واحد.'}
-                  </p>
+                  <div style={{ flex: 1, minWidth: "220px" }}>
+                    <h4
+                      style={{
+                        margin: "0 0 2px 0",
+                        fontSize: "14px",
+                        color: "#FFFFFF",
+                        fontWeight: 800,
+                      }}
+                    >
+                      {lang === "en"
+                        ? "Website Setup Confirmation"
+                        : "تأكيد جاهزية إعدادات الموقع"}
+                    </h4>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: "12px",
+                        color: "#94A3B8",
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {lang === "en"
+                        ? "Confirm that you have generated your landing page code and reviewed store parameters."
+                        : "قم بالتأكيد بعد معاينة الكود وضبط إعدادات الدومين لبدء تشغيل متجرك."}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      dispatch({
+                        type: "COMPLETE_STEP",
+                        payload: "website-construction",
+                      });
+                      toast(
+                        lang === "en"
+                          ? "Website setup step confirmed as completed! ✅"
+                          : "تم تأكيد إكمال خطوة بناء وتجهيز الموقع بنجاح! ✅",
+                        "success",
+                      );
+                    }}
+                    className="wc-btn wc-btn-primary"
+                    style={{ padding: "10px 24px" }}
+                  >
+                    {state?.completedSteps?.includes("website-construction")
+                      ? lang === "en"
+                        ? "Setup Confirmed ✅"
+                        : "تم التأكيد ✅"
+                      : lang === "en"
+                        ? "Confirm Completion"
+                        : "تأكيد الإنجاز"}
+                  </button>
                 </div>
-              </div>
+              )}
             </motion.div>
-          )}
-
-          {activeTab === 'taxes' && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text, #F8FAFC)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Coins size={22} color="#F59E0B" />
-                <span>{lang === 'en' ? 'Currency & Taxes Configuration' : 'العملة الأساسية والضرائب'}</span>
-              </h3>
-              
-              <ul className="wc-steps-list">
-                <li className="wc-step-item">
-                  <div className="wc-step-num" style={{ background: 'rgba(245, 158, 11, 0.2)', borderColor: '#F59E0B', color: '#F59E0B' }}>1</div>
-                  <div>
-                    <div style={{ fontWeight: 800, color: 'var(--text, #F8FAFC)' }}>
-                      {lang === 'en' ? 'Default Store Currency:' : 'العملة الأساسية للمتجر:'}
-                    </div>
-                    <div style={{ fontSize: '12px', color: 'var(--text2, #8B96A8)' }}>
-                      {lang === 'en' ? 'Set from Settings -> General -> Currency (e.g. USD, SAR, EGP).' : 'يتم الضبط من الإعدادات العامة للمتجر حسب جمهورك المستهدف (USD / SAR / EGP).'}
-                    </div>
-                  </div>
-                </li>
-
-                <li className="wc-step-item">
-                  <div className="wc-step-num" style={{ background: 'rgba(245, 158, 11, 0.2)', borderColor: '#F59E0B', color: '#F59E0B' }}>2</div>
-                  <div>
-                    <div style={{ fontWeight: 800, color: 'var(--text, #F8FAFC)' }}>
-                      {lang === 'en' ? 'Tax Rates (VAT):' : 'ضريبة القيمة المضافة (VAT):'}
-                    </div>
-                    <div style={{ fontSize: '12px', color: 'var(--text2, #8B96A8)' }}>
-                      {lang === 'en' ? 'Enable automatic checkout tax calculation in Settings -> Taxes.' : 'تأكد من تفعيل احتساب الضريبة تلقائياً في صفحة إعدادات الضرائب.'}
-                    </div>
-                  </div>
-                </li>
-              </ul>
-            </motion.div>
-          )}
-        </div>
-      </div>
-    </motion.div>
-  );
-
-  // ====== RENDER STEP 3 ======
-  const renderStep3 = () => (
-    <motion.div 
-      key="step3"
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -14 }}
-      transition={{ duration: 0.25 }}
-    >
-      <div className="wc-section-header">
-        <div style={{ width: '4px', height: '22px', borderRadius: '4px', background: '#F59E0B' }} />
-        <div>
-          <h3 className="wc-section-title">
-            <Server size={20} color="#F59E0B" />
-            <span>{lang === 'en' ? 'Step 3: Domain Infrastructure & Matrix' : 'الخطوة 3: البنية التحتية ومصفوفة الدومينات'}</span>
-          </h3>
-          <p className="wc-section-desc">
-            {lang === 'en' 
-              ? 'Generate premium brand domain name combinations and verify setup completion.' 
-              : 'استخرج أفضل نطاقات ودومينات تجارية بناءً على اسم براندك ومجالك للبدء بقوة.'}
-          </p>
-        </div>
-      </div>
-
-      <div style={{ background: 'var(--bg3, rgba(30, 41, 59, 0.5))', border: '1px solid var(--line, rgba(255,255,255,0.08))', borderRadius: '20px', padding: '24px', marginBottom: '28px' }}>
-        <h3 style={{ fontSize: '16px', fontWeight: '900', color: '#F59E0B', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Sparkles size={20} />
-          <span>{lang === 'en' ? 'Smart Domain Matrix Generator' : 'مولد مصفوفة الدومينات الذكية'}</span>
-        </h3>
-        <p style={{ color: 'var(--text2, #8B96A8)', fontSize: '13px', lineHeight: '1.6', marginBottom: '20px' }}>
-          {lang === 'en' 
-            ? `Generate strategic domain formats based on your brand (${state?.brandName || 'select brand in identity step'}) and niche (${state?.niche || 'general'}).` 
-            : `استخرج نماذج استراتيجية للدومينات بناءً على اسم البراند (${state?.brandName || 'يرجى تحديد براند في خطوات الهوية'}) ومجالك (${state?.niche || 'عام'}).`}
-        </p>
-
-        <div style={{ maxWidth: '560px', width: '100%', marginBottom: '20px' }}>
-          <AnalysisModeSelector 
-            mode={analysisMode} 
-            onChange={setAnalysisMode} 
-            lang={lang} 
-            accentColor="#F59E0B" 
-          />
-        </div>
-
-        <button 
-          onClick={generateDomainIdeas}
-          disabled={isGeneratingDomain || !state?.brandName}
-          className="wc-btn wc-btn-primary"
-          style={{ background: isGeneratingDomain ? 'rgba(245, 158, 11, 0.3)' : '#F59E0B', color: isGeneratingDomain ? '#FFF' : '#000' }}
-        >
-          {isGeneratingDomain ? (
-            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-              <span className="td-spinner" style={{ borderColor: 'rgba(0,0,0,0.2)', borderTopColor: '#000' }} /> {lang === 'en' ? 'Analyzing Matrix...' : 'جاري تحليل مصفوفة الدومينات...'}
-            </span>
-          ) : (
-            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              <Cpu size={18} /> {lang === 'en' ? 'Generate Domain Matrix' : 'توليد مصفوفة الدومينات'}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {renderMatrixSection()}
-
-      <div style={{ marginTop: '36px' }}>
-        <div style={{ background: 'var(--bg3, rgba(30, 41, 59, 0.4))', border: '1px solid var(--line, rgba(255,255,255,0.08))', borderRadius: '20px', padding: '24px', display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <CheckSquare size={24} />
-          </div>
-          <div style={{ flex: 1, minWidth: '220px' }}>
-            <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', color: 'var(--text, #F8FAFC)', fontWeight: 900 }}>
-              {lang === 'en' ? 'Website Setup Confirmation' : 'تأكيد جاهزية الموقع'}
-            </h4>
-            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text2, #8B96A8)', lineHeight: 1.6 }}>
-              {lang === 'en' ? 'Confirm that you have generated your website code and reviewed core store settings.' : 'قم بالتأكيد بأنك ولدت كود موقعك وراجعت الإعدادات الأساسية لتحديث حالة الإنجاز.'}
-            </p>
-          </div>
-          <button 
-            onClick={() => {
-              dispatch({ type: 'COMPLETE_STEP', payload: 'website-construction' });
-              toast(lang === 'en' ? 'Step marked as completed!' : 'تم تأكيد إكمال خطوة بناء الموقع!', 'success');
-            }}
-            className="wc-btn wc-btn-primary"
-            style={{ 
-              background: state?.completedSteps?.includes('website-construction') ? '#10B981' : '#F59E0B', 
-              color: state?.completedSteps?.includes('website-construction') ? '#FFF' : '#000',
-              padding: '12px 28px' 
-            }}
-          >
-            {state?.completedSteps?.includes('website-construction') 
-              ? (lang === 'en' ? 'Setup Confirmed ✅' : 'تم التأكيد ✅')
-              : (lang === 'en' ? 'Confirm Completion' : 'تأكيد الإنجاز')}
-          </button>
-        </div>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 
   return (
     <ToolDashboardLayout
       id="website-construction"
-      title={lang === 'en' ? 'Website Construction & Setup' : 'بناء وتجهيز الموقع'}
-      subtitle={lang === 'en' ? 'A 3-step wizard to build your website, configure settings, and setup the infrastructure.' : 'معالج من 3 خطوات لبناء الموقع، ضبط الإعدادات العامة، وتجهيز البنية التحتية.'}
+      title={
+        lang === "en"
+          ? "Website Construction & Setup Studio"
+          : "منصة بناء وتجهيز الموقع المتكاملة"
+      }
+      subtitle={
+        lang === "en"
+          ? "Generate custom Tailwind CSS code, configure payment gateways, and setup domain infrastructure."
+          : "مولد كود مواقع احترافي بـ Tailwind CSS، ضبط بوابات الدفع، وتجهيز البنية التحتية للدومين."
+      }
       stepNumber={stepNumber}
-      accentColor="#3B82F6"
+      accentColor="#6366F1"
       timeEstimate="30 - 60"
     >
-      <div className="wc-container" dir={isRtl ? 'rtl' : 'ltr'}>
-        {/* WIZARD NAVIGATION HEADER */}
-        <div className="wc-wizard-header">
-          <button 
-            className={`wc-wizard-tab ${currentStep === 1 ? 'active' : ''}`}
-            onClick={() => setCurrentStep(1)} 
+      <div className="wc-container" dir={isRtl ? "rtl" : "ltr"}>
+        {/* 2030 Floating Pill Tab Bar Navigation */}
+        <div className="wc-wizard-header-2030">
+          <button
+            type="button"
+            className={`wc-wizard-tab-2030 ${currentStep === 1 ? "active" : ""}`}
+            onClick={() => changeStep(1)}
           >
             {currentStep === 1 && (
-              <motion.div 
-                layoutId="websiteStepTabHighlight" 
-                className="wc-wizard-tab-bg" 
-                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              <motion.div
+                layoutId="websiteStepPillHighlight"
+                className="wc-wizard-tab-bg-2030"
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
               />
             )}
-            <Wand2 size={16} style={{ zIndex: 1 }} />
-            <span style={{ zIndex: 1 }}>1. {lang === 'en' ? 'Design & Code' : 'التصميم والكود'}</span>
+            <span className="wc-tab-badge" style={{ zIndex: 1 }}>
+              01
+            </span>
+            <Wand2 size={15} style={{ zIndex: 1 }} />
+            <span style={{ zIndex: 1 }}>
+              {lang === "en" ? "Design & Code" : "التصميم والكود"}
+            </span>
           </button>
 
-          <button 
-            className={`wc-wizard-tab ${currentStep === 2 ? 'active' : ''}`}
-            onClick={() => setCurrentStep(2)} 
+          <button
+            type="button"
+            className={`wc-wizard-tab-2030 ${currentStep === 2 ? "active" : ""}`}
+            onClick={() => changeStep(2)}
           >
             {currentStep === 2 && (
-              <motion.div 
-                layoutId="websiteStepTabHighlight" 
-                className="wc-wizard-tab-bg" 
-                style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.3) 0%, rgba(59, 130, 246, 0.25) 100%)', borderColor: 'rgba(16, 185, 129, 0.4)' }}
-                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              <motion.div
+                layoutId="websiteStepPillHighlight"
+                className="wc-wizard-tab-bg-2030"
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
               />
             )}
-            <Settings size={16} style={{ zIndex: 1 }} />
-            <span style={{ zIndex: 1 }}>2. {lang === 'en' ? 'Settings & DNS' : 'الإعدادات العامة'}</span>
+            <span className="wc-tab-badge" style={{ zIndex: 1 }}>
+              02
+            </span>
+            <SlidersHorizontal size={15} style={{ zIndex: 1 }} />
+            <span style={{ zIndex: 1 }}>
+              {lang === "en" ? "Core Configurations" : "الإعدادات العامة"}
+            </span>
           </button>
 
-          <button 
-            className={`wc-wizard-tab ${currentStep === 3 ? 'active' : ''}`}
-            onClick={() => setCurrentStep(3)} 
+          <button
+            type="button"
+            className={`wc-wizard-tab-2030 ${currentStep === 3 ? "active" : ""}`}
+            onClick={() => changeStep(3)}
           >
             {currentStep === 3 && (
-              <motion.div 
-                layoutId="websiteStepTabHighlight" 
-                className="wc-wizard-tab-bg" 
-                style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.3) 0%, rgba(236, 72, 153, 0.25) 100%)', borderColor: 'rgba(245, 158, 11, 0.4)' }}
-                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              <motion.div
+                layoutId="websiteStepPillHighlight"
+                className="wc-wizard-tab-bg-2030"
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
               />
             )}
-            <Server size={16} style={{ zIndex: 1 }} />
-            <span style={{ zIndex: 1 }}>3. {lang === 'en' ? 'Infrastructure' : 'البنية التحتية'}</span>
+            <span className="wc-tab-badge" style={{ zIndex: 1 }}>
+              03
+            </span>
+            <Server size={15} style={{ zIndex: 1 }} />
+            <span style={{ zIndex: 1 }}>
+              {lang === "en" ? "Domain Infrastructure" : "البنية التحتية"}
+            </span>
           </button>
         </div>
 
-        {/* STEP CONTENT WRAPPER */}
-        <div className="wc-panel">
+        {/* Step View Panel */}
+        <div className="wc-panel-2030">
           <AnimatePresence mode="wait">
             {currentStep === 1 && renderStep1()}
             {currentStep === 2 && renderStep2()}
             {currentStep === 3 && renderStep3()}
           </AnimatePresence>
 
-          {/* WIZARD CONTROLS */}
+          {/* Bottom Step Wizard Navigation */}
           <div className="wc-controls">
-            <button 
-              onClick={() => setCurrentStep(prev => Math.max(1, prev - 1))}
+            <button
+              onClick={() => changeStep(Math.max(1, currentStep - 1))}
               className="wc-btn wc-btn-secondary"
-              style={{ visibility: currentStep === 1 ? 'hidden' : 'visible' }}
+              style={{ visibility: currentStep === 1 ? "hidden" : "visible" }}
             >
-              {isRtl ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
-              <span>{lang === 'en' ? 'Previous Step' : 'الخطوة السابقة'}</span>
+              {isRtl ? <ArrowRight size={15} /> : <ArrowLeft size={15} />}
+              <span>{lang === "en" ? "Previous Step" : "الخطوة السابقة"}</span>
             </button>
             {currentStep < 3 && (
-              <button 
-                onClick={() => setCurrentStep(prev => Math.min(3, prev + 1))}
+              <button
+                onClick={() => changeStep(Math.min(3, currentStep + 1))}
                 className="wc-btn wc-btn-primary"
               >
-                <span>{lang === 'en' ? 'Next Step' : 'الخطوة التالية'}</span>
-                {isRtl ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
+                <span>{lang === "en" ? "Next Step" : "الخطوة التالية"}</span>
+                {isRtl ? <ArrowLeft size={15} /> : <ArrowRight size={15} />}
               </button>
             )}
           </div>

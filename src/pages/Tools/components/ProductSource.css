@@ -339,19 +339,538 @@
   color: #64748B;
 }
 
-/* RESPONSIVE MEDIA QUERIES */
-@media (max-width: 960px) {
-  .ps-main-grid {
+/* ==========================================================================
+   KANBAN 3-COLUMN INTERACTIVE PIPELINE WORKBOARD STYLES
+   ========================================================================== */
+.ps-kanban-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  align-items: start;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.ps-kanban-column {
+  background: var(--bg2, rgba(15, 23, 42, 0.65));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  border-radius: 20px;
+  padding: 20px;
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow, 0 10px 30px rgba(0, 0, 0, 0.25));
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 600px;
+}
+
+.ps-kanban-column.ideas-col {
+  border-top: 4px solid #F59E0B;
+}
+
+.ps-kanban-column.progress-col {
+  border-top: 4px solid #3B82F6;
+}
+
+.ps-kanban-column.completed-col {
+  border-top: 4px solid #10B981;
+}
+
+.ps-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+}
+
+.ps-column-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--text, #F8FAFC);
+}
+
+.ps-column-count {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text, #F8FAFC);
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 99px;
+}
+
+.ps-column-count.yellow {
+  background: rgba(245, 158, 11, 0.15);
+  color: #F59E0B;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.ps-column-count.blue {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60A5FA;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.ps-column-count.green {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34D399;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.ps-column-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 780px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.ps-column-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.ps-column-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 99px;
+}
+
+/* ==========================================================================
+   2030 SPATIAL DASHBOARD — NEON PINK & CYBER CYAN THEME
+   ========================================================================== */
+.ps-spatial-container {
+  background: radial-gradient(circle at 50% 0%, rgba(6, 182, 212, 0.08) 0%, rgba(244, 63, 94, 0.05) 40%, transparent 80%);
+  min-height: 100vh;
+}
+
+.ps-spatial-command-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 18px 28px;
+  background: rgba(13, 17, 26, 0.75);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4), 0 0 30px rgba(6, 182, 212, 0.12);
+  border-radius: 24px;
+  backdrop-filter: blur(20px);
+  margin-bottom: 28px;
+}
+
+.ps-pink-glow-btn {
+  padding: 12px 26px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #EC4899 0%, #F43F5E 100%);
+  border: none;
+  color: #FFFFFF;
+  font-size: 13.5px;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 25px rgba(244, 63, 94, 0.45);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ps-pink-glow-btn:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 32px rgba(244, 63, 94, 0.65);
+}
+
+.ps-cyan-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  color: #38BDF8;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 11.5px;
+  font-weight: 800;
+}
+
+.ps-pink-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  color: #FB7185;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 11.5px;
+  font-weight: 800;
+}
+
+/* Spatial Grid Canvas */
+.ps-spatial-canvas-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 28px;
+  align-items: start;
+}
+
+.ps-ideas-spatial-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.ps-spatial-hud-dock {
+  background: rgba(13, 17, 26, 0.75);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 25px rgba(6, 182, 212, 0.08);
+  border-radius: 24px;
+  padding: 24px;
+  backdrop-filter: blur(18px);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: sticky;
+  top: 90px;
+}
+
+@media (max-width: 1080px) {
+  .ps-spatial-canvas-grid {
     grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 640px) {
-  .ps-panel {
-    padding: 20px 16px;
-    border-radius: 18px;
-  }
-  .ps-cards-grid {
-    grid-template-columns: 1fr;
-  }
+.ps-filter-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px 24px;
+  background: var(--bg2, rgba(15, 23, 42, 0.5));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.06));
+  border-radius: 20px;
+  backdrop-filter: blur(16px);
+  margin-bottom: 24px;
 }
+
+.ps-filter-pills-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ps-pill-select-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg3, rgba(30, 41, 59, 0.5));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  padding: 6px 14px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.ps-pill-select-group:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+  background: var(--bg4, rgba(30, 41, 59, 0.8));
+}
+
+.ps-pill-select {
+  background: transparent;
+  border: none;
+  color: var(--text, #F8FAFC);
+  font-size: 12.5px;
+  font-weight: 800;
+  outline: none;
+  cursor: pointer;
+}
+
+.ps-cta-glow-btn {
+  padding: 12px 24px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #F43F5E 0%, #E11D48 100%);
+  border: none;
+  color: #FFFFFF;
+  font-size: 13.5px;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 20px rgba(244, 63, 94, 0.35);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ps-cta-glow-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(244, 63, 94, 0.5);
+}
+
+.ps-kanban-board-fluid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  align-items: start;
+  width: 100%;
+}
+
+.ps-fluid-column {
+  background: var(--bg2, rgba(15, 23, 42, 0.45));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.06));
+  border-radius: 24px;
+  padding: 24px;
+  backdrop-filter: blur(14px);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 620px;
+}
+
+.ps-fluid-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.06));
+}
+
+.ps-fluid-title-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.ps-fluid-title-badge.amber {
+  background: rgba(245, 158, 11, 0.12);
+  color: #F59E0B;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.ps-fluid-title-badge.indigo {
+  background: rgba(99, 102, 241, 0.12);
+  color: #818CF8;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.ps-fluid-title-badge.emerald {
+  background: rgba(16, 185, 129, 0.12);
+  color: #34D399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.ps-saas-card {
+  background: var(--bg3, rgba(30, 41, 59, 0.5));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  border-radius: 18px;
+  padding: 20px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+}
+
+.ps-saas-card:hover {
+  transform: translateY(-2px);
+  background: var(--bg4, rgba(30, 41, 59, 0.8));
+  border-color: rgba(244, 63, 94, 0.35);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3);
+}
+
+.ps-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 20px;
+  gap: 14px;
+  color: var(--text2, #94A3B8);
+}
+
+
+
+/* ==========================================================================
+   COMPACT VERTICAL TABS & ETSY TOOLING ENHANCEMENTS
+   ========================================================================== */
+.ps-vertical-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.ps-vtab-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--bg3, rgba(30, 41, 59, 0.6));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  border-radius: 16px;
+  color: var(--text2, #94A3B8);
+  cursor: pointer;
+  text-align: right;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+}
+
+.ps-vtab-card:hover {
+  background: var(--bg4, rgba(30, 41, 59, 0.9));
+  border-color: rgba(244, 63, 94, 0.3);
+  color: var(--text, #F8FAFC);
+  transform: translateY(-1px);
+}
+
+.ps-vtab-card.active {
+  background: rgba(244, 63, 94, 0.12);
+  border-color: #F43F5E;
+  color: var(--text, #F8FAFC);
+  box-shadow: 0 4px 20px rgba(244, 63, 94, 0.18);
+}
+
+.ps-vtab-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ps-vtab-icon.yellow { background: rgba(245, 158, 11, 0.15); color: #F59E0B; }
+.ps-vtab-icon.blue { background: rgba(59, 130, 246, 0.15); color: #3B82F6; }
+.ps-vtab-icon.green { background: rgba(16, 185, 129, 0.15); color: #10B981; }
+
+.ps-vtab-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.ps-vtab-title {
+  font-size: 13.5px;
+  font-weight: 900;
+  color: var(--text, #F8FAFC);
+}
+
+.ps-vtab-sub {
+  font-size: 11px;
+  color: var(--text2, #94A3B8);
+  margin-top: 2px;
+}
+
+.ps-vtab-badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60A5FA;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+
+.ps-vtab-badge.green {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34D399;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+/* Etsy Bestseller Badge */
+.ps-etsy-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #F59E0B;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 10.5px;
+  font-weight: 800;
+}
+
+/* Action Button: المساعدة في إنشاء نسختي الخاصة */
+.ps-build-btn {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #F43F5E, #E11D48);
+  border: none;
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 4px 14px rgba(244, 63, 94, 0.3);
+  transition: all 0.2s ease;
+  margin-top: 10px;
+}
+
+.ps-build-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(244, 63, 94, 0.45);
+}
+
+/* Internal Filter Pills */
+.ps-filter-pills {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.ps-pill-btn {
+  padding: 6px 14px;
+  border-radius: 10px;
+  background: var(--bg3, rgba(30, 41, 59, 0.5));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  color: var(--text2, #94A3B8);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ps-pill-btn.active {
+  background: #3B82F6;
+  border-color: #3B82F6;
+  color: #FFFFFF;
+}
+
+/* Tool Deep Dive Accordion */
+.ps-tool-card {
+  background: var(--bg3, rgba(30, 41, 59, 0.6));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ps-tool-card:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+  background: var(--bg4, rgba(30, 41, 59, 0.9));
+}
+
+.ps-tool-card.expanded {
+  border-color: #6366F1;
+  background: rgba(99, 102, 241, 0.08);
+}
+

@@ -4,7 +4,7 @@ export const TOOLS_24H = [
   { id: 'landing-page-content', label_ar: 'محتوى الموقع', label_en: 'Page Content', icon: '📄', section: 'tools', group_ar: 'بناء وتجهيز المتجر', group_en: 'Store Setup' },
   { id: 'legal-pages', label_ar: 'الصفحات القانونية', label_en: 'Legal Pages', icon: '⚖️', section: 'tools', group_ar: 'بناء وتجهيز المتجر', group_en: 'Store Setup' },
   { id: 'social-integration', label_ar: 'ربط السوشيال', label_en: 'Social Integration', icon: '🔗', section: 'tools', group_ar: 'بناء وتجهيز المتجر', group_en: 'Store Setup' },
-  { id: 'email-setup', label_ar: 'إعداد الإيميل', label_en: 'Email Setup', icon: '📧', section: 'tools', group_ar: 'بناء وتجهيز المتجر', group_en: 'Store Setup' },
+  { id: 'email-setup', label_ar: 'التسويق عبر الإيميل', label_en: 'Email Marketing', icon: '📧', section: 'tools', group_ar: 'بناء وتجهيز المتجر', group_en: 'Store Setup' },
   { id: 'product-source', label_ar: 'مصدر المنتج', label_en: 'Product Source', icon: '📦', section: 'tools', group_ar: 'المنتج والربحية', group_en: 'Product & Profit' },
   { id: 'profit-calculator', label_ar: 'حاسبة الأرباح', label_en: 'Profit Calculator', icon: '💰', section: 'tools', group_ar: 'المنتج والربحية', group_en: 'Product & Profit' },
   { id: 'social-presence', label_ar: 'السوشيال ميديا', label_en: 'Social Presence', icon: '📱', section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing' },
@@ -87,10 +87,10 @@ export const TOOLS_CONTENT = {
     ]
   },
   'email-setup': {
-    title_ar: 'إعدادات الإيميل (Email Setup)',
-    title_en: 'Email Setup',
-    description_ar: 'تواصل مع عملائك بشكل احترافي.',
-    description_en: 'Communicate with your customers professionally.',
+    title_ar: 'التسويق عبر الإيميل والأتمتة (Email Marketing)',
+    title_en: 'Email Marketing & Automation',
+    description_ar: 'تصميم قوالب الإيميل، إطلاق حملات أتمتة الرسائل الجماعية، وتوثيق سجلات الدومين.',
+    description_en: 'Design email templates, launch automated bulk campaigns, and authenticate domain DNS records.',
     steps_ar: [
       'إعداد وتوثيق الدومين للإرسال',
       'إنشاء قوائم المشتركين'

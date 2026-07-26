@@ -9,12 +9,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles,
   Target,
-  Layers,
-  ShoppingBag,
   Users,
   Check,
-  CheckCircle2,
   ChevronDown,
+  ChevronUp,
   Copy,
   Zap,
   AlertTriangle,
@@ -25,14 +23,16 @@ import {
   Layout,
   Award,
   Cpu,
-  Coins,
-  ArrowRight,
-  HelpCircle,
-  Bookmark
+  Download,
+  ShoppingBag,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 import './LandingPageContent.css';
 
-// Glassmorphic Animated Custom Dropdown
+// Glassmorphic Animated Custom Dropdown Component
 function CustomDropdown({ value, onChange, options, label, icon: Icon, placeholder, lang }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -52,8 +52,8 @@ function CustomDropdown({ value, onChange, options, label, icon: Icon, placehold
   return (
     <div className="lpc-dropdown-container" ref={dropdownRef}>
       {label && (
-        <label className="lpc-label" style={{ marginBottom: '8px' }}>
-          {Icon && <Icon size={14} color="#F43F5E" />}
+        <label className="lpc-label">
+          {Icon && <Icon size={13} color="#818CF8" strokeWidth={1.5} />}
           <span>{label}</span>
         </label>
       )}
@@ -64,7 +64,7 @@ function CustomDropdown({ value, onChange, options, label, icon: Icon, placehold
       >
         <span>{selectedOption?.label || placeholder}</span>
         <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
-          <ChevronDown size={16} color="var(--text2, #94A3B8)" />
+          <ChevronDown size={14} color="#94A3B8" />
         </motion.div>
       </div>
 
@@ -87,7 +87,7 @@ function CustomDropdown({ value, onChange, options, label, icon: Icon, placehold
                 }}
               >
                 <span>{opt.label}</span>
-                {String(opt.value) === String(value) && <Check size={14} color="#F43F5E" />}
+                {String(opt.value) === String(value) && <Check size={13} color="#6366F1" />}
               </div>
             ))}
           </motion.div>
@@ -99,14 +99,18 @@ function CustomDropdown({ value, onChange, options, label, icon: Icon, placehold
 
 export default function LandingPageContent({ stepNumber }) {
   const { state, dispatch } = useApp();
-  const toast = useToast();
+  const toastContext = useToast();
+  const toast = typeof toastContext === 'function' ? toastContext : (toastContext?.toast || ((msg) => console.log(msg)));
+
   const lang = state.language || 'ar';
   const isRtl = lang === 'ar';
   
   const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
+  const [activeSectionIndex, setActiveSectionIndex] = useState(0); // 0: config, 1: hero, 2: problem, 3: offer, 4: proof, 5: cta
+  const [isConsoleCollapsed, setIsConsoleCollapsed] = useState(false);
   
   // Base Inputs
-  const [productName, setProductName] = useState('');
+  const [productName, setProductName] = useState(state.brandName || '');
   const [audience, setAudience] = useState(state.niche || '');
   const [validationError, setValidationError] = useState('');
   
@@ -118,6 +122,9 @@ export default function LandingPageContent({ stepNumber }) {
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState(null);
+
+  // Active Idea Tab for each section
+  const [activeIdeaIndex, setActiveIdeaIndex] = useState({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 });
 
   // Dropdown Options Definitions
   const objectiveOptions = [
@@ -145,6 +152,44 @@ export default function LandingPageContent({ stepNumber }) {
     { value: 'logical', label: lang === 'en' ? 'Logical & ROI Data-Driven' : 'منطقي ولغة أرقام وعائد' },
     { value: 'empathetic', label: lang === 'en' ? 'Empathetic & Pain-Relief' : 'تعاطف وتخفيف الألم' }
   ];
+
+  // Dock Navigator Section Configuration
+  const dockSections = [
+    { id: 0, title_ar: '0. لوحة التحكم والمدخلات', title_en: '0. Command Deck', icon: Sliders, badge: 'CONSOLE' },
+    { id: 1, title_ar: '1. قسم البطل (Hero)', title_en: '1. Hero Section', icon: Sparkles, badge: 'HERO' },
+    { id: 2, title_ar: '2. المشكلة والألم (Problem)', title_en: '2. Problem & Pain', icon: AlertTriangle, badge: 'PROBLEM' },
+    { id: 3, title_ar: '3. العرض والفوائد (Offer)', title_en: '3. Offer & Benefits', icon: Award, badge: 'OFFER' },
+    { id: 4, title_ar: '4. الإثبات والتوصيات (Proof)', title_en: '4. Social Proof', icon: Users, badge: 'PROOF' },
+    { id: 5, title_ar: '5. النداء لاتخاذ إجراء (CTA)', title_en: '5. Call to Action', icon: Zap, badge: 'CTA' }
+  ];
+
+  // Safe Copy helper
+  const safeCopyToClipboard = (text, successMsgEn, successMsgAr) => {
+    const copyPromise = navigator.clipboard && navigator.clipboard.writeText
+      ? navigator.clipboard.writeText(text)
+      : new Promise((resolve, reject) => {
+          try {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            resolve();
+          } catch (e) {
+            reject(e);
+          }
+        });
+
+    copyPromise.then(() => {
+      toast(lang === 'en' ? successMsgEn : successMsgAr, 'success');
+    }).catch(err => {
+      console.error(err);
+      toast(lang === 'en' ? 'Failed to copy to clipboard' : 'تعذر النسخ إلى الحافظة', 'error');
+    });
+  };
 
   const handleGenerate = async () => {
     if (!productName.trim() || !audience.trim()) {
@@ -249,11 +294,11 @@ export default function LandingPageContent({ stepNumber }) {
         const cIdea = pickRandom(getIdeas(ctaMatrix, ctaKey));
 
         const content = {
-          hero: hIdea ? formatIdea(hIdea) : 'Hero Section',
-          problem: pIdea ? formatIdea(pIdea) : 'Problem Section',
-          offer: oIdea ? formatIdea(oIdea) : 'Offer Section',
-          proof: prIdea ? formatIdea(prIdea) : 'Social Proof Section',
-          cta: cIdea ? formatIdea(cIdea) : 'CTA Section'
+          hero: hIdea ? [formatIdea(hIdea)] : ['Hero Section'],
+          problem: pIdea ? [formatIdea(pIdea)] : ['Problem Section'],
+          offer: oIdea ? [formatIdea(oIdea)] : ['Offer Section'],
+          proof: prIdea ? [formatIdea(prIdea)] : ['Social Proof Section'],
+          cta: cIdea ? [formatIdea(cIdea)] : ['CTA Section']
         };
 
         setGeneratedContent(content);
@@ -264,6 +309,11 @@ export default function LandingPageContent({ stepNumber }) {
         });
         toast(lang === 'en' ? 'Landing page matrix content generated!' : 'تم توليد مصفوفة محتوى صفحة الهبوط بنجاح!', 'success');
       }
+      
+      // Auto collapse console & focus Hero section
+      setIsConsoleCollapsed(true);
+      setActiveSectionIndex(1);
+
     } catch (err) {
       console.error(err);
       toast(lang === 'en' ? 'Error generating content' : 'حدث خطأ أثناء التوليد', 'error');
@@ -273,290 +323,419 @@ export default function LandingPageContent({ stepNumber }) {
   };
 
   const copySection = (text) => {
-    navigator.clipboard.writeText(text);
-    toast(lang === 'en' ? 'Section text copied to clipboard!' : 'تم نسخ نص القسم إلى الحافظة!', 'success');
+    safeCopyToClipboard(text, 'Section text copied to clipboard! ✅', 'تم نسخ نص القسم إلى الحافظة! ✅');
   };
+
+  const copyAllMarkdown = () => {
+    if (!generatedContent) return;
+    const formatSection = (title, arr) => {
+      const body = Array.isArray(arr) ? arr.join('\n\n') : String(arr || '');
+      return `## ${title}\n${body}`;
+    };
+
+    const fullMarkdown = [
+      `# ${productName || 'Landing Page Copy'}`,
+      formatSection('1. Hero Section', generatedContent.hero),
+      formatSection('2. Problem & Agitation', generatedContent.problem),
+      formatSection('3. The Offer & Benefits', generatedContent.offer),
+      formatSection('4. Social Proof & Credibility', generatedContent.proof),
+      formatSection('5. Call to Action (CTA)', generatedContent.cta)
+    ].join('\n\n---\n\n');
+
+    safeCopyToClipboard(fullMarkdown, 'Complete landing page markdown copied to clipboard! ✅', 'تم نسخ الهيكل الكامل لصفحة الهبوط إلى الحافظة! ✅');
+  };
+
+  const exportJson = () => {
+    if (!generatedContent) return;
+    const exportData = {
+      product_name: productName,
+      audience,
+      objective,
+      awareness,
+      price_point: pricePoint,
+      emotion_driver: emotion,
+      content: generatedContent,
+      generated_at: new Date().toLocaleDateString()
+    };
+    const jsonStr = JSON.stringify(exportData, null, 2);
+    
+    try {
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(productName || 'landing_page').toLowerCase().replace(/[^a-z0-9]/g, '_')}_content.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast(lang === 'en' ? 'Landing page JSON exported! ✅' : 'تم تصدير ملف JSON بنجاح! ✅', 'success');
+    } catch (err) {
+      console.error(err);
+      safeCopyToClipboard(jsonStr, 'Export JSON copied to clipboard!', 'تم نسخ JSON إلى الحافظة!');
+    }
+  };
+
+  const getSectionDataByIndex = (index) => {
+    if (!generatedContent) return null;
+    switch (index) {
+      case 1: return { title_ar: '1. قسم البطل (Hero)', title_en: '1. Hero Section', ideas: generatedContent.hero, icon: Sparkles };
+      case 2: return { title_ar: '2. توضيح المشكلة والألم', title_en: '2. Problem & Agitation', ideas: generatedContent.problem, icon: AlertTriangle };
+      case 3: return { title_ar: '3. العرض والفوائد الأساسية', title_en: '3. Offer & Benefits', ideas: generatedContent.offer, icon: Award };
+      case 4: return { title_ar: '4. الإثبات الاجتماعي والمصداقية', title_en: '4. Social Proof & Credibility', ideas: generatedContent.proof, icon: Users };
+      case 5: return { title_ar: '5. النداء لاتخاذ إجراء (CTA)', title_en: '5. Call to Action (CTA)', ideas: generatedContent.cta, icon: Zap };
+      default: return null;
+    }
+  };
+
+  const activeSectionData = getSectionDataByIndex(activeSectionIndex);
 
   return (
     <ToolDashboardLayout
       id="landing-page-content"
-      title={lang === 'en' ? 'Landing Page Content Matrix' : 'مصفوفة محتوى صفحة الهبوط'}
-      subtitle={lang === 'en' ? 'Generate highly targeted, multi-variable landing page copy based on 4 psychological dimensions.' : 'أنشئ محتوى مخصص بالكامل لصفحة الهبوط بناءً على 4 أبعاد نفسية واستراتيجية.'}
+      title={lang === 'en' ? 'Landing Page Content Studio' : 'استوديو وصانع محتوى صفحات الهبوط'}
+      subtitle={lang === 'en' ? 'Interactive Collapsible Command Deck for high-converting multi-variable landing page copy.' : 'لوحة تحكم تفاعلية قابلة للطي لصياغة محتوى صفحة الهبوط بناءً على 4 أبعاد نفسية.'}
       stepNumber={stepNumber}
-      accentColor="#F43F5E"
+      accentColor="#6366F1"
       timeEstimate="10 - 20"
     >
-      <div className="lpc-container" dir={isRtl ? 'rtl' : 'ltr'}>
-        <div className="lpc-main-grid">
-          
-          {/* ═══════════════ INPUTS FORM PANEL ═══════════════ */}
-          <div className="lpc-panel">
-            <div className="lpc-panel-header">
-              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(244, 63, 94, 0.12)', color: '#F43F5E', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Sliders size={20} />
+      <div className="lpc-deck-workspace" dir={isRtl ? 'rtl' : 'ltr'}>
+        
+        {/* ═══════════════ 1. MINIMALIST TOP DOCK FLOATING NAVIGATOR ═══════════════ */}
+        <div className="lpc-floating-dock-bar">
+          {dockSections.map((sec) => {
+            const IconComp = sec.icon;
+            const isActive = activeSectionIndex === sec.id;
+            return (
+              <button
+                key={sec.id}
+                type="button"
+                onClick={() => {
+                  setActiveSectionIndex(sec.id);
+                  if (sec.id === 0) setIsConsoleCollapsed(false);
+                }}
+                className={`lpc-dock-pill ${isActive ? 'active' : ''}`}
+              >
+                <div className="lpc-dock-pill-icon">
+                  <IconComp size={15} color={isActive ? '#FFFFFF' : '#818CF8'} />
+                </div>
+                <span className="lpc-dock-pill-title">
+                  {lang === 'en' ? sec.title_en : sec.title_ar}
+                </span>
+                <span className="lpc-dock-pill-badge">{sec.badge}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ═══════════════ 2. DYNAMIC INPUT COMMAND PANEL (SECTION 0 REFACTOR) ═══════════════ */}
+        {activeSectionIndex === 0 && (
+          <motion.div 
+            className="lpc-command-console"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            {/* Console Header Rail */}
+            <div className="lpc-console-rail">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div className="lpc-console-badge-icon">
+                  <Sliders size={18} color="#818CF8" />
+                </div>
+                <div>
+                  <h3 className="lpc-console-heading">
+                    {lang === 'en' ? '4-Dimensional Command Console' : 'منصة التحكم البرمجية ومصفوفة الأبعاد الأربعة'}
+                  </h3>
+                  <p className="lpc-console-subtext">
+                    {lang === 'en' ? 'Define offer details & psychological drivers.' : 'حدد بيانات العرض والدوافع النفسية لجمهورك.'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="lpc-panel-title">
-                  <span>{lang === 'en' ? '4-Dimensional Matrix Inputs' : 'مدخلات المصفوفة رباعية الأبعاد'}</span>
-                </h3>
-                <p className="lpc-panel-subtitle">
-                  {lang === 'en' ? 'Configure offer specs & psychological drivers.' : 'حدد مواصفات العرض والأبعاد النفسية لجمهورك.'}
-                </p>
-              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsConsoleCollapsed(!isConsoleCollapsed)}
+                className="wc-btn wc-btn-secondary"
+                style={{ padding: '6px 14px', fontSize: '11px' }}
+              >
+                {isConsoleCollapsed ? <Maximize2 size={13} /> : <Minimize2 size={13} />}
+                <span>{isConsoleCollapsed ? (lang === 'en' ? 'Expand' : 'توسيع') : (lang === 'en' ? 'Collapse' : 'طـي')}</span>
+              </button>
             </div>
 
-            {/* Validation Alert Box */}
+            {/* Validation Alert */}
             <AnimatePresence>
               {validationError && (
                 <motion.div 
                   className="lpc-validation-alert"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
                 >
-                  <AlertTriangle size={18} flexShrink={0} />
+                  <AlertTriangle size={16} flexShrink={0} />
                   <span>{validationError}</span>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Base Text Inputs */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-              <div className="lpc-form-group">
-                <label className="lpc-label">
-                  <ShoppingBag size={14} color="#F43F5E" />
-                  <span>{lang === 'en' ? 'Product / Offer Name' : 'اسم المنتج أو العرض'}</span>
-                  <span className="lpc-label-accent">*</span>
-                </label>
-                <input 
-                  type="text" 
-                  className={`lpc-input ${validationError && !productName ? 'error' : ''}`}
-                  value={productName}
-                  onChange={(e) => {
-                    setProductName(e.target.value);
-                    if (e.target.value.trim() && audience.trim()) setValidationError('');
-                  }}
-                  placeholder={lang === 'en' ? 'e.g., The Profit System' : 'مثال: نظام الأرباح الإلكترونية'}
-                />
-              </div>
+            {/* Collapsible Console Body */}
+            <AnimatePresence initial={false}>
+              {!isConsoleCollapsed && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25 }}
+                  style={{ overflow: 'hidden' }}
+                >
+                  <div className="lpc-console-body">
+                    {/* Base Text Inputs Row (2 Columns) */}
+                    <div className="lpc-inputs-2col-grid">
+                      <div className="lpc-form-group">
+                        <label className="lpc-label">
+                          <ShoppingBag size={13} color="#818CF8" strokeWidth={1.5} />
+                          <span>{lang === 'en' ? 'Product / Offer Name' : 'اسم المنتج أو العرض'}</span>
+                          <span className="lpc-label-accent">*</span>
+                        </label>
+                        <input 
+                          type="text" 
+                          className={`lpc-input ${validationError && !productName ? 'error' : ''}`}
+                          value={productName}
+                          onChange={(e) => {
+                            setProductName(e.target.value);
+                            if (e.target.value.trim() && audience.trim()) setValidationError('');
+                          }}
+                          placeholder={lang === 'en' ? 'e.g., Nova Profit Engine' : 'مثال: نظام الأرباح الإلكترونية'}
+                        />
+                      </div>
 
-              <div className="lpc-form-group">
-                <label className="lpc-label">
-                  <Users size={14} color="#F43F5E" />
-                  <span>{lang === 'en' ? 'Target Audience' : 'الجمهور المستهدف'}</span>
-                  <span className="lpc-label-accent">*</span>
-                </label>
-                <input 
-                  type="text" 
-                  className={`lpc-input ${validationError && !audience ? 'error' : ''}`}
-                  value={audience}
-                  onChange={(e) => {
-                    setAudience(e.target.value);
-                    if (productName.trim() && e.target.value.trim()) setValidationError('');
-                  }}
-                  placeholder={lang === 'en' ? 'e.g., Freelancers & Agencies' : 'مثال: أصحاب الوكالات والمستقلين'}
-                />
-              </div>
-            </div>
+                      <div className="lpc-form-group">
+                        <label className="lpc-label">
+                          <Users size={13} color="#818CF8" strokeWidth={1.5} />
+                          <span>{lang === 'en' ? 'Target Audience' : 'الجمهور المستهدف'}</span>
+                          <span className="lpc-label-accent">*</span>
+                        </label>
+                        <input 
+                          type="text" 
+                          className={`lpc-input ${validationError && !audience ? 'error' : ''}`}
+                          value={audience}
+                          onChange={(e) => {
+                            setAudience(e.target.value);
+                            if (productName.trim() && e.target.value.trim()) setValidationError('');
+                          }}
+                          placeholder={lang === 'en' ? 'e.g., Freelancers & Agencies' : 'مثال: أصحاب الوكالات والمستقلين'}
+                        />
+                      </div>
+                    </div>
 
-            {/* 4 Psychological Dimension Dropdowns */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-              <CustomDropdown 
-                label={lang === 'en' ? '1. Page Objective' : '1. الهدف من الصفحة'}
-                icon={Target}
-                value={objective}
-                onChange={setObjective}
-                options={objectiveOptions}
-                lang={lang}
-              />
+                    {/* 4 Psychological Dimension Dropdowns (2x2 Clean Grid) */}
+                    <div className="lpc-dropdowns-2x2-grid">
+                      <CustomDropdown 
+                        label={lang === 'en' ? '1. Page Objective' : '1. الهدف من الصفحة'}
+                        icon={Target}
+                        value={objective}
+                        onChange={setObjective}
+                        options={objectiveOptions}
+                        lang={lang}
+                      />
 
-              <CustomDropdown 
-                label={lang === 'en' ? '2. Audience Awareness' : '2. مستوى وعي الجمهور'}
-                icon={Sparkles}
-                value={awareness}
-                onChange={setAwareness}
-                options={awarenessOptions}
-                lang={lang}
-              />
+                      <CustomDropdown 
+                        label={lang === 'en' ? '2. Audience Awareness' : '2. مستوى وعي الجمهور'}
+                        icon={Sparkles}
+                        value={awareness}
+                        onChange={setAwareness}
+                        options={awarenessOptions}
+                        lang={lang}
+                      />
 
-              <CustomDropdown 
-                label={lang === 'en' ? '3. Price/Complexity' : '3. الفئة السعرية / التعقيد'}
-                icon={DollarSign}
-                value={pricePoint}
-                onChange={setPricePoint}
-                options={pricePointOptions}
-                lang={lang}
-              />
+                      <CustomDropdown 
+                        label={lang === 'en' ? '3. Price/Complexity' : '3. الفئة السعرية / التعقيد'}
+                        icon={DollarSign}
+                        value={pricePoint}
+                        onChange={setPricePoint}
+                        options={pricePointOptions}
+                        lang={lang}
+                      />
 
-              <CustomDropdown 
-                label={lang === 'en' ? '4. Emotional Driver' : '4. الدافع العاطفي (Tone)'}
-                icon={HeartPulse}
-                value={emotion}
-                onChange={setEmotion}
-                options={emotionOptions}
-                lang={lang}
-              />
-            </div>
+                      <CustomDropdown 
+                        label={lang === 'en' ? '4. Emotional Driver' : '4. الدافع العاطفي (Tone)'}
+                        icon={HeartPulse}
+                        value={emotion}
+                        onChange={setEmotion}
+                        options={emotionOptions}
+                        lang={lang}
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            {/* Dual Mode Selector */}
-            <div style={{ marginBottom: '20px' }}>
+            {/* Bottom Distinct Action Bar */}
+            <div className="lpc-console-action-bar">
               <AnalysisModeSelector 
                 mode={analysisMode} 
                 onChange={setAnalysisMode} 
                 lang={lang} 
-                accentColor="#F43F5E" 
+                accentColor="#6366F1" 
               />
-            </div>
 
-            <button 
-              onClick={handleGenerate}
-              disabled={isGenerating}
-              className="td-btn-primary"
-              style={{ background: isGenerating ? 'rgba(244, 63, 94, 0.3)' : '#F43F5E', width: '100%' }}
+              <button 
+                onClick={handleGenerate}
+                disabled={isGenerating}
+                className="lpc-btn-primary"
+              >
+                {isGenerating ? (
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    <span className="td-spinner" /> {lang === 'en' ? 'Assembling Matrix...' : 'جاري تجميع محتوى الصفحة...'}
+                  </span>
+                ) : (
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    <Cpu size={16} strokeWidth={1.5} /> {lang === 'en' ? 'Generate Intelligent Content' : 'توليد محتوى ذكي وموجه'}
+                  </span>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ═══════════════ 3. IN-CONTEXT CONTENT CANVAS SPOTLIGHT (SECTIONS 1 TO 5) ═══════════════ */}
+        {activeSectionIndex >= 1 && activeSectionIndex <= 5 && (
+          <div className="lpc-spotlight-copy-wrapper">
+            {!generatedContent && !isGenerating ? (
+              <div className="lpc-empty-deck-card">
+                <FileText size={36} color="#818CF8" />
+                <h4>{lang === 'en' ? 'Configure parameters & click generate' : 'حدد الأبعاد الأربعة ثم اضغط توليد المحتوى'}</h4>
+                <p>{lang === 'en' ? 'Switch to Section 0 to set product name and target audience.' : 'انتقل للمحطة 0 لإدخال بيانات المنتج والجمهور المستهدف.'}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveSectionIndex(0);
+                    setIsConsoleCollapsed(false);
+                  }}
+                  className="wc-btn wc-btn-primary"
+                  style={{ marginTop: '14px' }}
+                >
+                  <Sliders size={14} />
+                  <span>{lang === 'en' ? 'Go to Command Deck' : 'الانتقال لمنصة التحكم'}</span>
+                </button>
+              </div>
+            ) : isGenerating ? (
+              <div className="lpc-loading-deck-card">
+                <div className="td-spinner" style={{ width: 32, height: 32 }} />
+                <span>{lang === 'en' ? 'Generating section copy...' : 'جاري صياغة وتوليد محتوى القسم...'}</span>
+              </div>
+            ) : (
+              activeSectionData && (
+                <motion.div 
+                  className="lpc-live-copy-card"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  {/* Card Header Rail */}
+                  <div className="lpc-copy-card-header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div className="lpc-copy-card-icon">
+                        {React.createElement(activeSectionData.icon || Sparkles, { size: 18, color: '#818CF8' })}
+                      </div>
+                      <div>
+                        <h3 className="lpc-copy-card-title">
+                          {lang === 'en' ? activeSectionData.title_en : activeSectionData.title_ar}
+                        </h3>
+                        <span className="lpc-copy-card-tag">SPOTLIGHT COPY ⚡</span>
+                      </div>
+                    </div>
+
+                    {/* Option Switcher & Copy Action */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        {(activeSectionData.ideas || []).map((_, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => setActiveIdeaIndex(prev => ({ ...prev, [activeSectionIndex]: i }))}
+                            className={`lpc-idea-pill ${ (activeIdeaIndex[activeSectionIndex] || 0) === i ? 'active' : '' }`}
+                          >
+                            {lang === 'en' ? `Option ${i + 1}` : `خيار ${i + 1}`}
+                          </button>
+                        ))}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => copySection((activeSectionData.ideas || [])[activeIdeaIndex[activeSectionIndex] || 0])}
+                        className="wc-btn wc-btn-primary"
+                        style={{ padding: '6px 14px', fontSize: '11.5px' }}
+                      >
+                        <Copy size={13} />
+                        <span>{lang === 'en' ? 'Copy Text' : 'نسخ النص'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Card Main Body */}
+                  <div className="lpc-copy-card-body">
+                    <pre dir={isRtl ? 'rtl' : 'ltr'} style={{ textAlign: isRtl ? 'right' : 'left' }}>
+                      {(activeSectionData.ideas || [])[activeIdeaIndex[activeSectionIndex] || 0]}
+                    </pre>
+                  </div>
+                </motion.div>
+              )
+            )}
+          </div>
+        )}
+
+        {/* ═══════════════ FLOATING BOTTOM UTILITY DOCK ═══════════════ */}
+        <div className="lpc-bottom-utility-dock">
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              type="button"
+              disabled={activeSectionIndex === 0}
+              onClick={() => setActiveSectionIndex(prev => Math.max(0, prev - 1))}
+              className="wc-btn wc-btn-secondary"
             >
-              {isGenerating ? (
-                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-                  <span className="td-spinner" /> {lang === 'en' ? 'Assembling Matrix...' : 'جاري تجميع محتوى الصفحة...'}
-                </span>
-              ) : (
-                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                  <Sparkles size={18} /> {lang === 'en' ? 'Generate Intelligent Content' : 'توليد محتوى ذكي وموجه'}
-                </span>
-              )}
+              {isRtl ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
+              <span>{lang === 'en' ? 'Previous' : 'السابق'}</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={activeSectionIndex === 5}
+              onClick={() => setActiveSectionIndex(prev => Math.min(5, prev + 1))}
+              className="wc-btn wc-btn-secondary"
+            >
+              <span>{lang === 'en' ? 'Next' : 'التالي'}</span>
+              {isRtl ? <ChevronLeft size={15} /> : <ChevronRight size={15} />}
             </button>
           </div>
 
-          {/* ═══════════════ OUTPUT DISPLAY PANEL ═══════════════ */}
-          <div className="lpc-panel">
-            <div className="lpc-panel-header">
-              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.12)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Layout size={20} />
-              </div>
-              <div>
-                <h3 className="lpc-panel-title">
-                  <span>{lang === 'en' ? 'Generated Landing Page Copy' : 'محتوى صفحة الهبوط المولد'}</span>
-                </h3>
-                <p className="lpc-panel-subtitle">
-                  {lang === 'en' ? 'Multi-section targeted copy ready to paste into your website builder.' : 'هيكل محتوى متكامل جاهز للنسخ في موقعك.'}
-                </p>
-              </div>
-            </div>
-
-            {!generatedContent && !isGenerating ? (
-              <div style={{ textAlign: 'center', padding: '48px 16px' }}>
-                <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(244, 63, 94, 0.1)', color: '#F43F5E', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
-                  <FileText size={32} />
-                </div>
-                <h4 style={{ fontSize: '15px', fontWeight: '900', color: 'var(--text, #F8FAFC)', marginBottom: '6px' }}>
-                  {lang === 'en' ? 'Set 4 dimensions & click generate' : 'حدد الأبعاد الأربعة ثم اضغط توليد المحتوى'}
-                </h4>
-                <p style={{ fontSize: '12.5px', color: 'var(--text2, #8B96A8)', maxWidth: '360px', margin: '0 auto', lineHeight: '1.6' }}>
-                  {lang === 'en' ? 'Our matrix adapts Hero, Problem, Offer, Social Proof, and CTA to match your scenario.' : 'يقوم نظامنا بتطوير الهيكل الكامل من البطل والمشكلة والعرض حتى زر الإجراء ليناسب مشروعك.'}
-                </p>
-              </div>
-            ) : isGenerating ? (
-              <div style={{ textAlign: 'center', padding: '48px 16px' }}>
-                <div className="td-spinner" style={{ width: '42px', height: '42px', borderWidth: '4px', borderColor: 'rgba(244, 63, 94, 0.2)', borderTopColor: '#F43F5E', margin: '0 auto 20px auto' }}></div>
-                <h4 style={{ color: '#F43F5E', fontWeight: '900', fontSize: '15px', marginBottom: '6px' }}>
-                  {lang === 'en' ? 'Assembling psychological matrix...' : 'جاري تجميع الأنماط النفسية المطابقة...'}
-                </h4>
-                <p style={{ fontSize: '12px', color: 'var(--text2, #8B96A8)' }}>
-                  {lang === 'en' ? 'Structuring Hero, Offer, Proof, and CTA copy.' : 'يتم تجهيز كافة الأقسام التخصصية لصفحة الهبوط.'}
-                </p>
-              </div>
-            ) : (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}
+          {generatedContent && !isGenerating && (
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={copyAllMarkdown}
+                className="wc-btn wc-btn-secondary"
               >
-                <ContentSection 
-                  icon={Sparkles}
-                  title={lang === 'en' ? '1. Hero Section (Headline & Subtitle)' : '1. قسم البطل (العنوان الرئيسي والفرعي)'} 
-                  ideas={generatedContent.hero} 
-                  onCopy={copySection} 
-                  lang={lang} 
-                />
-                <ContentSection 
-                  icon={AlertTriangle}
-                  title={lang === 'en' ? '2. The Problem / Agitation' : '2. توضيح المشكلة والألم'} 
-                  ideas={generatedContent.problem} 
-                  onCopy={copySection} 
-                  lang={lang} 
-                />
-                <ContentSection 
-                  icon={Award}
-                  title={lang === 'en' ? '3. The Offer & Benefits' : '3. العرض والفوائد الأساسية'} 
-                  ideas={generatedContent.offer} 
-                  onCopy={copySection} 
-                  lang={lang} 
-                />
-                <ContentSection 
-                  icon={Users}
-                  title={lang === 'en' ? '4. Social Proof & Credibility' : '4. الإثبات الاجتماعي والمصداقية'} 
-                  ideas={generatedContent.proof} 
-                  onCopy={copySection} 
-                  lang={lang} 
-                />
-                <ContentSection 
-                  icon={Zap}
-                  title={lang === 'en' ? '5. Call to Action (CTA)' : '5. النداء لاتخاذ إجراء (CTA)'} 
-                  ideas={generatedContent.cta} 
-                  onCopy={copySection} 
-                  lang={lang} 
-                />
-              </motion.div>
-            )}
-          </div>
+                <Copy size={13} />
+                <span>{lang === 'en' ? 'Copy All Markdown' : 'نسخ الكل'}</span>
+              </button>
 
+              <button
+                type="button"
+                onClick={exportJson}
+                className="wc-btn wc-btn-primary"
+              >
+                <Download size={13} />
+                <span>{lang === 'en' ? 'Export JSON' : 'تصدير JSON'}</span>
+              </button>
+            </div>
+          )}
         </div>
+
       </div>
     </ToolDashboardLayout>
   );
 }
 
-function ContentSection({ icon: Icon, title, ideas, onCopy, lang }) {
-  const [activeTab, setActiveTab] = useState(0);
 
-  if (!ideas) return null;
-  const ideasList = Array.isArray(ideas) ? ideas : [ideas];
-  if (ideasList.length === 0 || (ideasList.length === 1 && !ideasList[0])) return null;
-
-  return (
-    <div className="lpc-output-card">
-      <div className="lpc-output-header">
-        <h4 className="lpc-output-title">
-          {Icon && <Icon size={16} />}
-          <span>{title}</span>
-        </h4>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ display: 'flex', gap: '6px' }}>
-            {ideasList.map((_, i) => (
-              <button 
-                key={i} 
-                onClick={() => setActiveTab(i)}
-                className={`lpc-tab-pill ${activeTab === i ? 'active' : ''}`}
-              >
-                {lang === 'en' ? `Idea ${i+1}` : `فكرة ${i+1}`}
-              </button>
-            ))}
-          </div>
-          <button 
-            onClick={() => onCopy(ideasList[activeTab])}
-            className="lpc-copy-btn-header"
-            title={lang === 'en' ? 'Copy Text' : 'نسخ النص'}
-          >
-            <Copy size={13} />
-            <span>{lang === 'en' ? 'Copy' : 'نسخ'}</span>
-          </button>
-        </div>
-      </div>
-      <div className="lpc-output-body">
-        <pre>
-          {ideasList[activeTab]}
-        </pre>
-      </div>
-    </div>
-  );
-}

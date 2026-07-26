@@ -144,7 +144,12 @@ export const getNicheAnalysis = async (nicheId, subNicheId = null) => {
  * Returns the structure of niches (ecom, digital, service) and their sub-niches
  */
 export const getBrandNichesDef = async () => {
-  return await fetchWithFallback(COL.BRAND_NAMES, 'master_niches_list', null);
+  const data = await fetchWithFallback(COL.BRAND_NAMES, 'master_niches_list', null);
+  if (data && data.ecom && data.ecom[0]?.catalogs?.length >= 5) {
+    return data;
+  }
+  const { brandNichesDef } = await import('./seedPart6_brands');
+  return brandNichesDef;
 };
 
 /**

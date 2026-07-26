@@ -11,6 +11,8 @@ import ToolPage from './pages/Tools/ToolPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 import TutorialPage from './pages/Tutorial/TutorialPage';
 
+import ResetPasswordPage from './pages/Auth/ResetPasswordPage';
+
 import { useAuth } from './context/AuthContext';
 import { useApp } from './context/AppContext';
 import { useEffect } from 'react';

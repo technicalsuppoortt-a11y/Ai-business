@@ -25,32 +25,28 @@ export function getCurrentUserEmail(userEmail = null) {
  *  - Uses personal API key from settings (app_api_key in localStorage) if provided.
  */
 export function getOpenAiApiKey(userEmail = null) {
-  const email = getCurrentUserEmail(userEmail);
-  const isAllowedUser = email.toLowerCase() === 'admin@brand.com';
+  let key = '';
 
-  let defaultKey = '';
-  if (isAllowedUser) {
-    try {
-      if (import.meta && import.meta.env && import.meta.env.VITE_OPENAI_API_KEY) {
-        defaultKey = import.meta.env.VITE_OPENAI_API_KEY;
-      }
-    } catch (e) {
-      // Ignore
+  try {
+    if (import.meta && import.meta.env && import.meta.env.VITE_OPENAI_API_KEY) {
+      key = import.meta.env.VITE_OPENAI_API_KEY;
     }
-
-    if (!defaultKey && typeof process !== 'undefined' && process?.env?.VITE_OPENAI_API_KEY) {
-      defaultKey = process.env.VITE_OPENAI_API_KEY;
-    }
+  } catch (e) {
+    // Ignore
   }
 
-  if (defaultKey) {
-    return defaultKey.trim();
+  if (!key && typeof process !== 'undefined' && process?.env?.VITE_OPENAI_API_KEY) {
+    key = process.env.VITE_OPENAI_API_KEY;
+  }
+
+  if (key && typeof key === 'string' && key.trim()) {
+    return key.trim();
   }
 
   // Fallback to user's personal API key configured in Settings
   try {
     const personalKey = localStorage.getItem('app_api_key') || localStorage.getItem('user_openai_api_key') || '';
-    if (personalKey) {
+    if (personalKey && typeof personalKey === 'string' && personalKey.trim()) {
       return personalKey.trim();
     }
   } catch (e) {
@@ -67,7 +63,7 @@ export async function callOpenAiApi({ systemPrompt, userPrompt, jsonMode = false
   const apiKey = getOpenAiApiKey(userEmail);
 
   if (!apiKey) {
-    throw new Error('Live AI Real-time Analysis requires an OpenAI API key. System VITE_OPENAI_API_KEY access is strictly restricted to admin@brand.com. Please enter your personal OpenAI API key in Settings to use Live AI Mode.');
+    throw new Error('Please provide a valid VITE_OPENAI_API_KEY in your .env file to enable Live AI generation.');
   }
 
   const url = 'https://api.openai.com/v1/chat/completions';

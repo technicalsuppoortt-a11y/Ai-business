@@ -6,6 +6,7 @@ import { useApp } from "../../context/AppContext";
 import { useToast } from "../../context/ToastContext";
 import { landingTranslations } from "./LandingTranslations";
 import MadgicxTemplate from "./MadgicxTemplate";
+import VideoShowcaseSection from "../../components/common/VideoShowcaseSection";
 import Logo from "../../components/common/Logo";
 import BrandedLoader from "../../components/common/BrandedLoader";
 import { motion, AnimatePresence } from "framer-motion";
@@ -1365,6 +1366,9 @@ export default function LandingPage() {
           </div>
         </div>
       </motion.section>
+
+      {/* ─── VIDEO SHOWCASE DEMO SECTION ─────────────────────────────────── */}
+      <VideoShowcaseSection isArabic={state.language === "ar"} />
 
       {/* ─── 9 PREMIUM INTERACTIVE SHOWCASE SECTIONS ────────────────────────── */}
 

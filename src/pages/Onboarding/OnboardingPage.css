@@ -1,7 +1,7 @@
 /* Onboarding Page Glassmorphic Styling */
 .onboarding-container {
-  padding: 32px;
-  max-width: 1050px;
+  padding: 20px 24px;
+  max-width: 1000px;
   margin: 0 auto;
   color: var(--text);
   box-sizing: border-box;
@@ -10,93 +10,95 @@
 /* HERO WELCOME HEADER */
 .onboarding-hero-header {
   text-align: center;
-  padding: 36px 24px 28px;
-  background: linear-gradient(135deg, rgba(30, 41, 75, 0.5) 0%, rgba(13, 18, 32, 0.8) 100%);
+  padding: 24px 20px 20px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.6) 0%, rgba(11, 15, 23, 0.8) 100%);
   border: 1px solid var(--line);
   backdrop-filter: blur(16px);
-  border-radius: 24px;
-  margin-bottom: 28px;
+  border-radius: 16px;
+  margin-bottom: 20px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .onboarding-hero-header::before {
   content: '';
   position: absolute;
-  top: -60px;
+  top: -40px;
   left: 50%;
   transform: translateX(-50%);
-  width: 320px;
-  height: 120px;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%);
+  width: 280px;
+  height: 90px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
   pointer-events: none;
 }
 
 .onboarding-step-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--accent);
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #818CF8;
   background: rgba(99, 102, 241, 0.12);
   border: 1px solid rgba(99, 102, 241, 0.25);
-  padding: 6px 14px;
-  border-radius: 20px;
-  letter-spacing: 0.5px;
-  margin-bottom: 14px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
 }
 
 .onboarding-hero-title {
-  font-size: 30px;
-  font-weight: 900;
-  letter-spacing: -0.5px;
-  color: #fff;
-  margin: 0 0 10px 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  color: #F8FAFC;
+  margin: 0 0 6px 0;
 }
 
 .onboarding-hero-subtitle {
-  font-size: 14px;
-  color: var(--text2);
-  line-height: 1.7;
-  max-width: 540px;
+  font-size: 13px;
+  color: #94A3B8;
+  line-height: 1.6;
+  max-width: 520px;
   margin: 0 auto;
 }
 
 /* FREE TRIAL ALERT CARD */
 .onboarding-trial-card {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(59, 130, 246, 0.06) 100%);
+  background: rgba(99, 102, 241, 0.08);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  border-radius: 20px;
-  padding: 24px 28px;
-  margin-bottom: 28px;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  gap: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .trial-badge-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
 .trial-active-tag {
-  font-size: 11px;
-  font-weight: 800;
-  color: #10B981;
-  background: rgba(16, 185, 129, 0.12);
-  padding: 4px 12px;
-  border-radius: 20px;
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  font-size: 10px;
+  font-weight: 700;
+  color: #818CF8;
+  background: rgba(99, 102, 241, 0.12);
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(99, 102, 241, 0.25);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  text-transform: uppercase;
 }
 
 .trial-days-tag {

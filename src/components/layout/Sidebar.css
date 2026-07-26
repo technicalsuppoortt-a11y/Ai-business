@@ -3,8 +3,10 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  width: 260px;
-  background: var(--bg2);
+  width: 250px;
+  background: rgba(11, 15, 23, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-inline-end: 1px solid var(--line);
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -14,21 +16,21 @@
 }
 
 .sidebar.collapsed {
-  width: 72px;
+  width: 68px;
 }
 
 .sidebar-logo-bar {
-  padding: 18px 16px 14px;
+  padding: 14px 14px;
   border-bottom: 1px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 64px;
+  height: 56px;
   box-sizing: border-box;
 }
 
 .sidebar-progress {
-  padding: 12px 16px;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -38,19 +40,21 @@
   font-size: 10px;
   font-weight: 700;
   color: var(--text3);
-  margin-bottom: 6px;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .progress-track {
   height: 4px;
-  background: var(--bg3);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 4px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent), #10B981);
+  background: linear-gradient(90deg, #6366F1, #818CF8);
   border-radius: 4px;
   transition: width 0.4s ease;
 }
@@ -60,39 +64,39 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 8px 6px;
+  padding: 6px 6px;
 }
 
 .nav-section {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .nav-label {
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--text3);
-  letter-spacing: 0.8px;
-  padding: 6px 10px 4px;
+  letter-spacing: 0.08em;
+  padding: 5px 8px 3px;
   text-transform: uppercase;
 }
 
 .nav-section-divider {
   height: 1px;
   background: var(--line);
-  margin: 8px 10px;
+  margin: 6px 8px;
   opacity: 0.5;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 10px;
-  border-radius: 10px;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   color: var(--text2);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   margin-bottom: 2px;
   border: 1px solid transparent;
@@ -100,26 +104,26 @@
 
 .nav-item:hover {
   color: var(--text);
-  background: var(--bg3);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .nav-item.active {
   background: rgba(99, 102, 241, 0.12);
-  color: var(--accent);
+  color: #818CF8;
   border-color: rgba(99, 102, 241, 0.25);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .nav-item.collapsed-item {
   justify-content: center;
-  padding: 8px 0;
+  padding: 6px 0;
 }
 
 .nav-icon-badge {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: var(--bg3);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--line);
   display: flex;
   align-items: center;
@@ -130,8 +134,8 @@
 }
 
 .nav-item:hover .nav-icon-badge {
-  background: var(--bg4);
-  border-color: var(--accent);
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.3);
   color: var(--accent);
 }
 
@@ -139,13 +143,13 @@
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.35);
 }
 
 .nav-icon-badge.done {
-  background: rgba(16, 185, 129, 0.15);
-  border-color: rgba(16, 185, 129, 0.3);
-  color: #10B981;
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.25);
+  color: #818CF8;
 }
 
 .nav-icon-badge.locked {

@@ -2,12 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { useAuth } from '../../../context/AuthContext';
 import { db } from '../../../firebase';
-import { collection, doc, getDocs, setDoc, deleteDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, setDoc, deleteDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Notebook,
-  Folder,
-  FolderPlus,
+  ListTodo,
+  Lightbulb,
+  FileText,
+  Star,
+  Trash2,
+  Edit3,
   Plus,
   Search,
   Grid,
@@ -15,12 +19,10 @@ import {
   Pin,
   Lock,
   Unlock,
-  Star,
-  Trash2,
-  Share2,
-  Download,
-  FileText,
-  Printer,
+  Filter,
+  CheckCircle2,
+  Save,
+  GripVertical,
   Bold as BoldIcon,
   Italic as ItalicIcon,
   Underline as UnderlineIcon,
@@ -39,36 +41,152 @@ import {
   CheckSquare,
   Code as CodeIcon,
   Quote as QuoteIcon,
-  Minus,
   Sparkles,
   Maximize2,
   Minimize2,
   Clock,
   Calendar,
   Tag as TagIcon,
-  Palette,
   Check,
   X,
-  Eye,
   FileCode,
-  SlidersHorizontal,
+  Download,
+  Printer,
   ChevronLeft,
   ChevronRight,
   PanelLeftClose,
   PanelLeftOpen,
-  Filter
+  FolderPlus,
+  ChevronDown,
+  AlertCircle
 } from 'lucide-react';
 import './SmartNotebook.css';
 
-const DEFAULT_NOTEBOOKS = ['Personal', 'Work', 'Study', 'Check List', 'Project Ideas'];
+// Glassmorphic Professional Custom Dropdown Component
+function PlannerCustomDropdown({ value, onChange, options, label, icon: Icon, placeholder, lang }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
-const COLOR_ACCENTS = [
-  { id: 'indigo', name: 'Indigo', hex: '#6366F1' },
-  { id: 'emerald', name: 'Emerald', hex: '#10B981' },
-  { id: 'amber', name: 'Amber', hex: '#F59E0B' },
-  { id: 'rose', name: 'Rose', hex: '#F43F5E' },
-  { id: 'purple', name: 'Purple', hex: '#8B5CF6' }
-];
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(o => String(o.value) === String(value)) || options[0];
+
+  return (
+    <div className="lpc-dropdown-container" ref={dropdownRef}>
+      {label && (
+        <label className="lpc-label">
+          {Icon && <Icon size={13} color="#818CF8" strokeWidth={1.5} />}
+          <span>{label}</span>
+        </label>
+      )}
+      
+      <div 
+        className={`sn-custom-select-trigger ${isOpen ? 'open' : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span>{selectedOption?.label || placeholder}</span>
+        <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          <ChevronDown size={14} color="#94A3B8" />
+        </motion.div>
+      </div>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            className="sn-custom-select-menu"
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            transition={{ duration: 0.15 }}
+          >
+            {options.map(opt => (
+              <div
+                key={String(opt.value)}
+                className={`sn-custom-select-option ${String(opt.value) === String(value) ? 'selected' : ''}`}
+                onClick={() => {
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+              >
+                <span>{opt.label}</span>
+                {String(opt.value) === String(value) && <Check size={13} color="#6366F1" />}
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// Custom Glassmorphic Topbar Filter Dropdown Component
+function PlannerFilterCategoryDropdown({ value, onChange, options, lang }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(o => String(o.value) === String(value)) || options[0];
+
+  return (
+    <div className="lpc-dropdown-container" ref={dropdownRef} style={{ width: 'auto', minWidth: '150px' }}>
+      <div 
+        className={`sn-filter-dropdown-trigger ${isOpen ? 'open' : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <TagIcon size={13} color="#818CF8" />
+          <span>{selectedOption?.label}</span>
+        </div>
+        <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          <ChevronDown size={13} color="#94A3B8" />
+        </motion.div>
+      </div>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            className="sn-filter-dropdown-menu"
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            transition={{ duration: 0.15 }}
+          >
+            {options.map(opt => (
+              <div
+                key={String(opt.value)}
+                className={`sn-filter-dropdown-option ${String(opt.value) === String(value) ? 'selected' : ''}`}
+                onClick={() => {
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+              >
+                <span>{opt.label}</span>
+                {String(opt.value) === String(value) && <Check size={13} color="#6366F1" />}
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export default function SmartNotebook() {
   const { state } = useApp();
@@ -77,41 +195,58 @@ export default function SmartNotebook() {
   const isRtl = lang === 'ar';
   
   // Data State
-  const [notes, setNotes] = useState([]);
+  const [items, setItems] = useState([]);
   const [activeNoteId, setActiveNoteId] = useState(null);
-  const [activeNotebook, setActiveNotebook] = useState('All');
-  const [customNotebooks, setCustomNotebooks] = useState(DEFAULT_NOTEBOOKS);
   
+  // 4 Main Tab Architecture: 'tasks' | 'ideas' | 'notes' | 'favorites'
+  const [activeTab, setActiveTab] = useState('tasks');
+  
+  // Tasks Sub-Tab: 'active' | 'completed'
+  const [taskSubTab, setTaskSubTab] = useState('active');
+  const [priorityFilter, setPriorityFilter] = useState('all'); // 'all' | 'high' | 'medium' | 'low'
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all'); // 'all' | category name
+  
+  // Drag and Drop States for 2D Grid / List Reordering
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+
+  // Custom Dynamic Categories (Persisted with Firebase)
+  const [customTaskCategories, setCustomTaskCategories] = useState(['Work', 'Home', 'General']);
+  const [customIdeaCategories, setCustomIdeaCategories] = useState(['Project', 'Travel', 'Content']);
+  const [customNoteCategories, setCustomNoteCategories] = useState(['Work', 'Personal', 'Study']);
+  
+  // New Category Modals State
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [categoryTarget, setCategoryTarget] = useState('notes'); // 'tasks' | 'ideas' | 'notes'
+  const [newCategoryName, setNewCategoryName] = useState('');
+
+  // Item Creation Modal State
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createType, setCreateType] = useState('task'); // 'task' | 'idea' | 'note'
+  const [newItemTitle, setNewItemTitle] = useState('');
+  const [newItemCategory, setNewItemCategory] = useState('General');
+  const [newItemPriority, setNewItemPriority] = useState('medium'); // 'high' | 'medium' | 'low'
+  const [newItemContent, setNewItemContent] = useState('');
+
   // UI & Filters State
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
   const [isLoading, setIsLoading] = useState(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
-  const [filterPriority, setFilterPriority] = useState('all');
-  
+
   // Active Note Form State
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [notePriority, setNotePriority] = useState('low');
   const [tags, setTags] = useState([]);
-  const [tagInput, setTagInput] = useState('');
   const [selectedColor, setSelectedColor] = useState('#6366F1');
   const [saveStatus, setSaveStatus] = useState('saved'); // 'saving' | 'saved'
 
-  // Modals & Notifications
-  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  // Delete Modals
   const [toastMessage, setToastMessage] = useState(null);
-  const [noteToDelete, setNoteToDelete] = useState(null);
-
-  // Checklist Modal State
-  const [isChecklistModalOpen, setIsChecklistModalOpen] = useState(false);
-  const [isCreatingChecklist, setIsCreatingChecklist] = useState(false);
-  const [checklistTitle, setChecklistTitle] = useState('');
-  const [checklistItems, setChecklistItems] = useState([]);
-  const [viewingChecklist, setViewingChecklist] = useState(null);
+  const [itemToDelete, setItemToDelete] = useState(null);
 
   const editorRef = useRef(null);
   const saveTimeoutRef = useRef(null);
@@ -122,90 +257,56 @@ export default function SmartNotebook() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  // Delete Handlers
-  const requestDeleteNote = (e, note) => {
-    if (e) e.stopPropagation();
-    setNoteToDelete(note);
-  };
-
-  const confirmDeleteNote = async () => {
-    if (!noteToDelete) return;
-    const id = noteToDelete.id || noteToDelete;
-    
-    setNotes(prev => prev.filter(n => n.id !== id));
-    if (activeNoteId === id) setActiveNoteId(null);
-    setNoteToDelete(null);
-    showToast(lang === 'en' ? 'Note deleted 🗑️' : 'تم حذف الملاحظة 🗑️');
-    
-    try {
-      await deleteDoc(doc(db, 'users', userData.uid, 'notebooks', id));
-    } catch (err) {
-      console.error("Delete failed:", err);
-    }
-  };
-
-  // Keyboard Shortcuts Listener
+  // Fetch Items & Custom Categories from Firestore
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Ctrl + N (New Note)
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
-        e.preventDefault();
-        handleCreateNote(activeNotebook === 'All' || activeNotebook === 'Favorites' ? 'Personal' : activeNotebook);
-      }
-      // Ctrl + Shift + F (Focus Mode)
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
-        e.preventDefault();
-        setIsFocusMode(prev => !prev);
-      }
-      // Ctrl + F (Search Focus)
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f' && !e.shiftKey) {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-      }
-      // Esc (Close Modals & Clear Active Note)
-      if (e.key === 'Escape') {
-        setIsTemplateModalOpen(false);
-        setIsChecklistModalOpen(false);
-        setIsCreatingChecklist(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeNotebook]);
-
-  // Load Notes from Firestore
-  useEffect(() => {
-    const fetchNotes = async () => {
+    const fetchData = async () => {
       if (!userData?.uid) return;
       setIsLoading(true);
       try {
+        // Fetch Items
         const notesRef = collection(db, 'users', userData.uid, 'notebooks');
         const q = query(notesRef, orderBy('updatedAt', 'desc'));
         const snap = await getDocs(q);
-        const loadedNotes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        setNotes(loadedNotes);
+        const loaded = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        setItems(loaded);
+
+        // Fetch Custom Categories Settings
+        const catDocRef = doc(db, 'users', userData.uid, 'planner_settings', 'categories');
+        const catSnap = await getDoc(catDocRef);
+        if (catSnap.exists()) {
+          const catData = catSnap.data();
+          if (Array.isArray(catData.taskCategories) && catData.taskCategories.length > 0) {
+            setCustomTaskCategories(catData.taskCategories);
+          }
+          if (Array.isArray(catData.ideaCategories) && catData.ideaCategories.length > 0) {
+            setCustomIdeaCategories(catData.ideaCategories);
+          }
+          if (Array.isArray(catData.noteCategories) && catData.noteCategories.length > 0) {
+            setCustomNoteCategories(catData.noteCategories);
+          }
+        }
       } catch (err) {
-        console.error("Error loading notes:", err);
+        console.error("Error loading planner items/settings:", err);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchNotes();
+    fetchData();
   }, [userData]);
 
-  // Set Active Note Data to Editor Form
+  // Set Active Note Data to Rich Text Editor Canvas
   useEffect(() => {
     if (activeNoteId) {
-      const note = notes.find(n => n.id === activeNoteId);
-      if (note) {
-        setTitle(note.title || '');
-        setContent(note.content || '');
-        setIsReadOnly(note.isLocked || false);
-        setNotePriority(note.priority || 'low');
-        setTags(note.tags || []);
-        setSelectedColor(note.colorAccent || '#6366F1');
-        if (editorRef.current && editorRef.current.innerHTML !== note.content) {
-          editorRef.current.innerHTML = note.content || '';
+      const item = items.find(n => n.id === activeNoteId);
+      if (item) {
+        setTitle(item.title || '');
+        setContent(item.content || '');
+        setIsReadOnly(item.isLocked || false);
+        setNotePriority(item.priority || 'medium');
+        setTags(item.tags || []);
+        setSelectedColor(item.colorAccent || '#6366F1');
+        if (editorRef.current && editorRef.current.innerHTML !== item.content) {
+          editorRef.current.innerHTML = item.content || '';
         }
       }
     } else {
@@ -214,7 +315,7 @@ export default function SmartNotebook() {
       setTags([]);
       if (editorRef.current) editorRef.current.innerHTML = '';
     }
-  }, [activeNoteId, notes]);
+  }, [activeNoteId, items]);
 
   // Auto-Save Logic to Firestore
   useEffect(() => {
@@ -234,7 +335,7 @@ export default function SmartNotebook() {
           updatedAt: serverTimestamp()
         }, { merge: true });
         
-        setNotes(prev => prev.map(n => n.id === activeNoteId ? { ...n, title, content, priority: notePriority, tags, colorAccent: selectedColor } : n));
+        setItems(prev => prev.map(n => n.id === activeNoteId ? { ...n, title, content, priority: notePriority, tags, colorAccent: selectedColor } : n));
         setSaveStatus('saved');
       } catch (err) {
         console.error("Auto-save failed:", err);
@@ -248,82 +349,159 @@ export default function SmartNotebook() {
     return () => clearTimeout(saveTimeoutRef.current);
   }, [title, content, notePriority, tags, selectedColor, activeNoteId, userData, isReadOnly]);
 
-  // Note Handlers
-  const handleCreateNote = async (notebook = 'Personal') => {
-    if (!userData?.uid) return;
+  // Explicit Manual Save Action Button
+  const handleManualSave = async () => {
+    if (!activeNoteId || !userData?.uid) return;
+    setSaveStatus('saving');
+    try {
+      const noteRef = doc(db, 'users', userData.uid, 'notebooks', activeNoteId);
+      await setDoc(noteRef, {
+        title,
+        content,
+        priority: notePriority,
+        tags,
+        colorAccent: selectedColor,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      
+      setItems(prev => prev.map(n => n.id === activeNoteId ? { ...n, title, content, priority: notePriority, tags, colorAccent: selectedColor } : n));
+      setSaveStatus('saved');
+      showToast(lang === 'en' ? 'Saved successfully!' : 'تم الحفظ بنجاح!');
+    } catch (err) {
+      console.error("Manual save failed:", err);
+      showToast(lang === 'en' ? 'Save failed' : 'فشل الحفظ');
+    }
+  };
+
+  // Create Item Handler (Task, Idea, Note)
+  const handleCreateNewItem = async () => {
+    if (!userData?.uid || !newItemTitle.trim()) return;
     const newId = Date.now().toString();
-    const newNote = {
+    const itemType = createType; // 'task' | 'idea' | 'note'
+    
+    const newItem = {
       id: newId,
-      title: lang === 'en' ? 'New Note' : 'ملاحظة جديدة',
-      content: '',
-      notebook: notebook,
+      title: newItemTitle.trim(),
+      content: newItemContent.trim(),
+      type: itemType,
+      category: newItemCategory || (itemType === 'task' ? customTaskCategories[0] : itemType === 'idea' ? customIdeaCategories[0] : customNoteCategories[0]),
+      priority: newItemPriority || 'medium',
+      isCompleted: false,
+      isFavorite: false,
       isPinned: false,
       isLocked: false,
-      isFavorite: false,
-      priority: 'low',
       tags: [],
       colorAccent: '#6366F1',
       createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
     };
-    
-    setNotes([newNote, ...notes]);
-    setActiveNoteId(newId);
-    setActiveNotebook(notebook);
-    showToast(lang === 'en' ? 'New note created! ✨' : 'تم إنشاء ملاحظة جديدة! ✨');
-    
+
+    setItems([newItem, ...items]);
+    setIsCreateModalOpen(false);
+    setNewItemTitle('');
+    setNewItemContent('');
+
+    // Toast for Tasks & General Items
+    showToast(
+      itemType === 'task' 
+        ? (lang === 'en' ? 'New task created successfully!' : 'تم إنشاء المهمة بنجاح!')
+        : itemType === 'idea'
+        ? (lang === 'en' ? 'Idea recorded successfully!' : 'تم تسجيل الفكرة بنجاح!')
+        : (lang === 'en' ? 'Note created successfully!' : 'تم إنشاء الملاحظة بنجاح!')
+    );
+
     try {
-      await setDoc(doc(db, 'users', userData.uid, 'notebooks', newId), newNote);
+      await setDoc(doc(db, 'users', userData.uid, 'notebooks', newId), newItem);
     } catch (err) {
-      console.error("Error creating note:", err);
+      console.error("Error creating item:", err);
     }
   };
 
-  const handleDeleteNote = async (e, id) => {
+  // Toggle Favorite Star Handler from Outer Card
+  const toggleFavorite = async (e, item) => {
     if (e) e.stopPropagation();
-    if (!confirm(lang === 'en' ? 'Delete this note permanently?' : 'هل أنت متأكد من حذف هذه الملاحظة نهائياً؟')) return;
+    const newStatus = !item.isFavorite;
+    setItems(prev => prev.map(n => n.id === item.id ? { ...n, isFavorite: newStatus } : n));
+    showToast(newStatus ? (lang === 'en' ? 'Added to Favorites ⭐' : 'أضيفت للمفضلة ⭐') : (lang === 'en' ? 'Removed from Favorites' : 'تمت الإزالة من المفضلة'));
+
+    try {
+      await setDoc(doc(db, 'users', userData.uid, 'notebooks', item.id), { isFavorite: newStatus }, { merge: true });
+    } catch (err) {}
+  };
+
+  // Toggle Task Completion Handler (With Success Toast)
+  const toggleTaskCompleted = async (e, item) => {
+    if (e) e.stopPropagation();
+    const newStatus = !item.isCompleted;
+    setItems(prev => prev.map(n => n.id === item.id ? { ...n, isCompleted: newStatus } : n));
     
-    setNotes(notes.filter(n => n.id !== id));
+    showToast(
+      newStatus 
+        ? (lang === 'en' ? 'Task completed successfully! 🎉' : 'تم إنجاز المهمة بنجاح! 🎉') 
+        : (lang === 'en' ? 'Task restored to active tasks' : 'تمت إعادة المهمة للمهام النشطة')
+    );
+
+    try {
+      await setDoc(doc(db, 'users', userData.uid, 'notebooks', item.id), { isCompleted: newStatus, updatedAt: serverTimestamp() }, { merge: true });
+    } catch (err) {}
+  };
+
+  // Confirm Delete Handler
+  const confirmDeleteItem = async () => {
+    if (!itemToDelete) return;
+    const id = itemToDelete.id;
+    setItems(prev => prev.filter(n => n.id !== id));
     if (activeNoteId === id) setActiveNoteId(null);
-    showToast(lang === 'en' ? 'Note deleted' : 'تم حذف الملاحظة');
-    
+    setItemToDelete(null);
+    showToast(lang === 'en' ? 'Item deleted' : 'تم الحذف');
+
     try {
       await deleteDoc(doc(db, 'users', userData.uid, 'notebooks', id));
-    } catch (err) {
-      console.error("Delete failed:", err);
+    } catch (err) {}
+  };
+
+  // Add Custom Category Handler (WITH FIREBASE PERSISTENCE)
+  const handleAddCustomCategory = async () => {
+    if (!newCategoryName.trim()) return;
+    const cat = newCategoryName.trim();
+    let updatedTaskCats = [...customTaskCategories];
+    let updatedIdeaCats = [...customIdeaCategories];
+    let updatedNoteCats = [...customNoteCategories];
+
+    if (categoryTarget === 'tasks') {
+      if (!updatedTaskCats.includes(cat)) updatedTaskCats.push(cat);
+      setCustomTaskCategories(updatedTaskCats);
+      setNewItemCategory(cat);
+    } else if (categoryTarget === 'ideas') {
+      if (!updatedIdeaCats.includes(cat)) updatedIdeaCats.push(cat);
+      setCustomIdeaCategories(updatedIdeaCats);
+      setNewItemCategory(cat);
+    } else {
+      if (!updatedNoteCats.includes(cat)) updatedNoteCats.push(cat);
+      setCustomNoteCategories(updatedNoteCats);
+      setNewItemCategory(cat);
+    }
+
+    setNewCategoryName('');
+    setIsCategoryModalOpen(false);
+    showToast(lang === 'en' ? 'Category created & saved!' : 'تم إنشاء التصنيف وحفظه بنجاح!');
+
+    // Persist Categories in Firestore
+    if (userData?.uid) {
+      try {
+        await setDoc(doc(db, 'users', userData.uid, 'planner_settings', 'categories'), {
+          taskCategories: updatedTaskCats,
+          ideaCategories: updatedIdeaCats,
+          noteCategories: updatedNoteCats,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } catch (err) {
+        console.error("Error persisting custom categories:", err);
+      }
     }
   };
 
-  const togglePin = async (e, id, currentStatus) => {
-    if (e) e.stopPropagation();
-    try {
-      await setDoc(doc(db, 'users', userData.uid, 'notebooks', id), { isPinned: !currentStatus }, { merge: true });
-      setNotes(notes.map(n => n.id === id ? { ...n, isPinned: !currentStatus } : n));
-      showToast(currentStatus ? (lang === 'en' ? 'Unpinned' : 'تم إلغاء التثبيت') : (lang === 'en' ? 'Pinned 📌' : 'تم التثبيت 📌'));
-    } catch (err) {}
-  };
-
-  const toggleLock = async () => {
-    if (!activeNoteId) return;
-    const newStatus = !isReadOnly;
-    setIsReadOnly(newStatus);
-    try {
-      await setDoc(doc(db, 'users', userData.uid, 'notebooks', activeNoteId), { isLocked: newStatus }, { merge: true });
-      setNotes(notes.map(n => n.id === activeNoteId ? { ...n, isLocked: newStatus } : n));
-      showToast(newStatus ? (lang === 'en' ? 'Locked 🔒' : 'تم التأمين 🔒') : (lang === 'en' ? 'Unlocked 🔓' : 'تم إلغاء القفل 🔓'));
-    } catch (err) {}
-  };
-
-  const toggleFavorite = async (e, id, currentStatus) => {
-    if (e) e.stopPropagation();
-    try {
-      await setDoc(doc(db, 'users', userData.uid, 'notebooks', id), { isFavorite: !currentStatus }, { merge: true });
-      setNotes(notes.map(n => n.id === id ? { ...n, isFavorite: !currentStatus } : n));
-      showToast(currentStatus ? (lang === 'en' ? 'Removed from favorites' : 'تمت الإزالة من المفضلة') : (lang === 'en' ? 'Added to favorites ⭐' : 'أضيفت للمفضلة ⭐'));
-    } catch (err) {}
-  };
-
-  // Editor Commands & Formatting
+  // Editor Commands
   const execCommand = (cmd, value = null) => {
     if (isReadOnly) return;
     document.execCommand(cmd, false, value);
@@ -373,140 +551,119 @@ export default function SmartNotebook() {
     execCommand('insertHTML', codeHtml);
   };
 
-  // Templates Handler
-  const TEMPLATES = [
-    {
-      id: 'business',
-      name_ar: '🤝 خطة العمل واجتماع العملاء',
-      name_en: '🤝 Business Meeting & Strategy Plan',
-      html_ar: `<h2>🤝 ملاحظات اجتماع العميل والاستراتيجية</h2><hr/><p><strong>اسم العميل:</strong> </p><p><strong>التاريخ:</strong> </p><h3>🎯 الأهداف الرئيسية:</h3><ul><li>الهدف الأول</li><li>الهدف الثاني</li></ul><h3>📝 النقاشات والقرارات:</h3><p></p><h3>🚀 خطوات العمل القادمة:</h3><ul><li>المهمة الأولى</li></ul>`,
-      html_en: `<h2>🤝 Business Meeting & Strategy</h2><hr/><p><strong>Client Name:</strong> </p><p><strong>Date:</strong> </p><h3>🎯 Core Objectives:</h3><ul><li>Objective 1</li></ul><h3>📝 Discussion Summary:</h3><p></p><h3>🚀 Action Plan:</h3><ul><li>Action Item 1</li></ul>`
-    },
-    {
-      id: 'study',
-      name_ar: '📚 تلخيص المذاكرة والدراسة',
-      name_en: '📚 Study & Research Summary',
-      html_ar: `<h2>📚 ملخص الدراسة والتعلم</h2><hr/><h3>الموضوع الرئيسي: </h3><ul><li><strong>المفهوم الأساسي:</strong> </li><li><strong>أهم المعادلات والنقاط:</strong> </li></ul><h3>💡 الأسئلة المفتوحة:</h3><p></p>`,
-      html_en: `<h2>📚 Research & Study Notes</h2><hr/><h3>Main Subject: </h3><ul><li><strong>Key Concepts:</strong> </li><li><strong>Core Points:</strong> </li></ul><h3>💡 Open Questions:</h3><p></p>`
-    },
-    {
-      id: 'daily',
-      name_ar: '🌅 التخطيط واليوميات',
-      name_en: '🌅 Daily Planner & Journal',
-      html_ar: `<h2>🌅 أهداف وتخطيط اليوم</h2><hr/><h3>🎯 أهم 3 أهداف لليوم:</h3><ul><li>الهدف 1</li><li>الهدف 2</li><li>الهدف 3</li></ul><h3>📓 ملاحظات اليوم والأفكار:</h3><p></p>`,
-      html_en: `<h2>🌅 Daily Goals & Journal</h2><hr/><h3>🎯 Top 3 Goals:</h3><ul><li>Goal 1</li><li>Goal 2</li><li>Goal 3</li></ul><h3>📓 Daily Thoughts:</h3><p></p>`
-    }
-  ];
+  // Filter Items based on Active Tab, Sub-Tab, Priority, Category, and Search Query
+  const getFilteredItems = () => {
+    return items.filter(item => {
+      const matchSearch = (item.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (item.content || '').toLowerCase().includes(searchQuery.toLowerCase());
+      if (!matchSearch) return false;
 
-  const applyTemplate = (tpl) => {
-    if (isReadOnly) return;
-    const html = lang === 'en' ? tpl.html_en : tpl.html_ar;
-    if (editorRef.current) {
-      editorRef.current.innerHTML += html;
-      setContent(editorRef.current.innerHTML);
-    }
-    setIsTemplateModalOpen(false);
-    showToast(lang === 'en' ? 'Template inserted! 📄' : 'تم إدراج القالب بنجاح! 📄');
+      // Category Filter
+      if (selectedCategoryFilter !== 'all' && (item.category || 'General') !== selectedCategoryFilter) {
+        return false;
+      }
+
+      if (activeTab === 'favorites') {
+        return item.isFavorite === true;
+      }
+
+      if (activeTab === 'tasks') {
+        const isTaskType = item.type === 'task' || item.isChecklist || item.notebook === 'Check List';
+        if (!isTaskType) return false;
+        
+        if (priorityFilter !== 'all' && (item.priority || 'medium') !== priorityFilter) {
+          return false;
+        }
+
+        if (taskSubTab === 'completed') {
+          return item.isCompleted === true;
+        }
+        return item.isCompleted !== true;
+      }
+
+      if (activeTab === 'ideas') {
+        return item.type === 'idea' || item.notebook === 'Project Ideas';
+      }
+
+      if (activeTab === 'notes') {
+        const isNoteType = item.type === 'note' || !item.type || item.type === 'default';
+        return isNoteType;
+      }
+
+      return true;
+    });
   };
 
-  // Export File Formats
-  const exportNote = (format) => {
-    if (!activeNoteId) return;
-    if (format === 'print') {
-      window.print();
+  const filteredList = getFilteredItems();
+
+  // 2D HTML5 Drag & Drop Handlers
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index);
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDrop = (e, targetIndex) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
       return;
     }
-    let ext = format;
-    let mime = 'text/plain';
-    let rawContent = content.replace(/<[^>]+>/g, '\n');
 
-    if (format === 'html') {
-      mime = 'text/html';
-      rawContent = `<!DOCTYPE html><html><head><title>${title}</title></head><body><h1>${title}</h1>${content}</body></html>`;
+    const sourceItem = filteredList[draggedIndex];
+    const targetItem = filteredList[targetIndex];
+
+    if (sourceItem && targetItem) {
+      const sourceGlobalIdx = items.findIndex(i => i.id === sourceItem.id);
+      const targetGlobalIdx = items.findIndex(i => i.id === targetItem.id);
+
+      if (sourceGlobalIdx !== -1 && targetGlobalIdx !== -1) {
+        const updated = [...items];
+        const [moved] = updated.splice(sourceGlobalIdx, 1);
+        updated.splice(targetGlobalIdx, 0, moved);
+        setItems(updated);
+      }
     }
-    if (format === 'md') {
-      rawContent = `# ${title}\n\n${rawContent}`;
-    }
 
-    const element = document.createElement("a");
-    const file = new Blob([rawContent], { type: mime });
-    element.href = URL.createObjectURL(file);
-    element.download = `${title || 'note'}.${ext}`;
-    document.body.appendChild(element);
-    element.click();
-    showToast(lang === 'en' ? `Exported as .${ext} 💾` : `تم التصدير بصيغة .${ext} 💾`);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
   };
 
-  // Tag Management
-  const addTag = () => {
-    if (!tagInput.trim() || tags.includes(tagInput.trim())) return;
-    setTags([...tags, tagInput.trim()]);
-    setTagInput('');
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
   };
-
-  const removeTag = (tToRemove) => {
-    setTags(tags.filter(t => t !== tToRemove));
-  };
-
-  // Checklist Modal Handlers
-  const handleCreateChecklist = async () => {
-    if (!userData?.uid || !checklistTitle.trim()) return;
-    const newId = Date.now().toString();
-    const newList = {
-      id: newId,
-      title: checklistTitle,
-      items: checklistItems.filter(i => i.text.trim() !== ''),
-      notebook: 'Check List',
-      isChecklist: true,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    };
-
-    setNotes([newList, ...notes]);
-    setIsCreatingChecklist(false);
-    setChecklistTitle('');
-    setChecklistItems([]);
-    showToast(lang === 'en' ? 'Checklist created! ✅' : 'تم إنشاء قائمة المهام! ✅');
-    
-    try {
-      await setDoc(doc(db, 'users', userData.uid, 'notebooks', newId), newList);
-    } catch (err) {
-      console.error("Error creating checklist:", err);
-    }
-  };
-
-  const toggleChecklistItem = async (checklist, itemId) => {
-    const updatedItems = checklist.items.map(i => i.id === itemId ? { ...i, completed: !i.completed } : i);
-    const updatedChecklist = { ...checklist, items: updatedItems };
-    
-    setNotes(notes.map(n => n.id === checklist.id ? updatedChecklist : n));
-    if (viewingChecklist?.id === checklist.id) setViewingChecklist(updatedChecklist);
-
-    try {
-      await setDoc(doc(db, 'users', userData.uid, 'notebooks', checklist.id), { items: updatedItems, updatedAt: serverTimestamp() }, { merge: true });
-    } catch (err) {}
-  };
-
-  // Derived Calculations
-  const filteredNotes = notes.filter(n => {
-    if (activeNotebook === 'Favorites') return n.isFavorite;
-    const matchBook = activeNotebook === 'All' || n.notebook === activeNotebook;
-    const matchQuery = (n.title || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
-                       (n.content || '').toLowerCase().includes(searchQuery.toLowerCase());
-    const matchPriority = filterPriority === 'all' || n.priority === filterPriority;
-    return matchBook && matchQuery && matchPriority;
-  }).sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0));
 
   const textOnly = content.replace(/<[^>]+>/g, ' ').trim();
   const wordCount = textOnly.split(/\s+/).filter(w => w.length > 0).length;
-  const charCount = textOnly.length;
-  const readTimeMin = Math.ceil(wordCount / 200) || 1;
 
-  // Extract Thumbnail Image if present in content
-  const getThumbnail = (htmlStr) => {
-    const match = htmlStr.match(/<img[^>]+src="([^">]+)"/);
-    return match ? match[1] : null;
-  };
+  // Options for Dropdowns
+  const priorityOptions = [
+    { value: 'high', label: lang === 'en' ? '🔴 High / Urgent' : '🔴 عالية / عاجل' },
+    { value: 'medium', label: lang === 'en' ? '🟡 Medium Priority' : '🟡 متوسطة الأهمية' },
+    { value: 'low', label: lang === 'en' ? '🟢 Low Priority' : '🟢 منخفضة الأهمية' }
+  ];
+
+  const currentCategoryOptions = (createType === 'task' ? customTaskCategories : createType === 'idea' ? customIdeaCategories : customNoteCategories).map(cat => ({
+    value: cat,
+    label: cat
+  }));
+
+  const activeTabCategoryList = activeTab === 'ideas' ? customIdeaCategories : activeTab === 'notes' ? customNoteCategories : customTaskCategories;
+
+  const categoryFilterDropdownOptions = [
+    { value: 'all', label: lang === 'en' ? 'All Categories' : 'كل التصنيفات' },
+    ...activeTabCategoryList.map(cat => ({ value: cat, label: cat }))
+  ];
 
   return (
     <div className={`sn-wrapper ${isFocusMode ? 'focus-mode' : ''} ${isRtl ? 'rtl' : 'ltr'}`}>
@@ -526,15 +683,15 @@ export default function SmartNotebook() {
         )}
       </AnimatePresence>
 
-      {/* LEFT SIDEBAR */}
+      {/* ═══════════════ LEFT SIDEBAR (STRICTLY 4 CORE TABS) ═══════════════ */}
       {!isFocusMode && (
         <aside className={`sn-sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
-          {/* Header */}
+          {/* Sidebar Header Title */}
           <div className="sn-sidebar-header">
             {!isSidebarCollapsed && (
               <div className="sn-sidebar-title">
                 <Notebook size={20} color="#6366F1" />
-                <span>{lang === 'en' ? 'Smart Notebook' : 'دفتر الملاحظات الذكي'}</span>
+                <span>{lang === 'en' ? 'The Comprehensive Planner' : 'سجل المهام والأفكار'}</span>
               </div>
             )}
             <button 
@@ -546,13 +703,22 @@ export default function SmartNotebook() {
             </button>
           </div>
 
-          {/* Action Button */}
-          <button className="sn-primary-btn" onClick={() => handleCreateNote('Personal')}>
-            <Plus size={16} />
-            {!isSidebarCollapsed && <span>{lang === 'en' ? 'New Note' : 'ملاحظة جديدة'}</span>}
-          </button>
+          {/* New Item Action Button (HIDDEN WHEN IN FAVORITES TAB) */}
+          {activeTab !== 'favorites' && (
+            <button 
+              className="sn-primary-btn" 
+              onClick={() => {
+                setCreateType(activeTab === 'ideas' ? 'idea' : activeTab === 'notes' ? 'note' : 'task');
+                setNewItemCategory(activeTab === 'ideas' ? customIdeaCategories[0] : activeTab === 'notes' ? customNoteCategories[0] : customTaskCategories[0]);
+                setIsCreateModalOpen(true);
+              }}
+            >
+              <Plus size={16} />
+              {!isSidebarCollapsed && <span>{lang === 'en' ? 'Add Item' : 'إضافة جديدة'}</span>}
+            </button>
+          )}
 
-          {/* Search */}
+          {/* Search Box */}
           {!isSidebarCollapsed && (
             <div className="sn-sidebar-search">
               <div className="sn-search-input-wrap">
@@ -561,7 +727,7 @@ export default function SmartNotebook() {
                   ref={searchInputRef}
                   type="text" 
                   className="sn-search-input"
-                  placeholder={lang === 'en' ? 'Search notes (Ctrl+F)...' : 'البحث في الملاحظات (Ctrl+F)...'}
+                  placeholder={lang === 'en' ? 'Search items...' : 'بحث سريع...'}
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                 />
@@ -569,126 +735,174 @@ export default function SmartNotebook() {
             </div>
           )}
 
-          {/* Folder Notebooks */}
+          {/* STRICT 4 MAIN CORE TABS */}
           <div className="sn-folders-list">
+            {/* Tab 1: Tasks */}
             <div 
-              className={`sn-folder-item ${activeNotebook === 'All' ? 'active' : ''}`}
-              onClick={() => { setActiveNotebook('All'); setActiveNoteId(null); }}
+              className={`sn-folder-item ${activeTab === 'tasks' ? 'active' : ''}`}
+              onClick={() => { setActiveTab('tasks'); setActiveNoteId(null); setSelectedCategoryFilter('all'); }}
             >
               <div className="sn-folder-left">
-                <Folder size={16} />
-                {!isSidebarCollapsed && <span>{lang === 'en' ? 'All Notes' : 'كل الملاحظات'}</span>}
+                <ListTodo size={16} color="#6366F1" />
+                {!isSidebarCollapsed && <span>{lang === 'en' ? 'Tasks' : 'قائمة المهام'}</span>}
               </div>
-              {!isSidebarCollapsed && <span className="sn-folder-badge">{notes.length}</span>}
+              {!isSidebarCollapsed && (
+                <span className="sn-folder-badge">
+                  {items.filter(i => (i.type === 'task' || i.isChecklist) && !i.isCompleted).length}
+                </span>
+              )}
             </div>
 
+            {/* Tab 2: Ideas */}
             <div 
-              className={`sn-folder-item ${activeNotebook === 'Favorites' ? 'active' : ''}`}
-              onClick={() => { setActiveNotebook('Favorites'); setActiveNoteId(null); }}
+              className={`sn-folder-item ${activeTab === 'ideas' ? 'active' : ''}`}
+              onClick={() => { setActiveTab('ideas'); setActiveNoteId(null); setSelectedCategoryFilter('all'); }}
             >
               <div className="sn-folder-left">
-                <Star size={16} color="#F59E0B" />
+                <Lightbulb size={16} color="#F59E0B" />
+                {!isSidebarCollapsed && <span>{lang === 'en' ? 'Ideas' : 'الأفكار'}</span>}
+              </div>
+              {!isSidebarCollapsed && (
+                <span className="sn-folder-badge">
+                  {items.filter(i => i.type === 'idea' || i.notebook === 'Project Ideas').length}
+                </span>
+              )}
+            </div>
+
+            {/* Tab 3: Notes */}
+            <div 
+              className={`sn-folder-item ${activeTab === 'notes' ? 'active' : ''}`}
+              onClick={() => { setActiveTab('notes'); setActiveNoteId(null); setSelectedCategoryFilter('all'); }}
+            >
+              <div className="sn-folder-left">
+                <FileText size={16} color="#10B981" />
+                {!isSidebarCollapsed && <span>{lang === 'en' ? 'Notes' : 'الملاحظات'}</span>}
+              </div>
+              {!isSidebarCollapsed && (
+                <span className="sn-folder-badge">
+                  {items.filter(i => i.type === 'note' || !i.type).length}
+                </span>
+              )}
+            </div>
+
+            {/* Tab 4: Favorites */}
+            <div 
+              className={`sn-folder-item ${activeTab === 'favorites' ? 'active' : ''}`}
+              onClick={() => { setActiveTab('favorites'); setActiveNoteId(null); setSelectedCategoryFilter('all'); }}
+            >
+              <div className="sn-folder-left">
+                <Star size={16} color="#EC4899" fill="#EC4899" />
                 {!isSidebarCollapsed && <span>{lang === 'en' ? 'Favorites' : 'المفضلة'}</span>}
               </div>
-              {!isSidebarCollapsed && <span className="sn-folder-badge">{notes.filter(n => n.isFavorite).length}</span>}
+              {!isSidebarCollapsed && (
+                <span className="sn-folder-badge">
+                  {items.filter(i => i.isFavorite).length}
+                </span>
+              )}
             </div>
-
-            {customNotebooks.map(book => {
-              const count = notes.filter(n => n.notebook === book).length;
-              return (
-                <div 
-                  key={book}
-                  className={`sn-folder-item ${activeNotebook === book ? 'active' : ''}`}
-                  onClick={() => { setActiveNotebook(book); setActiveNoteId(null); }}
-                >
-                  <div className="sn-folder-left">
-                    <Folder size={16} color={book === 'Personal' ? '#6366F1' : book === 'Work' ? '#10B981' : book === 'Study' ? '#F59E0B' : '#EC4899'} />
-                    {!isSidebarCollapsed && <span>{lang === 'en' ? book : (book === 'Personal' ? 'شخصي' : book === 'Work' ? 'عمل' : book === 'Study' ? 'دراسة' : book === 'Check List' ? 'قائمة المهام' : book)}</span>}
-                  </div>
-                  {!isSidebarCollapsed && <span className="sn-folder-badge">{count}</span>}
-                </div>
-              );
-            })}
           </div>
 
-          {/* Scrollable Note Cards (Sidebar) */}
+          {/* Quick Create Custom Category Trigger */}
+          {!isSidebarCollapsed && activeTab !== 'favorites' && (
+            <button
+              className="sn-category-add-btn"
+              onClick={() => {
+                setCategoryTarget(activeTab === 'ideas' ? 'ideas' : activeTab === 'notes' ? 'notes' : 'tasks');
+                setIsCategoryModalOpen(true);
+              }}
+            >
+              <FolderPlus size={14} />
+              <span>{lang === 'en' ? '+ Create Category' : '+ إنشاء تصنيف جديد'}</span>
+            </button>
+          )}
+
+          {/* Scrollable Items List View (Sidebar with Professional Icons) */}
           {!isSidebarCollapsed && (
             <div className="sn-notes-scroll-list">
               {isLoading ? (
                 <div style={{ textAlign: 'center', padding: '20px', fontSize: '12px', color: 'var(--text3)' }}>{lang === 'en' ? 'Loading...' : 'جاري التحميل...'}</div>
-              ) : filteredNotes.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '20px', fontSize: '12px', color: 'var(--text3)' }}>{lang === 'en' ? 'No notes found' : 'لا توجد ملاحظات'}</div>
+              ) : filteredList.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '20px', fontSize: '12px', color: 'var(--text3)' }}>{lang === 'en' ? 'No items found' : 'لا توجد عناصر'}</div>
               ) : (
-                filteredNotes.map(n => (
-                  <div 
-                    key={n.id} 
-                    className={`sn-note-card ${activeNoteId === n.id ? 'active' : ''}`}
-                    onClick={() => setActiveNoteId(n.id)}
-                  >
-                    <div className="sn-note-card-header">
-                      <span className="sn-note-card-title">{n.title || (lang === 'en' ? 'Untitled Note' : 'ملاحظة بدون عنوان')}</span>
-                      <div className="sn-card-actions">
-                        <button className={`sn-card-action-btn ${n.isFavorite ? 'active' : ''}`} onClick={(e) => toggleFavorite(e, n.id, n.isFavorite)}>
-                          <Star size={12} fill={n.isFavorite ? '#F59E0B' : 'none'} />
-                        </button>
-                        <button className="sn-card-action-btn" onClick={(e) => togglePin(e, n.id, n.isPinned)}>
-                          <Pin size={12} color={n.isPinned ? '#6366F1' : 'currentColor'} />
-                        </button>
-                        <button className="sn-card-action-btn" onClick={(e) => handleDeleteNote(e, n.id)}>
-                          <Trash2 size={12} color="#EF4444" />
-                        </button>
+                filteredList.map(n => {
+                  const isTask = n.type === 'task' || n.isChecklist;
+                  const isIdea = n.type === 'idea';
+                  return (
+                    <div 
+                      key={n.id} 
+                      className={`sn-note-card ${activeNoteId === n.id ? 'active' : ''}`}
+                      onClick={() => setActiveNoteId(n.id)}
+                    >
+                      <div className="sn-note-card-header">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', flex: 1 }}>
+                          {isTask ? (
+                            <ListTodo size={13} color="#6366F1" flexShrink={0} />
+                          ) : isIdea ? (
+                            <Lightbulb size={13} color="#F59E0B" flexShrink={0} />
+                          ) : (
+                            <FileText size={13} color="#10B981" flexShrink={0} />
+                          )}
+                          <span className="sn-note-card-title">{n.title || (lang === 'en' ? 'Untitled' : 'بدون عنوان')}</span>
+                        </div>
+
+                        <div className="sn-card-actions">
+                          <button className={`sn-card-action-btn ${n.isFavorite ? 'active' : ''}`} onClick={(e) => toggleFavorite(e, n)}>
+                            <Star size={12} fill={n.isFavorite ? '#F59E0B' : 'none'} color={n.isFavorite ? '#F59E0B' : 'currentColor'} />
+                          </button>
+                          <button className="sn-card-action-btn" onClick={(e) => { e.stopPropagation(); setActiveNoteId(n.id); }}>
+                            <Edit3 size={12} color="#6366F1" />
+                          </button>
+                          <button className="sn-card-action-btn" onClick={(e) => { e.stopPropagation(); setItemToDelete(n); }}>
+                            <Trash2 size={12} color="#EF4444" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="sn-note-card-preview">
+                        {(n.content || '').replace(/<[^>]+>/g, '').substring(0, 45)}...
+                      </div>
+
+                      <div className="sn-note-card-footer">
+                        <span className="sn-card-cat-badge">{n.category || 'General'}</span>
+                        {n.priority && (
+                          <span className={`sn-priority-pill ${n.priority}`}>
+                            {n.priority.toUpperCase()}
+                          </span>
+                        )}
                       </div>
                     </div>
-
-                    <div className="sn-note-card-preview">
-                      {(n.content || '').replace(/<[^>]+>/g, '').substring(0, 50)}...
-                    </div>
-
-                    <div className="sn-note-card-footer">
-                      <span>{n.notebook}</span>
-                      {n.isLocked && <Lock size={12} color="#EF4444" />}
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           )}
         </aside>
       )}
 
-      {/* RIGHT MAIN EDITOR / GALLERY VIEW */}
+      {/* ═══════════════ RIGHT MAIN EDITOR / GALLERY VIEW ═══════════════ */}
       <main className="sn-main-editor">
         {activeNoteId ? (
           <>
-            {/* Editor Top Bar */}
+            {/* Editor Top Bar (PRESERVED) */}
             <div className="sn-editor-header">
               <div className="sn-editor-header-start">
-                <button className="sn-icon-btn" onClick={() => setActiveNoteId(null)} title={lang === 'en' ? 'Back to Gallery' : 'العودة للمعرض'}>
+                <button className="sn-icon-btn" onClick={() => setActiveNoteId(null)} title={lang === 'en' ? 'Back' : 'العودة'}>
                   {isRtl ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
                 </button>
 
                 <button 
                   className={`sn-icon-btn ${isFocusMode ? 'active' : ''}`}
                   onClick={() => setIsFocusMode(!isFocusMode)}
-                  title={lang === 'en' ? 'Focus Mode (Ctrl+Shift+F)' : 'وضع التركيز (Ctrl+Shift+F)'}
+                  title={lang === 'en' ? 'Focus Mode' : 'وضع التركيز'}
                 >
                   {isFocusMode ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
                 </button>
 
                 <button 
                   className={`sn-icon-btn ${isReadOnly ? 'active' : ''}`}
-                  onClick={toggleLock}
-                  title={isReadOnly ? (lang === 'en' ? 'Unlock Note' : 'إلغاء قفل الملاحظة') : (lang === 'en' ? 'Lock Note' : 'قفل الملاحظة')}
+                  onClick={() => setIsReadOnly(!isReadOnly)}
                 >
                   {isReadOnly ? <Lock size={16} color="#EF4444" /> : <Unlock size={16} />}
-                </button>
-
-                <button 
-                  className="sn-icon-btn"
-                  onClick={() => setIsTemplateModalOpen(true)}
-                  title={lang === 'en' ? 'Insert Template' : 'إدراج قالب'}
-                >
-                  <FileText size={16} />
                 </button>
               </div>
 
@@ -700,31 +914,26 @@ export default function SmartNotebook() {
 
                 <div className="sn-reading-stats">
                   <span>{wordCount} {lang === 'en' ? 'words' : 'كلمة'}</span>
-                  <span> • </span>
-                  <span>{readTimeMin} {lang === 'en' ? 'min read' : 'دقيقة قراءة'}</span>
                 </div>
 
-                {/* Export Formats */}
-                <div className="sn-editor-header-start">
-                  <button className="sn-icon-btn" onClick={() => exportNote('md')} title={lang === 'en' ? 'Export .md' : 'تصدير Markdown'}>
-                    <FileCode size={16} />
-                  </button>
-                  <button className="sn-icon-btn" onClick={() => exportNote('txt')} title={lang === 'en' ? 'Export .txt' : 'تصدير نص عادي'}>
-                    <Download size={16} />
-                  </button>
-                  <button className="sn-icon-btn" onClick={() => exportNote('print')} title={lang === 'en' ? 'Print (Ctrl+P)' : 'طباعة (Ctrl+P)'}>
-                    <Printer size={16} />
-                  </button>
-                </div>
+                {/* Explicit Professional Save Button */}
+                <button
+                  onClick={handleManualSave}
+                  className="wc-btn wc-btn-primary"
+                  style={{ padding: '6px 16px', fontSize: '11.5px', borderRadius: '10px' }}
+                >
+                  <Save size={13} />
+                  <span>{lang === 'en' ? 'Save' : 'حفظ'}</span>
+                </button>
               </div>
             </div>
 
-            {/* Rich Text Toolbar */}
+            {/* Rich Text Toolbar (PRESERVED) */}
             {!isReadOnly && (
               <div className="sn-format-bar">
-                <button className="sn-format-btn" onClick={() => execCommand('bold')} title="Bold (Ctrl+B)"><BoldIcon size={14} /></button>
-                <button className="sn-format-btn" onClick={() => execCommand('italic')} title="Italic (Ctrl+I)"><ItalicIcon size={14} /></button>
-                <button className="sn-format-btn" onClick={() => execCommand('underline')} title="Underline (Ctrl+U)"><UnderlineIcon size={14} /></button>
+                <button className="sn-format-btn" onClick={() => execCommand('bold')} title="Bold"><BoldIcon size={14} /></button>
+                <button className="sn-format-btn" onClick={() => execCommand('italic')} title="Italic"><ItalicIcon size={14} /></button>
+                <button className="sn-format-btn" onClick={() => execCommand('underline')} title="Underline"><UnderlineIcon size={14} /></button>
                 <button className="sn-format-btn" onClick={() => execCommand('strikethrough')} title="Strikethrough"><StrikethroughIcon size={14} /></button>
 
                 <span className="sn-format-divider" />
@@ -747,281 +956,446 @@ export default function SmartNotebook() {
                 <span className="sn-format-divider" />
 
                 <button className="sn-format-btn" onClick={insertLink} title="Insert Link"><LinkIcon size={14} /></button>
-                <button className="sn-format-btn" onClick={insertImage} title="Insert Image URL"><ImageIcon size={14} /></button>
+                <button className="sn-format-btn" onClick={insertImage} title="Insert Image"><ImageIcon size={14} /></button>
                 <button className="sn-format-btn" onClick={insertTable} title="Insert Table"><TableIcon size={14} /></button>
                 <button className="sn-format-btn" onClick={insertChecklistLine} title="Insert Checklist Item"><CheckSquare size={14} /></button>
                 <button className="sn-format-btn" onClick={insertCodeBlock} title="Insert Code Block"><CodeIcon size={14} /></button>
-
-                <span className="sn-format-divider" />
-
-                <input 
-                  type="color" 
-                  className="sn-color-input" 
-                  onChange={(e) => execCommand('foreColor', e.target.value)} 
-                  title={lang === 'en' ? 'Text Color' : 'لون النص'} 
-                />
               </div>
             )}
 
-            {/* Canvas Area */}
+            {/* Canvas Area (PRESERVED) */}
             <div className="sn-canvas-area">
               <input 
                 type="text" 
                 className="sn-title-input" 
                 value={title} 
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder={lang === 'en' ? 'Note Title...' : 'عنوان الملاحظة...'}
+                placeholder={lang === 'en' ? 'Title...' : 'العنوان...'}
                 disabled={isReadOnly}
               />
 
-              {/* Tags & Metadata Pill Bar */}
-              <div className="sn-tags-bar">
-                {tags.map(t => (
-                  <span key={t} className="sn-tag-pill">
-                    #{t}
-                    {!isReadOnly && <button onClick={() => removeTag(t)}>✕</button>}
-                  </span>
-                ))}
-                {!isReadOnly && (
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    <input 
-                      type="text" 
-                      placeholder={lang === 'en' ? '+ Add Tag' : '+ إضافة وسام'}
-                      value={tagInput}
-                      onChange={e => setTagInput(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && addTag()}
-                      style={{ fontSize: 11, background: 'transparent', border: '1px solid var(--line)', borderRadius: 10, padding: '2px 8px', color: 'var(--text)', outline: 'none' }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Editable Content Editor */}
-              <div 
-                className="sn-content-canvas"
+              <div className="sn-content-canvas"
                 ref={editorRef}
                 contentEditable={!isReadOnly}
                 onInput={() => setContent(editorRef.current?.innerHTML || '')}
-                placeholder={lang === 'en' ? 'Start typing your ideas here...' : 'ابدأ كتابة أفكارك هنا...'}
+                placeholder={lang === 'en' ? 'Start writing...' : 'ابدأ الكتابة...'}
               />
             </div>
           </>
         ) : (
           /* GALLERY / GRID VIEW AREA */
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            {/* Gallery Topbar */}
+            
+            {/* Gallery Top Filter & Control Header */}
             <div className="sn-gallery-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <Folder size={18} color="#6366F1" />
-                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800 }}>
-                  {activeNotebook === 'All' ? (lang === 'en' ? 'All Notes' : 'كل الملاحظات') : activeNotebook}
+                {activeTab === 'tasks' && <ListTodo size={20} color="#6366F1" />}
+                {activeTab === 'ideas' && <Lightbulb size={20} color="#F59E0B" />}
+                {activeTab === 'notes' && <FileText size={20} color="#10B981" />}
+                {activeTab === 'favorites' && <Star size={20} color="#EC4899" fill="#EC4899" />}
+                
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#FFFFFF' }}>
+                  {activeTab === 'tasks' ? (lang === 'en' ? 'Tasks List' : 'قائمة المهام') :
+                   activeTab === 'ideas' ? (lang === 'en' ? 'Ideas Space' : 'سجل الأفكار') :
+                   activeTab === 'notes' ? (lang === 'en' ? 'Notes' : 'الملاحظات') :
+                   (lang === 'en' ? 'Favorites' : 'المفضلة')}
                 </h3>
               </div>
 
+              {/* View Switcher, Custom Category Filter & Add Action */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                {/* View Switcher */}
+                {/* Professional Custom Category Filter Dropdown */}
+                <PlannerFilterCategoryDropdown
+                  value={selectedCategoryFilter}
+                  onChange={setSelectedCategoryFilter}
+                  options={categoryFilterDropdownOptions}
+                  lang={lang}
+                />
+
                 <div style={{ display: 'flex', background: 'var(--bg3)', borderRadius: 10, padding: 2 }}>
                   <button className={`sn-icon-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')}>
-                    <Grid size={16} />
+                    <Grid size={15} />
                   </button>
                   <button className={`sn-icon-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')}>
-                    <ListIcon size={16} />
+                    <ListIcon size={15} />
                   </button>
                 </div>
 
-                <button className="sn-primary-btn" style={{ width: 'auto', margin: 0 }} onClick={() => handleCreateNote(activeNotebook === 'All' ? 'Personal' : activeNotebook)}>
-                  <Plus size={14} />
-                  <span>{lang === 'en' ? 'New Note' : 'ملاحظة جديدة'}</span>
-                </button>
+                {activeTab !== 'favorites' && (
+                  <button 
+                    className="sn-primary-btn" 
+                    style={{ width: 'auto', margin: 0, padding: '8px 16px' }}
+                    onClick={() => {
+                      setCreateType(activeTab === 'ideas' ? 'idea' : activeTab === 'notes' ? 'note' : 'task');
+                      setNewItemCategory(activeTab === 'ideas' ? customIdeaCategories[0] : activeTab === 'notes' ? customNoteCategories[0] : customTaskCategories[0]);
+                      setIsCreateModalOpen(true);
+                    }}
+                  >
+                    <Plus size={14} />
+                    <span>{lang === 'en' ? 'Add Item' : 'إضافة جديدة'}</span>
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* Notes Grid/List Display */}
-            {filteredNotes.length > 0 ? (
-              viewMode === 'grid' ? (
-                <div className="sn-gallery-grid">
-                  {filteredNotes.map(n => {
-                    const thumb = getThumbnail(n.content || '');
-                    return (
-                      <motion.div 
-                        key={n.id} 
-                        className="sn-gallery-card"
-                        whileHover={{ y: -3 }}
-                        onClick={() => {
-                          if (n.isChecklist) {
-                            setViewingChecklist(n);
-                            setIsChecklistModalOpen(true);
-                          } else {
-                            setActiveNoteId(n.id);
-                          }
-                        }}
-                      >
-                        <div className="sn-gallery-card-top">
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                            <span style={{ fontSize: 10, color: 'var(--accent)', fontWeight: 800 }}>{n.notebook}</span>
-                            <div style={{ display: 'flex', gap: 4 }}>
-                              {n.isPinned && <Pin size={12} color="#6366F1" />}
-                              {n.isFavorite && <Star size={12} color="#F59E0B" fill="#F59E0B" />}
-                              {n.isLocked && <Lock size={12} color="#EF4444" />}
-                            </div>
-                          </div>
+            {/* TAB 1 SPECIFIC SUB-BAR: TASKS SUB-TABS & PRIORITY FILTER */}
+            {activeTab === 'tasks' && (
+              <div className="sn-tasks-subbar">
+                {/* Active vs Completed Tasks Sub-Tab */}
+                <div className="sn-subtab-group">
+                  <button
+                    className={`sn-subtab-btn ${taskSubTab === 'active' ? 'active' : ''}`}
+                    onClick={() => setTaskSubTab('active')}
+                  >
+                    <ListTodo size={13} />
+                    <span>{lang === 'en' ? 'Active Tasks' : 'المهام النشطة'}</span>
+                  </button>
 
-                          <h4 className="sn-gallery-card-title">{n.title || (lang === 'en' ? 'Untitled Note' : 'ملاحظة بدون عنوان')}</h4>
-                          
-                          {thumb && (
-                            <div style={{ width: '100%', height: 100, borderRadius: 10, overflow: 'hidden', margin: '8px 0', background: `url(${thumb}) center/cover no-repeat` }} />
-                          )}
-
-                          <p className="sn-gallery-card-desc">
-                            {(n.content || '').replace(/<[^>]+>/g, '') || (lang === 'en' ? 'No content...' : 'لا يوجد محتوى...')}
-                          </p>
-                        </div>
-
-                        <div className="sn-gallery-card-footer">
-                          <span>{lang === 'en' ? 'Edit Note' : 'تعديل الملاحظة'}</span>
-                          <button className="sn-card-action-btn" onClick={(e) => requestDeleteNote(e, n)}>
-                            <Trash2 size={13} color="#EF4444" />
-                          </button>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
+                  <button
+                    className={`sn-subtab-btn ${taskSubTab === 'completed' ? 'active' : ''}`}
+                    onClick={() => setTaskSubTab('completed')}
+                  >
+                    <CheckCircle2 size={13} color="#10B981" />
+                    <span>{lang === 'en' ? 'Completed Tasks' : 'المهام المنجزة'}</span>
+                  </button>
                 </div>
-              ) : (
-                <div className="sn-gallery-list">
-                  {filteredNotes.map(n => (
-                    <motion.div 
-                      key={n.id}
-                      className="sn-gallery-list-item"
-                      whileHover={{ x: isRtl ? -4 : 4 }}
-                      onClick={() => {
-                        if (n.isChecklist) {
-                          setViewingChecklist(n);
-                          setIsChecklistModalOpen(true);
-                        } else {
-                          setActiveNoteId(n.id);
-                        }
-                      }}
-                    >
-                      <div className="sn-list-item-main">
-                        <Folder size={18} color="#6366F1" style={{ flexShrink: 0 }} />
-                        <div style={{ overflow: 'hidden' }}>
-                          <div className="sn-list-item-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span>{n.title || (lang === 'en' ? 'Untitled Note' : 'ملاحظة بدون عنوان')}</span>
-                            {n.isPinned && <Pin size={12} color="#6366F1" />}
-                            {n.isFavorite && <Star size={12} color="#F59E0B" fill="#F59E0B" />}
-                            {n.isLocked && <Lock size={12} color="#EF4444" />}
-                          </div>
-                          <div className="sn-list-item-snippet">
-                            {(n.content || '').replace(/<[^>]+>/g, '') || (lang === 'en' ? 'No content...' : 'لا يوجد محتوى...')}
-                          </div>
-                        </div>
-                      </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-                        <span className="sn-folder-badge" style={{ fontSize: 10 }}>{n.notebook}</span>
-                        <button className="sn-card-action-btn" onClick={(e) => requestDeleteNote(e, n)}>
-                          <Trash2 size={15} color="#EF4444" />
-                        </button>
-                      </div>
-                    </motion.div>
+                {/* Priority Filter Bar */}
+                <div className="sn-priority-filter-bar">
+                  <Filter size={13} color="#818CF8" />
+                  <span style={{ fontSize: 11, fontWeight: 800, color: '#94A3B8' }}>
+                    {lang === 'en' ? 'Priority:' : 'الأهمية:'}
+                  </span>
+                  {['all', 'high', 'medium', 'low'].map(p => (
+                    <button
+                      key={p}
+                      className={`sn-p-filter-chip ${priorityFilter === p ? 'active' : ''} ${p}`}
+                      onClick={() => setPriorityFilter(p)}
+                    >
+                      {p === 'all' ? (lang === 'en' ? 'All' : 'الكل') :
+                       p === 'high' ? (lang === 'en' ? 'High / Urgent' : 'عالية / عاجل') :
+                       p === 'medium' ? (lang === 'en' ? 'Medium' : 'متوسطة') :
+                       (lang === 'en' ? 'Low' : 'منخفضة')}
+                    </button>
                   ))}
                 </div>
-              )
+              </div>
+            )}
+
+            {/* REFACTORED 2D GRID/LIST CARD CONTAINER WITH HTML5 + FRAMER MOTION LAYOUT */}
+            {filteredList.length > 0 ? (
+              <div className={viewMode === 'grid' ? "sn-gallery-grid-reorder" : "sn-gallery-list-reorder"}>
+                {filteredList.map((n, idx) => (
+                  <motion.div 
+                    key={n.id}
+                    layout
+                    transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, idx)}
+                    onDragOver={(e) => handleDragOver(e, idx)}
+                    onDrop={(e) => handleDrop(e, idx)}
+                    onDragEnd={handleDragEnd}
+                    className={`sn-planner-card ${draggedIndex === idx ? 'is-dragging' : ''} ${dragOverIndex === idx ? 'drag-over' : ''}`}
+                    whileHover={{ y: -2 }}
+                  >
+                    {/* Top Header Rail: Drag handle & Badges */}
+                    <div className="sn-card-header-rail">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                        <div 
+                          className="sn-card-drag-handle"
+                          title={lang === 'en' ? 'Drag card to swap position' : 'اسحب الكارت لتغيير الترتيب'}
+                        >
+                          <GripVertical size={15} color="#818CF8" />
+                        </div>
+
+                        {(activeTab === 'tasks' || n.type === 'task') && (
+                          <button
+                            type="button"
+                            onClick={(e) => toggleTaskCompleted(e, n)}
+                            className={`sn-task-checkbox ${n.isCompleted ? 'checked' : ''}`}
+                            title={n.isCompleted ? (lang === 'en' ? 'Mark active' : 'إعادة كـ نشطة') : (lang === 'en' ? 'Mark completed' : 'إنجاز المهمة')}
+                          >
+                            {n.isCompleted && <Check size={11} color="#FFFFFF" strokeWidth={3} />}
+                          </button>
+                        )}
+
+                        <span className="sn-card-category-badge">{n.category || 'General'}</span>
+                        
+                        {n.priority && (
+                          <span className={`sn-priority-pill ${n.priority}`}>
+                            {n.priority === 'high' ? (lang === 'en' ? 'Urgent' : 'عاجل') :
+                             n.priority === 'medium' ? (lang === 'en' ? 'Mid' : 'متوسطة') :
+                             (lang === 'en' ? 'Low' : 'منخفضة')}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* 3 Quick Action Icons (Star, Edit, Delete) */}
+                      <div className="sn-card-quick-actions">
+                        <button 
+                          className={`sn-action-icon-btn star ${n.isFavorite ? 'active' : ''}`} 
+                          onClick={(e) => toggleFavorite(e, n)}
+                          title={n.isFavorite ? (lang === 'en' ? 'Starred' : 'في المفضلة') : (lang === 'en' ? 'Add to Favorites' : 'إضافة للمفضلة')}
+                        >
+                          <Star size={13} fill={n.isFavorite ? '#F59E0B' : 'none'} color={n.isFavorite ? '#F59E0B' : '#94A3B8'} />
+                        </button>
+
+                        <button 
+                          className="sn-action-icon-btn edit" 
+                          onClick={(e) => { e.stopPropagation(); setActiveNoteId(n.id); }}
+                          title={lang === 'en' ? 'Edit Item' : 'تعديل العنصر'}
+                        >
+                          <Edit3 size={13} color="#818CF8" />
+                        </button>
+
+                        <button 
+                          className="sn-action-icon-btn delete" 
+                          onClick={(e) => { e.stopPropagation(); setItemToDelete(n); }}
+                          title={lang === 'en' ? 'Delete Item' : 'حذف العنصر'}
+                        >
+                          <Trash2 size={13} color="#EF4444" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Card Content Body Area */}
+                    <div className="sn-card-body-area" onClick={() => setActiveNoteId(n.id)}>
+                      <h4 className={`sn-card-title ${n.isCompleted ? 'completed-text' : ''}`}>
+                        {n.title || (lang === 'en' ? 'Untitled' : 'بدون عنوان')}
+                      </h4>
+
+                      <p className="sn-card-snippet">
+                        {(n.content || '').replace(/<[^>]+>/g, '') || (lang === 'en' ? 'No description...' : 'لا يوجد تفاصيل...')}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             ) : (
-              <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text3)' }}>
-                <Notebook size={48} color="var(--accent)" style={{ marginBottom: 16, opacity: 0.7 }} />
-                <h3 style={{ color: 'var(--text)', margin: '0 0 8px 0' }}>{lang === 'en' ? 'No notes in this folder' : 'لا توجد ملاحظات في هذا الدفتر'}</h3>
-                <p style={{ fontSize: 13 }}>{lang === 'en' ? 'Create a new note to start capturing your business strategy ideas.' : 'ابدأ بإضافة ملاحظة جديدة لتأطير استراتيجيتك اليوم.'}</p>
-                <button className="sn-primary-btn" style={{ width: 'auto', margin: '16px auto' }} onClick={() => handleCreateNote('Personal')}>
-                  <Plus size={16} />
-                  <span>{lang === 'en' ? 'Create Note' : 'إنشاء ملاحظة جديدة'}</span>
-                </button>
+              /* EMPTY STATE DISPLAY */
+              <div className="sn-empty-planner-state">
+                <Notebook size={44} color="#6366F1" style={{ opacity: 0.8 }} />
+                <h3>
+                  {activeTab === 'tasks' ? (taskSubTab === 'completed' ? (lang === 'en' ? 'No completed tasks yet' : 'لا توجد مهام منجزة بعد') : (lang === 'en' ? 'No active tasks' : 'لا توجد مهام نشطة حالياً')) :
+                   activeTab === 'ideas' ? (lang === 'en' ? 'No ideas recorded yet' : 'لم يتم تسجيل أي أفكار بعد') :
+                   activeTab === 'notes' ? (lang === 'en' ? 'No notes in this section' : 'لا توجد ملاحظات') :
+                   (lang === 'en' ? 'No favorite items starred' : 'لا توجد عناصر مفضلة')}
+                </h3>
+                <p>
+                  {lang === 'en' ? 'Add a new item to organize your workflow efficiently.' : 'أضف عنصراً جديداً لتنظيم جدول عملك وأفكارك بسهولة.'}
+                </p>
+                {activeTab !== 'favorites' && (
+                  <button 
+                    className="sn-primary-btn" 
+                    style={{ width: 'auto', margin: '14px auto' }} 
+                    onClick={() => {
+                      setCreateType(activeTab === 'ideas' ? 'idea' : activeTab === 'notes' ? 'note' : 'task');
+                      setNewItemCategory(activeTab === 'ideas' ? customIdeaCategories[0] : activeTab === 'notes' ? customNoteCategories[0] : customTaskCategories[0]);
+                      setIsCreateModalOpen(true);
+                    }}
+                  >
+                    <Plus size={16} />
+                    <span>{lang === 'en' ? 'Add Item' : 'إضافة عنصر جديد'}</span>
+                  </button>
+                )}
               </div>
             )}
           </div>
         )}
       </main>
 
-      {/* TEMPLATES PREVIEW MODAL */}
+      {/* ═══════════════ NEW ITEM CREATION MODAL WITH PROFESSIONAL DROPDOWNS ═══════════════ */}
       <AnimatePresence>
-        {isTemplateModalOpen && (
-          <div className="sn-modal-backdrop" onClick={() => setIsTemplateModalOpen(false)}>
+        {isCreateModalOpen && (
+          <div className="sn-modal-backdrop" onClick={() => setIsCreateModalOpen(false)}>
             <motion.div 
               className="sn-modal-box"
-              initial={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
+              exit={{ scale: 0.95, opacity: 0 }}
               onClick={e => e.stopPropagation()}
             >
               <div className="sn-modal-title">
-                <span>📄 {lang === 'en' ? 'Note Templates Library' : 'مكتبة قوالب الملاحظات'}</span>
-                <button className="sn-icon-btn" onClick={() => setIsTemplateModalOpen(false)}>✕</button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {createType === 'task' ? (
+                    <CheckCircle2 size={20} color="#6366F1" />
+                  ) : createType === 'idea' ? (
+                    <Lightbulb size={20} color="#F59E0B" />
+                  ) : (
+                    <FileText size={20} color="#10B981" />
+                  )}
+                  <span>
+                    {createType === 'task' ? (lang === 'en' ? 'Add New Task' : 'إضافة مهمة جديدة') :
+                     createType === 'idea' ? (lang === 'en' ? 'Record New Idea' : 'تسجيل فكرة جديدة') :
+                     (lang === 'en' ? 'Create Note' : 'إنشاء ملاحظة جديدة')}
+                  </span>
+                </div>
+                <button className="sn-icon-btn" onClick={() => setIsCreateModalOpen(false)}>✕</button>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {TEMPLATES.map(tpl => (
-                  <div 
-                    key={tpl.id}
-                    style={{ background: 'var(--bg3)', border: '1px solid var(--line)', padding: 14, borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s' }}
-                    onClick={() => applyTemplate(tpl)}
-                  >
-                    <h4 style={{ margin: '0 0 6px 0', color: 'var(--accent)', fontSize: 14 }}>{lang === 'en' ? tpl.name_en : tpl.name_ar}</h4>
-                    <p style={{ margin: 0, fontSize: 12, color: 'var(--text3)' }}>{lang === 'en' ? 'Click to insert template into active note canvas.' : 'اضغط لإدراج القالب في مساحة الكتابة الحالية.'}</p>
-                  </div>
-                ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {/* Title */}
+                <div className="lpc-form-group">
+                  <label className="lpc-label">
+                    <FileText size={13} color="#818CF8" />
+                    <span>{lang === 'en' ? 'Title / Name' : 'العنوان'}</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    className="lpc-input"
+                    placeholder={lang === 'en' ? 'Item title...' : 'اكتب العنوان هنا...'}
+                    value={newItemTitle}
+                    onChange={e => setNewItemTitle(e.target.value)}
+                  />
+                </div>
+
+                {/* Professional UI Dropdowns (Category & Priority) */}
+                <div style={{ display: 'grid', gridTemplateColumns: createType === 'task' ? '1fr 1fr' : '1fr', gap: 14 }}>
+                  {/* Professional Category Dropdown */}
+                  <PlannerCustomDropdown
+                    label={lang === 'en' ? 'Category' : 'التصنيف'}
+                    icon={TagIcon}
+                    value={newItemCategory}
+                    onChange={setNewItemCategory}
+                    options={currentCategoryOptions}
+                    lang={lang}
+                  />
+
+                  {/* Professional Priority Dropdown (Tasks ONLY) */}
+                  {createType === 'task' && (
+                    <PlannerCustomDropdown
+                      label={lang === 'en' ? 'Priority Level' : 'مدى أهمية المهمة'}
+                      icon={AlertCircle}
+                      value={newItemPriority}
+                      onChange={setNewItemPriority}
+                      options={priorityOptions}
+                      lang={lang}
+                    />
+                  )}
+                </div>
+
+                {/* Content / Notes */}
+                <div className="lpc-form-group">
+                  <label className="lpc-label">
+                    <FileText size={13} color="#818CF8" />
+                    <span>{lang === 'en' ? 'Description / Details' : 'التفاصيل والملاحظات'}</span>
+                  </label>
+                  <textarea 
+                    className="lpc-input"
+                    rows={4}
+                    placeholder={lang === 'en' ? 'Enter item details...' : 'اكتب التفاصيل هنا...'}
+                    value={newItemContent}
+                    onChange={e => setNewItemContent(e.target.value)}
+                    style={{ resize: 'vertical' }}
+                  />
+                </div>
+
+                <button 
+                  className="lpc-btn-primary"
+                  onClick={handleCreateNewItem}
+                  disabled={!newItemTitle.trim()}
+                  style={{ marginTop: 8 }}
+                >
+                  <Plus size={16} />
+                  <span>{lang === 'en' ? 'Add Item' : 'إضافة العنصر'}</span>
+                </button>
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* PROFESSIONAL DELETE CONFIRMATION DIALOG */}
+      {/* ═══════════════ DYNAMIC CUSTOM CATEGORY CREATION MODAL ═══════════════ */}
       <AnimatePresence>
-        {noteToDelete && (
-          <div className="sn-modal-backdrop" onClick={() => setNoteToDelete(null)}>
+        {isCategoryModalOpen && (
+          <div className="sn-modal-backdrop" onClick={() => setIsCategoryModalOpen(false)}>
             <motion.div 
               className="sn-modal-box"
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="sn-modal-title">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <FolderPlus size={20} color="#818CF8" />
+                  <span>{lang === 'en' ? 'Create Custom Category' : 'إنشاء تصنيف خاص جديد'}</span>
+                </div>
+                <button className="sn-icon-btn" onClick={() => setIsCategoryModalOpen(false)}>✕</button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div className="lpc-form-group">
+                  <label className="lpc-label">{lang === 'en' ? 'Category Name' : 'اسم التصنيف'}</label>
+                  <input 
+                    type="text" 
+                    className="lpc-input"
+                    placeholder={lang === 'en' ? 'e.g., Marketing, Personal Project' : 'مثال: التسويق، مشروع خاص'}
+                    value={newCategoryName}
+                    onChange={e => setNewCategoryName(e.target.value)}
+                  />
+                </div>
+
+                <button 
+                  className="lpc-btn-primary"
+                  onClick={handleAddCustomCategory}
+                  disabled={!newCategoryName.trim()}
+                >
+                  <FolderPlus size={16} />
+                  <span>{lang === 'en' ? 'Create Category' : 'إنشاء التصنيف'}</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* DELETE CONFIRMATION MODAL */}
+      <AnimatePresence>
+        {itemToDelete && (
+          <div className="sn-modal-backdrop" onClick={() => setItemToDelete(null)}>
+            <motion.div 
+              className="sn-modal-box"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
               onClick={e => e.stopPropagation()}
               style={{ maxWidth: 440, border: '1px solid rgba(239, 68, 68, 0.3)' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(239, 68, 68, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EF4444', flexShrink: 0 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(239, 68, 68, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EF4444' }}>
                   <Trash2 size={22} />
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, color: 'var(--text)', fontSize: 16, fontWeight: 900 }}>
-                    {lang === 'en' ? 'Delete Note?' : 'حذف الملاحظة؟'}
+                  <h3 style={{ margin: 0, color: '#FFFFFF', fontSize: 16, fontWeight: 900 }}>
+                    {lang === 'en' ? 'Delete Item?' : 'حذف العنصر؟'}
                   </h3>
                   <span style={{ fontSize: 12, color: 'var(--text3)' }}>
-                    {noteToDelete.title || (lang === 'en' ? 'Untitled Note' : 'ملاحظة بدون عنوان')}
+                    {itemToDelete.title || (lang === 'en' ? 'Untitled' : 'بدون عنوان')}
                   </span>
                 </div>
               </div>
 
-              <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.6, margin: '0 0 20px 0' }}>
+              <p style={{ fontSize: 13, color: '#94A3B8', lineHeight: 1.6, margin: '0 0 20px 0' }}>
                 {lang === 'en' 
-                  ? 'Are you sure you want to delete this note? This action cannot be undone.' 
-                  : 'هل أنت متأكد من رغبتك في حذف هذه الملاحظة نهائياً؟ لا يمكن التراجع عن هذه الخطوة.'}
+                  ? 'Are you sure you want to delete this item? This action cannot be undone.' 
+                  : 'هل أنت متأكد من رغبتك في حذف هذا العنصر نهائياً؟'}
               </p>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
                 <button 
                   className="sn-format-btn" 
-                  onClick={() => setNoteToDelete(null)}
+                  onClick={() => setItemToDelete(null)}
                   style={{ padding: '8px 16px', borderRadius: 10, background: 'var(--bg3)' }}
                 >
                   {lang === 'en' ? 'Cancel' : 'إلغاء'}
                 </button>
                 <button 
                   className="sn-primary-btn" 
-                  onClick={confirmDeleteNote}
+                  onClick={confirmDeleteItem}
                   style={{ width: 'auto', margin: 0, padding: '8px 20px', borderRadius: 10, background: '#EF4444', boxShadow: '0 4px 14px rgba(239, 68, 68, 0.3)' }}
                 >
-                  {lang === 'en' ? 'Delete Note' : 'حذف الملاحظة'}
+                  {lang === 'en' ? 'Delete' : 'حذف'}
                 </button>
               </div>
             </motion.div>

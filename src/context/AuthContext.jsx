@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth';
+import { doc, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, adminAuth, superAdminAuth, db } from '../firebase';
+import { sendEmailViaResend } from '../services/emailCrmService';
 
 const AuthContext = createContext(null);
 
@@ -152,6 +153,98 @@ export function AuthProvider({ children }) {
     return userData;
   };
 
+  const resetPassword = async (email, portal = 'user') => {
+    const authInstance = getAuthInstance(portal);
+    const cleanEmail = email.trim().toLowerCase();
+
+    let role = portal;
+    // Role authorization check in Firestore for admin/superadmin portals
+    if (cleanEmail !== 'admin@brand.com') {
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('email', '==', cleanEmail));
+      const snap = await getDocs(q);
+
+      if (!snap.empty) {
+        const userData = snap.docs[0].data();
+        role = userData.role || 'user';
+
+        if (portal === 'admin' && role !== 'admin' && role !== 'superadmin') {
+          throw new Error('ROLE_MISMATCH_ADMIN');
+        }
+        if (portal === 'superadmin' && role !== 'superadmin') {
+          throw new Error('ROLE_MISMATCH_SUPER');
+        }
+      }
+    }
+
+    // Role-based dynamic Action URL Settings
+    const redirectPath = (role === 'admin' || role === 'superadmin') ? '/admin/resetpassword' : '/auth/resetpassword';
+    const actionCodeSettings = {
+      url: `https://digital-product-3a97c.web.app${redirectPath}`,
+      handleCodeInApp: true,
+    };
+
+    // 1. Firebase Auth Password Reset Email Link Generation
+    let firebaseErr = null;
+    try {
+      await sendPasswordResetEmail(authInstance, cleanEmail, actionCodeSettings);
+    } catch (err) {
+      firebaseErr = err;
+      console.warn('Firebase Auth sendPasswordResetEmail notice:', err);
+    }
+
+    // 2. Custom Branded Email via Resend API
+    try {
+      const portalName = portal === 'superadmin' ? 'Super Admin' : portal === 'admin' ? 'Admin' : 'User';
+      const actionUrl = `https://digital-product-3a97c.web.app${redirectPath}`;
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <body style="font-family: 'Segoe UI', Arial, sans-serif; background: #0B0F17; color: #FFFFFF; padding: 24px;">
+          <div style="max-width: 540px; margin: 0 auto; background: #151C2C; border: 1px solid #6366F1; border-radius: 16px; padding: 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <h2 style="color: #6366F1; margin-top: 0;">🔐 Reset Your ${portalName} Password</h2>
+            <p style="color: #94A3B8; font-size: 14px; line-height: 1.6;">
+              We received a request to reset your password for account <code>${cleanEmail}</code> (${portalName} Portal).
+            </p>
+            <div style="text-align: center; margin: 26px 0;">
+              <a href="${actionUrl}" style="background: linear-gradient(135deg, #6366F1, #7C3AED); color: #FFFFFF; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block; box-shadow: 0 4px 14px rgba(99,102,241,0.4);">
+                Reset Password / إعادة تعيين كلمة المرور
+              </a>
+            </div>
+            <div style="background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 10px; padding: 12px; margin: 20px 0; color: #CBD5E1; font-size: 12px; word-break: break-all;">
+              Target Recovery URL: <a href="${actionUrl}" style="color: #818CF8;">${actionUrl}</a>
+            </div>
+            <p style="color: #64748B; font-size: 11px; margin-bottom: 0;">
+              If you did not request this password reset, please ignore this email.
+            </p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      await sendEmailViaResend({
+        to: cleanEmail,
+        subject: `🔐 Password Reset Request - ${portalName} Portal`,
+        html: htmlContent
+      });
+    } catch (resendErr) {
+      console.warn('Resend API notice:', resendErr);
+    }
+
+    if (firebaseErr && firebaseErr.code === 'auth/user-not-found') {
+      throw firebaseErr;
+    }
+
+    return { success: true };
+  };
+
+  const isPortalLoading = (portal) => {
+    if (portal === 'superadmin') return loadingSuper;
+    if (portal === 'admin') return loadingAdmin;
+    return loadingUser;
+  };
+
   return (
     <AuthContext.Provider value={{
       // Users
@@ -161,6 +254,10 @@ export function AuthProvider({ children }) {
       
       // Flags
       loading: loadingUser || loadingAdmin || loadingSuper,
+      loadingUser,
+      loadingAdmin,
+      loadingSuper,
+      isPortalLoading,
       isSuperAdmin: !!superAdminUserData,
       isAdmin: !!adminUserData || !!superAdminUserData,
       isUser: !!userData,
@@ -168,6 +265,7 @@ export function AuthProvider({ children }) {
       // Methods
       login,
       logout,
+      resetPassword,
       isAuthenticatedFor,
       getUserDataFor,
     }}>

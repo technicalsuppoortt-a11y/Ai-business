@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import VideoShowcaseSection from '../../components/common/VideoShowcaseSection';
 
 export default function MadgicxTemplate({ brandData, plans, goAuth }) {
   const { state, dispatch } = useApp();
@@ -537,6 +538,9 @@ export default function MadgicxTemplate({ brandData, plans, goAuth }) {
             </div>
           </div>
         </section>
+
+        {/* VIDEO SHOWCASE SECTION */}
+        <VideoShowcaseSection isArabic={isArabic} />
 
         {/* CTA */}
         <section className="section_cta" style={{ backgroundColor: '#07070F' }}>

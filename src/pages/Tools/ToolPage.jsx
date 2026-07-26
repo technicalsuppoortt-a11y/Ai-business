@@ -165,7 +165,7 @@ export default function ToolPage() {
   // Exact Components Mapping (From tools.html)
   const toolComponents = {
     'analysis-identity': <AnalysisIdentity />,
-    'niche-selection': <AnalysisIdentity />,
+    'niche-selection': <NicheSelection stepNumber={1} />,
     'brand-naming': <AnalysisIdentity />,
     'visual-identity': <AnalysisIdentity />,
     'website-construction': <WebsiteConstruction stepNumber={5} />,

@@ -11,19 +11,22 @@ import {
   Mail,
   Building,
   Check,
-  CheckCircle2,
   Copy,
-  Sparkles,
   AlertTriangle,
   ChevronDown,
-  Sliders,
   Scale,
   Lock,
-  ArrowRight,
-  ArrowLeft,
   BookOpen,
   Search,
-  PenTool
+  PenTool,
+  Cookie,
+  Download,
+  Code,
+  Sliders,
+  X,
+  Sparkles,
+  Command,
+  FileCheck
 } from 'lucide-react';
 import './LegalPages.css';
 
@@ -69,9 +72,9 @@ function SearchableCountryDropdown({ value, onChange, options, label, icon: Icon
   return (
     <div className="lp-dropdown-container" ref={dropdownRef}>
       {label && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
           <label className="lp-label" style={{ margin: 0 }}>
-            {Icon && <Icon size={14} color="#8B5CF6" />}
+            {Icon && <Icon size={13} color="#6366F1" strokeWidth={1.5} />}
             <span>{label}</span>
           </label>
           <button 
@@ -80,7 +83,7 @@ function SearchableCountryDropdown({ value, onChange, options, label, icon: Icon
             style={{ 
               background: 'transparent', 
               border: 'none', 
-              color: '#8B5CF6', 
+              color: '#818CF8', 
               fontSize: '11px', 
               fontWeight: 800, 
               cursor: 'pointer',
@@ -97,7 +100,7 @@ function SearchableCountryDropdown({ value, onChange, options, label, icon: Icon
             ) : (
               <>
                 <PenTool size={11} />
-                <span>{lang === 'en' ? '+ Write custom country' : '+ كتابة دولة مخصصة'}</span>
+                <span>{lang === 'en' ? '+ Custom country' : '+ كتابة دولة مخصصة'}</span>
               </>
             )}
           </button>
@@ -120,7 +123,7 @@ function SearchableCountryDropdown({ value, onChange, options, label, icon: Icon
         >
           <span>{selectedOption?.label || value || placeholder}</span>
           <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
-            <ChevronDown size={16} color="var(--text2, #94A3B8)" />
+            <ChevronDown size={14} color="#94A3B8" />
           </motion.div>
         </div>
       )}
@@ -134,9 +137,8 @@ function SearchableCountryDropdown({ value, onChange, options, label, icon: Icon
             exit={{ opacity: 0, y: -6, scale: 0.98 }}
             transition={{ duration: 0.15 }}
           >
-            {/* Advanced Search Bar inside Dropdown Menu */}
             <div className="lp-search-box">
-              <Search size={14} color="var(--text2, #94A3B8)" />
+              <Search size={13} color="#94A3B8" />
               <input 
                 ref={searchInputRef}
                 type="text" 
@@ -146,21 +148,20 @@ function SearchableCountryDropdown({ value, onChange, options, label, icon: Icon
               />
             </div>
 
-            {/* Custom option when user types a search query */}
             {searchQuery.trim() && (
               <div 
                 className="lp-dropdown-option custom-add-option"
                 onClick={() => handleSelect(searchQuery.trim())}
               >
-                <span style={{ color: '#8B5CF6', fontWeight: 800 }}>
+                <span style={{ color: '#6366F1', fontWeight: 800 }}>
                   ✨ {lang === 'en' ? `Use typed: "${searchQuery}"` : `استخدام الدولة المدخلة: "${searchQuery}"`}
                 </span>
-                <Check size={14} color="#8B5CF6" />
+                <Check size={13} color="#6366F1" />
               </div>
             )}
 
             {filteredOptions.length === 0 && !searchQuery.trim() ? (
-              <div style={{ padding: '12px', textAlign: 'center', color: 'var(--text2, #94A3B8)', fontSize: '12px' }}>
+              <div style={{ padding: '10px', textAlign: 'center', color: '#94A3B8', fontSize: '12px' }}>
                 {lang === 'en' ? 'No countries found.' : 'لم يتم العثور على دول.'}
               </div>
             ) : (
@@ -171,7 +172,7 @@ function SearchableCountryDropdown({ value, onChange, options, label, icon: Icon
                   onClick={() => handleSelect(opt.value)}
                 >
                   <span>{opt.label}</span>
-                  {String(opt.value) === String(value) && <Check size={14} color="#8B5CF6" />}
+                  {String(opt.value) === String(value) && <Check size={13} color="#6366F1" />}
                 </div>
               ))
             )}
@@ -184,10 +185,15 @@ function SearchableCountryDropdown({ value, onChange, options, label, icon: Icon
 
 export default function LegalPages({ stepNumber }) {
   const { state } = useApp();
-  const toast = useToast();
+  const toastContext = useToast();
+  const toast = typeof toastContext === 'function' ? toastContext : (toastContext?.toast || ((msg) => console.log(msg)));
+
   const lang = state.language || 'ar';
   const isRtl = lang === 'ar';
-  
+
+  // Configurator Drawer Overlay State
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
   // Inputs
   const [brandName, setBrandName] = useState(state.brandName || '');
   const [contactEmail, setContactEmail] = useState(state.contactEmail || '');
@@ -195,7 +201,19 @@ export default function LegalPages({ stepNumber }) {
   const [country, setCountry] = useState(state.country || (lang === 'en' ? 'USA' : 'مصر'));
   const [validationError, setValidationError] = useState('');
   
-  const [activeTab, setActiveTab] = useState('privacy'); // privacy, terms, refund
+  const [activeTab, setActiveTab] = useState('privacy'); // privacy | terms | refund | cookie
+
+  // Global Keyboard Shortcut (Ctrl+K or Cmd+K) to open Inspector Drawer
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsDrawerOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Pre-configured popular country options
   const countryOptions = [
@@ -220,6 +238,34 @@ export default function LegalPages({ stepNumber }) {
     { value: lang === 'en' ? 'Turkey' : 'تركيا', label: lang === 'en' ? 'Turkey (تركيا)' : 'تركيا (Turkey)' },
     { value: lang === 'en' ? 'Spain' : 'إسبانيا', label: lang === 'en' ? 'Spain (إسبانيا)' : 'إسبانيا (Spain)' }
   ];
+
+  // Safe Copy helper
+  const safeCopyToClipboard = (text, successMsgEn, successMsgAr) => {
+    const copyPromise = navigator.clipboard && navigator.clipboard.writeText
+      ? navigator.clipboard.writeText(text)
+      : new Promise((resolve, reject) => {
+          try {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            resolve();
+          } catch (e) {
+            reject(e);
+          }
+        });
+
+    copyPromise.then(() => {
+      toast(lang === 'en' ? successMsgEn : successMsgAr, 'success');
+    }).catch(err => {
+      console.error(err);
+      toast(lang === 'en' ? 'Failed to copy to clipboard' : 'تعذر النسخ إلى الحافظة', 'error');
+    });
+  };
 
   const generatePrivacyPolicy = () => {
     if (lang === 'en') {
@@ -386,11 +432,49 @@ To submit a return request, please contact us via email at ${contactEmail || '[E
     `.trim();
   };
 
+  const generateCookiePolicy = () => {
+    if (lang === 'en') {
+      return `
+Cookie & GDPR Compliance Policy for ${brandName || '[Brand Name]'}
+
+1. What are Cookies?
+Cookies are small text files placed on your device to enhance your browsing experience on ${websiteUrl || '[Website URL]'}.
+
+2. Types of Cookies We Use
+- Essential Cookies: Necessary for site security and session login.
+- Analytics Cookies: Helps us understand visitor behavior via Google Analytics.
+- Marketing Cookies: Used to deliver relevant advertisements based on interest.
+
+3. Managing Cookies
+You can manage or disable cookie preferences directly in your browser settings at any time.
+
+Contact: ${contactEmail || '[Email Address]'}
+      `.trim();
+    }
+    return `
+سياسة ملفات تعريف الارتباط (Cookies) والتوافق مع GDPR لـ ${brandName || '[اسم البراند]'}
+
+1. ما هي ملفات تعريف الارتباط؟
+ملفات تعريف الارتباط هي ملفات نصية صغيرة يتم تخزينها على جهازك لتحسين تجربة التصفح عبر موقعنا ${websiteUrl || '[رابط الموقع]'}.
+
+2. أنواع ملفات الكوكيز المستخدمة
+- الكوكيز الأساسية: ضرورية لأمان الموقع وتسجيل الدخول.
+- كوكيز التحليلات: تساعدنا في فهم سلوك الزوار عبر Google Analytics.
+- كوكيز التسويق: تُستخدم لتقديم إعلانات موجهة تناسب اهتماماتك.
+
+3. إدارة التفضيلات
+يمكنك التحكم في تفضيلات وتعطيل الكوكيز في أي وقت مباشرة من إعدادات متصفحك.
+
+للتواصل: ${contactEmail || '[البريد الإلكتروني]'}
+    `.trim();
+  };
+
   const getContent = () => {
     switch(activeTab) {
       case 'privacy': return generatePrivacyPolicy();
       case 'terms': return generateTerms();
       case 'refund': return generateRefundPolicy();
+      case 'cookie': return generateCookiePolicy();
       default: return '';
     }
   };
@@ -401,214 +485,326 @@ To submit a return request, please contact us via email at ${contactEmail || '[E
     if (!brandName.trim() || !contactEmail.trim() || !websiteUrl.trim()) {
       setValidationError(
         lang === 'en' 
-          ? 'Notice: Some fields (Brand Name, Email, or Website) are empty. Please fill them out to generate custom terms.' 
-          : 'تنبيه: بعض الحقول (اسم البراند، البريد الإلكتروني أو رابط الموقع) فارغة. يرجى استكمالها لتخصيص الوثيقة.'
+          ? 'Notice: Some fields (Brand Name, Email, or Website) are empty. Click "Edit Business Parameters" to customize.' 
+          : 'تنبيه: بعض الحقول فارغة. اضغط على "تعديل بيانات المشروع" للتخصيص.'
       );
       toast(
-        lang === 'en' ? 'Please complete the brand details for customized terms.' : 'يرجى استكمال بيانات البراند لتخصيص الشروط.', 
+        lang === 'en' ? 'Please complete brand details for customized terms.' : 'يرجى استكمال بيانات البراند لتخصيص الشروط.', 
         'warning'
       );
     } else {
       setValidationError('');
     }
 
-    navigator.clipboard.writeText(currentContent);
-    toast(lang === 'en' ? 'Document copied to clipboard! ✅' : 'تم نسخ الوثيقة القانونية إلى الحافظة! ✅', 'success');
+    safeCopyToClipboard(currentContent, 'Legal document copied to clipboard! ✅', 'تم نسخ الوثيقة القانونية إلى الحافظة! ✅');
+  };
+
+  const downloadTxtFile = () => {
+    const filename = `${(brandName || 'legal_document').toLowerCase().replace(/[^a-z0-9]/g, '_')}_${activeTab}.txt`;
+    const blob = new Blob([currentContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast(lang === 'en' ? 'Document TXT downloaded! ✅' : 'تم تحميل ملف الوثيقة النصي بنجاح! ✅', 'success');
+  };
+
+  const exportHtmlFile = () => {
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+  <meta charset="UTF-8">
+  <title>${brandName || 'Legal Document'} - ${activeTab.toUpperCase()}</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.85; color: #0F172A; max-width: 800px; margin: 40px auto; padding: 24px; }
+    h1 { color: #6366F1; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px; }
+    pre { white-space: pre-wrap; font-family: inherit; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <pre>${currentContent}</pre>
+</body>
+</html>
+    `.trim();
+
+    const filename = `${(brandName || 'legal_document').toLowerCase().replace(/[^a-z0-9]/g, '_')}_${activeTab}.html`;
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast(lang === 'en' ? 'Document HTML exported! ✅' : 'تم تصدير ملف HTML بنجاح! ✅', 'success');
   };
 
   const tabsList = [
     { id: 'privacy', label_ar: 'سياسة الخصوصية', label_en: 'Privacy Policy', IconComp: Shield },
     { id: 'terms', label_ar: 'الشروط والأحكام', label_en: 'Terms & Conditions', IconComp: FileText },
-    { id: 'refund', label_ar: 'سياسة الاسترجاع', label_en: 'Refund Policy', IconComp: RotateCcw }
+    { id: 'refund', label_ar: 'سياسة الاسترجاع', label_en: 'Refund Policy', IconComp: RotateCcw },
+    { id: 'cookie', label_ar: 'ملفات الكوكيز (Cookies)', label_en: 'Cookie Policy', IconComp: Cookie }
   ];
+
+  const wordCount = currentContent.trim().split(/\s+/).filter(Boolean).length;
+  const charCount = currentContent.length;
 
   return (
     <ToolDashboardLayout
       id="legal-pages"
-      title={lang === 'en' ? 'Legal Pages Generator' : 'مولد الصفحات القانونية'}
-      subtitle={lang === 'en' ? 'Generate privacy policy, terms & conditions, and refund policy for your site with one click to protect your business legally.' : 'قم بتوليد سياسة الخصوصية، الشروط والأحكام، وسياسة الاسترجاع الخاصة بموقعك بضغطة زر لحماية عملك قانونياً.'}
+      title={lang === 'en' ? 'Full-Screen Legal Canvas Workspace' : 'منصة الشاشة الكاملة للوثائق القانونية'}
+      subtitle={lang === 'en' ? 'Full-width legal editor with floating parameters inspector overlay.' : 'استوديو شاشة كاملة لعرض وتخصيص كافة الوثائق القانونية لموقعك بمرونة فائقة.'}
       stepNumber={stepNumber}
-      accentColor="#8B5CF6"
+      accentColor="#6366F1"
       timeEstimate="10 - 15"
     >
-      <div className="lp-container" dir={isRtl ? 'rtl' : 'ltr'}>
-        <div className="lp-main-grid">
-          
-          {/* ═══════════════ INPUTS FORM PANEL ═══════════════ */}
-          <div className="lp-panel">
-            <div className="lp-panel-header">
-              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.12)', color: '#8B5CF6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Scale size={20} />
-              </div>
-              <div>
-                <h3 className="lp-panel-title">
-                  <span>{lang === 'en' ? 'Business Legal Details' : 'البيانات القانونية للمشروع'}</span>
-                </h3>
-                <p className="lp-panel-subtitle">
-                  {lang === 'en' ? 'Provide your company parameters to generate dynamic legal documents.' : 'أدخل بيانات شركتك لتخصيص وثائق الخصوصية والشروط تلقائياً.'}
-                </p>
-              </div>
-            </div>
-
-            {/* Validation Warning Alert */}
-            <AnimatePresence>
-              {validationError && (
-                <motion.div 
-                  className="lp-validation-alert"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
+      <div className="lp-canvas-container" dir={isRtl ? 'rtl' : 'ltr'}>
+        
+        {/* 1. TOP FLOATING GLASS ACTION HEADER BAR */}
+        <div className="lp-floating-header">
+          {/* Left Side: Document Tab Selector Pills */}
+          <div className="lp-doc-tabs-2030">
+            {tabsList.map(tab => {
+              const IconComponent = tab.IconComp;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  className={`lp-doc-tab-btn-2030 ${isActive ? 'active' : ''}`}
+                  onClick={() => setActiveTab(tab.id)}
                 >
-                  <AlertTriangle size={18} flexShrink={0} />
-                  <span>{validationError}</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  {isActive && (
+                    <motion.div 
+                      layoutId="activeLegalCanvasTabHighlight" 
+                      className="lp-doc-tab-bg-2030" 
+                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                    />
+                  )}
+                  <IconComponent size={14} style={{ zIndex: 1 }} strokeWidth={1.5} />
+                  <span style={{ zIndex: 1 }}>{lang === 'en' ? tab.label_en : tab.label_ar}</span>
+                </button>
+              );
+            })}
+          </div>
 
-            <div className="lp-form-group">
-              <label className="lp-label">
-                <Building size={14} color="#8B5CF6" />
-                <span>{lang === 'en' ? 'Brand / Company Name' : 'اسم البراند / الشركة'}</span>
-                <span className="lp-label-accent">*</span>
-              </label>
-              <input 
-                type="text" 
-                className={`lp-input ${validationError && !brandName ? 'error' : ''}`}
-                value={brandName}
-                onChange={(e) => {
-                  setBrandName(e.target.value);
-                  if (e.target.value.trim()) setValidationError('');
-                }}
-                placeholder={lang === 'en' ? "e.g. UpKlick Ltd." : "مثال: شركة أب كليك"}
-              />
+          {/* Right Side: Primary Actions & Inspector Trigger */}
+          <div className="lp-header-actions">
+            <button 
+              onClick={() => setIsDrawerOpen(true)}
+              className="lp-btn-inspector-trigger"
+            >
+              <Sliders size={14} strokeWidth={1.5} />
+              <span>{lang === 'en' ? 'Edit Business Info' : 'تعديل بيانات المشروع'}</span>
+              <span className="lp-shortcut-badge">⌘K</span>
+            </button>
+
+            <button 
+              onClick={handleCopy}
+              className="lp-btn-action-ghost"
+              title={lang === 'en' ? 'Copy Document' : 'نسخ الوثيقة'}
+            >
+              <Copy size={13} />
+              <span>{lang === 'en' ? 'Copy' : 'نسخ'}</span>
+            </button>
+
+            <button 
+              onClick={downloadTxtFile}
+              className="lp-btn-action-ghost"
+              title={lang === 'en' ? 'Download TXT' : 'تحميل TXT'}
+            >
+              <Download size={13} />
+              <span>TXT</span>
+            </button>
+
+            <button 
+              onClick={exportHtmlFile}
+              className="lp-btn-action-ghost"
+              title={lang === 'en' ? 'Export HTML' : 'تصدير HTML'}
+            >
+              <Code size={13} />
+              <span>HTML</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 2. 100% VIEWPORT WIDTH DOCUMENT STUDIO CANVAS */}
+        <div className="lp-full-canvas">
+          <div className="lp-canvas-toolbar">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span className="lp-canvas-badge">
+                <Lock size={12} />
+                <span>{lang === 'en' ? `Governing Law: ${country}` : `القانون المطبق: ${country}`}</span>
+              </span>
+              <span className="lp-canvas-badge" style={{ background: 'rgba(16, 185, 129, 0.12)', borderColor: 'rgba(16, 185, 129, 0.25)', color: '#10B981' }}>
+                <FileCheck size={12} />
+                <span>{lang === 'en' ? 'Auto-Synced' : 'متوافق ومحدث'}</span>
+              </span>
             </div>
 
-            <div className="lp-form-group">
-              <label className="lp-label">
-                <Globe size={14} color="#8B5CF6" />
-                <span>{lang === 'en' ? 'Website Domain URL' : 'رابط الموقع (Domain)'}</span>
-                <span className="lp-label-accent">*</span>
-              </label>
-              <input 
-                type="text" 
-                className={`lp-input ${validationError && !websiteUrl ? 'error' : ''}`}
-                dir="ltr"
-                value={websiteUrl}
-                onChange={(e) => {
-                  setWebsiteUrl(e.target.value);
-                  if (e.target.value.trim()) setValidationError('');
-                }}
-                placeholder="https://example.com"
-                style={{ textAlign: isRtl ? 'right' : 'left' }}
-              />
-            </div>
-
-            <div className="lp-form-group">
-              <label className="lp-label">
-                <Mail size={14} color="#8B5CF6" />
-                <span>{lang === 'en' ? 'Support Contact Email' : 'إيميل الدعم الفني والقانوني'}</span>
-                <span className="lp-label-accent">*</span>
-              </label>
-              <input 
-                type="email" 
-                className={`lp-input ${validationError && !contactEmail ? 'error' : ''}`}
-                dir="ltr"
-                value={contactEmail}
-                onChange={(e) => {
-                  setContactEmail(e.target.value);
-                  if (e.target.value.trim()) setValidationError('');
-                }}
-                placeholder="support@example.com"
-                style={{ textAlign: isRtl ? 'right' : 'left' }}
-              />
-            </div>
-
-            <div className="lp-form-group" style={{ marginBottom: 0 }}>
-              <SearchableCountryDropdown 
-                label={lang === 'en' ? 'Country (For Governing Law)' : 'الدولة (للقوانين والنزاعات المطبقة)'}
-                icon={Lock}
-                value={country}
-                onChange={setCountry}
-                options={countryOptions}
-                placeholder={lang === 'en' ? 'Select or Search Governing Jurisdiction...' : 'اختر أو ابحث عن الدولة المطبقة لقوانين المتجر...'}
-                lang={lang}
-              />
+            <div className="lp-canvas-stats">
+              <span>{lang === 'en' ? `${wordCount} words` : `${wordCount} كلمة`}</span>
+              <span>•</span>
+              <span>{lang === 'en' ? `${charCount} characters` : `${charCount} حرف`}</span>
             </div>
           </div>
 
-          {/* ═══════════════ GENERATED DOCUMENTS PANEL ═══════════════ */}
-          <div className="lp-panel">
-            <div className="lp-panel-header" style={{ justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.12)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <BookOpen size={20} />
-                </div>
-                <div>
-                  <h3 className="lp-panel-title">
-                    <span>{lang === 'en' ? 'Generated Legal Documents' : 'الوثائق القانونية المولدة'}</span>
-                  </h3>
-                  <p className="lp-panel-subtitle">
-                    {lang === 'en' ? 'Ready to copy & paste into your website footer.' : 'جاهزة للنسخ المباشر واللصق في تذييل موقعك.'}
-                  </p>
-                </div>
-              </div>
-
-              <button 
-                onClick={handleCopy}
-                className="lp-copy-header-btn"
-                title={lang === 'en' ? 'Copy Document' : 'نسخ الوثيقة'}
+          <div className="lp-document-paper-card">
+            <AnimatePresence mode="wait">
+              <motion.pre 
+                key={activeTab}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                style={{ 
+                  direction: lang === 'en' ? 'ltr' : 'rtl', 
+                  textAlign: lang === 'en' ? 'left' : 'right' 
+                }}
               >
-                <Copy size={14} />
-                <span>{lang === 'en' ? 'Copy Document' : 'نسخ الوثيقة'}</span>
-              </button>
-            </div>
-
-            {/* Document Segmented Tabs with Framer Motion Highlight */}
-            <div className="lp-doc-tabs">
-              {tabsList.map(tab => {
-                const IconComponent = tab.IconComp;
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    className={`lp-doc-tab-btn ${isActive ? 'active' : ''}`}
-                    onClick={() => setActiveTab(tab.id)}
-                  >
-                    {isActive && (
-                      <motion.div 
-                        layoutId="activeLegalTabHighlight" 
-                        className="lp-doc-tab-bg" 
-                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                      />
-                    )}
-                    <IconComponent size={15} style={{ zIndex: 1 }} />
-                    <span style={{ zIndex: 1 }}>{lang === 'en' ? tab.label_en : tab.label_ar}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Output Text Viewer */}
-            <div className="lp-output-container">
-              <AnimatePresence mode="wait">
-                <motion.pre 
-                  key={activeTab}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.2 }}
-                  style={{ 
-                    direction: lang === 'en' ? 'ltr' : 'rtl', 
-                    textAlign: lang === 'en' ? 'left' : 'right' 
-                  }}
-                >
-                  {currentContent}
-                </motion.pre>
-              </AnimatePresence>
-            </div>
-
+                {currentContent}
+              </motion.pre>
+            </AnimatePresence>
           </div>
+        </div>
 
+        {/* 3. FLOATING COMMAND & CONFIGURATOR SIDE-DRAWER (Z-INDEX OVERLAY) */}
+        <AnimatePresence>
+          {isDrawerOpen && (
+            <motion.div 
+              className="lp-drawer-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsDrawerOpen(false)}
+            >
+              <motion.div 
+                className="lp-drawer-panel"
+                initial={{ x: isRtl ? -400 : 400 }}
+                animate={{ x: 0 }}
+                exit={{ x: isRtl ? -400 : 400 }}
+                transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="lp-drawer-header">
+                  <h3 className="lp-drawer-title">
+                    <Sliders size={18} color="#6366F1" strokeWidth={1.5} />
+                    <span>{lang === 'en' ? 'Business Legal Parameters' : 'تعديل البيانات القانونية'}</span>
+                  </h3>
+                  <button 
+                    onClick={() => setIsDrawerOpen(false)}
+                    style={{ background: 'transparent', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: 4 }}
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {validationError && (
+                  <div className="lp-validation-alert">
+                    <AlertTriangle size={16} flexShrink={0} />
+                    <span>{validationError}</span>
+                  </div>
+                )}
+
+                <div className="lp-form-group">
+                  <label className="lp-label">
+                    <Building size={13} color="#6366F1" strokeWidth={1.5} />
+                    <span>{lang === 'en' ? 'Brand / Company Name' : 'اسم البراند / الشركة'}</span>
+                    <span className="lp-label-accent">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    className="lp-input"
+                    value={brandName}
+                    onChange={(e) => setBrandName(e.target.value)}
+                    placeholder={lang === 'en' ? "e.g. Nova Studio Ltd." : "مثال: شركة نوفا ستوديو"}
+                  />
+                </div>
+
+                <div className="lp-form-group">
+                  <label className="lp-label">
+                    <Globe size={13} color="#6366F1" strokeWidth={1.5} />
+                    <span>{lang === 'en' ? 'Website Domain URL' : 'رابط الموقع (Domain)'}</span>
+                    <span className="lp-label-accent">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    className="lp-input"
+                    dir="ltr"
+                    value={websiteUrl}
+                    onChange={(e) => setWebsiteUrl(e.target.value)}
+                    placeholder="https://example.com"
+                    style={{ textAlign: isRtl ? 'right' : 'left' }}
+                  />
+                </div>
+
+                <div className="lp-form-group">
+                  <label className="lp-label">
+                    <Mail size={13} color="#6366F1" strokeWidth={1.5} />
+                    <span>{lang === 'en' ? 'Support Contact Email' : 'إيميل الدعم الفني والقانوني'}</span>
+                    <span className="lp-label-accent">*</span>
+                  </label>
+                  <input 
+                    type="email" 
+                    className="lp-input"
+                    dir="ltr"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    placeholder="support@example.com"
+                    style={{ textAlign: isRtl ? 'right' : 'left' }}
+                  />
+                </div>
+
+                <div className="lp-form-group">
+                  <SearchableCountryDropdown 
+                    label={lang === 'en' ? 'Country (Governing Law)' : 'الدولة (للقوانين والنزاعات المطبقة)'}
+                    icon={Lock}
+                    value={country}
+                    onChange={setCountry}
+                    options={countryOptions}
+                    placeholder={lang === 'en' ? 'Select Jurisdiction...' : 'اختر الدولة المطبقة...'}
+                    lang={lang}
+                  />
+                </div>
+
+                <div style={{ marginTop: 'auto', paddingTop: '20px' }}>
+                  <button 
+                    onClick={() => {
+                      setIsDrawerOpen(false);
+                      toast(lang === 'en' ? 'Business parameters updated!' : 'تم تحديث البيانات والمعلومات القانونية بنجاح!', 'success');
+                    }}
+                    className="wc-btn wc-btn-primary"
+                    style={{ width: '100%' }}
+                  >
+                    <span>{lang === 'en' ? 'Close & View Document' : 'إغلاق ومعاينة الوثائق'}</span>
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* 4. STICKY MOBILE ACTION BAR PILL */}
+        <div className="lp-mobile-sticky-bar-2030">
+          <button 
+            onClick={() => setIsDrawerOpen(true)}
+            className="wc-btn wc-btn-secondary"
+            style={{ fontSize: '11px', padding: '6px 14px' }}
+          >
+            <Sliders size={13} /> {lang === 'en' ? 'Edit Info' : 'تعديل البيانات'}
+          </button>
+          <button 
+            onClick={handleCopy}
+            className="wc-btn wc-btn-primary"
+            style={{ fontSize: '11px', padding: '6px 14px' }}
+          >
+            <Copy size={13} /> {lang === 'en' ? 'Copy Document' : 'نسخ الوثيقة'}
+          </button>
         </div>
       </div>
     </ToolDashboardLayout>

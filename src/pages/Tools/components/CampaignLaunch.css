@@ -1,6 +1,6 @@
 /* ==========================================================================
-   Campaign Launch & UTM Tracking — Professional Design System
-   Full Light Mode & Dark Mode Support via CSS variables
+   Campaign Launch & UTM Studio Deck — Live URL Terminal & Interactive Assembler
+   Full Light Mode & Dark Mode Support via CSS variables & theme tokens
    ========================================================================== */
 
 .cl-container {
@@ -8,66 +8,137 @@
   flex-direction: column;
   gap: 24px;
   width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
-.cl-main-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  align-items: start;
+/* ═══════════════ 1. TOP CANVAS: LIVE INTERACTIVE URL TERMINAL ═══════════════ */
+.cl-terminal-container {
+  background: radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.12) 0%, rgba(8, 12, 20, 0.95) 100%), rgba(8, 12, 20, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  border-radius: 26px;
+  padding: 24px 28px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55), 0 0 24px rgba(99, 102, 241, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-/* Glassmorphic Panel Base */
-.cl-panel {
-  background: var(--bg2, rgba(15, 23, 42, 0.65));
-  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
-  border-radius: 24px;
-  padding: 28px;
-  backdrop-filter: blur(14px);
-  box-shadow: var(--shadow, 0 12px 40px rgba(0, 0, 0, 0.3));
-}
-
-.cl-panel-header {
+.cl-terminal-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.cl-panel-title {
-  font-size: 17px;
+.cl-terminal-title {
+  font-size: 13.5px;
   font-weight: 900;
-  color: var(--text, #F8FAFC);
-  margin: 0;
+  color: #818CF8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.cl-panel-subtitle {
-  font-size: 12.5px;
-  color: var(--text2, #94A3B8);
-  margin: 4px 0 0 0;
-  line-height: 1.5;
+.cl-terminal-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-/* Form Groups & Inputs */
-.cl-form-group {
-  margin-bottom: 22px;
+.cl-terminal-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
 }
 
-.cl-label {
+.cl-terminal-body {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 14px;
+  line-height: 1.8;
+  word-break: break-all;
+  white-space: pre-wrap;
+  background: rgba(13, 18, 32, 0.85);
+  padding: 18px 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Real-Time Color Coded Tokens */
+.cl-token-base { color: #F8FAFC; font-weight: 700; }
+.cl-token-sep { color: #94A3B8; }
+.cl-token-source { color: #38BDF8; font-weight: 900; text-shadow: 0 0 10px rgba(56, 189, 248, 0.3); }
+.cl-token-medium { color: #34D399; font-weight: 900; text-shadow: 0 0 10px rgba(52, 211, 153, 0.3); }
+.cl-token-campaign { color: #C084FC; font-weight: 900; text-shadow: 0 0 10px rgba(192, 132, 252, 0.3); }
+.cl-token-placeholder { color: rgba(148, 163, 184, 0.45); font-style: italic; }
+
+/* Parameter Breakdown Badges */
+.cl-parameter-breakdown {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cl-breakdown-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+  font-weight: 800;
+  color: #CBD5E1;
+}
+
+.cl-breakdown-chip strong {
+  color: #818CF8;
+}
+
+/* ═══════════════ 2. CENTER WORKSPACE: HORIZONTAL MODULAR ATTRIBUTE DECK ═══════════════ */
+.cl-attribute-deck-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  width: 100%;
+}
+
+.cl-module-tile {
+  background: rgba(13, 18, 32, 0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 22px;
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
+  transition: all 0.25s ease;
+}
+
+.cl-module-tile:hover {
+  border-color: rgba(99, 102, 241, 0.35);
+}
+
+.cl-tile-title {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 900;
-  color: #10B981;
+  color: #818CF8;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 10px;
+  margin: 0;
 }
 
 .cl-input-wrap {
@@ -80,7 +151,7 @@
 .cl-input-icon {
   position: absolute;
   inset-inline-start: 14px;
-  color: var(--text2, #94A3B8);
+  color: #94A3B8;
   pointer-events: none;
 }
 
@@ -89,206 +160,154 @@
   padding: 13px 16px;
   padding-inline-start: 42px;
   border-radius: 14px;
-  background: var(--bg3, rgba(30, 41, 59, 0.6));
-  border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
-  color: var(--text, #F8FAFC);
-  font-size: 14px;
+  background: rgba(8, 12, 20, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #F8FAFC;
+  font-size: 13.5px;
   font-weight: 700;
   font-family: inherit;
   outline: none;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
   box-sizing: border-box;
 }
 
 .cl-input:focus {
-  border-color: #10B981;
-  background: var(--bg4, rgba(30, 41, 59, 0.9));
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  border-color: #6366F1;
+  background: rgba(8, 12, 20, 0.9);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
 }
 
-/* Source Platform Selectors */
-.cl-source-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.cl-source-btn {
+/* Horizontal Source & Medium Chips Grid */
+.cl-chip-flow {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
-  padding: 11px 12px;
-  border-radius: 12px;
-  background: var(--bg3, rgba(30, 41, 59, 0.6));
-  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
-  color: var(--text2, #94A3B8);
+  flex-wrap: wrap;
+}
+
+.cl-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 14px;
+  border-radius: 13px;
+  background: rgba(8, 12, 20, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94A3B8;
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   text-transform: capitalize;
 }
 
-.cl-source-btn:hover {
-  background: var(--bg4, rgba(30, 41, 59, 0.85));
-  color: var(--text, #F8FAFC);
+.cl-chip-btn:hover {
+  background: rgba(99, 102, 241, 0.08);
+  color: #F8FAFC;
+  border-color: rgba(99, 102, 241, 0.35);
+  transform: translateY(-2px);
 }
 
-.cl-source-btn.active {
-  background: rgba(16, 185, 129, 0.15);
-  border-color: #10B981;
-  color: var(--text, #F8FAFC);
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.15);
+.cl-chip-btn.active {
+  background: radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.22) 0%, rgba(13, 18, 32, 0.95) 100%);
+  border-color: #6366F1;
+  color: #F8FAFC;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.25);
 }
 
-/* Output Link Container */
-.cl-url-box {
-  background: var(--bg2, rgba(15, 23, 42, 0.8));
-  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
-  border-radius: 16px;
-  padding: 16px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.cl-url-code {
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 12.5px;
-  color: #10B981;
-  word-break: break-all;
-  line-height: 1.6;
-}
-
-/* UTM Badges */
-.cl-badge-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  width: 100%;
-}
-
-.cl-utm-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  background: var(--bg3, rgba(30, 41, 59, 0.6));
-  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
-  font-size: 11.5px;
-  font-weight: 800;
-  color: var(--text2, #94A3B8);
-}
-
-.cl-utm-badge strong {
-  color: #10B981;
-}
-
-/* Copy Action Button */
-.cl-copy-btn {
-  width: 100%;
-  padding: 14px;
-  border-radius: 14px;
-  background: #10B981;
-  border: none;
-  color: #FFFFFF;
-  font-size: 14px;
-  font-weight: 900;
-  cursor: pointer;
-  transition: all 0.2s ease;
+/* ═══════════════ 3. ACTION DOCK: INSTANT DISPATCH BAR ═══════════════ */
+.cl-tactical-dock {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 12px;
+  padding: 14px 24px;
+  border-radius: 22px;
+  background: rgba(13, 18, 32, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5), 0 0 20px rgba(99, 102, 241, 0.15);
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.cl-dock-btn {
+  display: flex;
+  align-items: center;
   gap: 8px;
-  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.35);
+  padding: 11px 22px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94A3B8;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.cl-copy-btn:hover {
-  background: #059669;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(16, 185, 129, 0.45);
+.cl-dock-btn:hover {
+  background: rgba(99, 102, 241, 0.18);
+  border-color: #6366F1;
+  color: #818CF8;
+  transform: translateY(-2px);
 }
 
-/* Light Mode Overrides for Complete Visual Excellence */
-:root.light-mode .cl-panel {
+.cl-dock-btn.primary {
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  border-color: #6366F1;
+  color: #FFFFFF;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+}
+
+.cl-dock-btn.primary:hover {
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+}
+
+/* Light Mode Overrides */
+:root.light-mode .cl-terminal-container,
+:root.light-mode .cl-module-tile {
   background: #FFFFFF;
   border-color: #E2E8F0;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
 }
 
-:root.light-mode .cl-panel-title {
-  color: #0F172A;
-}
-
-:root.light-mode .cl-panel-subtitle {
-  color: #64748B;
-}
-
-:root.light-mode .cl-label {
-  color: #059669;
-}
-
-:root.light-mode .cl-input {
+:root.light-mode .cl-terminal-body {
   background: #F8FAFC;
   border-color: #E2E8F0;
+}
+
+:root.light-mode .cl-token-base {
   color: #0F172A;
 }
 
-:root.light-mode .cl-input:focus {
-  background: #FFFFFF;
-  border-color: #10B981;
-}
-
-:root.light-mode .cl-source-btn {
+:root.light-mode .cl-input,
+:root.light-mode .cl-chip-btn {
   background: #F8FAFC;
   border-color: #E2E8F0;
   color: #475569;
 }
 
-:root.light-mode .cl-source-btn:hover {
-  background: #F1F5F9;
-  color: #0F172A;
+:root.light-mode .cl-tactical-dock {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
 }
 
-:root.light-mode .cl-source-btn.active {
-  background: rgba(16, 185, 129, 0.08);
-  border-color: #10B981;
-  color: #059669;
-}
-
-:root.light-mode .cl-url-box {
-  background: #F8FAFC;
-  border-color: #E2E8F0;
-}
-
-:root.light-mode .cl-url-code {
-  color: #059669;
-}
-
-:root.light-mode .cl-utm-badge {
-  background: #F1F5F9;
-  border-color: #E2E8F0;
-  color: #475569;
-}
-
-:root.light-mode .cl-utm-badge strong {
-  color: #059669;
-}
-
-/* RESPONSIVE MEDIA QUERIES */
-@media (max-width: 960px) {
-  .cl-main-grid {
+/* Responsive Media Queries */
+@media (max-width: 840px) {
+  .cl-attribute-deck-grid {
     grid-template-columns: 1fr;
   }
-}
 
-@media (max-width: 640px) {
-  .cl-panel {
-    padding: 20px 16px;
-    border-radius: 18px;
+  .cl-tactical-dock {
+    width: 100%;
+    flex-direction: column;
   }
-  .cl-source-grid {
-    grid-template-columns: repeat(2, 1fr);
+
+  .cl-dock-btn {
+    width: 100%;
+    justify-content: center;
   }
 }

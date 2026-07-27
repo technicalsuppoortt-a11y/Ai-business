@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { useToast } from '../../../context/ToastContext';
 import { getMarketingPlan } from '../../../services/contentDbService';
@@ -31,7 +31,13 @@ import {
   HelpCircle,
   Check,
   ClipboardList,
-  Rocket
+  Rocket,
+  ChevronRight,
+  ChevronLeft,
+  SlidersHorizontal,
+  FileText,
+  Activity,
+  Layers
 } from 'lucide-react';
 import './MarketingPlan.css';
 
@@ -53,6 +59,11 @@ export default function MarketingPlan({ stepNumber }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState(savedState.result || '');
 
+  // Step Navigator State (1: Goals & Experience, 2: Budget & Duration, 3: Strategy Mode)
+  const [currentStep, setCurrentStep] = useState(1);
+  const [loadingBadgeIndex, setLoadingBadgeIndex] = useState(0);
+  const [activeStrategyTab, setActiveStrategyTab] = useState('all'); // 'all' | 'executive' | 'channels' | 'timeline'
+
   const goals = [
     { id: 'sales', label_ar: 'مبيعات مباشرة (E-commerce / Services)', label_en: 'Direct Sales (E-commerce / Services)', IconComp: ShoppingCart },
     { id: 'leads', label_ar: 'جمع بيانات عملاء محتملين (B2B / High Ticket)', label_en: 'Lead Generation (B2B / High Ticket)', IconComp: Target },
@@ -64,6 +75,28 @@ export default function MarketingPlan({ stepNumber }) {
     { id: 'intermediate', label_ar: 'متوسط (مرحلة النمو)', label_en: 'Intermediate (Growth)', IconComp: Zap },
     { id: 'professional', label_ar: 'محترف (توسع شامل ومتقدم)', label_en: 'Professional (Omnichannel Scale)', IconComp: Award }
   ];
+
+  const loadingBadges = lang === 'en'
+    ? [
+        'Analyzing Target Audience & Goals...',
+        'Synthesizing Marketing Channels & Budget Allocation...',
+        'Building Strategic Timeline & KPI Metrics...'
+      ]
+    : [
+        'جاري تحليل الجمهور المستهدف والأهداف الاستراتيجية...',
+        'جاري توزيع الميزانية على القنوات التسويقية...',
+        'جاري صياغة الجدول الزمني ومؤشرات الأداء...'
+      ];
+
+  useEffect(() => {
+    let interval;
+    if (isGenerating) {
+      interval = setInterval(() => {
+        setLoadingBadgeIndex((prev) => (prev + 1) % loadingBadges.length);
+      }, 1400);
+    }
+    return () => clearInterval(interval);
+  }, [isGenerating, loadingBadges.length]);
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -90,9 +123,9 @@ export default function MarketingPlan({ stepNumber }) {
             mode: 'live'
           }
         });
-        toast(lang === 'en' ? 'Live AI Marketing Plan generated! ✨' : 'تم بناء خطة التسويق الذكية بالذكاء الاصطناعي الحي! ✨', 'success');
+        toast(lang === 'en' ? 'Live AI Marketing Plan generated!' : 'تم بناء خطة التسويق الذكية بالذكاء الاصطناعي الحي!', 'success');
       } else {
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 600));
 
         // Determine budget tier based on amount
         const bNum = Number(budget);
@@ -117,7 +150,7 @@ export default function MarketingPlan({ stepNumber }) {
               mode: 'fast'
             }
           });
-          toast(lang === 'en' ? 'Marketing plan ready! 🚀' : 'الخطة الإعلانية جاهزة! 🚀', 'success');
+          toast(lang === 'en' ? 'Marketing plan ready!' : 'الخطة الإعلانية جاهزة!', 'success');
         } else {
           setResult(lang === 'en' 
             ? "No specific marketing plan found for this budget/niche yet. We are constantly updating the database." 
@@ -135,7 +168,7 @@ export default function MarketingPlan({ stepNumber }) {
 
   const handleCopy = () => {
     navigator.clipboard.writeText(result);
-    toast(lang === 'en' ? 'Marketing plan copied to clipboard! ✅' : 'تم نسخ الخطة التسويقية إلى الحافظة! ✅', 'success');
+    toast(lang === 'en' ? 'Marketing plan copied to clipboard!' : 'تم نسخ الخطة التسويقية إلى الحافظة!', 'success');
   };
 
   const getSectionIcon = (titleStr) => {
@@ -174,7 +207,7 @@ export default function MarketingPlan({ stepNumber }) {
 
       if (formattedLine.startsWith('### ')) {
         return (
-          <h5 key={i} style={{ fontSize: '13.5px', fontWeight: 900, color: '#3B82F6', marginTop: '14px', marginBottom: '8px' }}>
+          <h5 key={i} style={{ fontSize: '14px', fontWeight: 900, color: '#60A5FA', marginTop: '16px', marginBottom: '8px' }}>
             {formattedLine.replace('### ', '')}
           </h5>
         );
@@ -191,10 +224,10 @@ export default function MarketingPlan({ stepNumber }) {
             <span>
               {formattedLine.split(/(\*\*.*?\*\*|\*.*?\*)/).map((part, j) => {
                 if (part.startsWith('**') && part.endsWith('**')) {
-                  return <strong key={j} style={{ color: '#3B82F6', fontWeight: 800 }}>{part.replace(/\*\*/g, '')}</strong>;
+                  return <strong key={j} style={{ color: '#60A5FA', fontWeight: 800 }}>{part.replace(/\*\*/g, '')}</strong>;
                 }
                 if (part.startsWith('*') && part.endsWith('*')) {
-                  return <em key={j} style={{ color: '#60A5FA', fontStyle: 'italic' }}>{part.replace(/\*/g, '')}</em>;
+                  return <em key={j} style={{ color: '#93C5FD', fontStyle: 'italic' }}>{part.replace(/\*/g, '')}</em>;
                 }
                 return part;
               })}
@@ -204,10 +237,10 @@ export default function MarketingPlan({ stepNumber }) {
       }
 
       return (
-        <p key={i} style={{ margin: '0 0 8px 0', fontSize: '13px', lineHeight: '1.7', color: 'var(--text, #F8FAFC)' }}>
+        <p key={i} style={{ margin: '0 0 10px 0', fontSize: '13.5px', lineHeight: '1.7', color: '#CBD5E1' }}>
           {formattedLine.split(/(\*\*.*?\*\*)/).map((part, j) => {
             if (part.startsWith('**') && part.endsWith('**')) {
-              return <strong key={j} style={{ color: '#3B82F6', fontWeight: 800 }}>{part.replace(/\*\*/g, '')}</strong>;
+              return <strong key={j} style={{ color: '#60A5FA', fontWeight: 800 }}>{part.replace(/\*\*/g, '')}</strong>;
             }
             return part;
           })}
@@ -219,7 +252,6 @@ export default function MarketingPlan({ stepNumber }) {
   const renderMarkdownPlan = (text) => {
     if (!text) return null;
 
-    // Check if it's formatted as standard text without ## headers
     if (!text.includes('## ')) {
       return (
         <div className="mp-plan-block">
@@ -228,7 +260,6 @@ export default function MarketingPlan({ stepNumber }) {
       );
     }
 
-    // Split by H2 sections ("## ")
     const rawSections = text.split(/^## /m).filter(Boolean);
 
     return rawSections.map((sec, secIdx) => {
@@ -236,11 +267,10 @@ export default function MarketingPlan({ stepNumber }) {
       const titleLine = lines[0] || '';
       const contentLines = lines.slice(1);
 
-      // Handle H1 document header (# Master Advertising...)
       if (titleLine.startsWith('# ') || (secIdx === 0 && text.trim().startsWith('# '))) {
         const cleanTitle = titleLine.replace(/^#\s*/, '').replace(/---/g, '').trim();
         return (
-          <div key={secIdx} style={{ background: '#3B82F6', color: '#FFFFFF', padding: '14px 20px', borderRadius: '14px', fontWeight: '900', fontSize: '15px', textAlign: 'center', boxShadow: '0 4px 16px rgba(59, 130, 246, 0.3)', marginBottom: '16px' }}>
+          <div key={secIdx} style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)', color: '#FFFFFF', padding: '16px 24px', borderRadius: '16px', fontWeight: '900', fontSize: '16px', textAlign: 'center', boxShadow: '0 6px 20px rgba(59, 130, 246, 0.35)', marginBottom: '20px' }}>
             {cleanTitle}
           </div>
         );
@@ -252,7 +282,6 @@ export default function MarketingPlan({ stepNumber }) {
 
       const bodyText = contentLines.join('\n').trim();
 
-      // Check if body has a table (| ... |)
       const hasTable = bodyText.includes('|') && bodyText.includes('---');
       
       let tableHeaders = [];
@@ -269,7 +298,7 @@ export default function MarketingPlan({ stepNumber }) {
           if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
             inTable = true;
             if (trimmed.includes(':---') || trimmed.includes('---:')) {
-              // separator line, skip
+              // separator line
             } else if (tableHeaders.length === 0) {
               tableHeaders = trimmed.split('|').filter(c => c.trim() !== '').map(c => c.trim());
             } else {
@@ -290,19 +319,17 @@ export default function MarketingPlan({ stepNumber }) {
         <div key={secIdx} className="mp-plan-block">
           <h4 className="mp-plan-block-title">
             <div className="mp-section-icon-badge" style={{ '--icon-color': iconColor, '--icon-bg': iconBg }}>
-              <SecIcon size={17} />
+              <SecIcon size={18} />
             </div>
             <span>{cleanSectionTitle}</span>
           </h4>
 
-          {/* Text before table */}
           {hasTable && nonTablePartsBefore.length > 0 && (
-            <div style={{ marginBottom: '12px' }}>
+            <div style={{ marginBottom: '14px' }}>
               {renderFormattedLines(nonTablePartsBefore.join('\n'))}
             </div>
           )}
 
-          {/* Markdown Table */}
           {hasTable && tableHeaders.length > 0 && (
             <div className="mp-table-wrap">
               <table className="mp-table">
@@ -320,7 +347,7 @@ export default function MarketingPlan({ stepNumber }) {
                         <td key={cIdx}>
                           {cell.split(/(\*\*.*?\*\*)/).map((part, pIdx) => {
                             if (part.startsWith('**') && part.endsWith('**')) {
-                              return <strong key={pIdx} style={{ color: '#3B82F6', fontWeight: 800 }}>{part.replace(/\*\*/g, '')}</strong>;
+                              return <strong key={pIdx} style={{ color: '#60A5FA', fontWeight: 800 }}>{part.replace(/\*\*/g, '')}</strong>;
                             }
                             return part;
                           })}
@@ -333,7 +360,6 @@ export default function MarketingPlan({ stepNumber }) {
             </div>
           )}
 
-          {/* Text after table / standard body */}
           {!hasTable ? renderFormattedLines(bodyText) : (nonTablePartsAfter.length > 0 && renderFormattedLines(nonTablePartsAfter.join('\n')))}
         </div>
       );
@@ -364,230 +390,400 @@ export default function MarketingPlan({ stepNumber }) {
   return (
     <ToolDashboardLayout
       id="marketing-plan"
-      title={lang === 'en' ? 'Marketing Plan Generator' : 'مخطط الحملات (Marketing Plan)'}
-      subtitle={lang === 'en' ? 'Draw your ad budget plan and allocation to ensure the best ROI before launching campaigns.' : 'ارسم خطة ميزانيتك الإعلانية وتوزيعها لضمان أفضل عائد على الاستثمار (ROI) قبل تشغيل الحملات.'}
+      title={lang === 'en' ? 'Campaign planner' : 'مخطط الحملات'}
+      subtitle={lang === 'en' ? 'Interactive canvas deck to structure, allocate, and scale your advertising budget with AI precision.' : 'منصة تفاعلية مخصصة لهيكلة وتوزيع ميزانيتك الإعلانية بدقة عالية وضمان أعلى عائد على الاستثمار.'}
       stepNumber={stepNumber}
       accentColor="#3B82F6"
       timeEstimate="30 - 45"
       bottomSections={bottomSections}
     >
       <div className="mp-container" dir={isRtl ? 'rtl' : 'ltr'}>
-        <div className="mp-main-grid">
-          
-          {/* ═══════════════ INPUTS FORM PANEL ═══════════════ */}
-          <div className="mp-panel">
-            <div className="mp-panel-header">
-              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.12)', color: '#3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Map size={20} />
+        
+        {/* ═══════════════ 1. GUIDED ARC STEP NAVIGATOR ═══════════════ */}
+        <div className="mp-arc-nav-wrap">
+          <div className="mp-arc-nav">
+            {/* Step 1 Pill */}
+            <div 
+              onClick={() => !isGenerating && setCurrentStep(1)}
+              className={`mp-arc-step ${currentStep === 1 ? 'active' : currentStep > 1 ? 'completed' : ''}`}
+            >
+              <div className="mp-step-icon-wrapper">
+                {currentStep > 1 ? <Check size={15} /> : <Target size={15} />}
               </div>
+              <span>{lang === 'en' ? '1. Goals & Level' : '1. الأهداف والمستوى'}</span>
+            </div>
+
+            {/* Step 2 Pill */}
+            <div 
+              onClick={() => !isGenerating && setCurrentStep(2)}
+              className={`mp-arc-step ${currentStep === 2 ? 'active' : currentStep > 2 ? 'completed' : ''}`}
+            >
+              <div className="mp-step-icon-wrapper">
+                {currentStep > 2 ? <Check size={15} /> : <PieChart size={15} />}
+              </div>
+              <span>{lang === 'en' ? '2. Channels & Budget' : '2. الميزانية والمدة'}</span>
+            </div>
+
+            {/* Step 3 Pill */}
+            <div 
+              onClick={() => !isGenerating && setCurrentStep(3)}
+              className={`mp-arc-step ${currentStep === 3 ? 'active' : ''}`}
+            >
+              <div className="mp-step-icon-wrapper">
+                <Zap size={15} />
+              </div>
+              <span>{lang === 'en' ? '3. Mode & Generate' : '3. تخصيص الخطة'}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ═══════════════ 2. MAIN INTERACTIVE CANVAS DECK ═══════════════ */}
+        <AnimatePresence mode="wait">
+          {/* A. AI LOADING STAGE */}
+          {isGenerating ? (
+            <motion.div
+              key="loading-stage"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.3 }}
+              className="mp-futuristic-loading"
+            >
+              <div className="mp-core-spinner-wrap">
+                <div className="mp-core-ring-outer" />
+                <div className="mp-core-ring-inner" />
+                <Sparkles size={32} className="mp-core-icon" />
+              </div>
+
               <div>
-                <h3 className="mp-panel-title">
-                  <span>{lang === 'en' ? 'Campaign Parameters' : 'معايير وميزانية الحملة'}</span>
+                <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#F8FAFC', margin: '0 0 8px 0' }}>
+                  {lang === 'en' ? 'Synthesizing Advertising Master Strategy...' : 'جاري بناء وصياغة الخطة التسويقية الشاملة...'}
                 </h3>
-                <p className="mp-panel-subtitle">
-                  {lang === 'en' ? 'Set your ad budget, campaign duration, and primary goal.' : 'أدخل الميزانية المتاحة، مدة النشر والهدف لتقسيم الإنفاق.'}
+                <p style={{ fontSize: '13px', color: '#94A3B8', margin: 0 }}>
+                  {lang === 'en' ? 'Processing campaign parameters, audience hooks, and KPI metrics' : 'معالجة معايير الحملة، استهداف الجمهور، ومؤشرات الأداء'}
                 </p>
               </div>
-            </div>
 
-            {/* Budget & Duration Inputs */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '22px' }}>
-              <div className="mp-form-group" style={{ marginBottom: 0 }}>
-                <label className="mp-label">
-                  <DollarSign size={13} color="#3B82F6" />
-                  <span>{lang === 'en' ? 'Available Budget' : 'الميزانية المتاحة'}</span>
-                </label>
-                <div className="mp-input-wrap">
-                  <span className="mp-input-badge prefix">$</span>
-                  <input 
-                    type="number" 
-                    className="mp-input has-prefix"
-                    dir="ltr"
-                    value={budget}
-                    onChange={(e) => setBudget(e.target.value)}
-                    placeholder="500"
-                    style={{ textAlign: isRtl ? 'right' : 'left' }}
-                  />
-                </div>
+              <div className="mp-loading-badge">
+                <Activity size={14} className="td-spinner" style={{ borderTopColor: '#60A5FA' }} />
+                <span>{loadingBadges[loadingBadgeIndex]}</span>
               </div>
-              
-              <div className="mp-form-group" style={{ marginBottom: 0 }}>
-                <label className="mp-label">
-                  <Calendar size={13} color="#3B82F6" />
-                  <span>{lang === 'en' ? 'Duration (Days)' : 'المدة (بالأيام)'}</span>
-                </label>
-                <div className="mp-input-wrap">
-                  <input 
-                    type="number" 
-                    className="mp-input has-suffix"
-                    dir="ltr"
-                    value={duration}
-                    onChange={(e) => setDuration(e.target.value)}
-                    placeholder="30"
-                    style={{ textAlign: isRtl ? 'right' : 'left' }}
-                  />
-                  <span className="mp-input-badge suffix">
-                    {lang === 'en' ? 'Days' : 'يوم'}
-                  </span>
-                </div>
-              </div>
-            </div>
+            </motion.div>
 
-            {/* Client Level */}
-            <div className="mp-form-group">
-              <label className="mp-label">
-                <Sprout size={13} color="#3B82F6" />
-                <span>{lang === 'en' ? '1. Client Level (Complexity)' : '1. مستوى العميل (مدى التعقيد)'}</span>
-              </label>
-
-              <div className="mp-radio-grid">
-                {clientLevels.map(lvl => {
-                  const LevelIcon = lvl.IconComp;
-                  const isActive = clientLevel === lvl.id;
-                  return (
-                    <div 
-                      key={lvl.id} 
-                      onClick={() => setClientLevel(lvl.id)}
-                      className={`mp-radio-card ${isActive ? 'active' : ''}`}
-                    >
-                      <div className="mp-radio-circle">
-                        {isActive && <div className="mp-radio-inner" />}
-                      </div>
-
-                      <LevelIcon size={16} color={isActive ? '#3B82F6' : 'var(--text2, #94A3B8)'} />
-
-                      <span style={{ fontWeight: '800', fontSize: '13px', color: isActive ? 'var(--text, #F8FAFC)' : 'var(--text2, #94A3B8)' }}>
-                        {lang === 'en' ? lvl.label_en : lvl.label_ar}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Campaign Goal */}
-            <div className="mp-form-group">
-              <label className="mp-label">
-                <Target size={13} color="#3B82F6" />
-                <span>{lang === 'en' ? '2. Main Campaign Goal' : '2. الهدف الرئيسي للحملة'}</span>
-              </label>
-
-              <div className="mp-radio-grid">
-                {goals.map(g => {
-                  const GoalIcon = g.IconComp;
-                  const isActive = goal === g.id;
-                  return (
-                    <div 
-                      key={g.id} 
-                      onClick={() => setGoal(g.id)}
-                      className={`mp-radio-card ${isActive ? 'active' : ''}`}
-                    >
-                      <div className="mp-radio-circle">
-                        {isActive && <div className="mp-radio-inner" />}
-                      </div>
-
-                      <GoalIcon size={16} color={isActive ? '#3B82F6' : 'var(--text2, #94A3B8)'} />
-
-                      <span style={{ fontWeight: '800', fontSize: '13px', color: isActive ? 'var(--text, #F8FAFC)' : 'var(--text2, #94A3B8)' }}>
-                        {lang === 'en' ? g.label_en : g.label_ar}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Dual Mode Selector */}
-            <div style={{ marginTop: '16px' }}>
-              <AnalysisModeSelector 
-                mode={analysisMode} 
-                onChange={setAnalysisMode} 
-                lang={lang} 
-                accentColor="#3B82F6" 
-              />
-            </div>
-
-            <button 
-              onClick={handleGenerate}
-              disabled={isGenerating}
-              className="mp-generate-btn"
+          ) : result ? (
+            /* B. FULL-WIDTH STRATEGY STAGE (OUTPUT CANVAS) */
+            <motion.div
+              key="strategy-stage"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="mp-strategy-stage"
             >
-              {isGenerating ? (
-                <>
-                  <span className="td-spinner" /> 
-                  <span>{lang === 'en' ? 'Building Ad Plan...' : 'جاري بناء الخطة...'}</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles size={16} />
-                  <span>{lang === 'en' ? 'Build Smart Marketing Plan' : 'بناء خطة التسويق الذكية'}</span>
-                </>
-              )}
-            </button>
-          </div>
-
-          {/* ═══════════════ AI MARKETING PLAN OUTPUT PANEL ═══════════════ */}
-          <div className="mp-panel">
-            <div className="mp-panel-header" style={{ justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.12)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <PieChart size={20} />
-                </div>
+              <div className="mp-deck-header">
                 <div>
-                  <h3 className="mp-panel-title">
-                    <span>{lang === 'en' ? 'Master Advertising Strategy' : 'الخطة الإعلانية الشاملة'}</span>
-                  </h3>
-                  <p className="mp-panel-subtitle">
-                    {lang === 'en' ? 'Target spending, key metrics, and ad creative concepts.' : 'طريقة توزيع الإنفاق، مؤشرات الأداء، وأفكار الإعلانات.'}
+                  <h4 className="mp-deck-title">
+                    <PieChart size={22} style={{ color: '#10B981' }} />
+                    <span>{lang === 'en' ? 'Master Advertising Strategy Deck' : 'خطة الإعلانات والتسويق الشاملة'}</span>
+                  </h4>
+                  <p className="mp-deck-subtitle">
+                    {lang === 'en' ? 'Tailored spending distribution, audience targeting, and creative direction.' : 'طريقة توزيع الإنفاق، استهداف الجمهور، وأفكار الإعلانات.'}
                   </p>
                 </div>
               </div>
 
-              {result && !isGenerating && (
-                <button onClick={handleCopy} className="sp-copy-btn" title={lang === 'en' ? 'Copy Plan' : 'نسخ الخطة'}>
-                  <Copy size={14} />
-                  <span>{lang === 'en' ? 'Copy Plan' : 'نسخ الخطة'}</span>
+              <div className="mp-output-content">
+                {renderMarkdownPlan(result)}
+              </div>
+
+              {/* FLOATING TACTICAL ACTION DOCK */}
+              <div className="mp-tactical-dock">
+                <button type="button" onClick={handleCopy} className="mp-dock-btn">
+                  <Copy size={15} />
+                  <span>{lang === 'en' ? 'Quick Copy' : 'النسخ السريع'}</span>
                 </button>
-              )}
-            </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    dispatch({
+                      type: 'SAVE_TOOL_RESULT',
+                      toolId: 'marketing-plan',
+                      data: { budget, duration, goal, clientLevel, result, mode: analysisMode }
+                    });
+                    toast(lang === 'en' ? 'Strategy saved to database!' : 'تم حفظ الخطة في قاعدة البيانات!', 'success');
+                  }}
+                  className="mp-dock-btn"
+                >
+                  <CheckCircle2 size={15} style={{ color: '#34D399' }} />
+                  <span>{lang === 'en' ? 'Save Strategy' : 'حفظ الخطة'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResult('');
+                    setCurrentStep(1);
+                  }}
+                  className="mp-dock-btn primary"
+                >
+                  <Wrench size={15} />
+                  <span>{lang === 'en' ? 'Modify Inputs' : 'تعديل المدخلات'}</span>
+                </button>
+              </div>
+            </motion.div>
 
-            <div style={{ minHeight: '380px', display: 'flex', flexDirection: 'column' }}>
-              {!result && !isGenerating ? (
-                <div style={{ margin: 'auto', textAlign: 'center', padding: '40px 20px' }}>
-                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                    <Map size={28} />
+          ) : (
+            /* C. CONFIGURATION STEP DECK (GUIDED ARC CANVAS) */
+            <motion.div
+              key={`step-${currentStep}`}
+              initial={{ opacity: 0, x: isRtl ? -15 : 15 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: isRtl ? 15 : -15 }}
+              transition={{ duration: 0.25 }}
+              className="mp-deck-canvas"
+            >
+              {/* STEP 1: GOALS & LEVEL */}
+              {currentStep === 1 && (
+                <div>
+                  <div className="mp-deck-header">
+                    <div>
+                      <h4 className="mp-deck-title">
+                        <Target size={22} style={{ color: '#3B82F6' }} />
+                        <span>{lang === 'en' ? 'Step 1: Campaign Goals & Client Level' : 'الخطوة 1: أهداف الحملة ومستوى الخبرة'}</span>
+                      </h4>
+                      <p className="mp-deck-subtitle">
+                        {lang === 'en' ? 'Define your experience level and primary conversion objective.' : 'حدد مستوى خبرتك التجارية والهدف الأساسي من الحملة الإعلانية.'}
+                      </p>
+                    </div>
                   </div>
-                  <p style={{ fontSize: '14.5px', fontWeight: '800', color: 'var(--text, #F8FAFC)', margin: '0 0 6px 0' }}>
-                    {lang === 'en' ? 'Enter your budget to draw the optimal spending plan' : 'أدخل ميزانيتك لنرسم لك خطة الإنفاق المثلى'}
-                  </p>
-                  <p style={{ fontSize: '12.5px', color: 'var(--text2, #94A3B8)', margin: 0 }}>
-                    {lang === 'en' ? 'When to spend, where, and what numbers to monitor.' : 'متى تصرف، وأين، وما هي الأرقام التي ستراقبها.'}
-                  </p>
-                </div>
-              ) : isGenerating ? (
-                <div style={{ margin: 'auto', textAlign: 'center', padding: '40px 20px' }}>
-                  <div className="td-spinner" style={{ width: '42px', height: '42px', borderWidth: '4px', borderColor: 'rgba(59, 130, 246, 0.2)', borderTopColor: '#3B82F6', margin: '0 auto 16px' }} />
-                  <p style={{ color: '#3B82F6', fontWeight: '800', fontSize: '14px', margin: 0 }}>
-                    {lang === 'en' ? 'Drawing a custom advertising financial plan for you...' : 'يتم الآن رسم خطة مالية إعلانية مخصصة لك...'}
-                  </p>
-                </div>
-              ) : (
-                <AnimatePresence mode="wait">
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
-                  >
-                    {renderMarkdownPlan(result)}
-                  </motion.div>
-                </AnimatePresence>
-              )}
-            </div>
-          </div>
 
-        </div>
+                  {/* Client Level */}
+                  <div className="mp-form-group">
+                    <label className="mp-label">
+                      <Sprout size={14} color="#3B82F6" />
+                      <span>{lang === 'en' ? 'Client Experience Level' : 'مستوى العميل (مدى التعقيد)'}</span>
+                    </label>
+
+                    <div className="mp-radio-grid">
+                      {clientLevels.map(lvl => {
+                        const LevelIcon = lvl.IconComp;
+                        const isActive = clientLevel === lvl.id;
+                        return (
+                          <div 
+                            key={lvl.id} 
+                            onClick={() => setClientLevel(lvl.id)}
+                            className={`mp-radio-card ${isActive ? 'active' : ''}`}
+                          >
+                            <div className="mp-radio-circle">
+                              {isActive && <div className="mp-radio-inner" />}
+                            </div>
+                            <LevelIcon size={18} color={isActive ? '#3B82F6' : '#94A3B8'} />
+                            <span style={{ fontWeight: '800', fontSize: '13.5px', color: isActive ? '#F8FAFC' : '#94A3B8' }}>
+                              {lang === 'en' ? lvl.label_en : lvl.label_ar}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Campaign Goal */}
+                  <div className="mp-form-group">
+                    <label className="mp-label">
+                      <Target size={14} color="#3B82F6" />
+                      <span>{lang === 'en' ? 'Main Campaign Objective' : 'الهدف الرئيسي للحملة'}</span>
+                    </label>
+
+                    <div className="mp-radio-grid">
+                      {goals.map(g => {
+                        const GoalIcon = g.IconComp;
+                        const isActive = goal === g.id;
+                        return (
+                          <div 
+                            key={g.id} 
+                            onClick={() => setGoal(g.id)}
+                            className={`mp-radio-card ${isActive ? 'active' : ''}`}
+                          >
+                            <div className="mp-radio-circle">
+                              {isActive && <div className="mp-radio-inner" />}
+                            </div>
+                            <GoalIcon size={18} color={isActive ? '#3B82F6' : '#94A3B8'} />
+                            <span style={{ fontWeight: '800', fontSize: '13.5px', color: isActive ? '#F8FAFC' : '#94A3B8' }}>
+                              {lang === 'en' ? g.label_en : g.label_ar}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Deck Controls */}
+                  <div className="mp-deck-controls">
+                    <div />
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep(2)}
+                      className="mp-btn-primary"
+                    >
+                      <span>{lang === 'en' ? 'Next: Channels & Budget' : 'التالي: الميزانية والمدة'}</span>
+                      {isRtl ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 2: CHANNELS & BUDGET */}
+              {currentStep === 2 && (
+                <div>
+                  <div className="mp-deck-header">
+                    <div>
+                      <h4 className="mp-deck-title">
+                        <PieChart size={22} style={{ color: '#10B981' }} />
+                        <span>{lang === 'en' ? 'Step 2: Budget Allocation & Duration' : 'الخطوة 2: الميزانية والمدة الزمنية'}</span>
+                      </h4>
+                      <p className="mp-deck-subtitle">
+                        {lang === 'en' ? 'Set your available ad spend budget and active campaign timeframe.' : 'أدخل الميزانية المتاحة للمشر ومدد الحملة لتقسيم الإنفاق الفعال.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
+                    <div className="mp-form-group" style={{ marginBottom: 0 }}>
+                      <label className="mp-label">
+                        <DollarSign size={14} color="#3B82F6" />
+                        <span>{lang === 'en' ? 'Available Budget' : 'الميزانية المتاحة'}</span>
+                      </label>
+                      <div className="mp-input-wrap">
+                        <span className="mp-input-badge prefix">$</span>
+                        <input 
+                          type="number" 
+                          className="mp-input has-prefix"
+                          dir={isRtl ? 'rtl' : 'ltr'}
+                          value={budget}
+                          onChange={(e) => setBudget(e.target.value)}
+                          placeholder="500"
+                          style={{ textAlign: isRtl ? 'right' : 'left' }}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="mp-form-group" style={{ marginBottom: 0 }}>
+                      <label className="mp-label">
+                        <Calendar size={14} color="#3B82F6" />
+                        <span>{lang === 'en' ? 'Duration (Days)' : 'المدة (بالأيام)'}</span>
+                      </label>
+                      <div className="mp-input-wrap">
+                        <input 
+                          type="number" 
+                          className="mp-input has-suffix"
+                          dir={isRtl ? 'rtl' : 'ltr'}
+                          value={duration}
+                          onChange={(e) => setDuration(e.target.value)}
+                          placeholder="30"
+                          style={{ textAlign: isRtl ? 'right' : 'left' }}
+                        />
+                        <span className="mp-input-badge suffix">
+                          {lang === 'en' ? 'Days' : 'يوم'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Deck Controls */}
+                  <div className="mp-deck-controls">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep(1)}
+                      className="mp-btn-secondary"
+                    >
+                      {isRtl ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+                      <span>{lang === 'en' ? 'Previous' : 'السابق'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep(3)}
+                      className="mp-btn-primary"
+                    >
+                      <span>{lang === 'en' ? 'Next: Strategy Mode' : 'التالي: تخصيص الخطة'}</span>
+                      {isRtl ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3: STRATEGY & EXECUTION MODE */}
+              {currentStep === 3 && (
+                <div>
+                  <div className="mp-deck-header">
+                    <div>
+                      <h4 className="mp-deck-title">
+                        <Zap size={22} style={{ color: '#8B5CF6' }} />
+                        <span>{lang === 'en' ? 'Step 3: Strategy Mode & AI Execution' : 'الخطوة 3: نمط التوليد وتنفيذ الخطة'}</span>
+                      </h4>
+                      <p className="mp-deck-subtitle">
+                        {lang === 'en' ? 'Choose Fast DB lookup or Live OpenAI synthesis for custom insights.' : 'اختر التوليد السريع من قاعدة البيانات أو التفكير الحي عبر الذكاء الاصطناعي.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: '24px' }}>
+                    <label className="mp-label">
+                      <SlidersHorizontal size={14} color="#8B5CF6" />
+                      <span>{lang === 'en' ? 'Select Analysis Engine' : 'اختر محرك التحليل والذكاء الاصطناعي'}</span>
+                    </label>
+                    <AnalysisModeSelector 
+                      mode={analysisMode} 
+                      onChange={setAnalysisMode} 
+                      lang={lang} 
+                      accentColor="#3B82F6" 
+                    />
+                  </div>
+
+                  {/* Summary Box */}
+                  <div style={{ background: 'rgba(8, 12, 20, 0.6)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '16px', padding: '16px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <Target size={16} style={{ color: '#3B82F6' }} />
+                      <span style={{ fontSize: '13px', color: '#94A3B8' }}>
+                        {lang === 'en' ? 'Budget & Duration:' : 'الميزانية والمدة:'} <strong style={{ color: '#F8FAFC' }}>${budget} / {duration} {lang === 'en' ? 'days' : 'يوم'}</strong>
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <Zap size={16} style={{ color: '#10B981' }} />
+                      <span style={{ fontSize: '13px', color: '#94A3B8' }}>
+                        {lang === 'en' ? 'Engine:' : 'المحرك:'} <strong style={{ color: '#34D399' }}>{analysisMode === 'live' ? 'Live AI' : 'Fast Database'}</strong>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Deck Controls */}
+                  <div className="mp-deck-controls">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep(2)}
+                      className="mp-btn-secondary"
+                    >
+                      {isRtl ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+                      <span>{lang === 'en' ? 'Previous' : 'السابق'}</span>
+                    </button>
+
+                    <button 
+                      type="button"
+                      onClick={handleGenerate}
+                      disabled={isGenerating}
+                      className="mp-btn-primary"
+                      style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', boxShadow: '0 4px 20px rgba(16, 185, 129, 0.4)' }}
+                    >
+                      <Sparkles size={16} />
+                      <span>{lang === 'en' ? 'Generate Marketing Plan' : 'إنشاء الخطة التسويقية'}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
       </div>
     </ToolDashboardLayout>
   );

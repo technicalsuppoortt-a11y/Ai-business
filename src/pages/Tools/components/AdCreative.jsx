@@ -27,7 +27,14 @@ import {
   Lightbulb,
   PlaySquare,
   Camera,
-  Globe
+  Globe,
+  SlidersHorizontal,
+  RotateCcw,
+  Wrench,
+  Activity,
+  Layers,
+  Megaphone,
+  ChevronDown
 } from 'lucide-react';
 import './AdCreative.css';
 
@@ -50,6 +57,10 @@ export default function AdCreative({ stepNumber }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState(savedState.result || null);
 
+  const [activePopover, setActivePopover] = useState(null); // 'product' | 'pain' | 'platform' | 'dialect' | null
+  const [loadingBadgeIndex, setLoadingBadgeIndex] = useState(0);
+  const [activeAngleTab, setActiveAngleTab] = useState('hook'); // 'hook' | 'visual' | 'script' | 'cta' | 'angles' | 'all'
+
   const platformColors = { 
     tiktok: '#25F4EE', 
     facebook: '#1877F2', 
@@ -65,6 +76,28 @@ export default function AdCreative({ stepNumber }) {
     instagram: Camera,
     linkedin: Share2
   };
+
+  const loadingBadges = lang === 'en'
+    ? [
+        'Analyzing Product Value Proposition & Persona...',
+        'Framing Hook & Angle Variations...',
+        'Formatting Multi-Platform Copy & Visual Prompts...'
+      ]
+    : [
+        'جاري تحليل للقيمة المضافة للمنتج والجمهور...',
+        'صياغة الخطاف الترويجي والزوايا البيعية...',
+        'كتابة السكربت والتوجيهات البصرية الشاملة...'
+      ];
+
+  useEffect(() => {
+    let interval;
+    if (isGenerating) {
+      interval = setInterval(() => {
+        setLoadingBadgeIndex((prev) => (prev + 1) % loadingBadges.length);
+      }, 1400);
+    }
+    return () => clearInterval(interval);
+  }, [isGenerating, loadingBadges.length]);
 
   useEffect(() => {
     const load = async () => {
@@ -83,6 +116,7 @@ export default function AdCreative({ stepNumber }) {
   const handleGenerate = async () => {
     setIsGenerating(true);
     setResult(null);
+    setActivePopover(null);
     try {
       if (analysisMode === 'live') {
         const liveResult = await dispatchLiveAiAnalysis({
@@ -128,9 +162,9 @@ export default function AdCreative({ stepNumber }) {
             mode: 'live'
           }
         });
-        toast(lang === 'en' ? 'Live AI Ad Script generated! ✨' : 'تم توليد السكربت الإعلاني بالذكاء الاصطناعي الحي! ✨', 'success');
+        toast(lang === 'en' ? 'Live AI Ad Script generated!' : 'تم توليد السكربت الإعلاني بالذكاء الاصطناعي الحي!', 'success');
       } else {
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 600));
         const dbResult = await getAdLabTemplate(selectedProduct, selectedPain, selectedPlatform, selectedDialect);
         if (dbResult && dbResult.content) {
           setResult(dbResult.content);
@@ -146,7 +180,7 @@ export default function AdCreative({ stepNumber }) {
               mode: 'fast'
             }
           });
-          toast(lang === 'en' ? 'Ad script ready! 🚀' : 'السكربت الإعلاني جاهز للإنتاج! 🚀', 'success');
+          toast(lang === 'en' ? 'Ad script ready!' : 'السكربت الإعلاني جاهز للإنتاج!', 'success');
         } else {
           setResult({ error: lang === 'en' ? 'Template not found for this configuration.' : 'لم يتم العثور على قالب لهذا التكوين.' });
           toast(lang === 'en' ? 'Try switching to Live AI mode for custom script!' : 'جرب التبديل للوضع الحي للحصول على نتائج مخصصة!', 'warning');
@@ -161,45 +195,14 @@ export default function AdCreative({ stepNumber }) {
   };
 
   const copyText = (text, label) => {
+    if (!text) return;
     navigator.clipboard.writeText(text);
-    toast(lang === 'en' ? `${label} copied to clipboard! ✅` : `تم نسخ ${label} إلى الحافظة! ✅`, 'success');
-  };
-
-  const renderSelector = (title, icon, items, selectedId, setId, getLabel) => {
-    if (!items) return null;
-    const IconComponent = icon;
-
-    return (
-      <div className="ac-form-group">
-        <label className="ac-label">
-          <IconComponent size={14} color="#EC4899" />
-          <span>{title}</span>
-        </label>
-        
-        <div className="ac-option-grid" style={{ gridTemplateColumns: items.length <= 3 ? 'repeat(auto-fit, minmax(110px, 1fr))' : 'repeat(auto-fit, minmax(130px, 1fr))' }}>
-          {items.map(item => {
-            const isActive = selectedId === item.id;
-            const PlatIcon = platformIconsMap[item.id] || null;
-
-            return (
-              <button 
-                key={item.id} 
-                onClick={() => setId(item.id)} 
-                className={`ac-option-btn ${isActive ? 'active' : ''}`}
-              >
-                {PlatIcon && <PlatIcon size={14} color={isActive ? '#EC4899' : 'var(--text2, #94A3B8)'} />}
-                <span>{getLabel ? getLabel(item) : (lang === 'en' ? item.name_en : item.name_ar)}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
+    toast(lang === 'en' ? `${label} copied to clipboard!` : `تم نسخ ${label} إلى الحافظة!`, 'success');
   };
 
   const bottomSections = [
     {
-      icon: <Brain size={18} color="#EC4899" />,
+      icon: <Brain size={18} color="#6366F1" />,
       title: lang === 'en' ? 'Psychology of a Successful Ad' : 'سيكولوجية الإعلان الناجح',
       items: [
         lang === 'en' ? 'A good ad sells the "end result" and escape from pain, not the product itself.' : 'الإعلان الجيد لا يبيع المنتج، بل يبيع "النتيجة النهائية" والهروب من الألم.',
@@ -209,255 +212,396 @@ export default function AdCreative({ stepNumber }) {
     }
   ];
 
+  const selectedPlatObj = structure?.platforms?.find(p => p.id === selectedPlatform);
+  const ActivePlatIcon = platformIconsMap[selectedPlatform] || Share2;
+
   return (
     <ToolDashboardLayout
       id="ad-creative"
-      title={lang === 'en' ? 'Ad Creative Lab' : 'مختبر الإعلانات (Ad Creative)'}
-      subtitle={lang === 'en' ? 'Generate scenario-specific ad scripts with hooks, visuals, and CTAs based on your product, pain point, and platform.' : 'توليد سكربتات إعلانية مخصصة بالكامل بناءً على نوع منتجك، ألم العميل، والمنصة المستهدفة.'}
+      title={lang === 'en' ? 'Ad Creative 360° Studio' : 'مختبر الإعلانات 360° (Ad Creative Studio)'}
+      subtitle={lang === 'en' ? 'Command-bar studio canvas for rapid visual ad assembly and multi-angle script synthesis.' : 'شريط أوامر تفاعلي لبناء السكربتات الإعلانية الفيروسية والتوجيهات البصرية لجميع المنصات.'}
       stepNumber={stepNumber}
-      accentColor="#EC4899"
+      accentColor="#6366F1"
       timeEstimate="45 - 90"
       bottomSections={bottomSections}
     >
       <div className="ac-container" dir={isRtl ? 'rtl' : 'ltr'}>
-        <div className="ac-main-grid">
+        
+        {/* ═══════════════ 1. TOP SECTION: FLOATING COMMAND RIBBON ═══════════════ */}
+        <div className="ac-ribbon-wrapper">
+          <div className="ac-command-ribbon">
+            <div className="ac-ribbon-pills-row">
+              
+              {/* Product Type Pill */}
+              <div 
+                onClick={() => setActivePopover(activePopover === 'product' ? null : 'product')}
+                className={`ac-command-pill ${activePopover === 'product' ? 'active' : ''}`}
+              >
+                <ShoppingBag size={16} style={{ color: '#6366F1' }} />
+                <div className="ac-pill-label-value">
+                  <span className="ac-pill-tag">{lang === 'en' ? 'Product Type' : 'نوع المنتج'}</span>
+                  <span className="ac-pill-val">
+                    {structure?.products?.find(p => p.id === selectedProduct)?.[lang === 'en' ? 'name_en' : 'name_ar'] || selectedProduct || '...'}
+                  </span>
+                </div>
+                <ChevronDown size={14} style={{ color: '#94A3B8' }} />
+              </div>
 
-          {/* ═══════════════ INPUTS FORM PANEL ═══════════════ */}
-          <div className="ac-panel">
-            <div className="ac-panel-header">
-              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(236, 72, 153, 0.12)', color: '#EC4899', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Clapperboard size={20} />
+              {/* Pain Point Pill */}
+              <div 
+                onClick={() => setActivePopover(activePopover === 'pain' ? null : 'pain')}
+                className={`ac-command-pill ${activePopover === 'pain' ? 'active' : ''}`}
+              >
+                <AlertCircle size={16} style={{ color: '#EF4444' }} />
+                <div className="ac-pill-label-value">
+                  <span className="ac-pill-tag">{lang === 'en' ? 'Customer Pain' : 'ألم العميل'}</span>
+                  <span className="ac-pill-val">
+                    {structure?.painPoints?.find(p => p.id === selectedPain)?.[lang === 'en' ? 'name_en' : 'name_ar'] || selectedPain || '...'}
+                  </span>
+                </div>
+                <ChevronDown size={14} style={{ color: '#94A3B8' }} />
               </div>
-              <div>
-                <h3 className="ac-panel-title">
-                  <span>{lang === 'en' ? 'Ad Configuration' : 'تكوين الإعلان المموال'}</span>
-                </h3>
-                <p className="ac-panel-subtitle">
-                  {lang === 'en' ? 'Select product type, customer pain point, target platform, and dialect.' : 'حدد نوع المنتج وألم العميل والمنصة المستهدفة لتوليد السكربت.'}
-                </p>
+
+              {/* Target Platform Pill */}
+              <div 
+                onClick={() => setActivePopover(activePopover === 'platform' ? null : 'platform')}
+                className={`ac-command-pill ${activePopover === 'platform' ? 'active' : ''}`}
+              >
+                <ActivePlatIcon size={16} style={{ color: platformColors[selectedPlatform] || '#38BDF8' }} />
+                <div className="ac-pill-label-value">
+                  <span className="ac-pill-tag">{lang === 'en' ? 'Platform' : 'المنصة المستهدفة'}</span>
+                  <span className="ac-pill-val">
+                    {selectedPlatObj?.[lang === 'en' ? 'name_en' : 'name_ar'] || selectedPlatform || '...'}
+                  </span>
+                </div>
+                <ChevronDown size={14} style={{ color: '#94A3B8' }} />
               </div>
+
+              {/* Dialect Pill */}
+              <div 
+                onClick={() => setActivePopover(activePopover === 'dialect' ? null : 'dialect')}
+                className={`ac-command-pill ${activePopover === 'dialect' ? 'active' : ''}`}
+              >
+                <Languages size={16} style={{ color: '#10B981' }} />
+                <div className="ac-pill-label-value">
+                  <span className="ac-pill-tag">{lang === 'en' ? 'Script Dialect' : 'اللهجة المستهدفة'}</span>
+                  <span className="ac-pill-val">
+                    {structure?.dialects?.find(d => d.id === selectedDialect)?.[lang === 'en' ? 'name_en' : 'name_ar'] || selectedDialect || '...'}
+                  </span>
+                </div>
+                <ChevronDown size={14} style={{ color: '#94A3B8' }} />
+              </div>
+
             </div>
-
-            {structure ? (
-              <>
-                {renderSelector(
-                  lang === 'en' ? '1. Product / Service Type' : '1. نوع المنتج أو الخدمة',
-                  ShoppingBag,
-                  structure.products, 
-                  selectedProduct, 
-                  setSelectedProduct
-                )}
-
-                {renderSelector(
-                  lang === 'en' ? '2. Customer\'s Biggest Pain' : '2. أكبر مشكلة يعاني منها العميل',
-                  AlertCircle,
-                  structure.painPoints, 
-                  selectedPain, 
-                  setSelectedPain
-                )}
-
-                {renderSelector(
-                  lang === 'en' ? '3. Target Platform' : '3. المنصة المستهدفة',
-                  Share2,
-                  structure.platforms, 
-                  selectedPlatform, 
-                  setSelectedPlatform
-                )}
-
-                {renderSelector(
-                  lang === 'en' ? '4. Script Dialect' : '4. اللهجة المستهدفة',
-                  Languages,
-                  structure.dialects, 
-                  selectedDialect, 
-                  setSelectedDialect
-                )}
-              </>
-            ) : (
-              <div style={{ color: 'var(--text2, #8B96A8)', fontSize: '13px', textAlign: 'center', padding: '40px 0' }}>
-                <span className="td-spinner" style={{ margin: '0 auto 12px' }} />
-                <p>{lang === 'en' ? 'Loading Ad Matrix Structure...' : 'جاري تحميل الهيكل...'}</p>
-              </div>
-            )}
-
-            {/* Dual Mode Selector */}
-            <div style={{ marginTop: '16px' }}>
-              <AnalysisModeSelector 
-                mode={analysisMode} 
-                onChange={setAnalysisMode} 
-                lang={lang} 
-                accentColor="#EC4899" 
-              />
-            </div>
-
-            <button 
-              onClick={handleGenerate} 
-              disabled={isGenerating || !structure} 
-              className="ac-generate-btn"
-            >
-              {isGenerating ? (
-                <>
-                  <span className="td-spinner" /> 
-                  <span>{lang === 'en' ? 'Brainstorming Ad Script...' : 'جاري العصف الذهني...'}</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles size={16} />
-                  <span>{lang === 'en' ? 'Generate Ad Script' : 'توليد السكربت الإعلاني'}</span>
-                </>
-              )}
-            </button>
           </div>
 
-          {/* ═══════════════ AI OUTPUT PANEL ═══════════════ */}
-          <div className="ac-panel">
-            <div className="ac-panel-header">
-              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(236, 72, 153, 0.12)', color: '#EC4899', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Film size={20} />
+          {/* FLOATING POPOVER DROPDOWN PANEL */}
+          <AnimatePresence>
+            {activePopover && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="ac-popover-dropdown"
+              >
+                <div className="ac-popover-grid">
+                  {activePopover === 'product' && structure?.products?.map(p => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => { setSelectedProduct(p.id); setActivePopover(null); }}
+                      className={`ac-popover-btn ${selectedProduct === p.id ? 'selected' : ''}`}
+                    >
+                      <ShoppingBag size={14} />
+                      <span>{lang === 'en' ? p.name_en : p.name_ar}</span>
+                    </button>
+                  ))}
+
+                  {activePopover === 'pain' && structure?.painPoints?.map(p => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => { setSelectedPain(p.id); setActivePopover(null); }}
+                      className={`ac-popover-btn ${selectedPain === p.id ? 'selected' : ''}`}
+                    >
+                      <AlertCircle size={14} />
+                      <span>{lang === 'en' ? p.name_en : p.name_ar}</span>
+                    </button>
+                  ))}
+
+                  {activePopover === 'platform' && structure?.platforms?.map(p => {
+                    const PlatIcon = platformIconsMap[p.id] || Share2;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => { setSelectedPlatform(p.id); setActivePopover(null); }}
+                        className={`ac-popover-btn ${selectedPlatform === p.id ? 'selected' : ''}`}
+                      >
+                        <PlatIcon size={14} />
+                        <span>{lang === 'en' ? p.name_en : p.name_ar}</span>
+                      </button>
+                    );
+                  })}
+
+                  {activePopover === 'dialect' && structure?.dialects?.map(d => (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() => { setSelectedDialect(d.id); setActivePopover(null); }}
+                      className={`ac-popover-btn ${selectedDialect === d.id ? 'selected' : ''}`}
+                    >
+                      <Languages size={14} />
+                      <span>{lang === 'en' ? d.name_en : d.name_ar}</span>
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* ═══════════════ 2. CENTER SECTION: ACTION CORE & ENGINE ═══════════════ */}
+        {!result && !isGenerating && (
+          <div className="ac-action-core-section">
+            <AnalysisModeSelector 
+              mode={analysisMode} 
+              onChange={setAnalysisMode} 
+              lang={lang} 
+              accentColor="#6366F1" 
+            />
+
+            <button
+              type="button"
+              onClick={handleGenerate}
+              disabled={isGenerating || !structure}
+              className="ac-assemble-btn"
+            >
+              <Zap size={20} />
+              <span>{lang === 'en' ? 'Assemble & Generate Ad' : 'تركيب وتوليد الإعلانات'}</span>
+            </button>
+          </div>
+        )}
+
+        {/* ═══════════════ ANIMATED STAGES ═══════════════ */}
+        <AnimatePresence mode="wait">
+          
+          {/* AI SYNTHESIS LOADING STAGE */}
+          {isGenerating ? (
+            <motion.div
+              key="loading-stage"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.3 }}
+              className="ac-reactor-loading"
+            >
+              <div className="ac-reactor-wrap">
+                <div className="ac-reactor-ring-1" />
+                <div className="ac-reactor-ring-2" />
+                <Sparkles size={34} className="ac-reactor-icon" />
               </div>
+
               <div>
-                <h3 className="ac-panel-title">
-                  <span>{lang === 'en' ? 'Production-Ready Ad Creative' : 'السكربت الإعلاني للإنتاج'}</span>
+                <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#F8FAFC', margin: '0 0 8px 0' }}>
+                  {lang === 'en' ? 'Synthesizing Viral 360° Ad Creative Deck...' : 'جاري تركيب وتوليد السكربت الإعلاني...'}
                 </h3>
-                <p className="ac-panel-subtitle">
-                  {lang === 'en' ? 'Hook line, visual direction, full video script, CTA & alternative angles.' : 'الخطاف الشديد، التوجيه البصري، السكربت الكامل، ودافع الشراء.'}
+                <p style={{ fontSize: '13px', color: '#94A3B8', margin: 0 }}>
+                  {lang === 'en' ? 'Formatting hooks, visual direction, script & alternative sales angles' : 'تأطير الخطافات، التوجيهات البصرية، والزوايا الإعلانية البديلة'}
                 </p>
               </div>
-            </div>
 
-            <div style={{ minHeight: '380px', display: 'flex', flexDirection: 'column' }}>
-              {!result && !isGenerating && (
-                <div style={{ margin: 'auto', textAlign: 'center', padding: '40px 20px' }}>
-                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(236, 72, 153, 0.1)', color: '#EC4899', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                    <Clapperboard size={28} />
+              <div className="ac-loading-status-badge">
+                <Activity size={14} className="td-spinner" style={{ borderTopColor: '#6366F1' }} />
+                <span>{loadingBadges[loadingBadgeIndex]}</span>
+              </div>
+            </motion.div>
+
+          ) : result ? (
+            /* DIGITAL AD MOCKUP VIEWPORT CANVAS */
+            <motion.div
+              key="mockup-stage"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="ac-mockup-stage"
+            >
+              {/* Hook Angle Selector Bar */}
+              <div className="ac-angle-selector-bar">
+                <button
+                  type="button"
+                  onClick={() => setActiveAngleTab('hook')}
+                  className={`ac-angle-pill ${activeAngleTab === 'hook' ? 'active' : ''}`}
+                >
+                  <Flame size={14} style={{ color: '#6366F1' }} />
+                  <span>{lang === 'en' ? 'Angle 1: Hook (First 3s)' : 'الزاوية 1: الخطاف (أول 3 ثوانٍ)'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveAngleTab('visual')}
+                  className={`ac-angle-pill ${activeAngleTab === 'visual' ? 'active' : ''}`}
+                >
+                  <Film size={14} style={{ color: '#38BDF8' }} />
+                  <span>{lang === 'en' ? 'Angle 2: Visual Prompt' : 'الزاوية 2: التوجيه البصري'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveAngleTab('script')}
+                  className={`ac-angle-pill ${activeAngleTab === 'script' ? 'active' : ''}`}
+                >
+                  <FileText size={14} style={{ color: '#10B981' }} />
+                  <span>{lang === 'en' ? 'Angle 3: Full Video Script' : 'الزاوية 3: السكربت الكامل'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveAngleTab('cta')}
+                  className={`ac-angle-pill ${activeAngleTab === 'cta' ? 'active' : ''}`}
+                >
+                  <Zap size={14} style={{ color: '#F59E0B' }} />
+                  <span>{lang === 'en' ? 'Angle 4: Call To Action' : 'الزاوية 4: نداء الإجراء'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveAngleTab('angles')}
+                  className={`ac-angle-pill ${activeAngleTab === 'angles' ? 'active' : ''}`}
+                >
+                  <Target size={14} style={{ color: '#818CF8' }} />
+                  <span>{lang === 'en' ? '5 Alternative Angles' : '5 زوايا إعلانية بديلة'}</span>
+                </button>
+              </div>
+
+              {/* Live Digital Ad Mockup Viewport */}
+              <div className="ac-mockup-frame">
+                <div className="ac-mockup-header-row">
+                  <div className="ac-mockup-badge">
+                    <ActivePlatIcon size={14} style={{ color: platformColors[selectedPlatform] || '#818CF8' }} />
+                    <span>{selectedPlatObj?.[lang === 'en' ? 'name_en' : 'name_ar'] || 'Live Ad Mockup'}</span>
                   </div>
-                  <p style={{ fontSize: '14.5px', fontWeight: '800', color: 'var(--text, #F8FAFC)', margin: '0 0 6px 0' }}>
-                    {lang === 'en' ? 'Select product, pain point, and platform then click generate' : 'حدد المنتج والمشكلة والمنصة ثم اضغط توليد'}
-                  </p>
-                  <p style={{ fontSize: '12.5px', color: 'var(--text2, #94A3B8)', margin: 0 }}>
-                    {lang === 'en' ? 'Get custom Hook, Visual Direction, Full Script, and Call to Action.' : 'احصل على خطاف قوي، توجيه بصري، سكربت كامل، ودافع شراء.'}
-                  </p>
+                  <span style={{ fontSize: '11.5px', color: '#94A3B8', fontWeight: '800' }}>
+                    {lang === 'en' ? 'Dialect:' : 'اللهجة:'} {structure?.dialects?.find(d => d.id === selectedDialect)?.[lang === 'en' ? 'name_en' : 'name_ar']}
+                  </span>
                 </div>
-              )}
 
-              {isGenerating && (
-                <div style={{ margin: 'auto', textAlign: 'center', padding: '40px 20px' }}>
-                  <div className="td-spinner" style={{ width: '42px', height: '42px', borderWidth: '4px', borderColor: 'rgba(236, 72, 153, 0.2)', borderTopColor: '#EC4899', margin: '0 auto 16px' }} />
-                  <p style={{ color: '#EC4899', fontWeight: '800', fontSize: '14px', margin: 0 }}>
-                    {lang === 'en' ? 'Drafting viral ad script tailored to your niche...' : 'جاري كتابة السكربت الإعلاني المخصص...'}
-                  </p>
-                </div>
-              )}
+                {/* Error Output Handing */}
+                {result.error ? (
+                  <div className="ac-mockup-card" style={{ borderColor: '#EF4444' }}>
+                    <p style={{ color: '#EF4444', margin: 0, fontWeight: '800' }}>{result.error}</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    
+                    {/* Hook Line Card */}
+                    {(activeAngleTab === 'hook' || activeAngleTab === 'all') && (
+                      <div className="ac-mockup-card">
+                        <div className="ac-card-label-row">
+                          <h5 className="ac-card-title">
+                            <Flame size={16} />
+                            <span>{lang === 'en' ? 'The Hook (First 3 Seconds)' : 'الخطاف الترويجي (أول 3 ثوانٍ)'}</span>
+                          </h5>
+                          <button
+                            type="button"
+                            onClick={() => copyText(lang === 'en' ? result.hook_en : result.hook_ar, lang === 'en' ? 'Hook' : 'الخطاف')}
+                            className="ac-copy-btn"
+                          >
+                            <Copy size={13} />
+                            <span>{lang === 'en' ? 'Copy Hook' : 'نسخ الخطاف'}</span>
+                          </button>
+                        </div>
+                        <div className="ac-card-body" style={{ fontSize: '15px', fontWeight: '900' }}>
+                          "{lang === 'en' ? result.hook_en : result.hook_ar}"
+                        </div>
+                      </div>
+                    )}
 
-              {result && result.error && (
-                <div className="ac-result-card" style={{ '--card-accent': '#EF4444' }}>
-                  <p style={{ color: '#EF4444', margin: 0, fontWeight: '800' }}>{result.error}</p>
-                </div>
-              )}
+                    {/* Visual Prompt Card */}
+                    {(activeAngleTab === 'visual' || activeAngleTab === 'all') && (
+                      <div className="ac-mockup-card">
+                        <div className="ac-card-label-row">
+                          <h5 className="ac-card-title" style={{ color: '#38BDF8' }}>
+                            <Film size={16} />
+                            <span>{lang === 'en' ? 'Visual Direction & Camera Scene' : 'التوجيه البصري ومحاكاة المشهد'}</span>
+                          </h5>
+                          <button
+                            type="button"
+                            onClick={() => copyText(lang === 'en' ? result.visual_en : result.visual_ar, lang === 'en' ? 'Visual Prompt' : 'التوجيه البصري')}
+                            className="ac-copy-btn"
+                          >
+                            <Camera size={13} />
+                            <span>{lang === 'en' ? 'Copy Visual Prompt' : 'نسخ التوجيه البصري'}</span>
+                          </button>
+                        </div>
+                        <div className="ac-card-body">
+                          {lang === 'en' ? result.visual_en : result.visual_ar}
+                        </div>
+                      </div>
+                    )}
 
-              {result && !result.error && !isGenerating && (
-                <AnimatePresence mode="wait">
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
-                  >
-                    {/* The Hook */}
-                    <div className="ac-result-card" style={{ '--card-accent': '#EC4899' }}>
-                      <div className="ac-card-header">
-                        <h4 className="ac-card-title">
-                          <Flame size={16} />
-                          <span>{lang === 'en' ? 'The Hook (First Line)' : 'الخطاف (أول 3 ثوانٍ)'}</span>
-                        </h4>
-                        <button 
-                          onClick={() => copyText(lang === 'en' ? result.hook_en : result.hook_ar, lang === 'en' ? 'Hook' : 'الخطاف')} 
-                          className="ac-copy-btn"
-                        >
-                          <Copy size={13} />
-                          <span>{lang === 'en' ? 'Copy' : 'نسخ'}</span>
-                        </button>
+                    {/* Full Script Card */}
+                    {(activeAngleTab === 'script' || activeAngleTab === 'all') && (
+                      <div className="ac-mockup-card">
+                        <div className="ac-card-label-row">
+                          <h5 className="ac-card-title" style={{ color: '#10B981' }}>
+                            <FileText size={16} />
+                            <span>{lang === 'en' ? 'Full Ad Script Body' : 'السكربت الإعلاني الكامل'}</span>
+                          </h5>
+                          <button
+                            type="button"
+                            onClick={() => copyText(lang === 'en' ? result.script_en : result.script_ar, lang === 'en' ? 'Full Script' : 'السكربت الكامل')}
+                            className="ac-copy-btn"
+                          >
+                            <Copy size={13} />
+                            <span>{lang === 'en' ? 'Copy Script' : 'نسخ السكربت'}</span>
+                          </button>
+                        </div>
+                        <div className="ac-card-body">
+                          {lang === 'en' ? result.script_en : result.script_ar}
+                        </div>
                       </div>
-                      <div className="ac-card-content" style={{ fontSize: '15px', fontWeight: '900', color: 'var(--text, #F8FAFC)' }}>
-                        "{lang === 'en' ? result.hook_en : result.hook_ar}"
-                      </div>
-                    </div>
+                    )}
 
-                    {/* Visual Direction */}
-                    <div className="ac-result-card" style={{ '--card-accent': platformColors[selectedPlatform] || '#3B82F6' }}>
-                      <div className="ac-card-header">
-                        <h4 className="ac-card-title" style={{ color: platformColors[selectedPlatform] || '#3B82F6' }}>
-                          <Film size={16} />
-                          <span>{lang === 'en' ? 'Visual Direction (Scene Notes)' : 'التوجيه البصري (مشهد بالفيديو)'}</span>
-                        </h4>
-                        <button 
-                          onClick={() => copyText(lang === 'en' ? result.visual_en : result.visual_ar, lang === 'en' ? 'Visual Direction' : 'التوجيه البصري')} 
-                          className="ac-copy-btn"
-                        >
-                          <Copy size={13} />
-                          <span>{lang === 'en' ? 'Copy' : 'نسخ'}</span>
-                        </button>
+                    {/* CTA Card */}
+                    {(activeAngleTab === 'cta' || activeAngleTab === 'all') && (
+                      <div className="ac-mockup-card">
+                        <div className="ac-card-label-row">
+                          <h5 className="ac-card-title" style={{ color: '#F59E0B' }}>
+                            <Zap size={16} />
+                            <span>{lang === 'en' ? 'Call To Action (CTA)' : 'نداء اتخاذ الإجراء (CTA)'}</span>
+                          </h5>
+                          <button
+                            type="button"
+                            onClick={() => copyText(lang === 'en' ? result.cta_en : result.cta_ar, 'CTA')}
+                            className="ac-copy-btn"
+                          >
+                            <Copy size={13} />
+                            <span>{lang === 'en' ? 'Copy CTA' : 'نسخ الإجراء'}</span>
+                          </button>
+                        </div>
+                        <div className="ac-card-body" style={{ fontSize: '15px', fontWeight: '900' }}>
+                          {lang === 'en' ? result.cta_en : result.cta_ar}
+                        </div>
                       </div>
-                      <div className="ac-card-content">
-                        {lang === 'en' ? result.visual_en : result.visual_ar}
-                      </div>
-                    </div>
+                    )}
 
-                    {/* Full Script */}
-                    <div className="ac-result-card" style={{ '--card-accent': '#10B981' }}>
-                      <div className="ac-card-header">
-                        <h4 className="ac-card-title" style={{ color: '#10B981' }}>
-                          <FileText size={16} />
-                          <span>{lang === 'en' ? 'Full Ad Script' : 'السكربت الإعلاني الكامل'}</span>
-                        </h4>
-                        <button 
-                          onClick={() => copyText(lang === 'en' ? result.script_en : result.script_ar, lang === 'en' ? 'Full Script' : 'السكربت الكامل')} 
-                          className="ac-copy-btn"
-                        >
-                          <Copy size={13} />
-                          <span>{lang === 'en' ? 'Copy' : 'نسخ'}</span>
-                        </button>
-                      </div>
-                      <div className="ac-card-content">
-                        {lang === 'en' ? result.script_en : result.script_ar}
-                      </div>
-                    </div>
-
-                    {/* CTA */}
-                    <div className="ac-result-card" style={{ '--card-accent': '#F59E0B' }}>
-                      <div className="ac-card-header">
-                        <h4 className="ac-card-title" style={{ color: '#F59E0B' }}>
-                          <Zap size={16} />
-                          <span>{lang === 'en' ? 'Call To Action (CTA)' : 'نداء اتخاذ الإجراء (CTA)'}</span>
-                        </h4>
-                        <button 
-                          onClick={() => copyText(lang === 'en' ? result.cta_en : result.cta_ar, 'CTA')} 
-                          className="ac-copy-btn"
-                        >
-                          <Copy size={13} />
-                          <span>{lang === 'en' ? 'Copy' : 'نسخ'}</span>
-                        </button>
-                      </div>
-                      <div className="ac-card-content" style={{ fontSize: '15px', fontWeight: '900' }}>
-                        {lang === 'en' ? result.cta_en : result.cta_ar}
-                      </div>
-                    </div>
-
-                    {/* Alternative Angles */}
-                    {result.ad_angles && result.ad_angles.length > 0 && (
-                      <div className="ac-result-card" style={{ '--card-accent': '#8B5CF6' }}>
-                        <h4 className="ac-card-title" style={{ color: '#8B5CF6', marginBottom: '14px' }}>
+                    {/* 5 Alternative Angles Card */}
+                    {(activeAngleTab === 'angles' || activeAngleTab === 'all') && result.ad_angles && result.ad_angles.length > 0 && (
+                      <div className="ac-mockup-card">
+                        <h5 className="ac-card-title" style={{ color: '#818CF8', marginBottom: '10px' }}>
                           <Target size={16} />
-                          <span>{lang === 'en' ? '5 Alternative Ad Angles' : '5 زوايا إعلانية بديلة للاختبار'}</span>
-                        </h4>
-                        
+                          <span>{lang === 'en' ? '5 Alternative Ad Angles to Test' : '5 زوايا إعلانية بديلة للاختبار والتوسع'}</span>
+                        </h5>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                           {result.ad_angles.map((angle, i) => (
-                            <div key={i} style={{ background: 'var(--bg2, rgba(15, 23, 42, 0.7))', padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--line, rgba(255, 255, 255, 0.05))' }}>
-                              <div style={{ fontWeight: '900', fontSize: '13px', color: '#8B5CF6', marginBottom: '3px' }}>
+                            <div key={i} style={{ background: 'rgba(15, 23, 42, 0.7)', padding: '12px 14px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                              <div style={{ fontWeight: '900', fontSize: '13px', color: '#818CF8', marginBottom: '3px' }}>
                                 {i + 1}. {lang === 'en' ? angle.angle_en : angle.angle_ar}
                               </div>
-                              <div style={{ fontSize: '12px', color: 'var(--text2, #94A3B8)', lineHeight: '1.6' }}>
+                              <div style={{ fontSize: '12px', color: '#CBD5E1', lineHeight: '1.6' }}>
                                 {lang === 'en' ? angle.desc_en : angle.desc_ar}
                               </div>
                             </div>
@@ -466,25 +610,54 @@ export default function AdCreative({ stepNumber }) {
                       </div>
                     )}
 
-                    {/* Pro Tip */}
-                    {(lang === 'en' ? result.tip_en : result.tip_ar) && (
-                      <div className="ac-result-card" style={{ '--card-accent': '#EC4899', background: 'rgba(236, 72, 153, 0.06)' }}>
-                        <h4 className="ac-card-title" style={{ color: '#EC4899', marginBottom: '8px' }}>
-                          <Lightbulb size={16} />
-                          <span>{lang === 'en' ? 'Pro Execution Tip' : 'نصيحة تنفيذية ذهبية'}</span>
-                        </h4>
-                        <div style={{ fontSize: '12.5px', color: 'var(--text, #F8FAFC)', lineHeight: '1.7' }}>
-                          {lang === 'en' ? result.tip_en : result.tip_ar}
-                        </div>
-                      </div>
-                    )}
-                  </motion.div>
-                </AnimatePresence>
-              )}
-            </div>
-          </div>
+                  </div>
+                )}
+              </div>
 
-        </div>
+              {/* FLOATING TACTICAL ACTION DOCK */}
+              <div className="ac-tactical-dock">
+                <button
+                  type="button"
+                  onClick={() => copyText(lang === 'en' ? result?.script_en : result?.script_ar, lang === 'en' ? 'Full Script' : 'السكربت الكامل')}
+                  className="ac-dock-btn"
+                >
+                  <Copy size={15} />
+                  <span>{lang === 'en' ? 'Copy Script' : 'نسخ السكربت'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => copyText(lang === 'en' ? result?.visual_en : result?.visual_ar, lang === 'en' ? 'Visual Prompt' : 'التوجيه البصري')}
+                  className="ac-dock-btn"
+                >
+                  <Camera size={15} style={{ color: '#38BDF8' }} />
+                  <span>{lang === 'en' ? 'Copy Visual Prompt' : 'نسخ التوجيه البصري'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleGenerate}
+                  className="ac-dock-btn"
+                >
+                  <Zap size={15} style={{ color: '#10B981' }} />
+                  <span>{lang === 'en' ? 'Re-Assemble Ad' : 'إعادة تركيب الإعلان'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setResult(null)}
+                  className="ac-dock-btn primary"
+                >
+                  <Wrench size={15} />
+                  <span>{lang === 'en' ? 'Edit Brief' : 'تعديل التكليف'}</span>
+                </button>
+              </div>
+
+            </motion.div>
+          ) : null}
+
+        </AnimatePresence>
+
       </div>
     </ToolDashboardLayout>
   );

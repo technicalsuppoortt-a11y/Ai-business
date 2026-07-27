@@ -7,22 +7,21 @@ export const TOOLS_24H = [
   { id: 'email-setup', label_ar: 'التسويق عبر الإيميل', label_en: 'Email Marketing', icon: '📧', section: 'tools', group_ar: 'بناء وتجهيز المتجر', group_en: 'Store Setup' },
   { id: 'product-source', label_ar: 'مصدر المنتج', label_en: 'Product Source', icon: '📦', section: 'tools', group_ar: 'المنتج والربحية', group_en: 'Product & Profit' },
   { id: 'profit-calculator', label_ar: 'حاسبة الأرباح', label_en: 'Profit Calculator', icon: '💰', section: 'tools', group_ar: 'المنتج والربحية', group_en: 'Product & Profit' },
-  { id: 'social-presence', label_ar: 'السوشيال ميديا', label_en: 'Social Presence', icon: '📱', section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing' },
-  { id: 'content-factory', label_ar: 'مصنع المحتوى', label_en: 'Content Factory', icon: '🖼️', section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing' },
-  { id: 'marketing-plan', label_ar: 'خطة التسويق', label_en: 'Marketing Plan', icon: '🗺️', section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing' },
+  { id: 'social-media', label_ar: 'منصة السوشيال ميديا', label_en: 'Social Media', icon: '📱', section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing' },
+  { id: 'marketing-plan', label_ar: 'مخطط الحملات', label_en: 'Campaign planner', icon: '🗺️', section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing' },
   { id: 'ad-creative', label_ar: 'أفكار الإعلانات', label_en: 'Ad Creative', icon: '🎞️', section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing' },
   { id: 'campaign-launch', label_ar: 'إطلاق الحملة', label_en: 'Campaign Launch', icon: '🚀', section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing' },
 
   { id: 'smart-ai-assistant', label_ar: 'المساعد الذكي', label_en: 'AI Assistant', icon: '🤖', section: 'tools', group_ar: 'إدارة وتشغيل', group_en: 'Management & Ops' },
   { id: 'external-tools', label_ar: 'أدوات خارجية', label_en: 'External Tools', icon: '🌐', section: 'tools', group_ar: 'إدارة وتشغيل', group_en: 'Management & Ops' },
-  { id: 'freelance-profile', label_ar: 'الملف المهني', label_en: 'Freelance Profile', icon: '👤', section: 'freelance' },
-  { id: 'platform-radar', label_ar: 'رادار المنصات', label_en: 'Platform Radar', icon: '🌐', section: 'freelance' },
-  { id: 'freelance-pricing', label_ar: 'حاسبة التسعير', label_en: 'Pricing Calculator', icon: '💰', section: 'freelance' },
-  { id: 'skills-crafting', label_ar: 'صياغة المهارات', label_en: 'Skills Crafting', icon: '⚡', section: 'freelance' },
-  { id: 'portfolio-builder', label_ar: 'معرض الأعمال', label_en: 'Portfolio Builder', icon: '📁', section: 'freelance' },
-  { id: 'proposal-sniper', label_ar: 'قناص العروض', label_en: 'Proposal Sniper', icon: '🎯', section: 'freelance' },
-  { id: 'interview-prep', label_ar: 'أسئلة المقابلات', label_en: 'Interview Prep', icon: '🎤', section: 'freelance' },
-  { id: 'sales-templates', label_ar: 'نماذج المبيعات', label_en: 'Sales Templates', icon: '💬', section: 'freelance' },
+  { id: 'freelance-profile', label_ar: 'الملف المهني', label_en: 'Freelance Profile', icon: '👤', section: 'freelance', group_ar: 'أدوات العمل الحر', group_en: 'Freelance & Agency' },
+  { id: 'platform-radar', label_ar: 'رادار المنصات', label_en: 'Platform Radar', icon: '🌐', section: 'freelance', group_ar: 'أدوات العمل الحر', group_en: 'Freelance & Agency' },
+  { id: 'freelance-pricing', label_ar: 'حاسبة التسعير', label_en: 'Pricing Calculator', icon: '💰', section: 'freelance', group_ar: 'أدوات العمل الحر', group_en: 'Freelance & Agency' },
+  { id: 'skills-crafting', label_ar: 'صياغة المهارات', label_en: 'Skills Crafting', icon: '⚡', section: 'freelance', group_ar: 'أدوات العمل الحر', group_en: 'Freelance & Agency' },
+  { id: 'portfolio-builder', label_ar: 'معرض الأعمال', label_en: 'Portfolio Builder', icon: '📁', section: 'freelance', group_ar: 'أدوات العمل الحر', group_en: 'Freelance & Agency' },
+  { id: 'proposal-sniper', label_ar: 'قناص العروض', label_en: 'Proposal Sniper', icon: '🎯', section: 'freelance', group_ar: 'أدوات العمل الحر', group_en: 'Freelance & Agency' },
+  { id: 'interview-prep', label_ar: 'أسئلة المقابلات', label_en: 'Interview Prep', icon: '🎤', section: 'freelance', group_ar: 'أدوات العمل الحر', group_en: 'Freelance & Agency' },
+  { id: 'sales-templates', label_ar: 'نماذج المبيعات', label_en: 'Sales Templates', icon: '💬', section: 'freelance', group_ar: 'أدوات العمل الحر', group_en: 'Freelance & Agency' },
 ];
 
 export const TOOLS_CONTENT = {
@@ -132,11 +131,18 @@ export const TOOLS_CONTENT = {
     type: 'dynamic-content',
     category: 'design'
   },
+  'social-media': {
+    title_ar: 'منصة السوشيال ميديا الشاملة',
+    title_en: 'Social Media Hub',
+    description_ar: 'تأسيس استراتيجية الحسابات وإنتاج المحتوى الاحترافي المخصص لجميع المنصات.',
+    description_en: 'Social media strategy setup and customized professional content factory.',
+    type: 'social-media'
+  },
 
 
   'marketing-plan': {
-    title_ar: 'مولد خطة التسويق الذكي',
-    title_en: 'Smart Marketing Plan Generator',
+    title_ar: 'مخطط الحملات',
+    title_en: 'Campaign planner',
     description_ar: 'خطة تسويق مفصلة مع الاستهداف والميزانية.',
     description_en: 'Detailed marketing plan with targeting and budget.',
     type: 'marketing-generator',
@@ -232,5 +238,12 @@ export const TOOLS_CONTENT = {
     description_ar: 'مساحة عمل متكاملة لحفظ ملاحظاتك، تنظيم أفكارك، وإدارة مهامك بكل احترافية.',
     description_en: 'A complete workspace to save notes, organize ideas, and manage tasks professionally.',
     type: 'notebook',
+  },
+  'external-tools': {
+    title_ar: 'أدوات خارجية',
+    title_en: 'External Tools',
+    description_ar: 'روابط وأدوات خارجية مساعدة لإدارة وتشغيل أعمالك.',
+    description_en: 'External tools and links to help manage and operate your business.',
+    type: 'external-tools',
   }
 };

@@ -87,7 +87,7 @@ export default function DashboardNavbar({
   const displayEmail = userData?.email || '';
 
   const isTrial = userData?.subscription?.type === 'trial';
-  const allowedTools = userData?.freeTrialSettings?.allowedTools || [];
+  const allowedTools = userData?.freeTrialSettings?.allowedTools || brandData?.freeTrialSettings?.allowedTools || [];
   const isNotebookLocked = isTrial && !allowedTools.includes('smart-notebook');
 
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);

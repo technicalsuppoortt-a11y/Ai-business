@@ -41,6 +41,8 @@ import {
   ChevronDown,
   PanelLeftClose,
   PanelLeftOpen,
+  UserCheck,
+  ExternalLink,
 } from "lucide-react";
 import "./Sidebar.css";
 
@@ -60,15 +62,20 @@ const STEP_ICON_MAP = {
   "proposal-sniper": Send,
   "platform-radar": Radar,
   "skills-crafter": Zap,
+  "skills-crafting": Zap,
   "interview-prep": Users,
   "sales-templates": MessageSquare,
   "freelance-pricing": Calculator,
   "portfolio-builder": Briefcase,
+  "freelance-profile": UserCheck,
   "smart-ai-assistant": Bot,
   "profit-calculator": DollarSign,
   "social-presence": Share2,
+  "social-media": Share2,
+  "content-factory": Share2,
   "smart-notebook": BookOpen,
   "brand-library": Library,
+  "external-tools": ExternalLink,
   settings: Settings,
   tutorial: PlayCircle,
 };
@@ -123,7 +130,10 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
   };
 
   const isTrial = userData?.subscription?.type === "trial";
-  const allowedTools = brandData?.freeTrialSettings?.allowedTools || [];
+  const allowedTools =
+    userData?.freeTrialSettings?.allowedTools ||
+    brandData?.freeTrialSettings?.allowedTools ||
+    [];
 
   const isStepLocked = (stepId) => {
     if (stepId === "onboarding") return false;
@@ -153,7 +163,10 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
     setIsLogoutModalOpen(false);
     await logout();
     navigate("/auth");
-    toast(lang === "en" ? "Logged out successfully" : "تم تسجيل الخروج بنجاح", "info");
+    toast(
+      lang === "en" ? "Logged out successfully" : "تم تسجيل الخروج بنجاح",
+      "info",
+    );
   };
 
   const renderNavItem = (step) => {
@@ -271,6 +284,10 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
       label: lang === "en" ? "AI Tools" : "أدوات ذكية (AI)",
       items: TOOLS_24H.filter((s) => s.section === "tools"),
     },
+    // {
+    //   label: lang === "en" ? "Freelance Tools" : "أدوات العمل الحر",
+    //   items: TOOLS_24H.filter((s) => s.section === "freelance"),
+    // },
   ].filter((section) => section.items.length > 0);
 
   return (
@@ -303,7 +320,10 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
       <nav className="sidebar-nav">
         {navSections.map((section) => {
           const isAiTools =
-            section.label.includes("AI") || section.label.includes("ذكية");
+            section.label.includes("AI") ||
+            section.label.includes("ذكية") ||
+            section.label.includes("Freelance") ||
+            section.label.includes("العمل الحر");
 
           return (
             <div className="nav-section" key={section.label}>
@@ -485,7 +505,10 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
       {createPortal(
         <AnimatePresence>
           {isLogoutModalOpen && (
-            <div className="sidebar-logout-backdrop" onClick={() => setIsLogoutModalOpen(false)}>
+            <div
+              className="sidebar-logout-backdrop"
+              onClick={() => setIsLogoutModalOpen(false)}
+            >
               <motion.div
                 className="sidebar-logout-modal-box"
                 initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -500,7 +523,9 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
                   </div>
                   <div>
                     <h3 className="logout-modal-title">
-                      {lang === "en" ? "Confirm Logout?" : "تأكيد تسجيل الخروج؟"}
+                      {lang === "en"
+                        ? "Confirm Logout?"
+                        : "تأكيد تسجيل الخروج؟"}
                     </h3>
                     <p className="logout-modal-user">
                       {displayName} ({displayEmail})
@@ -526,14 +551,16 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
                     onClick={confirmLogout}
                   >
                     <LogOut size={16} />
-                    <span>{lang === "en" ? "Logout Account" : "تسجيل الخروج"}</span>
+                    <span>
+                      {lang === "en" ? "Logout Account" : "تسجيل الخروج"}
+                    </span>
                   </button>
                 </div>
               </motion.div>
             </div>
           )}
         </AnimatePresence>,
-        document.body
+        document.body,
       )}
     </aside>
   );

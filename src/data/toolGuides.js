@@ -187,13 +187,13 @@ export const TOOL_GUIDES = {
   },
   'marketing-plan': {
     ar: {
-      title: 'خطة التسويق',
+      title: 'مخطط الحملات',
       description: 'مولد خطط تسويق ذكي مع الاستهداف والميزانية ونصوص الإعلانات.',
       steps: ['اختر السوق المستهدف والعملة', 'اختر الفئة العمرية والجنس', 'اضغط "توليد الخطة"', 'انسخ المحتوى واعتمد الميزانية'],
       hasInputs: true, inputs: ['السوق', 'العملة', 'العمر', 'الجنس'], outputs: ['ميزانية يومية', 'استهداف', 'نصوص إعلانية'],
     },
     en: {
-      title: 'Marketing Plan',
+      title: 'Campaign planner',
       description: 'Smart marketing plan generator with targeting, budget, and ad copy.',
       steps: ['Choose target market and currency', 'Select age range and gender', 'Click "Generate Plan"', 'Copy content and approve budget'],
       hasInputs: true, inputs: ['Market', 'Currency', 'Age', 'Gender'], outputs: ['Daily budget', 'Targeting', 'Ad copy'],

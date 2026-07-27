@@ -17,6 +17,7 @@ import StandardTool from './components/StandardTool';
 import EmailSetup from './components/EmailSetup';
 import SocialIntegration from './components/SocialIntegration';
 import SocialPresence from './components/SocialPresence';
+import SocialMedia from './components/SocialMedia';
 
 import ProductSource from './components/ProductSource';
 import ProfitCalculator from './components/ProfitCalculator';
@@ -96,37 +97,27 @@ export default function ToolPage() {
   }, [userData, brandData]);
 
   const isTrial = userData?.subscription?.type === 'trial';
-  const allowedTools = brandData?.freeTrialSettings?.allowedTools || [];
+  const allowedTools = userData?.freeTrialSettings?.allowedTools || brandData?.freeTrialSettings?.allowedTools || [];
   const isLocked = isTrial && normalizedId !== 'onboarding' && (
-    normalizedId === 'analysis-identity'
-      ? !allowedTools.includes('analysis-identity') && !allowedTools.includes('niche-selection') && !allowedTools.includes('brand-naming') && !allowedTools.includes('visual-identity')
-      : !allowedTools.includes(normalizedId)
+    allowedTools.length > 0 ? !allowedTools.includes(normalizedId) : false
   );
 
   if (isLocked) {
     return (
-      <div className="lock-screen-wrapper">
-        <div className="lock-screen-card animate-slide-up" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-          <div className="lock-icon-container">
-            🔒
-          </div>
-          <h2 className="lock-title">
-            {lang === 'ar' ? 'هذه الأداة مقفلة في الفترة المجانية' : 'This Tool is Locked During the Free Trial'}
-          </h2>
-          <p className="lock-subtitle">
-            {lang === 'ar'
-              ? 'تفضل بتفعيل اشتراكك الكامل للوصول إلى كافة الأدوات المتطورة والحصرية والبدء في تنمية أعمالك!'
-              : 'Activate your full subscription to access premium features, all professional tools, and start scaling your business!'}
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', maxWidth: '300px', margin: '0 auto' }}>
+      <div className="tool-page-container">
+        <div className="whatsapp-lock-overlay">
+          <div className="whatsapp-lock-card">
+            <div className="whatsapp-lock-icon">🔒</div>
+            <h3>{lang === 'ar' ? 'هذه الأداة مغلقة في النسخة التجريبية' : 'This Tool is Locked in Free Trial'}</h3>
+            <p>
+              {lang === 'ar' 
+                ? 'للوصول إلى هذه الأداة وجميع مميزات المنصة الكاملة، يرجى الترقية والاشتراك.' 
+                : 'To access this tool and all full platform features, please upgrade and subscribe.'}
+            </p>
             {adminPhone && (
-              <a
-                href={`https://wa.me/${adminPhone.replace(/\+/g, '').trim()}?text=${encodeURIComponent(
-                  lang === 'ar'
-                    ? `مرحباً، أريد تفعيل اشتراكي بالكامل في منصة ${adminBrandName}`
-                    : `Hello, I want to activate my full subscription in ${adminBrandName} platform`
-                )}`}
-                target="_blank"
+              <a 
+                href={`https://wa.me/${adminPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(lang === 'ar' ? `مرحباً، أود الترقية والاشتراك في المنصة (اسم البراند: ${adminBrandName})` : `Hello, I would like to upgrade my subscription (Brand: ${adminBrandName})`)}`}
+                target="_blank" 
                 rel="noopener noreferrer"
                 className="whatsapp-lock-btn"
               >
@@ -160,8 +151,6 @@ export default function ToolPage() {
     );
   }
 
-  if (!content) return <div className="tool-not-found">{lang === 'en' ? 'Tool not found:' : 'الأداة غير موجودة:'} {toolId}</div>;
-
   // Exact Components Mapping (From tools.html)
   const toolComponents = {
     'analysis-identity': <AnalysisIdentity />,
@@ -175,8 +164,9 @@ export default function ToolPage() {
     'email-setup': <EmailSetup stepNumber={11} />,
     'product-source': <ProductSource stepNumber={12} />,
     'profit-calculator': <ProfitCalculator stepNumber={14} />,
-    'social-presence': <SocialPresence stepNumber={15} />,
-    'content-factory': <ContentFactory stepNumber={16} />,
+    'social-presence': <SocialMedia stepNumber={15} />,
+    'content-factory': <SocialMedia stepNumber={16} />,
+    'social-media': <SocialMedia stepNumber={15} />,
 
     'marketing-plan': <MarketingPlan stepNumber={20} />,
     'ad-creative': <AdCreative stepNumber={21} />,
@@ -197,10 +187,12 @@ export default function ToolPage() {
 
   const currentComponent = toolComponents[normalizedId];
 
+  if (!content && !currentComponent) return <div className="tool-not-found">{lang === 'en' ? 'Tool not found:' : 'الأداة غير موجودة:'} {toolId}</div>;
+
   // Resolve bilingual title/description
-  const title = lang === 'en' ? (content.title_en || content.title_ar) : (content.title_ar || content.title);
-  const description = lang === 'en' ? (content.description_en || content.description_ar) : (content.description_ar || content.description);
-  const steps = lang === 'en' ? (content.steps_en || content.steps) : (content.steps_ar || content.steps);
+  const title = content ? (lang === 'en' ? (content.title_en || content.title_ar) : (content.title_ar || content.title)) : '';
+  const description = content ? (lang === 'en' ? (content.description_en || content.description_ar) : (content.description_ar || content.description)) : '';
+  const steps = content ? (lang === 'en' ? (content.steps_en || content.steps) : (content.steps_ar || content.steps)) : null;
 
   return (
     <div className="tool-page-container animate-fade-in">

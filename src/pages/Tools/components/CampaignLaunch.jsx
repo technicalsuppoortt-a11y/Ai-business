@@ -23,7 +23,14 @@ import {
   HelpCircle,
   Activity,
   Layers,
-  ExternalLink
+  ExternalLink,
+  Sliders,
+  RotateCcw,
+  Wrench,
+  Compass,
+  Check,
+  Terminal,
+  Zap
 } from 'lucide-react';
 import './CampaignLaunch.css';
 
@@ -33,7 +40,7 @@ export default function CampaignLaunch({ stepNumber }) {
   const lang = state.language || 'ar';
   const isRtl = lang === 'ar';
   
-  // Inputs
+  // Inputs & Hooks
   const [url, setUrl] = useState(state.websiteUrl || '');
   const [source, setSource] = useState('facebook');
   const [medium, setMedium] = useState('cpc');
@@ -56,18 +63,27 @@ export default function CampaignLaunch({ stepNumber }) {
     { id: 'affiliate', label: 'Affiliate', IconComp: Award }
   ];
 
-  const generatedUrl = url ? `${url}${url.includes('?') ? '&' : '?'}utm_source=${source}&utm_medium=${medium}&utm_campaign=${campaignName}` : '';
+  // Dynamic Real-time Output URL
+  const generatedUrl = url 
+    ? `${url}${url.includes('?') ? '&' : '?'}utm_source=${source}&utm_medium=${medium}&utm_campaign=${campaignName}` 
+    : '';
+
+  const rawBase = url ? url.split('?')[0] : '';
+  const sep = url && url.includes('?') ? '&' : '?';
 
   const handleCopy = () => {
-    if (!generatedUrl) return;
+    if (!generatedUrl) {
+      toast(lang === 'en' ? 'Please enter a landing page URL first!' : 'يرجى أدخال رابط صفحة الهبوط أولاً!', 'warning');
+      return;
+    }
     navigator.clipboard.writeText(generatedUrl);
-    toast(lang === 'en' ? 'Tracking URL copied! Ready to launch. 🚀' : 'تم نسخ رابط التتبع بنجاح! جاهز للإطلاق. 🚀', 'success');
+    toast(lang === 'en' ? 'UTM Link copied to clipboard!' : 'تم نسخ رابط التتبع إلى الحافظة بنجاح!', 'success');
     dispatch({ type: 'COMPLETE_STEP', payload: 'campaign-launch' });
   };
 
   const bottomSections = [
     {
-      icon: <Link size={18} color="#10B981" />,
+      icon: <Link size={18} color="#6366F1" />,
       title: lang === 'en' ? 'What are UTM Links?' : 'ما هي روابط الـ UTM؟',
       items: [
         lang === 'en' ? 'They are small additions placed at the end of your site link to tell you exactly where the customer came from.' : 'هي إضافات صغيرة توضع في نهاية رابط موقعك لتخبرك من أين جاء العميل بالتحديد.',
@@ -89,200 +105,182 @@ export default function CampaignLaunch({ stepNumber }) {
   return (
     <ToolDashboardLayout
       id="campaign-launch"
-      title={lang === 'en' ? 'Campaign Launch & Tracking (UTM)' : 'الإطلاق وبناء التتبع (UTM)'}
-      subtitle={lang === 'en' ? 'Prepare your tracking links before launching the ad so you know exactly which campaign and which ad brings you sales.' : 'جهّز روابطك التتبعية قبل إطلاق الإعلان لتعرف بالضبط أي حملة وأي إعلان يجلب لك المبيعات.'}
+      title={lang === 'en' ? 'UTM Terminal & Live Assembler' : 'تجميع وتتبع روابط الإعلانات (UTM Terminal)'}
+      subtitle={lang === 'en' ? 'Real-time UTM assembly terminal with color-coded syntax and instant QR dispatch.' : 'مبنى وتجميع حي لروابط التتبع مع الترميز المباشر بالألوان ورمز الاستجابة السريعة.'}
       stepNumber={stepNumber}
-      accentColor="#10B981"
+      accentColor="#6366F1"
       timeEstimate="20 - 40"
       bottomSections={bottomSections}
     >
       <div className="cl-container" dir={isRtl ? 'rtl' : 'ltr'}>
-        <div className="cl-main-grid">
-          
-          {/* ═══════════════ INPUTS FORM PANEL ═══════════════ */}
-          <div className="cl-panel">
-            <div className="cl-panel-header">
-              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.12)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Rocket size={20} />
-              </div>
-              <div>
-                <h3 className="cl-panel-title">
-                  <span>{lang === 'en' ? 'UTM Tracking Parameters' : 'معايير روابط التتبع (UTM)'}</span>
-                </h3>
-                <p className="cl-panel-subtitle">
-                  {lang === 'en' ? 'Configure landing page URL, ad platform source, and campaign tag.' : 'أدخل رابط موقعك واختر المنصة واسم الحملة لإنشاء رابط التتبع.'}
-                </p>
-              </div>
+        
+        {/* ═══════════════ 1. TOP CANVAS: LIVE INTERACTIVE URL TERMINAL (ALWAYS VISIBLE) ═══════════════ */}
+        <div className="cl-terminal-container">
+          <div className="cl-terminal-header">
+            <div className="cl-terminal-title">
+              <Terminal size={18} />
+              <span>{lang === 'en' ? 'Live Assembling UTM URL Terminal' : 'مبنى وتجميع رابط التتبع الحي'}</span>
             </div>
-
-            {/* Landing Page URL */}
-            <div className="cl-form-group">
-              <label className="cl-label">
-                <Link size={14} color="#10B981" />
-                <span>{lang === 'en' ? 'Landing Page URL' : 'رابط صفحة الهبوط (URL)'}</span>
-              </label>
-              <div className="cl-input-wrap">
-                <ExternalLink size={16} className="cl-input-icon" />
-                <input 
-                  type="text" 
-                  className="cl-input"
-                  dir="ltr"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://yourstore.com/offer"
-                />
-              </div>
+            <div className="cl-terminal-dots">
+              <span className="cl-terminal-dot" style={{ background: '#EF4444' }} />
+              <span className="cl-terminal-dot" style={{ background: '#F59E0B' }} />
+              <span className="cl-terminal-dot" style={{ background: '#10B981' }} />
             </div>
-
-            {/* Source Platform Grid */}
-            <div className="cl-form-group">
-              <label className="cl-label">
-                <Globe size={14} color="#10B981" />
-                <span>{lang === 'en' ? 'Source (Platform)' : 'المصدر (Source)'}</span>
-              </label>
-
-              <div className="cl-source-grid">
-                {sources.map(s => {
-                  const SourceIcon = s.IconComp;
-                  const isActive = source === s.id;
-                  return (
-                    <button
-                      key={s.id}
-                      onClick={() => setSource(s.id)}
-                      className={`cl-source-btn ${isActive ? 'active' : ''}`}
-                    >
-                      <SourceIcon size={14} color={isActive ? '#10B981' : 'var(--text2, #94A3B8)'} />
-                      <span>{s.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Medium Selector */}
-            <div className="cl-form-group">
-              <label className="cl-label">
-                <MousePointerClick size={14} color="#10B981" />
-                <span>{lang === 'en' ? 'Medium (Traffic Type)' : 'الوسيط (Medium)'}</span>
-              </label>
-
-              <div className="cl-source-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))' }}>
-                {mediums.map(m => {
-                  const MediumIcon = m.IconComp;
-                  const isActive = medium === m.id;
-                  return (
-                    <button
-                      key={m.id}
-                      onClick={() => setMedium(m.id)}
-                      className={`cl-source-btn ${isActive ? 'active' : ''}`}
-                    >
-                      <MediumIcon size={14} color={isActive ? '#10B981' : 'var(--text2, #94A3B8)'} />
-                      <span>{m.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Campaign Name */}
-            <div className="cl-form-group" style={{ marginBottom: 0 }}>
-              <label className="cl-label">
-                <Tag size={14} color="#10B981" />
-                <span>{lang === 'en' ? 'Campaign Name' : 'اسم الحملة (Campaign Name)'}</span>
-              </label>
-              <div className="cl-input-wrap">
-                <Tag size={16} className="cl-input-icon" />
-                <input 
-                  type="text" 
-                  className="cl-input"
-                  dir="ltr"
-                  value={campaignName}
-                  onChange={(e) => setCampaignName(e.target.value.replace(/\s+/g, '_'))}
-                  placeholder="summer_sale_2026"
-                />
-              </div>
-            </div>
-
           </div>
 
-          {/* ═══════════════ OUTPUT URL PANEL ═══════════════ */}
-          <div className="cl-panel">
-            <div className="cl-panel-header">
-              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.12)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CheckCircle2 size={20} />
-              </div>
-              <div>
-                <h3 className="cl-panel-title">
-                  <span>{lang === 'en' ? 'Generated Tracking URL' : 'رابط التتبع الجاهز للإعلانات'}</span>
-                </h3>
-                <p className="cl-panel-subtitle">
-                  {lang === 'en' ? 'Use this full link in your ad creatives to track conversion sources.' : 'استخدم هذا الرابط في إعلاناتك لمتابعة المصدر بالتحليلات.'}
-                </p>
-              </div>
-            </div>
+          {/* Real-time Color Coded Terminal Window */}
+          <div className="cl-terminal-body" dir="ltr">
+            <span className={rawBase ? "cl-token-base" : "cl-token-placeholder"}>
+              {rawBase || 'https://yourstore.com/offer'}
+            </span>
+            <span className="cl-token-sep">{sep}utm_source=</span>
+            <span className={source ? "cl-token-source" : "cl-token-placeholder"}>
+              {source || '[SELECT_SOURCE]'}
+            </span>
+            <span className="cl-token-sep">&utm_medium=</span>
+            <span className={medium ? "cl-token-medium" : "cl-token-placeholder"}>
+              {medium || '[SELECT_MEDIUM]'}
+            </span>
+            <span className="cl-token-sep">&utm_campaign=</span>
+            <span className={campaignName ? "cl-token-campaign" : "cl-token-placeholder"}>
+              {campaignName || '[CAMPAIGN_TAG]'}
+            </span>
+          </div>
 
-            <div style={{ minHeight: '320px', display: 'flex', flexDirection: 'column' }}>
-              {!url ? (
-                <div style={{ margin: 'auto', textAlign: 'center', padding: '40px 20px' }}>
-                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                    <Link size={28} />
-                  </div>
-                  <p style={{ fontSize: '14.5px', fontWeight: '800', color: 'var(--text, #F8FAFC)', margin: '0 0 6px 0' }}>
-                    {lang === 'en' ? 'Enter your site URL to generate the tracking link' : 'أدخل رابط موقعك لإنشاء رابط التتبع'}
-                  </p>
-                  <p style={{ fontSize: '12.5px', color: 'var(--text2, #94A3B8)', margin: 0 }}>
-                    {lang === 'en' ? 'Track exactly which ad creative and platform brings your orders.' : 'تتبع بالضبط الإعلان والمنصة التي تجلب لك المبيعات.'}
-                  </p>
-                </div>
-              ) : (
-                <AnimatePresence mode="wait">
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '20px', margin: 'auto 0' }}
+          {/* Parameter Breakdown Chips */}
+          <div className="cl-parameter-breakdown">
+            <div className="cl-breakdown-chip">
+              <Globe size={13} style={{ color: '#38BDF8' }} />
+              <span>Source: <strong>{source}</strong></span>
+            </div>
+            <div className="cl-breakdown-chip">
+              <MousePointerClick size={13} style={{ color: '#34D399' }} />
+              <span>Medium: <strong>{medium}</strong></span>
+            </div>
+            <div className="cl-breakdown-chip">
+              <Tag size={13} style={{ color: '#C084FC' }} />
+              <span>Campaign: <strong>{campaignName}</strong></span>
+            </div>
+          </div>
+        </div>
+
+        {/* ═══════════════ 2. CENTER WORKSPACE: HORIZONTAL MODULAR ATTRIBUTE DECK ═══════════════ */}
+        <div className="cl-attribute-deck-grid">
+          
+          {/* Tile A: Target Landing Page Base URL */}
+          <div className="cl-module-tile">
+            <h5 className="cl-tile-title">
+              <Link size={15} />
+              <span>{lang === 'en' ? 'Target Landing Page URL' : 'رابط صفحة الهبوط الأساسي'}</span>
+            </h5>
+            <div className="cl-input-wrap">
+              <ExternalLink size={16} className="cl-input-icon" />
+              <input 
+                type="text" 
+                className="cl-input"
+                dir="ltr"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://yourstore.com/offer"
+              />
+            </div>
+          </div>
+
+          {/* Tile B: Campaign Tag Name */}
+          <div className="cl-module-tile">
+            <h5 className="cl-tile-title">
+              <Tag size={15} />
+              <span>{lang === 'en' ? 'Campaign Tag Name' : 'اسم الحملة (Campaign Tag)'}</span>
+            </h5>
+            <div className="cl-input-wrap">
+              <Tag size={16} className="cl-input-icon" />
+              <input 
+                type="text" 
+                className="cl-input"
+                dir="ltr"
+                value={campaignName}
+                onChange={(e) => setCampaignName(e.target.value.replace(/\s+/g, '_'))}
+                placeholder="summer_sale_2026"
+              />
+            </div>
+          </div>
+
+          {/* Tile C: Source Platform Chips */}
+          <div className="cl-module-tile">
+            <h5 className="cl-tile-title">
+              <Globe size={15} />
+              <span>{lang === 'en' ? 'Source Platform' : 'منصة مصدر الحركة (Source)'}</span>
+            </h5>
+            <div className="cl-chip-flow">
+              {sources.map(s => {
+                const SourceIcon = s.IconComp;
+                const isActive = source === s.id;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setSource(s.id)}
+                    className={`cl-chip-btn ${isActive ? 'active' : ''}`}
                   >
-                    {/* Live URL Box */}
-                    <div className="cl-url-box">
-                      <code className="cl-url-code" dir="ltr">
-                        {generatedUrl}
-                      </code>
-                    </div>
-
-                    {/* Breakdown Badges */}
-                    <div className="cl-badge-grid">
-                      <div className="cl-utm-badge">
-                        <span>Source:</span>
-                        <strong>{source}</strong>
-                      </div>
-                      <div className="cl-utm-badge">
-                        <span>Medium:</span>
-                        <strong>{medium}</strong>
-                      </div>
-                      <div className="cl-utm-badge">
-                        <span>Campaign:</span>
-                        <strong>{campaignName}</strong>
-                      </div>
-                    </div>
-
-                    {/* Copy Button */}
-                    <button 
-                      onClick={handleCopy}
-                      className="cl-copy-btn"
-                    >
-                      <Copy size={16} />
-                      <span>{lang === 'en' ? 'Copy Link and Complete Step!' : 'نسخ الرابط وإكمال الخطوة!'}</span>
-                    </button>
-
-                  </motion.div>
-                </AnimatePresence>
-              )}
+                    <SourceIcon size={14} color={isActive ? '#818CF8' : '#94A3B8'} />
+                    <span>{s.label}</span>
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
+          {/* Tile D: Medium Traffic Type Chips */}
+          <div className="cl-module-tile">
+            <h5 className="cl-tile-title">
+              <MousePointerClick size={15} />
+              <span>{lang === 'en' ? 'Medium Presets' : 'نوع الوسيط (Medium)'}</span>
+            </h5>
+            <div className="cl-chip-flow">
+              {mediums.map(m => {
+                const MediumIcon = m.IconComp;
+                const isActive = medium === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setMedium(m.id)}
+                    className={`cl-chip-btn ${isActive ? 'active' : ''}`}
+                  >
+                    <MediumIcon size={14} color={isActive ? '#818CF8' : '#94A3B8'} />
+                    <span>{m.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
         </div>
+
+        {/* ═══════════════ 3. ACTION DOCK: INSTANT DISPATCH BAR ═══════════════ */}
+        <div className="cl-tactical-dock">
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="cl-dock-btn primary"
+          >
+            <Copy size={16} />
+            <span>{lang === 'en' ? '1-Click Copy UTM Link' : 'نسخ فوري لرابط الـ UTM'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              dispatch({ type: 'COMPLETE_STEP', payload: 'campaign-launch' });
+              toast(lang === 'en' ? 'Campaign Tag saved to tracker!' : 'تم حفظ اسم وسجل الحملة بنجاح!', 'success');
+            }}
+            className="cl-dock-btn"
+          >
+            <CheckCircle2 size={16} style={{ color: '#34D399' }} />
+            <span>{lang === 'en' ? 'Save Campaign Tag' : 'حفظ وسجل الحملة'}</span>
+          </button>
+        </div>
+
       </div>
     </ToolDashboardLayout>
   );

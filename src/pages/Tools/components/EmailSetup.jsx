@@ -2809,7 +2809,7 @@ export default function EmailSetup({ stepNumber }) {
                         </div>
 
                         <div className="es-pagination-bar">
-                          <div>
+                          <div className="es-pagination-info">
                             {lang === "en"
                               ? `Showing ${(campaignCurrentPage - 1) * campaignsPerPage + 1} - ${Math.min(campaignCurrentPage * campaignsPerPage, campaigns.length)} of ${campaigns.length} campaigns`
                               : `عرض ${(campaignCurrentPage - 1) * campaignsPerPage + 1} - ${Math.min(campaignCurrentPage * campaignsPerPage, campaigns.length)} من إجمالي ${campaigns.length} حملة`}
@@ -2831,14 +2831,15 @@ export default function EmailSetup({ stepNumber }) {
                               }
                               disabled={campaignCurrentPage === 1}
                               className="es-page-btn"
+                              aria-label="Previous Page"
                             >
-                              <ChevronRight size={14} />
+                              {isRtl ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
                             </button>
 
                             <span
+                              className="es-page-num-text"
                               style={{
                                 fontWeight: "800",
-                                color: "#FFF",
                                 padding: "0 6px",
                               }}
                             >
@@ -2856,8 +2857,9 @@ export default function EmailSetup({ stepNumber }) {
                                 campaignCurrentPage === totalCampaignPages
                               }
                               className="es-page-btn"
+                              aria-label="Next Page"
                             >
-                              <ChevronLeft size={14} />
+                              {isRtl ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
                             </button>
                           </div>
                         </div>

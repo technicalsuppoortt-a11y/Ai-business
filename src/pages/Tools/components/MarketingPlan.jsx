@@ -577,7 +577,7 @@ export default function MarketingPlan({ stepNumber }) {
                               {isActive && <div className="mp-radio-inner" />}
                             </div>
                             <LevelIcon size={18} color={isActive ? '#3B82F6' : '#94A3B8'} />
-                            <span style={{ fontWeight: '800', fontSize: '13.5px', color: isActive ? '#F8FAFC' : '#94A3B8' }}>
+                            <span className="mp-radio-label">
                               {lang === 'en' ? lvl.label_en : lvl.label_ar}
                             </span>
                           </div>
@@ -607,7 +607,7 @@ export default function MarketingPlan({ stepNumber }) {
                               {isActive && <div className="mp-radio-inner" />}
                             </div>
                             <GoalIcon size={18} color={isActive ? '#3B82F6' : '#94A3B8'} />
-                            <span style={{ fontWeight: '800', fontSize: '13.5px', color: isActive ? '#F8FAFC' : '#94A3B8' }}>
+                            <span className="mp-radio-label">
                               {lang === 'en' ? g.label_en : g.label_ar}
                             </span>
                           </div>

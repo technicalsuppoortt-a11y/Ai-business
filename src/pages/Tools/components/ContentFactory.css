@@ -181,51 +181,84 @@
 }
 
 /* Light Mode Overrides for Complete Visual Excellence */
-:root.light-mode .cf-panel {
+:root.light-mode .cf-panel,
+body.light-mode .cf-panel,
+.light-mode .cf-panel {
   background: #FFFFFF;
   border-color: #E2E8F0;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
 }
 
-:root.light-mode .cf-panel-title {
+:root.light-mode .cf-panel-title,
+body.light-mode .cf-panel-title,
+.light-mode .cf-panel-title {
   color: #0F172A;
 }
 
-:root.light-mode .cf-panel-subtitle {
+:root.light-mode .cf-panel-subtitle,
+body.light-mode .cf-panel-subtitle,
+.light-mode .cf-panel-subtitle {
   color: #64748B;
 }
 
-:root.light-mode .cf-option-btn {
-  background: #F8FAFC;
-  border-color: #E2E8F0;
-  color: #475569;
-}
-
-:root.light-mode .cf-option-btn:hover {
-  background: #F1F5F9;
-  color: #0F172A;
-}
-
-:root.light-mode .cf-option-btn.active {
-  background: rgba(20, 184, 166, 0.08);
-  border-color: #14B8A6;
+:root.light-mode .cf-section-label,
+body.light-mode .cf-section-label,
+.light-mode .cf-section-label {
   color: #0D9488;
 }
 
-:root.light-mode .cf-post-card {
+:root.light-mode .cf-option-btn,
+body.light-mode .cf-option-btn,
+.light-mode .cf-option-btn {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  color: #1E293B;
+}
+
+:root.light-mode .cf-option-btn:hover,
+body.light-mode .cf-option-btn:hover,
+.light-mode .cf-option-btn:hover {
+  background: #F1F5F9;
+  border-color: #14B8A6;
+  color: #0F172A;
+}
+
+:root.light-mode .cf-option-btn.active,
+body.light-mode .cf-option-btn.active,
+.light-mode .cf-option-btn.active {
+  background: #CCFBF1;
+  border-color: #14B8A6;
+  color: #0F766E;
+  box-shadow: 0 4px 16px rgba(20, 184, 166, 0.2);
+}
+
+:root.light-mode .cf-post-card,
+body.light-mode .cf-post-card,
+.light-mode .cf-post-card {
   background: #F8FAFC;
   border-color: #E2E8F0;
 }
 
-:root.light-mode .cf-post-content {
+:root.light-mode .cf-post-title,
+body.light-mode .cf-post-title,
+.light-mode .cf-post-title {
+  color: #0D9488;
+}
+
+:root.light-mode .cf-post-content,
+body.light-mode .cf-post-content,
+.light-mode .cf-post-content {
   background: #FFFFFF;
   border-color: #E2E8F0;
   color: #0F172A;
 }
 
-:root.light-mode .cf-hooks-box {
-  background: rgba(244, 63, 94, 0.04);
-  border-color: rgba(244, 63, 94, 0.2);
+:root.light-mode .cf-hooks-box,
+body.light-mode .cf-hooks-box,
+.light-mode .cf-hooks-box {
+  background: #FFF1F2;
+  border-color: #FECACA;
+  color: #991B1B;
 }
 
 /* RESPONSIVE MEDIA QUERIES */

@@ -1,29 +1,278 @@
 /* ==========================================================================
-   Campaign Launch & UTM Studio Deck — Live URL Terminal & Interactive Assembler
-   Full Light Mode & Dark Mode Support via CSS variables & theme tokens
+   Campaign Launch & UTM Live Pipeline Builder Layout
+   Glassmorphic Pipeline Nodes, Animated Streaming Pipes, Telemetry Gauges
+   Full Theme Support (Dark Mode & Light Mode)
    ========================================================================== */
 
 .cl-container {
+  --pipeline-bg: #0b0f17;
+  --node-bg: rgba(22, 27, 38, 0.75);
+  --node-border: rgba(99, 102, 241, 0.2);
+  --node-border-active: #6366f1;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --pipe-color: rgba(99, 102, 241, 0.3);
+  --pipe-active: #3b82f6;
+  --input-bg: #0f172a;
+
   display: flex;
   flex-direction: column;
   gap: 24px;
   width: 100%;
-  max-width: 1100px;
+  max-width: 1150px;
   margin: 0 auto;
 }
 
-/* ═══════════════ 1. TOP CANVAS: LIVE INTERACTIVE URL TERMINAL ═══════════════ */
-.cl-terminal-container {
-  background: radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.12) 0%, rgba(8, 12, 20, 0.95) 100%), rgba(8, 12, 20, 0.92);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(99, 102, 241, 0.35);
-  border-radius: 26px;
-  padding: 24px 28px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55), 0 0 24px rgba(99, 102, 241, 0.18);
+:root.light-mode .cl-container,
+body.light-mode .cl-container,
+.light-mode .cl-container,
+[data-theme="light"] .cl-container,
+.light .cl-container {
+  --pipeline-bg: #f8fafc;
+  --node-bg: #ffffff;
+  --node-border: #e2e8f0;
+  --node-border-active: #4f46e5;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --pipe-color: #cbd5e1;
+  --pipe-active: #4f46e5;
+  --input-bg: #f1f5f9;
+}
+
+/* ═══════════════ PIPELINE CONTAINER & GRID STRUCTURE ═══════════════ */
+.cl-pipeline-flow-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
+  width: 100%;
+}
+
+.cl-pipeline-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  align-items: stretch;
+  position: relative;
+}
+
+/* ═══════════════ PIPELINE NODE CARDS (STATIONS 1, 2, 3) ═══════════════ */
+.cl-node-card {
+  background: var(--node-bg);
+  border: 1px solid var(--node-border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+}
+
+.cl-node-card:hover {
+  border-color: var(--node-border-active);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.12);
+}
+
+.cl-node-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--node-border);
+  margin-bottom: 12px;
+}
+
+.cl-station-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cl-badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3B82F6;
+  box-shadow: 0 0 8px #3B82F6;
+}
+
+.cl-badge-dot.active {
+  background: #10B981;
+  box-shadow: 0 0 8px #10B981;
+}
+
+.cl-badge-dot.purple {
+  background: #C084FC;
+  box-shadow: 0 0 8px #C084FC;
+}
+
+.cl-node-icon {
+  color: var(--node-border-active);
+}
+
+.cl-node-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.cl-tile-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--node-border-active);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.cl-node-subnote {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ═══════════════ INPUT FIELDS & WRAPPERS ═══════════════ */
+.cl-input-wrap {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.cl-input-icon {
+  position: absolute;
+  inset-inline-start: 14px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.cl-input {
+  width: 100%;
+  padding: 12px 14px;
+  padding-inline-start: 42px;
+  border-radius: 12px;
+  background: var(--input-bg);
+  border: 1px solid var(--node-border);
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.25s ease;
+  box-sizing: border-box;
+}
+
+.cl-input:focus {
+  border-color: var(--node-border-active);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+/* ═══════════════ STATION 2 DUAL BRANCH CHANNEL ═══════════════ */
+.cl-dual-branch-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cl-branch-channel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cl-branch-divider {
+  height: 1px;
+  background: var(--node-border);
+  width: 100%;
+  margin: 2px 0;
+}
+
+/* Horizontal Source & Medium Chips Grid */
+.cl-chip-flow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cl-chip-flow.scrollable {
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.cl-chip-flow.scrollable::-webkit-scrollbar {
+  display: none;
+}
+
+.cl-chip-btn {
+  background: var(--input-bg);
+  border: 1px solid var(--node-border);
+  color: var(--text-main);
+  border-radius: 8px;
+  padding: 0.5rem 0.85rem;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cl-chip-btn:hover {
+  border-color: var(--node-border-active);
+  transform: translateY(-2px);
+}
+
+.cl-chip-btn.active {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: var(--node-border-active);
+  color: var(--node-border-active);
+  font-weight: 800;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.18);
+}
+
+/* ═══════════════ ANIMATED CONNECTOR PIPES ═══════════════ */
+.cl-connector-pipe {
+  position: absolute;
+  pointer-events: none;
+}
+
+.cl-pipe-glow-line {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--pipe-color), var(--pipe-active), var(--pipe-color));
+  background-size: 200% 200%;
+}
+
+/* ═══════════════ STATION 4: THE FINAL UTM TERMINAL VAULT ═══════════════ */
+.cl-terminal-container {
+  background: var(--node-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--node-border);
+  border-radius: 20px;
+  padding: 24px 28px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.08), 0 0 24px rgba(99, 102, 241, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
 .cl-terminal-header {
@@ -31,13 +280,13 @@
   align-items: center;
   justify-content: space-between;
   padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--node-border);
 }
 
 .cl-terminal-title {
   font-size: 13.5px;
   font-weight: 900;
-  color: #818CF8;
+  color: var(--node-border-active);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   display: flex;
@@ -63,22 +312,22 @@
   line-height: 1.8;
   word-break: break-all;
   white-space: pre-wrap;
-  background: rgba(13, 18, 32, 0.85);
+  background: var(--input-bg);
   padding: 18px 20px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+  border-radius: 14px;
+  border: 1px solid var(--node-border);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 /* Real-Time Color Coded Tokens */
-.cl-token-base { color: #F8FAFC; font-weight: 700; }
-.cl-token-sep { color: #94A3B8; }
-.cl-token-source { color: #38BDF8; font-weight: 900; text-shadow: 0 0 10px rgba(56, 189, 248, 0.3); }
-.cl-token-medium { color: #34D399; font-weight: 900; text-shadow: 0 0 10px rgba(52, 211, 153, 0.3); }
-.cl-token-campaign { color: #C084FC; font-weight: 900; text-shadow: 0 0 10px rgba(192, 132, 252, 0.3); }
-.cl-token-placeholder { color: rgba(148, 163, 184, 0.45); font-style: italic; }
+.cl-token-base { color: var(--text-main); font-weight: 700; }
+.cl-token-sep { color: var(--text-muted); }
+.cl-token-source { color: #38BDF8; font-weight: 900; }
+.cl-token-medium { color: #34D399; font-weight: 900; }
+.cl-token-campaign { color: #C084FC; font-weight: 900; }
+.cl-token-placeholder { color: var(--text-muted); opacity: 0.6; font-style: italic; }
 
-/* Parameter Breakdown Badges */
+/* Parameter Breakdown Telemetry Gauges */
 .cl-parameter-breakdown {
   display: flex;
   align-items: center;
@@ -90,145 +339,42 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 14px;
+  padding: 8px 16px;
   border-radius: 12px;
-  background: rgba(15, 23, 42, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--input-bg);
+  border: 1px solid var(--node-border);
   font-size: 12px;
   font-weight: 800;
-  color: #CBD5E1;
+  color: var(--text-main);
+}
+
+.cl-breakdown-chip.telemetry-source {
+  border-inline-start: 3px solid #38BDF8;
+}
+
+.cl-breakdown-chip.telemetry-medium {
+  border-inline-start: 3px solid #34D399;
+}
+
+.cl-breakdown-chip.telemetry-campaign {
+  border-inline-start: 3px solid #C084FC;
 }
 
 .cl-breakdown-chip strong {
-  color: #818CF8;
+  color: var(--node-border-active);
 }
 
-/* ═══════════════ 2. CENTER WORKSPACE: HORIZONTAL MODULAR ATTRIBUTE DECK ═══════════════ */
-.cl-attribute-deck-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  width: 100%;
-}
-
-.cl-module-tile {
-  background: rgba(13, 18, 32, 0.88);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 22px;
-  padding: 22px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
-  transition: all 0.25s ease;
-}
-
-.cl-module-tile:hover {
-  border-color: rgba(99, 102, 241, 0.35);
-}
-
-.cl-tile-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12.5px;
-  font-weight: 900;
-  color: #818CF8;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0;
-}
-
-.cl-input-wrap {
-  position: relative;
-  width: 100%;
-  display: flex;
-  align-items: center;
-}
-
-.cl-input-icon {
-  position: absolute;
-  inset-inline-start: 14px;
-  color: #94A3B8;
-  pointer-events: none;
-}
-
-.cl-input {
-  width: 100%;
-  padding: 13px 16px;
-  padding-inline-start: 42px;
-  border-radius: 14px;
-  background: rgba(8, 12, 20, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #F8FAFC;
-  font-size: 13.5px;
-  font-weight: 700;
-  font-family: inherit;
-  outline: none;
-  transition: all 0.25s ease;
-  box-sizing: border-box;
-}
-
-.cl-input:focus {
-  border-color: #6366F1;
-  background: rgba(8, 12, 20, 0.9);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-}
-
-/* Horizontal Source & Medium Chips Grid */
-.cl-chip-flow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.cl-chip-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 10px 14px;
-  border-radius: 13px;
-  background: rgba(8, 12, 20, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #94A3B8;
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  text-transform: capitalize;
-}
-
-.cl-chip-btn:hover {
-  background: rgba(99, 102, 241, 0.08);
-  color: #F8FAFC;
-  border-color: rgba(99, 102, 241, 0.35);
-  transform: translateY(-2px);
-}
-
-.cl-chip-btn.active {
-  background: radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.22) 0%, rgba(13, 18, 32, 0.95) 100%);
-  border-color: #6366F1;
-  color: #F8FAFC;
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.25);
-}
-
-/* ═══════════════ 3. ACTION DOCK: INSTANT DISPATCH BAR ═══════════════ */
+/* ═══════════════ TACTICAL ACTION DOCK VALVES ═══════════════ */
 .cl-tactical-dock {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  padding: 14px 24px;
-  border-radius: 22px;
-  background: rgba(13, 18, 32, 0.95);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5), 0 0 20px rgba(99, 102, 241, 0.15);
-  margin-top: 8px;
+  padding: 14px 20px;
+  border-radius: 16px;
+  background: var(--input-bg);
+  border: 1px solid var(--node-border);
+  margin-top: 4px;
   flex-wrap: wrap;
 }
 
@@ -237,67 +383,37 @@
   align-items: center;
   gap: 8px;
   padding: 11px 22px;
-  border-radius: 14px;
+  border-radius: 12px;
   font-size: 13px;
   font-weight: 800;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #94A3B8;
+  background: var(--node-bg);
+  border: 1px solid var(--node-border);
+  color: var(--text-main);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .cl-dock-btn:hover {
-  background: rgba(99, 102, 241, 0.18);
-  border-color: #6366F1;
-  color: #818CF8;
+  border-color: var(--node-border-active);
+  color: var(--node-border-active);
   transform: translateY(-2px);
 }
 
 .cl-dock-btn.primary {
   background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
   border-color: #6366F1;
-  color: #FFFFFF;
+  color: #FFFFFF !important;
   box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
 }
 
 .cl-dock-btn.primary:hover {
   box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+  color: #FFFFFF !important;
 }
 
-/* Light Mode Overrides */
-:root.light-mode .cl-terminal-container,
-:root.light-mode .cl-module-tile {
-  background: #FFFFFF;
-  border-color: #E2E8F0;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
-}
-
-:root.light-mode .cl-terminal-body {
-  background: #F8FAFC;
-  border-color: #E2E8F0;
-}
-
-:root.light-mode .cl-token-base {
-  color: #0F172A;
-}
-
-:root.light-mode .cl-input,
-:root.light-mode .cl-chip-btn {
-  background: #F8FAFC;
-  border-color: #E2E8F0;
-  color: #475569;
-}
-
-:root.light-mode .cl-tactical-dock {
-  background: #FFFFFF;
-  border-color: #CBD5E1;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-}
-
-/* Responsive Media Queries */
+/* ═══════════════ RESPONSIVE MEDIA QUERIES ═══════════════ */
 @media (max-width: 840px) {
-  .cl-attribute-deck-grid {
+  .cl-pipeline-grid {
     grid-template-columns: 1fr;
   }
 
@@ -309,5 +425,9 @@
   .cl-dock-btn {
     width: 100%;
     justify-content: center;
+  }
+
+  .cl-terminal-container {
+    padding: 18px 16px;
   }
 }

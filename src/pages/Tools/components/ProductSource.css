@@ -874,3 +874,381 @@
   background: rgba(99, 102, 241, 0.08);
 }
 
+/* ═══════════════ PILL SELECTOR & COMPLETED PRODUCTS STYLES ═══════════════ */
+.ps-select-pill-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.ps-select-pill-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  padding: 8px 14px;
+  border-radius: 14px;
+  color: var(--text, #F8FAFC);
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ps-pill-val-text {
+  color: #F8FAFC;
+}
+
+.ps-select-dropdown-card {
+  position: absolute;
+  top: calc(100% + 6px);
+  z-index: 999;
+  min-width: 220px;
+  background: #0F172A;
+  border-radius: 16px;
+  padding: 6px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(99, 102, 241, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ps-select-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: transparent;
+  color: #94A3B8;
+  border: none;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ps-select-dropdown-item.selected {
+  color: #FFFFFF;
+  font-weight: 900;
+}
+
+.ps-completed-product-card {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ps-completed-product-title {
+  color: #F8FAFC;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ps-restore-btn {
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 6px;
+}
+
+.ps-restore-btn:hover {
+  color: #34D399;
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.ps-ams-wrap {
+  width: auto;
+}
+
+/* ═══════════════ MOBILE & TABLET RESPONSIVENESS ═══════════════ */
+@media (max-width: 1024px) {
+  .ps-kanban-board,
+  .ps-kanban-board-fluid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ps-spatial-canvas-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ps-ideas-spatial-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .ps-spatial-command-bar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+    border-radius: 18px;
+    gap: 12px;
+  }
+
+  .ps-ams-wrap {
+    width: 100%;
+  }
+
+  .ps-ams-wrap .ams-tabs-container {
+    width: 100%;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ps-select-pill-wrapper {
+    width: 100%;
+  }
+
+  .ps-select-pill-btn {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .ps-select-dropdown-card {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .ps-search-wrap {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .ps-search-wrap > div {
+    width: 100% !important;
+  }
+
+  .ps-pink-glow-btn {
+    width: 100%;
+  }
+
+  .ps-kanban-board,
+  .ps-kanban-board-fluid {
+    grid-template-columns: 1fr;
+  }
+
+  .ps-ideas-spatial-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ps-main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ps-spatial-hud-dock {
+    position: relative;
+    top: 0;
+    padding: 18px;
+  }
+
+  .ps-modal-card {
+    padding: 20px;
+    border-radius: 20px;
+  }
+}
+
+/* ═══════════════ LIGHT MODE SUPPORT ═══════════════ */
+:root.light-mode .ps-spatial-container,
+body.light-mode .ps-spatial-container,
+.light-mode .ps-spatial-container {
+  background: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.04) 0%, rgba(244, 63, 94, 0.03) 40%, transparent 80%);
+}
+
+:root.light-mode .ps-spatial-command-bar,
+body.light-mode .ps-spatial-command-bar,
+.light-mode .ps-spatial-command-bar {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
+  color: #0F172A;
+}
+
+:root.light-mode .ps-select-pill-btn,
+body.light-mode .ps-select-pill-btn,
+.light-mode .ps-select-pill-btn {
+  background: #F8FAFC !important;
+  border-color: #CBD5E1 !important;
+  color: #0F172A !important;
+}
+
+:root.light-mode .ps-pill-val-text,
+body.light-mode .ps-pill-val-text,
+.light-mode .ps-pill-val-text {
+  color: #0F172A !important;
+}
+
+:root.light-mode .ps-select-dropdown-card,
+body.light-mode .ps-select-dropdown-card,
+.light-mode .ps-select-dropdown-card {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12) !important;
+}
+
+:root.light-mode .ps-select-dropdown-item,
+body.light-mode .ps-select-dropdown-item,
+.light-mode .ps-select-dropdown-item {
+  color: #475569 !important;
+}
+
+:root.light-mode .ps-select-dropdown-item.selected,
+body.light-mode .ps-select-dropdown-item.selected,
+.light-mode .ps-select-dropdown-item.selected {
+  color: #0F172A !important;
+  font-weight: 900 !important;
+}
+
+:root.light-mode .ps-search-input,
+body.light-mode .ps-search-input,
+.light-mode .ps-search-input {
+  background: #F8FAFC !important;
+  border-color: #CBD5E1 !important;
+  color: #0F172A !important;
+}
+
+:root.light-mode .ps-search-input::placeholder,
+body.light-mode .ps-search-input::placeholder,
+.light-mode .ps-search-input::placeholder {
+  color: #64748B !important;
+  opacity: 1 !important;
+}
+
+:root.light-mode .ps-completed-product-card,
+body.light-mode .ps-completed-product-card,
+.light-mode .ps-completed-product-card {
+  background: #ECFDF5 !important;
+  border-color: #A7F3D0 !important;
+}
+
+:root.light-mode .ps-completed-product-title,
+body.light-mode .ps-completed-product-title,
+.light-mode .ps-completed-product-title {
+  color: #065F46 !important;
+}
+
+:root.light-mode .ps-restore-btn,
+body.light-mode .ps-restore-btn,
+.light-mode .ps-restore-btn {
+  color: #047857 !important;
+}
+
+:root.light-mode .ps-kanban-board,
+body.light-mode .ps-kanban-board,
+.light-mode .ps-kanban-board,
+:root.light-mode .ps-kanban-column,
+body.light-mode .ps-kanban-column,
+.light-mode .ps-kanban-column,
+:root.light-mode .ps-fluid-column,
+body.light-mode .ps-fluid-column,
+.light-mode .ps-fluid-column,
+:root.light-mode .ps-spatial-hud-dock,
+body.light-mode .ps-spatial-hud-dock,
+.light-mode .ps-spatial-hud-dock,
+:root.light-mode .ps-saas-card,
+body.light-mode .ps-saas-card,
+.light-mode .ps-saas-card,
+:root.light-mode .ps-filter-toolbar,
+body.light-mode .ps-filter-toolbar,
+.light-mode .ps-filter-toolbar {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #0F172A;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+:root.light-mode .ps-panel,
+body.light-mode .ps-panel,
+.light-mode .ps-panel {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+
+:root.light-mode .ps-panel-title,
+body.light-mode .ps-panel-title,
+.light-mode .ps-panel-title,
+:root.light-mode .ps-card-title,
+body.light-mode .ps-card-title,
+.light-mode .ps-card-title,
+:root.light-mode .ps-vtab-title,
+body.light-mode .ps-vtab-title,
+.light-mode .ps-vtab-title,
+:root.light-mode .ps-column-title,
+body.light-mode .ps-column-title,
+.light-mode .ps-column-title,
+:root.light-mode .ps-saas-card *,
+body.light-mode .ps-saas-card *,
+.light-mode .ps-saas-card *,
+:root.light-mode .ps-product-card *,
+body.light-mode .ps-product-card *,
+.light-mode .ps-product-card *,
+:root.light-mode .ps-vtab-card *,
+body.light-mode .ps-vtab-card *,
+.light-mode .ps-vtab-card *,
+:root.light-mode .ps-modal-card *,
+body.light-mode .ps-modal-card *,
+.light-mode .ps-modal-card * {
+  color: #0F172A;
+}
+
+:root.light-mode .ps-panel-subtitle,
+body.light-mode .ps-panel-subtitle,
+.light-mode .ps-panel-subtitle,
+:root.light-mode .ps-vtab-sub,
+body.light-mode .ps-vtab-sub,
+.light-mode .ps-vtab-sub,
+:root.light-mode .ps-empty-state,
+body.light-mode .ps-empty-state,
+.light-mode .ps-empty-state {
+  color: #64748B !important;
+}
+
+:root.light-mode .ps-option-btn,
+body.light-mode .ps-option-btn,
+.light-mode .ps-option-btn,
+:root.light-mode .ps-quick-link-item,
+body.light-mode .ps-quick-link-item,
+.light-mode .ps-quick-link-item,
+:root.light-mode .ps-product-card,
+body.light-mode .ps-product-card,
+.light-mode .ps-product-card,
+:root.light-mode .ps-pill-btn,
+body.light-mode .ps-pill-btn,
+.light-mode .ps-pill-btn,
+:root.light-mode .ps-tool-card,
+body.light-mode .ps-tool-card,
+.light-mode .ps-tool-card {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  color: #1E293B;
+}
+
+:root.light-mode .ps-option-btn:hover,
+body.light-mode .ps-option-btn:hover,
+.light-mode .ps-option-btn:hover,
+:root.light-mode .ps-product-card:hover,
+body.light-mode .ps-product-card:hover,
+.light-mode .ps-product-card:hover {
+  background: #FFFFFF;
+  border-color: #F43F5E;
+  box-shadow: 0 8px 24px rgba(244, 63, 94, 0.12);
+}
+
+:root.light-mode .ps-option-btn.active,
+body.light-mode .ps-option-btn.active,
+.light-mode .ps-option-btn.active {
+  background: #FFF1F2;
+  border-color: #F43F5E;
+  color: #E11D48;
+}
+

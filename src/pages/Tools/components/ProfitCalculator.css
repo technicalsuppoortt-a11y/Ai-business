@@ -237,63 +237,89 @@
 }
 
 /* Light Mode Overrides for Complete Visual Excellence */
-:root.light-mode .pc-panel {
+:root.light-mode .pc-panel,
+body.light-mode .pc-panel,
+.light-mode .pc-panel {
   background: #FFFFFF;
   border-color: #E2E8F0;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
 }
 
-:root.light-mode .pc-panel-title-bar {
+:root.light-mode .pc-panel-title-bar,
+body.light-mode .pc-panel-title-bar,
+.light-mode .pc-panel-title-bar {
   border-color: #E2E8F0;
 }
 
-:root.light-mode .pc-label {
+:root.light-mode .pc-label,
+body.light-mode .pc-label,
+.light-mode .pc-label {
   color: #0F172A;
 }
 
-:root.light-mode .pc-input {
+:root.light-mode .pc-input,
+body.light-mode .pc-input,
+.light-mode .pc-input {
   background: #F8FAFC;
-  border-color: #E2E8F0;
+  border-color: #CBD5E1;
   color: #0F172A;
 }
 
-:root.light-mode .pc-input:focus {
+:root.light-mode .pc-input:focus,
+body.light-mode .pc-input:focus,
+.light-mode .pc-input:focus {
   background: #FFFFFF;
   border-color: #10B981;
 }
 
-:root.light-mode .pc-input-symbol {
+:root.light-mode .pc-input-symbol,
+body.light-mode .pc-input-symbol,
+.light-mode .pc-input-symbol {
   color: #64748B;
 }
 
-:root.light-mode .pc-metric-card.secondary {
+:root.light-mode .pc-metric-card.secondary,
+body.light-mode .pc-metric-card.secondary,
+.light-mode .pc-metric-card.secondary {
   background: #FFFFFF;
   border-color: #E2E8F0;
 }
 
-:root.light-mode .pc-metric-value {
+:root.light-mode .pc-metric-value,
+body.light-mode .pc-metric-value,
+.light-mode .pc-metric-value {
   color: #0F172A;
 }
 
-:root.light-mode .pc-funnel-container {
+:root.light-mode .pc-funnel-container,
+body.light-mode .pc-funnel-container,
+.light-mode .pc-funnel-container {
   background: #FFFFFF;
   border-color: #E2E8F0;
 }
 
-:root.light-mode .pc-funnel-row {
+:root.light-mode .pc-funnel-row,
+body.light-mode .pc-funnel-row,
+.light-mode .pc-funnel-row {
   background: #F8FAFC;
   border-color: #E2E8F0;
 }
 
-:root.light-mode .pc-funnel-label {
+:root.light-mode .pc-funnel-label,
+body.light-mode .pc-funnel-label,
+.light-mode .pc-funnel-label {
   color: #0F172A;
 }
 
-:root.light-mode .pc-funnel-val {
+:root.light-mode .pc-funnel-val,
+body.light-mode .pc-funnel-val,
+.light-mode .pc-funnel-val {
   color: #0F172A;
 }
 
-:root.light-mode .pc-insights-panel {
+:root.light-mode .pc-insights-panel,
+body.light-mode .pc-insights-panel,
+.light-mode .pc-insights-panel {
   background: rgba(16, 185, 129, 0.04);
   border-color: rgba(16, 185, 129, 0.25);
 }

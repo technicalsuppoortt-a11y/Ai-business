@@ -20,6 +20,7 @@ import { useApp } from '../../../context/AppContext';
 import { getNiches, seedNiches } from '../../../services/nicheService';
 import { callOpenAiApi } from '../../../services/liveAiService';
 import ToolDashboardLayout from './ToolDashboardLayout';
+import './AnalysisIdentity.css';
 import {
   Globe,
   TrendingUp,
@@ -309,19 +310,19 @@ function TargetMarketDropdown({ value, onChange, options, lang }) {
       <button
         type="button"
         onClick={() => setIsOpen(o => !o)}
+        className="ns-dropdown-trigger"
         style={{
           width: '100%', minHeight: '48px',
-          background: 'linear-gradient(135deg, rgba(15,23,42,0.9), rgba(30,41,59,0.85))',
-          border: '1px solid rgba(99,102,241,0.4)', borderRadius: '14px',
-          color: '#fff', padding: '0 16px', display: 'flex',
+          borderRadius: '14px',
+          padding: '0 16px', display: 'flex',
           alignItems: 'center', justifyContent: 'space-between',
-          cursor: 'pointer', backdropFilter: 'blur(10px)', transition: 'all 0.2s ease',
+          cursor: 'pointer', transition: 'all 0.2s ease',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '20px' }}>{selectedOption.flag}</span>
           <div style={{ textAlign: lang === 'ar' ? 'right' : 'left' }}>
-            <div style={{ fontSize: '13px', fontWeight: '800' }}>
+            <div className="ns-heading-title" style={{ fontSize: '13px', fontWeight: '800' }}>
               {lang === 'en' ? selectedOption.name_en : selectedOption.name_ar}
             </div>
             {selectedOption.region && (
@@ -344,11 +345,11 @@ function TargetMarketDropdown({ value, onChange, options, lang }) {
           <motion.div
             initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.15 }}
+            className="ns-dropdown-menu"
             style={{
               position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0,
-              zIndex: 9999, background: '#0F172A',
-              border: '1px solid rgba(99,102,241,0.4)', borderRadius: '14px',
-              boxShadow: '0 16px 48px rgba(0,0,0,0.75)', padding: '10px',
+              zIndex: 9999, borderRadius: '14px',
+              padding: '10px',
             }}
           >
             <div style={{ position: 'relative', marginBottom: '8px' }}>
@@ -357,16 +358,16 @@ function TargetMarketDropdown({ value, onChange, options, lang }) {
                 type="text" placeholder={lang === 'en' ? 'Search country…' : 'ابحث عن دولة…'}
                 value={searchQuery} onChange={e => setSearch(e.target.value)}
                 onClick={e => e.stopPropagation()}
+                className="ns-dropdown-search-input"
                 style={{
-                  width: '100%', background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px',
-                  padding: '6px 12px 6px 32px', color: '#fff', fontSize: '12px', outline: 'none',
+                  width: '100%', borderRadius: '8px',
+                  padding: '6px 12px 6px 32px', fontSize: '12px', outline: 'none',
                 }}
               />
             </div>
             <div style={{ maxHeight: '220px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '3px' }}>
               {filtered.length === 0 ? (
-                <div style={{ fontSize: '11px', color: '#64748B', textAlign: 'center', padding: '12px' }}>
+                <div className="ns-subtext" style={{ fontSize: '11px', textAlign: 'center', padding: '12px' }}>
                   {lang === 'en' ? 'No market found' : 'لم يتم العثور على سوق'}
                 </div>
               ) : filtered.map(opt => {
@@ -374,17 +375,16 @@ function TargetMarketDropdown({ value, onChange, options, lang }) {
                 return (
                   <div key={opt.id}
                     onClick={() => { onChange(opt.id); setIsOpen(false); }}
+                    className={`ns-dropdown-option ${sel ? 'selected' : ''}`}
                     style={{
                       padding: '8px 12px', borderRadius: '8px', cursor: 'pointer',
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      background: sel ? 'rgba(99,102,241,0.2)' : 'transparent',
-                      border: `1px solid ${sel ? 'rgba(99,102,241,0.4)' : 'transparent'}`,
                       transition: 'all 0.15s ease',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <span style={{ fontSize: '18px' }}>{opt.flag}</span>
-                      <span style={{ fontSize: '12px', fontWeight: sel ? '800' : '600', color: sel ? '#fff' : '#CBD5E1' }}>
+                      <span className="ns-dropdown-option-title" style={{ fontSize: '12px', fontWeight: sel ? '800' : '600' }}>
                         {lang === 'en' ? opt.name_en : opt.name_ar}
                       </span>
                     </div>
@@ -444,8 +444,8 @@ function MetricCard({ icon, label, value, accent, badgeType, loading }) {
   const bStyle = getBadgeStyle(badgeType);
 
   return (
-    <div style={{ background: 'rgba(0,0,0,0.3)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.08)' }}>
-      <div style={{ fontSize: '11px', fontWeight: '700', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+    <div className="ns-subcard" style={{ padding: '16px', borderRadius: '14px' }}>
+      <div className="ns-subtext" style={{ fontSize: '11px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
         {icon}
         <span>{label}</span>
       </div>
@@ -463,7 +463,7 @@ function MetricCard({ icon, label, value, accent, badgeType, loading }) {
           }}>
             {badgeType} Ocean
           </span>
-          <div style={{ fontSize: '13px', fontWeight: '700', color: '#E2E8F0', lineHeight: '1.4' }}>
+          <div className="ns-heading-title" style={{ fontSize: '13px', fontWeight: '700', lineHeight: '1.4' }}>
             {value}
           </div>
         </div>
@@ -506,14 +506,14 @@ function OpportunitiesTab({ data, loading, error, onRetry, lang }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
       {strengths.length > 0 && (
-        <div style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '12px', padding: '16px' }}>
+        <div className="ns-opp-card-green" style={{ borderRadius: '12px', padding: '16px' }}>
           <div style={{ fontSize: '13px', fontWeight: '800', color: '#10B981', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <CheckCircle2 size={15} />
             <span>{lang === 'en' ? 'Strengths & Market Drivers' : 'نقاط القوة والمزايا التنافسية'}</span>
           </div>
           <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {strengths.map((item, i) => (
-              <li key={i} style={{ fontSize: '12px', color: '#E2E8F0', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+              <li key={i} className="ns-list-item" style={{ fontSize: '12px', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                 <ShieldCheck size={13} color="#10B981" style={{ marginTop: 2, flexShrink: 0 }} />
                 <span>{item}</span>
               </li>
@@ -523,14 +523,14 @@ function OpportunitiesTab({ data, loading, error, onRetry, lang }) {
       )}
 
       {gaps.length > 0 && (
-        <div style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '12px', padding: '16px' }}>
+        <div className="ns-opp-card-indigo" style={{ borderRadius: '12px', padding: '16px' }}>
           <div style={{ fontSize: '13px', fontWeight: '800', color: '#818CF8', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <Target size={15} />
             <span>{lang === 'en' ? 'Market Gaps & Unserved Needs' : 'الفجوات والفرص غير المُستغَلة'}</span>
           </div>
           <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {gaps.map((item, i) => (
-              <li key={i} style={{ fontSize: '12px', color: '#E2E8F0', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+              <li key={i} className="ns-list-item" style={{ fontSize: '12px', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                 <Target size={13} color="#818CF8" style={{ marginTop: 2, flexShrink: 0 }} />
                 <span>{item}</span>
               </li>
@@ -571,7 +571,7 @@ function TopLeadersTab({ data, loading, error, onRetry, lang }) {
     <div style={{ overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
         <thead>
-          <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94A3B8', textAlign: lang === 'ar' ? 'right' : 'left' }}>
+          <tr className="ns-table-head-row" style={{ textAlign: lang === 'ar' ? 'right' : 'left' }}>
             <th style={{ padding: '10px', width: '32px' }}>#</th>
             <th style={{ padding: '10px' }}>{lang === 'en' ? 'Company / Brand' : 'الشركة / العلامة التجارية'}</th>
             <th style={{ padding: '10px' }}>{lang === 'en' ? 'Core Differentiator & Strategy' : 'استراتيجية التميز'}</th>
@@ -580,10 +580,10 @@ function TopLeadersTab({ data, loading, error, onRetry, lang }) {
         </thead>
         <tbody>
           {leaders.map((leader, idx) => (
-            <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-              <td style={{ padding: '10px', color: '#64748B', fontWeight: '800' }}>{idx + 1}</td>
-              <td style={{ padding: '10px', fontWeight: '800', color: '#fff' }}>{leader.name}</td>
-              <td style={{ padding: '10px', color: '#CBD5E1', lineHeight: '1.5' }}>{leader.strategy}</td>
+            <tr key={idx} className="ns-table-row">
+              <td className="ns-subtext" style={{ padding: '10px', fontWeight: '800' }}>{idx + 1}</td>
+              <td className="ns-heading-title" style={{ padding: '10px', fontWeight: '800' }}>{leader.name}</td>
+              <td className="ns-list-item" style={{ padding: '10px', lineHeight: '1.5' }}>{leader.strategy}</td>
               <td style={{ padding: '10px', textAlign: 'center' }}>
                 {leader.url ? (
                   <a href={leader.url} target="_blank" rel="noopener noreferrer"
@@ -620,35 +620,35 @@ function IcpCard({ icp, loading, lang, themeColor }) {
   const painPoints = Array.isArray(icp.painPoints) ? icp.painPoints : [];
 
   return (
-    <div style={{ background: `${themeColor}08`, border: `1px solid ${themeColor}30`, borderRadius: '14px', padding: '18px', marginTop: '18px' }}>
+    <div className="ns-icp-card" style={{ borderRadius: '14px', padding: '18px', marginTop: '18px' }}>
       <div style={{ fontSize: '13px', fontWeight: '800', color: themeColor, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
         <Users size={16} />
         <span>{lang === 'en' ? 'Ideal Customer Persona (ICP)' : 'ملف العميل المثالي (ICP)'}</span>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '12px' }}>
-        <div style={{ background: 'rgba(0,0,0,0.25)', padding: '10px 12px', borderRadius: '8px' }}>
-          <span style={{ fontSize: '10px', color: '#94A3B8', display: 'block', fontWeight: '700' }}>
+        <div className="ns-subcard" style={{ padding: '10px 12px', borderRadius: '8px' }}>
+          <span className="ns-subtext" style={{ fontSize: '10px', display: 'block', fontWeight: '700' }}>
             {lang === 'en' ? 'Target Group:' : 'الفئة المستهدفة:'}
           </span>
-          <span style={{ fontSize: '12px', color: '#fff', fontWeight: '800' }}>{icp.targetGroup || '—'}</span>
+          <span className="ns-heading-title" style={{ fontSize: '12px', fontWeight: '800' }}>{icp.targetGroup || '—'}</span>
         </div>
-        <div style={{ background: 'rgba(0,0,0,0.25)', padding: '10px 12px', borderRadius: '8px' }}>
-          <span style={{ fontSize: '10px', color: '#94A3B8', display: 'block', fontWeight: '700' }}>
+        <div className="ns-subcard" style={{ padding: '10px 12px', borderRadius: '8px' }}>
+          <span className="ns-subtext" style={{ fontSize: '10px', display: 'block', fontWeight: '700' }}>
             {lang === 'en' ? 'Demographic Age Range:' : 'الفئة العمرية:'}
           </span>
-          <span style={{ fontSize: '12px', color: '#fff', fontWeight: '800' }}>{icp.ageRange || '—'}</span>
+          <span className="ns-heading-title" style={{ fontSize: '12px', fontWeight: '800' }}>{icp.ageRange || '—'}</span>
         </div>
       </div>
 
       {painPoints.length > 0 && (
         <>
-          <div style={{ fontSize: '11px', fontWeight: '700', color: '#94A3B8', marginBottom: '8px' }}>
+          <div className="ns-subtext" style={{ fontSize: '11px', fontWeight: '700', marginBottom: '8px' }}>
             {lang === 'en' ? 'Core Client Pain Points:' : 'نقاط الألم الرئيسية للعميل:'}
           </div>
           <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {painPoints.map((p, i) => (
-              <li key={i} style={{ fontSize: '12px', color: '#E2E8F0', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+              <li key={i} className="ns-list-item" style={{ fontSize: '12px', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                 <Target size={12} color={themeColor} style={{ marginTop: 3, flexShrink: 0 }} />
                 <span>{p}</span>
               </li>
@@ -674,7 +674,7 @@ function GlobalComparisonCard({ globalComparison, loading, activeCountryObj, lan
   const keyDiffs = Array.isArray(globalComparison.keyDifferences) ? globalComparison.keyDifferences : [];
 
   return (
-    <div style={{ marginTop: '16px', padding: '16px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '14px' }}>
+    <div className="ns-global-card" style={{ marginTop: '16px', padding: '16px', borderRadius: '14px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#818CF8', fontWeight: '800', fontSize: '13px', marginBottom: '12px' }}>
         <ArrowRightLeft size={16} />
         <span>
@@ -685,28 +685,28 @@ function GlobalComparisonCard({ globalComparison, loading, activeCountryObj, lan
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', marginBottom: '12px' }}>
-        <div style={{ background: 'rgba(0,0,0,0.3)', padding: '14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
-          <div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: '700' }}>
+        <div className="ns-subcard" style={{ padding: '14px', borderRadius: '12px' }}>
+          <div className="ns-subtext" style={{ fontSize: '11px', fontWeight: '700' }}>
             {lang === 'en' ? 'Primary Target Country:' : 'سوقك المستهدف الأساسي:'}
           </div>
-          <div style={{ fontSize: '14px', fontWeight: '900', color: '#fff', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div className="ns-heading-title" style={{ fontSize: '14px', fontWeight: '900', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span>{activeCountryObj.flag}</span>
             <span>{lang === 'en' ? activeCountryObj.name_en : activeCountryObj.name_ar}</span>
           </div>
         </div>
 
-        <div style={{ background: 'rgba(16,185,129,0.08)', padding: '14px', borderRadius: '12px', border: '1px solid rgba(16,185,129,0.25)' }}>
+        <div className="ns-opp-card-green" style={{ padding: '14px', borderRadius: '12px' }}>
           <div style={{ fontSize: '11px', color: '#10B981', fontWeight: '700' }}>
             {lang === 'en' ? 'Recommended Benchmark Market:' : 'السوق المرجعي الموصى به:'}
           </div>
-          <div style={{ fontSize: '14px', fontWeight: '900', color: '#fff', marginTop: '4px' }}>
+          <div className="ns-heading-title" style={{ fontSize: '14px', fontWeight: '900', marginTop: '4px' }}>
             {globalComparison.recommendedCountry}
           </div>
         </div>
       </div>
 
       {globalComparison.comparisonSummary && (
-        <p style={{ fontSize: '12px', color: '#CBD5E1', lineHeight: '1.5', marginBottom: '10px' }}>
+        <p className="ns-list-item" style={{ fontSize: '12px', lineHeight: '1.5', marginBottom: '10px' }}>
           {globalComparison.comparisonSummary}
         </p>
       )}
@@ -714,7 +714,7 @@ function GlobalComparisonCard({ globalComparison, loading, activeCountryObj, lan
       {keyDiffs.length > 0 && (
         <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '6px' }}>
           {keyDiffs.map((d, i) => (
-            <li key={i} style={{ fontSize: '12px', color: '#E2E8F0', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+            <li key={i} className="ns-list-item" style={{ fontSize: '12px', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
               <Globe2 size={13} color="#818CF8" style={{ marginTop: 3, flexShrink: 0 }} />
               <span>{d}</span>
             </li>
@@ -844,15 +844,13 @@ export default function NicheSelection({ stepNumber }) {
       ) : (
         <>
           {/* LEVEL 1: MARKET & NICHE FILTERS (Z-Index 100 relative to avoid overlay overlap) */}
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(17,24,39,0.9), rgba(13,18,32,0.95))',
-            border: '1px solid rgba(99,102,241,0.25)', borderRadius: '16px',
-            padding: '20px', marginBottom: '24px', backdropFilter: 'blur(10px)',
+          <div className="ns-panel-card" style={{
+            padding: '20px', marginBottom: '24px',
             position: 'relative', zIndex: 100,
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
               <div style={{ flex: '1 1 280px', position: 'relative', zIndex: 200 }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '800', color: '#C7D2FE', marginBottom: '8px' }}>
+                <label className="ns-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '800', marginBottom: '8px' }}>
                   <Globe size={16} color="#6366F1" />
                   <span>{lang === 'en' ? 'Level 1: Select Target Market Country' : 'المستوى 1: اختر الدولة والسوق المستهدف'}</span>
                 </label>
@@ -867,21 +865,22 @@ export default function NicheSelection({ stepNumber }) {
               {/* Global Benchmark Toggle Switch */}
               <div
                 onClick={() => setIsGlobalBenchmark(g => !g)}
+                className="ns-benchmark-btn"
                 style={{
                   display: 'flex', alignItems: 'center', gap: '10px',
                   background: isGlobalBenchmark
                     ? 'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(16,185,129,0.25))'
-                    : 'rgba(255,255,255,0.05)',
+                    : 'transparent',
                   border: `1px solid ${isGlobalBenchmark ? '#6366F1' : 'rgba(255,255,255,0.1)'}`,
                   padding: '12px 18px', borderRadius: '14px', cursor: 'pointer', transition: 'all 0.25s ease',
                 }}
               >
                 <Globe size={18} color={isGlobalBenchmark ? '#10B981' : '#94A3B8'} />
                 <div>
-                  <div style={{ fontSize: '13px', fontWeight: '800', color: isGlobalBenchmark ? '#fff' : '#CBD5E1' }}>
+                  <div className="ns-heading-title" style={{ fontSize: '13px', fontWeight: '800' }}>
                     {lang === 'en' ? 'Level 3 Global Benchmark' : 'مقارنة السوق العالمي (المستوى 3)'}
                   </div>
-                  <div style={{ fontSize: '10px', color: '#94A3B8' }}>
+                  <div className="ns-subtext" style={{ fontSize: '10px' }}>
                     {lang === 'en' ? 'Compare local vs. global alternative' : 'مقارنة أداء السوق المحلي بالسوق العالمي'}
                   </div>
                 </div>
@@ -921,7 +920,7 @@ export default function NicheSelection({ stepNumber }) {
                   }}>
                     {getNicheVectorIcon(n.id, 24, isSelected ? '#fff' : theme.color)}
                   </div>
-                  <div className="td-card-label" style={{ color: isSelected ? '#fff' : '#B0BAC8' }}>{getLabel(n)}</div>
+                  <div className="td-card-label" style={{ color: isSelected ? undefined : '#B0BAC8' }}>{getLabel(n)}</div>
                 </div>
               );
             })}
@@ -929,10 +928,9 @@ export default function NicheSelection({ stepNumber }) {
 
           {/* LEVEL 1: MACRO METRICS DISPLAY */}
           {selectedNiche && (
-            <div style={{
-              background: 'linear-gradient(135deg, rgba(17,24,39,0.85), rgba(13,18,32,0.95))',
+            <div className="ns-panel-card" style={{
               border: `1px solid ${themeColor}50`, borderRadius: '16px',
-              padding: '20px', marginBottom: '24px', backdropFilter: 'blur(12px)',
+              padding: '20px', marginBottom: '24px',
               position: 'relative', zIndex: 1,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
@@ -940,10 +938,10 @@ export default function NicheSelection({ stepNumber }) {
                   <BarChart3 size={20} color={themeColor} />
                 </div>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '900', color: '#fff' }}>
+                  <h4 className="ns-heading-title" style={{ margin: 0, fontSize: '15px', fontWeight: '900' }}>
                     {lang === 'en' ? `Level 1 Macro Metrics: ${getLabel(selectedNiche)}` : `المؤشرات الكلية: ${getLabel(selectedNiche)}`}
                   </h4>
-                  <div style={{ fontSize: '11px', color: '#94A3B8' }}>
+                  <div className="ns-subtext" style={{ fontSize: '11px' }}>
                     {lang === 'en' ? `Market intelligence for ${activeCountryObj.name_en}` : `تحليل بيانات السوق لـ ${activeCountryObj.name_ar}`}
                   </div>
                 </div>
@@ -981,16 +979,16 @@ export default function NicheSelection({ stepNumber }) {
 
           {/* LEVEL 2: MICRO-NICHE SELECTION & DEEP DIVE */}
           {selectedNiche && (
-            <div className="td-info-panel" style={{ borderColor: `${themeColor}40`, background: 'rgba(13,18,32,0.6)', position: 'relative', zIndex: 1 }}>
+            <div className="td-info-panel ns-panel-card" style={{ borderColor: `${themeColor}40`, position: 'relative', zIndex: 1 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px', marginBottom: '16px' }}>
-                <h3 style={{ fontSize: '15px', fontWeight: '900', color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h3 className="ns-heading-title" style={{ fontSize: '15px', fontWeight: '900', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Target size={18} color={themeColor} />
                   <span>{lang === 'en' ? 'Select Micro-Niche Idea:' : 'اختر التخصص الدقيق (Micro-Niche):'}</span>
                 </h3>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                   {/* Segmented Mode Switch: Fast Mode (Preset) vs Live AI (Generate) */}
-                  <div style={{ display: 'flex', background: 'rgba(0,0,0,0.4)', padding: '3px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <div className="ai-mode-switch-bar" style={{ display: 'flex', padding: '3px', borderRadius: '10px' }}>
                     <button
                       type="button"
                       onClick={() => setMicroNicheMode('fast')}
@@ -1034,10 +1032,10 @@ export default function NicheSelection({ stepNumber }) {
                       value={microSearchQuery}
                       onChange={e => setMicroSearchQuery(e.target.value)}
                       placeholder={lang === 'en' ? 'Filter micro-niches…' : 'تصفية التخصصات…'}
+                      className="ns-dropdown-search-input"
                       style={{
-                        width: '100%', background: 'rgba(255,255,255,0.05)',
-                        border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px',
-                        padding: '5px 10px 5px 30px', color: '#fff', fontSize: '11px', outline: 'none',
+                        width: '100%', borderRadius: '8px',
+                        padding: '5px 10px 5px 30px', fontSize: '11px', outline: 'none',
                       }}
                     />
                   </div>
@@ -1046,21 +1044,20 @@ export default function NicheSelection({ stepNumber }) {
 
               {/* Live AI Status / Re-generate Action Bar */}
               {microNicheMode === 'live' && (
-                <div style={{
-                  background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(16,185,129,0.1))',
-                  border: '1px solid rgba(99,102,241,0.3)', borderRadius: '12px',
+                <div className="ns-opp-card-indigo" style={{
+                  borderRadius: '12px',
                   padding: '10px 14px', marginBottom: '16px', display: 'flex',
                   alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Bot size={18} color="#818CF8" />
                     <div>
-                      <div style={{ fontSize: '12px', fontWeight: '800', color: '#fff' }}>
-                        🤖 {lang === 'en' ? 'Live AI Micro-Niche Generator Active (OpenAI API)' : 'مولّد التخصصات المباشر بالذكاء الاصطناعي مفعّل'}
+                      <div className="ns-heading-title" style={{ fontSize: '12px', fontWeight: '800' }}>
+                        {lang === 'en' ? 'Live AI Micro-Niche Generator Active (OpenAI API)' : 'مولّد التخصصات المباشر بالذكاء الاصطناعي مفعّل'}
                       </div>
-                      <div style={{ fontSize: '10px', color: '#94A3B8' }}>
+                      <div className="ns-subtext" style={{ fontSize: '10px' }}>
                         {microIdeas.loading
-                          ? (lang === 'en' ? '⚡ Generating custom real-time micro-niches from OpenAI…' : '⚡ جاري استدعاء OpenAI لتوليد أفكار حية…')
+                          ? (lang === 'en' ? 'Generating custom real-time micro-niches from OpenAI…' : 'جاري استدعاء OpenAI لتوليد أفكار حية…')
                           : (lang === 'en' ? 'Displaying custom real-time micro-niches for target market' : 'عرض أفكار تخصصات مخصصة ومولّدة لحظياً حسب السوق المستهدف')}
                       </div>
                     </div>
@@ -1093,10 +1090,9 @@ export default function NicheSelection({ stepNumber }) {
                     const isActive = state.subNiche === ideaText;
                     return (
                       <button key={i} onClick={() => handleSubNicheSelect(ideaText)}
+                        className={`ns-chip-btn ${isActive ? 'active' : ''}`}
                         style={{
-                          background: isActive ? `${themeColor}25` : 'rgba(255,255,255,0.05)',
-                          border: `1px solid ${isActive ? themeColor : 'rgba(255,255,255,0.1)'}`,
-                          color: isActive ? '#fff' : '#B0BAC8', padding: '10px 16px',
+                          padding: '10px 16px',
                           borderRadius: '12px', fontSize: '13px', fontWeight: '700',
                           cursor: 'pointer', transition: 'all 0.2s',
                           display: 'flex', alignItems: 'center', gap: '8px',

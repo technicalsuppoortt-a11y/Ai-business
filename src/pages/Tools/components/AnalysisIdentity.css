@@ -356,8 +356,10 @@
 
 .micro-niche-card-2030.active {
   background: rgba(99, 102, 241, 0.14);
-  border: 1px solid #6366F1;
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.25), inset 0 0 12px rgba(99, 102, 241, 0.1);
+  border: 1px solid #6366f1;
+  box-shadow:
+    0 0 20px rgba(99, 102, 241, 0.25),
+    inset 0 0 12px rgba(99, 102, 241, 0.1);
 }
 
 .micro-niche-card-header {
@@ -370,7 +372,7 @@
 .micro-niche-card-title {
   font-size: 13px;
   font-weight: 700;
-  color: #F8FAFC;
+  color: #f8fafc;
   line-height: 1.4;
   word-break: break-word;
   display: flex;
@@ -379,7 +381,7 @@
 }
 
 .micro-niche-hashtag {
-  color: #6366F1;
+  color: #6366f1;
   font-weight: 800;
   flex-shrink: 0;
 }
@@ -397,7 +399,7 @@
 .micro-niche-score-tag {
   font-size: 10px;
   font-weight: 700;
-  color: #818CF8;
+  color: #818cf8;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -464,8 +466,10 @@
 
 .naming-proposal-card-2030.active {
   background: rgba(99, 102, 241, 0.15);
-  border: 1.5px solid #6366F1;
-  box-shadow: 0 0 24px rgba(99, 102, 241, 0.3), inset 0 0 16px rgba(99, 102, 241, 0.1);
+  border: 1.5px solid #6366f1;
+  box-shadow:
+    0 0 24px rgba(99, 102, 241, 0.3),
+    inset 0 0 16px rgba(99, 102, 241, 0.1);
 }
 
 .naming-proposal-header {
@@ -478,7 +482,7 @@
 .naming-proposal-title {
   font-size: 16px;
   font-weight: 800;
-  color: #FFFFFF;
+  color: #ffffff;
   letter-spacing: -0.01em;
   display: flex;
   align-items: center;
@@ -487,7 +491,7 @@
 
 .naming-proposal-meaning {
   font-size: 12px;
-  color: #94A3B8;
+  color: #94a3b8;
   line-height: 1.5;
   font-style: italic;
 }
@@ -1014,23 +1018,890 @@
   text-transform: uppercase;
 }
 
-/* RESPONSIVE MEDIA QUERIES */
+/* ═══════════════ LIGHT MODE SUPPORT (STRICT NO-WHITE-TEXT) ═══════════════ */
+:root.light-mode .ai-container,
+body.light-mode .ai-container,
+.light-mode .ai-container {
+  color: #0f172a !important;
+}
+
+:root.light-mode .ai-container h1,
+body.light-mode .ai-container h1,
+.light-mode .ai-container h1,
+:root.light-mode .ai-container h2,
+body.light-mode .ai-container h2,
+.light-mode .ai-container h2,
+:root.light-mode .ai-container h3,
+body.light-mode .ai-container h3,
+.light-mode .ai-container h3,
+:root.light-mode .ai-container h4,
+body.light-mode .ai-container h4,
+.light-mode .ai-container h4,
+:root.light-mode .ai-container h5,
+body.light-mode .ai-container h5,
+.light-mode .ai-container h5,
+:root.light-mode .ai-container h6,
+body.light-mode .ai-container h6,
+.light-mode .ai-container h6,
+:root.light-mode .ai-container label,
+body.light-mode .ai-container label,
+.light-mode .ai-container label,
+:root.light-mode .ai-container strong,
+body.light-mode .ai-container strong,
+.light-mode .ai-container strong {
+  color: #0f172a !important;
+}
+
+:root.light-mode .ai-container p,
+body.light-mode .ai-container p,
+.light-mode .ai-container p {
+  color: #475569 !important;
+}
+
+:root.light-mode .ai-panel,
+body.light-mode .ai-panel,
+.light-mode .ai-panel,
+:root.light-mode .ai-tabs-header,
+body.light-mode .ai-tabs-header,
+.light-mode .ai-tabs-header,
+:root.light-mode .naming-config-panel-2030,
+body.light-mode .naming-config-panel-2030,
+.light-mode .naming-config-panel-2030,
+:root.light-mode .identity-canvas-controls-pane,
+body.light-mode .identity-canvas-controls-pane,
+.light-mode .identity-canvas-controls-pane,
+:root.light-mode .identity-canvas-preview-pane,
+body.light-mode .identity-canvas-preview-pane,
+.light-mode .identity-canvas-preview-pane,
+:root.light-mode .result-card,
+body.light-mode .result-card,
+.light-mode .result-card,
+:root.light-mode .quick-action-bar,
+body.light-mode .quick-action-bar,
+.light-mode .quick-action-bar,
+:root.light-mode .identity-simulator-deck-2030,
+body.light-mode .identity-simulator-deck-2030,
+.light-mode .identity-simulator-deck-2030 {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04) !important;
+}
+
+:root.light-mode .identity-simulator-header,
+body.light-mode .identity-simulator-header,
+.light-mode .identity-simulator-header {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+:root.light-mode .ai-tab-btn,
+body.light-mode .ai-tab-btn,
+.light-mode .ai-tab-btn {
+  color: #475569 !important;
+}
+
+:root.light-mode .ai-tab-btn:hover:not(:disabled):not(.active),
+body.light-mode .ai-tab-btn:hover:not(:disabled):not(.active),
+.light-mode .ai-tab-btn:hover:not(:disabled):not(.active) {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+:root.light-mode .ai-tab-btn.active,
+body.light-mode .ai-tab-btn.active,
+.light-mode .ai-tab-btn.active {
+  background: #6366f1 !important;
+  color: #ffffff !important;
+}
+
+:root.light-mode .ai-tab-step-badge,
+body.light-mode .ai-tab-step-badge,
+.light-mode .ai-tab-step-badge {
+  background: rgba(0, 0, 0, 0.06) !important;
+  color: #475569 !important;
+}
+
+:root.light-mode .ai-tab-btn.active .ai-tab-step-badge,
+body.light-mode .ai-tab-btn.active .ai-tab-step-badge,
+.light-mode .ai-tab-btn.active .ai-tab-step-badge {
+  background: rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+}
+
+:root.light-mode .niche-card,
+body.light-mode .niche-card,
+.light-mode .niche-card,
+:root.light-mode .micro-niche-card-2030,
+body.light-mode .micro-niche-card-2030,
+.light-mode .micro-niche-card-2030,
+:root.light-mode .naming-proposal-card-2030,
+body.light-mode .naming-proposal-card-2030,
+.light-mode .naming-proposal-card-2030,
+:root.light-mode .identity-preset-card-2030,
+body.light-mode .identity-preset-card-2030,
+.light-mode .identity-preset-card-2030,
+:root.light-mode .identity-color-card-2030,
+body.light-mode .identity-color-card-2030,
+.light-mode .identity-color-card-2030,
+:root.light-mode .icp-item-card,
+body.light-mode .icp-item-card,
+.light-mode .icp-item-card,
+:root.light-mode .color-input-card,
+body.light-mode .color-input-card,
+.light-mode .color-input-card,
+:root.light-mode .archetype-card,
+body.light-mode .archetype-card,
+.light-mode .archetype-card {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+:root.light-mode .niche-card:hover,
+body.light-mode .niche-card:hover,
+.light-mode .niche-card:hover,
+:root.light-mode .micro-niche-card-2030:hover,
+body.light-mode .micro-niche-card-2030:hover,
+.light-mode .micro-niche-card-2030:hover,
+:root.light-mode .naming-proposal-card-2030:hover,
+body.light-mode .naming-proposal-card-2030:hover,
+.light-mode .naming-proposal-card-2030:hover,
+:root.light-mode .identity-preset-card-2030:hover,
+body.light-mode .identity-preset-card-2030:hover,
+.light-mode .identity-preset-card-2030:hover,
+:root.light-mode .identity-color-card-2030:hover,
+body.light-mode .identity-color-card-2030:hover,
+.light-mode .identity-color-card-2030:hover {
+  background: #eff6ff !important;
+  border-color: #3b82f6 !important;
+}
+
+:root.light-mode .niche-card.active,
+body.light-mode .niche-card.active,
+.light-mode .niche-card.active,
+:root.light-mode .micro-niche-card-2030.active,
+body.light-mode .micro-niche-card-2030.active,
+.light-mode .micro-niche-card-2030.active,
+:root.light-mode .naming-proposal-card-2030.active,
+body.light-mode .naming-proposal-card-2030.active,
+.light-mode .naming-proposal-card-2030.active,
+:root.light-mode .archetype-card.active,
+body.light-mode .archetype-card.active,
+.light-mode .archetype-card.active {
+  background: #eff6ff !important;
+  border-color: #6366f1 !important;
+}
+
+:root.light-mode .niche-label,
+body.light-mode .niche-label,
+.light-mode .niche-label,
+:root.light-mode .micro-niche-card-title,
+body.light-mode .micro-niche-card-title,
+.light-mode .micro-niche-card-title,
+:root.light-mode .naming-proposal-title,
+body.light-mode .naming-proposal-title,
+.light-mode .naming-proposal-title,
+:root.light-mode .result-card-title,
+body.light-mode .result-card-title,
+.light-mode .result-card-title,
+:root.light-mode .icp-item-val,
+body.light-mode .icp-item-val,
+.light-mode .icp-item-val {
+  color: #0f172a !important;
+}
+
+:root.light-mode .niche-card.active .niche-label,
+body.light-mode .niche-card.active .niche-label,
+.light-mode .niche-card.active .niche-label {
+  color: #1e40af !important;
+}
+
+:root.light-mode .naming-proposal-meaning,
+body.light-mode .naming-proposal-meaning,
+.light-mode .naming-proposal-meaning,
+:root.light-mode .icp-item-label,
+body.light-mode .icp-item-label,
+.light-mode .icp-item-label {
+  color: #64748b !important;
+}
+
+:root.light-mode .custom-dropdown-trigger,
+body.light-mode .custom-dropdown-trigger,
+.light-mode .custom-dropdown-trigger,
+:root.light-mode .micro-search-box,
+body.light-mode .micro-search-box,
+.light-mode .micro-search-box {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+:root.light-mode .micro-search-box input,
+body.light-mode .micro-search-box input,
+.light-mode .micro-search-box input {
+  color: #0f172a !important;
+}
+
+:root.light-mode .custom-dropdown-menu,
+body.light-mode .custom-dropdown-menu,
+.light-mode .custom-dropdown-menu {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1) !important;
+}
+
+:root.light-mode .custom-dropdown-option,
+body.light-mode .custom-dropdown-option,
+.light-mode .custom-dropdown-option {
+  color: #475569 !important;
+}
+
+:root.light-mode .custom-dropdown-option:hover,
+body.light-mode .custom-dropdown-option:hover,
+.light-mode .custom-dropdown-option:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+:root.light-mode .custom-dropdown-option.selected,
+body.light-mode .custom-dropdown-option.selected,
+.light-mode .custom-dropdown-option.selected {
+  background: #eff6ff !important;
+  color: #1e40af !important;
+}
+
+:root.light-mode .action-pill-btn,
+body.light-mode .action-pill-btn,
+.light-mode .action-pill-btn {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+:root.light-mode .action-pill-btn:hover,
+body.light-mode .action-pill-btn:hover,
+.light-mode .action-pill-btn:hover {
+  background: #eff6ff !important;
+  border-color: #3b82f6 !important;
+  color: #1e40af !important;
+}
+
+/* ═══════════════ STRATEGIC NICHE SELECTION STYLES ═══════════════ */
+.ns-panel-card {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  color: #f8fafc;
+}
+
+.ns-heading-title {
+  color: #ffffff;
+}
+
+.ns-label {
+  color: #c7d2fe;
+}
+
+.ns-subtext {
+  color: #94a3b8;
+}
+
+.ns-chip-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #b0bac8;
+}
+
+.ns-chip-btn:hover {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: #ffffff;
+}
+
+.ns-chip-btn.active {
+  background: rgba(99, 102, 241, 0.22);
+  border-color: #6366f1;
+  color: #ffffff;
+}
+
+:root.light-mode .ns-panel-card,
+body.light-mode .ns-panel-card,
+.light-mode .ns-panel-card {
+  background: #ffffff !important;
+  background-image: none !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04) !important;
+}
+
+:root.light-mode .ns-heading-title,
+body.light-mode .ns-heading-title,
+.light-mode .ns-heading-title {
+  color: #0f172a !important;
+}
+
+:root.light-mode .ns-label,
+body.light-mode .ns-label,
+.light-mode .ns-label {
+  color: #1e40af !important;
+}
+
+:root.light-mode .ns-subtext,
+body.light-mode .ns-subtext,
+.light-mode .ns-subtext {
+  color: #64748b !important;
+}
+
+:root.light-mode .ns-chip-btn:not(.active),
+body.light-mode .ns-chip-btn:not(.active),
+.light-mode .ns-chip-btn:not(.active) {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+:root.light-mode .ns-chip-btn:hover:not(.active),
+body.light-mode .ns-chip-btn:hover:not(.active),
+.light-mode .ns-chip-btn:hover:not(.active) {
+  background: #eff6ff !important;
+  border-color: #3b82f6 !important;
+  color: #1e40af !important;
+}
+
+:root.light-mode .ns-chip-btn.active,
+body.light-mode .ns-chip-btn.active,
+.light-mode .ns-chip-btn.active {
+  background: #eff6ff !important;
+  border-color: #6366f1 !important;
+  color: #1e40af !important;
+}
+
+.ns-subcard {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+}
+
+.ns-list-item {
+  color: #e2e8f0;
+}
+
+.ns-opp-card-green {
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.ns-opp-card-indigo {
+  background: rgba(99, 102, 241, 0.06);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.ns-icp-card {
+  background: rgba(99, 102, 241, 0.05);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.ns-global-card {
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.ns-table-head-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+.ns-table-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Light Mode Overrides */
+:root.light-mode .ns-subcard,
+body.light-mode .ns-subcard,
+.light-mode .ns-subcard {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+:root.light-mode .ns-list-item,
+body.light-mode .ns-list-item,
+.light-mode .ns-list-item {
+  color: #334155 !important;
+}
+
+:root.light-mode .ns-opp-card-green,
+body.light-mode .ns-opp-card-green,
+.light-mode .ns-opp-card-green {
+  background: #f0fdf4 !important;
+  border-color: #a7f3d0 !important;
+}
+
+:root.light-mode .ns-opp-card-indigo,
+body.light-mode .ns-opp-card-indigo,
+.light-mode .ns-opp-card-indigo {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+}
+
+:root.light-mode .ns-icp-card,
+body.light-mode .ns-icp-card,
+.light-mode .ns-icp-card {
+  background: #f5f3ff !important;
+  border-color: #ddd6fe !important;
+}
+
+:root.light-mode .ns-global-card,
+body.light-mode .ns-global-card,
+.light-mode .ns-global-card {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+}
+
+:root.light-mode .ns-table-head-row,
+body.light-mode .ns-table-head-row,
+.light-mode .ns-table-head-row {
+  border-bottom: 1px solid #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+:root.light-mode .ns-table-row,
+body.light-mode .ns-table-row,
+.light-mode .ns-table-row {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+/* Mode Switches & Status Banners */
+.ai-mode-switch-bar {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ai-status-indicator-banner {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #e2e8f0;
+}
+
+.niche-option-tabs {
+  display: flex;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.niche-option-tab {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.niche-option-tab.active {
+  background: #6366f1;
+  color: #ffffff;
+}
+
+:root.light-mode .ai-mode-switch-bar,
+body.light-mode .ai-mode-switch-bar,
+.light-mode .ai-mode-switch-bar,
+:root.light-mode .niche-option-tabs,
+body.light-mode .niche-option-tabs,
+.light-mode .niche-option-tabs {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+:root.light-mode .ai-status-indicator-banner,
+body.light-mode .ai-status-indicator-banner,
+.light-mode .ai-status-indicator-banner {
+  background: #f0fdf4 !important;
+  border-color: #a7f3d0 !important;
+  color: #065f46 !important;
+}
+
+:root.light-mode .niche-option-tab:not(.active),
+body.light-mode .niche-option-tab:not(.active),
+.light-mode .niche-option-tab:not(.active) {
+  color: #475569 !important;
+}
+
+/* Select Dropdowns & Result Card Descriptions */
+.ns-dropdown-trigger {
+  background: linear-gradient(
+    135deg,
+    rgba(15, 23, 42, 0.9),
+    rgba(30, 41, 59, 0.85)
+  );
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  color: #ffffff;
+}
+
+.ns-dropdown-menu {
+  background: #0f172a;
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75);
+}
+
+.ns-dropdown-search-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.ns-dropdown-option {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #cbd5e1;
+}
+
+.ns-dropdown-option.selected {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #ffffff;
+}
+
+.result-card-desc {
+  color: #f8fafc;
+}
+
+:root.light-mode .ns-dropdown-trigger,
+body.light-mode .ns-dropdown-trigger,
+.light-mode .ns-dropdown-trigger {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04) !important;
+}
+
+:root.light-mode .ns-dropdown-menu,
+body.light-mode .ns-dropdown-menu,
+.light-mode .ns-dropdown-menu {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12) !important;
+}
+
+:root.light-mode .ns-dropdown-search-input,
+body.light-mode .ns-dropdown-search-input,
+.light-mode .ns-dropdown-search-input {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+:root.light-mode .ns-dropdown-option,
+body.light-mode .ns-dropdown-option,
+.light-mode .ns-dropdown-option {
+  color: #475569 !important;
+}
+
+:root.light-mode .ns-dropdown-option-title,
+body.light-mode .ns-dropdown-option-title,
+.light-mode .ns-dropdown-option-title {
+  color: #0f172a !important;
+}
+
+:root.light-mode .ns-dropdown-option:hover,
+body.light-mode .ns-dropdown-option:hover,
+.light-mode .ns-dropdown-option:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+:root.light-mode .ns-dropdown-option.selected,
+body.light-mode .ns-dropdown-option.selected,
+.light-mode .ns-dropdown-option.selected {
+  background: #eff6ff !important;
+  border-color: #3b82f6 !important;
+  color: #1e40af !important;
+}
+
+:root.light-mode .result-card-desc,
+body.light-mode .result-card-desc,
+.light-mode .result-card-desc,
+:root.light-mode .result-card p,
+body.light-mode .result-card p,
+.light-mode .result-card p,
+:root.light-mode .result-card div,
+body.light-mode .result-card div,
+.light-mode .result-card div {
+  color: #334155 !important;
+}
+
+:root.light-mode .result-card h4,
+body.light-mode .result-card h4,
+.light-mode .result-card h4,
+:root.light-mode .result-card-title,
+body.light-mode .result-card-title,
+.light-mode .result-card-title {
+  color: #0f172a !important;
+}
+
+/* Universal Light Mode Overrides for dark rgba backgrounds & dark box shadows */
+:root.light-mode .ai-container [style*="rgba(0, 0, 0"],
+body.light-mode .ai-container [style*="rgba(0, 0, 0"],
+.light-mode .ai-container [style*="rgba(0, 0, 0"],
+:root.light-mode .ai-container [style*="rgba(0,0,0"],
+body.light-mode .ai-container [style*="rgba(0,0,0"],
+.light-mode .ai-container [style*="rgba(0,0,0"] {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+:root.light-mode .ai-tabs-header,
+body.light-mode .ai-tabs-header,
+.light-mode .ai-tabs-header {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05) !important;
+}
+
+:root.light-mode .naming-proposal-title,
+body.light-mode .naming-proposal-title,
+.light-mode .naming-proposal-title {
+  color: #0f172a !important;
+}
+
+:root.light-mode .naming-proposal-meaning,
+body.light-mode .naming-proposal-meaning,
+.light-mode .naming-proposal-meaning {
+  color: #475569 !important;
+}
+
+:root.light-mode .naming-proposal-card-2030,
+body.light-mode .naming-proposal-card-2030,
+.light-mode .naming-proposal-card-2030 {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04) !important;
+}
+
+:root.light-mode .naming-proposal-card-2030.active,
+body.light-mode .naming-proposal-card-2030.active,
+.light-mode .naming-proposal-card-2030.active {
+  background: #eff6ff !important;
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 16px rgba(99, 102, 241, 0.2) !important;
+}
+
+/* Brand Naming Studio Buttons & Chips */
+.bn-cat-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+.bn-cat-btn.active {
+  background: rgba(99, 102, 241, 0.18);
+  border-color: #6366f1;
+  color: #ffffff;
+}
+
+.bn-lang-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+.bn-lang-btn.active {
+  background: #6366f1;
+  border-color: #6366f1;
+  color: #ffffff;
+}
+
+.bn-catalog-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+.bn-catalog-btn.active {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: #6366f1;
+  color: #818cf8;
+}
+
+:root.light-mode .bn-cat-btn:not(.active),
+body.light-mode .bn-cat-btn:not(.active),
+.light-mode .bn-cat-btn:not(.active) {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+:root.light-mode .bn-cat-btn.active,
+body.light-mode .bn-cat-btn.active,
+.light-mode .bn-cat-btn.active {
+  background: #eff6ff !important;
+  border-color: #6366f1 !important;
+  color: #1e40af !important;
+}
+
+:root.light-mode .bn-lang-btn:not(.active),
+body.light-mode .bn-lang-btn:not(.active),
+.light-mode .bn-lang-btn:not(.active) {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+:root.light-mode .bn-lang-btn.active,
+body.light-mode .bn-lang-btn.active,
+.light-mode .bn-lang-btn.active {
+  background: #6366f1 !important;
+  border-color: #6366f1 !important;
+  color: #ffffff !important;
+}
+
+:root.light-mode .bn-catalog-btn:not(.active),
+body.light-mode .bn-catalog-btn:not(.active),
+.light-mode .bn-catalog-btn:not(.active) {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+:root.light-mode .bn-catalog-btn.active,
+body.light-mode .bn-catalog-btn.active,
+.light-mode .bn-catalog-btn.active {
+  background: #eff6ff !important;
+  border-color: #3b82f6 !important;
+  color: #1e40af !important;
+}
+
+/* ═══════════════ RESPONSIVE MEDIA QUERIES ═══════════════ */
 @media (max-width: 768px) {
   .ai-tabs-header {
-    border-radius: 16px; /* soften pill on mobile */
+    border-radius: 18px;
     width: 100%;
     margin: 0;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding: 6px;
+    scrollbar-width: none;
   }
+
+  .ai-tabs-header::-webkit-scrollbar {
+    display: none;
+  }
+
   .ai-tab-btn {
-    flex: 1;
-    padding: 9px 10px;
-    font-size: 11px;
+    flex: none;
+    min-width: 135px;
+    padding: 9px 14px;
+    font-size: 12px;
   }
+
+  .micro-niche-grid-2030 {
+    grid-template-columns: 1fr;
+  }
+
+  .naming-proposal-grid-2030 {
+    grid-template-columns: 1fr;
+  }
+
+  .naming-params-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .identity-preset-grid-2030 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .identity-color-picker-grid-2030 {
+    grid-template-columns: 1fr;
+  }
+
+  .archetype-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .color-circle-container {
     flex-direction: column;
   }
+
   .quick-action-bar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .ai-panel {
+    padding: 16px 14px;
+    border-radius: 18px;
+  }
+
+  /* Strategic Niche Selection Responsive Optimizations */
+  .ns-panel-card {
+    padding: 14px 14px !important;
+    border-radius: 14px !important;
+  }
+
+  .niche-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .ns-benchmark-btn {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .micro-niche-grid-2030 {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .micro-niche-card-2030 {
+    padding: 14px !important;
+    border-radius: 12px !important;
+  }
+
+  .ai-mode-switch-bar {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .ai-mode-switch-bar button {
+    flex: 1 !important;
+    text-align: center !important;
+    justify-content: center !important;
+  }
+
+  .ns-dropdown-trigger {
+    min-height: 44px !important;
+    padding: 0 12px !important;
+  }
+
+  .ns-subcard {
+    padding: 12px !important;
+  }
+
+  /* Table horizontal touch scroll */
+  table {
+    min-width: 540px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .niche-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .icp-item-card {
+    padding: 10px 12px !important;
+  }
+
+  .ns-chip-btn {
+    width: 100% !important;
+    justify-content: flex-start !important;
   }
 }

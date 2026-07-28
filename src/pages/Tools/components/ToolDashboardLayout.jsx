@@ -191,7 +191,8 @@ export default function ToolDashboardLayout({
 
                 {/* Glassmorphic Guide Drawer / Modal */}
                 <motion.div 
-                  className="td-guide-drawer show"
+                  className={`td-guide-drawer show ${isRtl ? 'rtl' : 'ltr'}`}
+                  dir={isRtl ? 'rtl' : 'ltr'}
                   initial={{ x: isRtl ? '-100%' : '100%', opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   exit={{ x: isRtl ? '-100%' : '100%', opacity: 0 }}

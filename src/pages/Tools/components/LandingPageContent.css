@@ -532,3 +532,191 @@
     align-items: stretch;
   }
 }
+
+/* ═══════════════ LIGHT MODE SUPPORT ═══════════════ */
+:root.light-mode .lpc-floating-dock-bar,
+body.light-mode .lpc-floating-dock-bar,
+.light-mode .lpc-floating-dock-bar,
+:root.light-mode .lpc-command-console,
+body.light-mode .lpc-command-console,
+.light-mode .lpc-command-console,
+:root.light-mode .lpc-live-copy-card,
+body.light-mode .lpc-live-copy-card,
+.light-mode .lpc-live-copy-card,
+:root.light-mode .lpc-empty-deck-card,
+body.light-mode .lpc-empty-deck-card,
+.light-mode .lpc-empty-deck-card,
+:root.light-mode .lpc-loading-deck-card,
+body.light-mode .lpc-loading-deck-card,
+.light-mode .lpc-loading-deck-card,
+:root.light-mode .lpc-console-action-bar,
+body.light-mode .lpc-console-action-bar,
+.light-mode .lpc-console-action-bar,
+:root.light-mode .lpc-bottom-utility-dock,
+body.light-mode .lpc-bottom-utility-dock,
+.light-mode .lpc-bottom-utility-dock {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+
+:root.light-mode .lpc-dock-pill,
+body.light-mode .lpc-dock-pill,
+.light-mode .lpc-dock-pill {
+  background: #F8FAFC !important;
+  border-color: #CBD5E1 !important;
+  color: #475569 !important;
+}
+
+:root.light-mode .lpc-console-heading,
+body.light-mode .lpc-console-heading,
+.light-mode .lpc-console-heading,
+:root.light-mode .lpc-label,
+body.light-mode .lpc-label,
+.light-mode .lpc-label,
+:root.light-mode .lpc-copy-card-title,
+body.light-mode .lpc-copy-card-title,
+.light-mode .lpc-copy-card-title,
+:root.light-mode .lpc-empty-deck-card h4,
+body.light-mode .lpc-empty-deck-card h4,
+.light-mode .lpc-empty-deck-card h4 {
+  color: #0F172A !important;
+}
+
+:root.light-mode .lpc-console-subtext,
+body.light-mode .lpc-console-subtext,
+.light-mode .lpc-console-subtext,
+:root.light-mode .lpc-empty-deck-card p,
+body.light-mode .lpc-empty-deck-card p,
+.light-mode .lpc-empty-deck-card p {
+  color: #64748B !important;
+}
+
+:root.light-mode .lpc-input,
+body.light-mode .lpc-input,
+.light-mode .lpc-input,
+:root.light-mode .lpc-dropdown-trigger,
+body.light-mode .lpc-dropdown-trigger,
+.light-mode .lpc-dropdown-trigger {
+  background: #FFFFFF !important;
+  border-color: #CBD5E1 !important;
+  color: #0F172A !important;
+}
+
+:root.light-mode .lpc-dropdown-trigger:hover,
+body.light-mode .lpc-dropdown-trigger:hover,
+.light-mode .lpc-dropdown-trigger:hover {
+  background: #F8FAFC !important;
+  border-color: #6366F1 !important;
+}
+
+:root.light-mode .lpc-dropdown-menu,
+body.light-mode .lpc-dropdown-menu,
+.light-mode .lpc-dropdown-menu {
+  background: #FFFFFF !important;
+  border-color: #CBD5E1 !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1);
+}
+
+:root.light-mode .lpc-dropdown-option,
+body.light-mode .lpc-dropdown-option,
+.light-mode .lpc-dropdown-option {
+  color: #475569 !important;
+}
+
+:root.light-mode .lpc-dropdown-option:hover,
+body.light-mode .lpc-dropdown-option:hover,
+.light-mode .lpc-dropdown-option:hover {
+  background: #F1F5F9 !important;
+  color: #0F172A !important;
+}
+
+:root.light-mode .lpc-dropdown-option.selected,
+body.light-mode .lpc-dropdown-option.selected,
+.light-mode .lpc-dropdown-option.selected {
+  background: #EFF6FF !important;
+  color: #1E40AF !important;
+}
+
+:root.light-mode .lpc-copy-card-body,
+body.light-mode .lpc-copy-card-body,
+.light-mode .lpc-copy-card-body {
+  background: #F8FAFC !important;
+  border-color: #E2E8F0 !important;
+}
+
+:root.light-mode .lpc-copy-card-body pre,
+body.light-mode .lpc-copy-card-body pre,
+.light-mode .lpc-copy-card-body pre {
+  color: #0F172A !important;
+}
+
+:root.light-mode .lpc-idea-pill,
+body.light-mode .lpc-idea-pill,
+.light-mode .lpc-idea-pill {
+  background: #F8FAFC !important;
+  border-color: #CBD5E1 !important;
+  color: #334155 !important;
+}
+
+:root.light-mode .lpc-idea-pill:hover:not(.active),
+body.light-mode .lpc-idea-pill:hover:not(.active),
+.light-mode .lpc-idea-pill:hover:not(.active) {
+  background: #EFF6FF !important;
+  color: #1E40AF !important;
+  border-color: #3B82F6 !important;
+}
+
+/* ═══════════════ BUTTONS & UTILITY DOCK LIGHT MODE ═══════════════ */
+.lpc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.lpc-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.lpc-btn-secondary {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #F8FAFC;
+}
+
+.lpc-btn-secondary:hover:not(:disabled) {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+:root.light-mode .lpc-btn-secondary,
+body.light-mode .lpc-btn-secondary,
+.light-mode .lpc-btn-secondary {
+  background: #F1F5F9 !important;
+  border-color: #CBD5E1 !important;
+  color: #0F172A !important;
+}
+
+:root.light-mode .lpc-btn-secondary:hover:not(:disabled),
+body.light-mode .lpc-btn-secondary:hover:not(:disabled),
+.light-mode .lpc-btn-secondary:hover:not(:disabled) {
+  background: #E2E8F0 !important;
+  border-color: #94A3B8 !important;
+}
+
+:root.light-mode .lpc-btn-secondary:disabled,
+body.light-mode .lpc-btn-secondary:disabled,
+.light-mode .lpc-btn-secondary:disabled {
+  opacity: 0.4 !important;
+  background: #F8FAFC !important;
+  color: #94A3B8 !important;
+  border-color: #E2E8F0 !important;
+}

@@ -463,29 +463,121 @@
 
 /* Light Mode Overrides */
 :root.light-mode .ac-command-ribbon,
+body.light-mode .ac-command-ribbon,
+.light-mode .ac-command-ribbon,
 :root.light-mode .ac-action-core-section,
-:root.light-mode .ac-mockup-stage {
+body.light-mode .ac-action-core-section,
+.light-mode .ac-action-core-section,
+:root.light-mode .ac-mockup-stage,
+body.light-mode .ac-mockup-stage,
+.light-mode .ac-mockup-stage {
   background: #FFFFFF;
   border-color: #E2E8F0;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
 }
 
+:root.light-mode .ac-command-pill,
+body.light-mode .ac-command-pill,
+.light-mode .ac-command-pill,
+:root.light-mode .ac-popover-btn,
+body.light-mode .ac-popover-btn,
+.light-mode .ac-popover-btn {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  color: #1E293B;
+}
+
+:root.light-mode .ac-command-pill:hover,
+body.light-mode .ac-command-pill:hover,
+.light-mode .ac-command-pill:hover,
+:root.light-mode .ac-popover-btn:hover,
+body.light-mode .ac-popover-btn:hover,
+.light-mode .ac-popover-btn:hover {
+  background: #EEF2FF;
+  border-color: #6366F1;
+  color: #4338CA;
+}
+
+:root.light-mode .ac-command-pill.active,
+body.light-mode .ac-command-pill.active,
+.light-mode .ac-command-pill.active,
+:root.light-mode .ac-popover-btn.selected,
+body.light-mode .ac-popover-btn.selected,
+.light-mode .ac-popover-btn.selected {
+  background: #EEF2FF;
+  border-color: #6366F1;
+  color: #4338CA;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2);
+}
+
 :root.light-mode .ac-pill-val,
-:root.light-mode .ac-card-body {
+body.light-mode .ac-pill-val,
+.light-mode .ac-pill-val,
+:root.light-mode .ac-card-body,
+body.light-mode .ac-card-body,
+.light-mode .ac-card-body {
   color: #0F172A;
 }
 
-:root.light-mode .ac-command-pill,
-:root.light-mode .ac-popover-btn {
-  background: #F8FAFC;
-  border-color: #E2E8F0;
-  color: #475569;
+:root.light-mode .ac-popover-dropdown,
+body.light-mode .ac-popover-dropdown,
+.light-mode .ac-popover-dropdown {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
 }
 
-:root.light-mode .ac-tactical-dock {
+:root.light-mode .ac-mockup-frame,
+body.light-mode .ac-mockup-frame,
+.light-mode .ac-mockup-frame {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+}
+
+:root.light-mode .ac-mockup-card,
+body.light-mode .ac-mockup-card,
+.light-mode .ac-mockup-card {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+}
+
+:root.light-mode .ac-angle-pill,
+body.light-mode .ac-angle-pill,
+.light-mode .ac-angle-pill {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  color: #334155;
+}
+
+:root.light-mode .ac-angle-pill.active,
+body.light-mode .ac-angle-pill.active,
+.light-mode .ac-angle-pill.active {
+  background: #EEF2FF;
+  border-color: #6366F1;
+  color: #4338CA;
+}
+
+:root.light-mode .ac-tactical-dock,
+body.light-mode .ac-tactical-dock,
+.light-mode .ac-tactical-dock {
   background: #FFFFFF;
   border-color: #CBD5E1;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+:root.light-mode .ac-dock-btn,
+body.light-mode .ac-dock-btn,
+.light-mode .ac-dock-btn {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+  color: #1E293B;
+}
+
+:root.light-mode .ac-reactor-loading,
+body.light-mode .ac-reactor-loading,
+.light-mode .ac-reactor-loading {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
 }
 
 /* Responsive Media Queries */

@@ -484,16 +484,46 @@
   background: rgba(255, 255, 255, 0.02);
 }
 
-/* Mobile Responsiveness */
+.pcc-insights-body {
+  color: #F8FAFC;
+  font-size: 14px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+/* ═══════════════ MOBILE & TABLET RESPONSIVENESS ═══════════════ */
+@media (max-width: 1024px) {
+  .pcc-3d-nodes-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .pcc-blueprint-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .pcc-3d-canvas {
     padding: 16px;
-    border-radius: 18px;
+    border-radius: 20px;
+    gap: 16px;
+  }
+
+  .pcc-3d-top-bar {
+    width: 100%;
+    justify-content: stretch;
+    padding: 4px;
+  }
+
+  .pcc-3d-tab-btn {
+    flex: 1;
+    padding: 10px 14px;
+    font-size: 12.5px;
   }
 
   .pcc-3d-ring-container {
-    width: 220px;
-    height: 220px;
+    width: 200px;
+    height: 200px;
   }
 
   .pcc-3d-profit-val {
@@ -504,12 +534,126 @@
     grid-template-columns: 1fr;
   }
 
+  .pcc-blueprint-grid {
+    grid-template-columns: 1fr;
+  }
+
   .pcc-drawer-header {
     flex-direction: column;
     align-items: stretch;
+    gap: 14px;
   }
 
   .pcc-pro-btn {
     width: 100%;
   }
+}
+
+/* ═══════════════ LIGHT MODE SUPPORT ═══════════════ */
+:root.light-mode .pcc-3d-canvas,
+body.light-mode .pcc-3d-canvas,
+.light-mode .pcc-3d-canvas {
+  --bg: #FFFFFF;
+  --bg2: #F8FAFC;
+  --text: #0F172A;
+  --text2: #475569;
+  --line: #E2E8F0;
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+:root.light-mode .pcc-3d-top-bar,
+body.light-mode .pcc-3d-top-bar,
+.light-mode .pcc-3d-top-bar,
+:root.light-mode .pcc-3d-node-card,
+body.light-mode .pcc-3d-node-card,
+.light-mode .pcc-3d-node-card,
+:root.light-mode .pcc-3d-drawer-dock,
+body.light-mode .pcc-3d-drawer-dock,
+.light-mode .pcc-3d-drawer-dock,
+:root.light-mode .pcc-blueprint-card,
+body.light-mode .pcc-blueprint-card,
+.light-mode .pcc-blueprint-card,
+:root.light-mode .pcc-drawer-accordion-item,
+body.light-mode .pcc-drawer-accordion-item,
+.light-mode .pcc-drawer-accordion-item,
+:root.light-mode .pcc-mode-selector-container,
+body.light-mode .pcc-mode-selector-container,
+.light-mode .pcc-mode-selector-container {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+}
+
+:root.light-mode .pcc-3d-tab-btn,
+body.light-mode .pcc-3d-tab-btn,
+.light-mode .pcc-3d-tab-btn {
+  color: #475569;
+}
+
+:root.light-mode .pcc-3d-tab-btn.active,
+body.light-mode .pcc-3d-tab-btn.active,
+.light-mode .pcc-3d-tab-btn.active {
+  color: #0F172A;
+}
+
+:root.light-mode .pcc-3d-node-title,
+body.light-mode .pcc-3d-node-title,
+.light-mode .pcc-3d-node-title,
+:root.light-mode .pcc-drawer-header h4,
+body.light-mode .pcc-drawer-header h4,
+.light-mode .pcc-drawer-header h4 {
+  color: #0F172A !important;
+}
+
+:root.light-mode .pcc-drawer-header p,
+body.light-mode .pcc-drawer-header p,
+.light-mode .pcc-drawer-header p {
+  color: #64748B !important;
+}
+
+:root.light-mode .pcc-label,
+body.light-mode .pcc-label,
+.light-mode .pcc-label {
+  color: #2563EB;
+}
+
+:root.light-mode .pcc-label.green,
+body.light-mode .pcc-label.green,
+.light-mode .pcc-label.green {
+  color: #059669;
+}
+
+:root.light-mode .pcc-input,
+body.light-mode .pcc-input,
+.light-mode .pcc-input,
+:root.light-mode .pcc-textarea,
+body.light-mode .pcc-textarea,
+.light-mode .pcc-textarea {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  color: #0F172A;
+}
+
+:root.light-mode .pcc-insights-stage,
+body.light-mode .pcc-insights-stage,
+.light-mode .pcc-insights-stage {
+  background: #EFF6FF;
+  border-color: #93C5FD;
+}
+
+:root.light-mode .pcc-insights-stage.green,
+body.light-mode .pcc-insights-stage.green,
+.light-mode .pcc-insights-stage.green {
+  background: #ECFDF5;
+  border-color: #A7F3D0;
+}
+
+:root.light-mode .pcc-insights-body,
+body.light-mode .pcc-insights-body,
+.light-mode .pcc-insights-body,
+:root.light-mode .pcc-insights-body *,
+body.light-mode .pcc-insights-body *,
+.light-mode .pcc-insights-body * {
+  color: #0F172A !important;
 }

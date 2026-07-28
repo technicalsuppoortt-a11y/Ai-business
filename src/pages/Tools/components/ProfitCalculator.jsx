@@ -953,16 +953,11 @@ export default function ProfitCalculator({ stepNumber }) {
                     </h3>
 
                     {aiInsightsMode === "live" ? (
-                      <TypewriterText text={aiInsights} speed={10} />
+                      <div className="pcc-insights-body">
+                        <TypewriterText text={aiInsights} speed={10} />
+                      </div>
                     ) : (
-                      <div
-                        style={{
-                          color: "#F8FAFC",
-                          fontSize: "14px",
-                          lineHeight: "1.8",
-                          whiteSpace: "pre-wrap",
-                        }}
-                      >
+                      <div className="pcc-insights-body">
                         {aiInsights.split("\n").map((line, i) => (
                           <p key={i} style={{ margin: "0 0 6px 0" }}>
                             {line.replace(/\*/g, "")}
@@ -1040,19 +1035,14 @@ export default function ProfitCalculator({ stepNumber }) {
                     </div>
 
                     {monthlyPlanResult.mode === "live" ? (
-                      <TypewriterText
-                        text={monthlyPlanResult.aiStrategy}
-                        speed={10}
-                      />
+                      <div className="pcc-insights-body">
+                        <TypewriterText
+                          text={monthlyPlanResult.aiStrategy}
+                          speed={10}
+                        />
+                      </div>
                     ) : (
-                      <div
-                        style={{
-                          color: "#F8FAFC",
-                          fontSize: "14px",
-                          lineHeight: "1.8",
-                          whiteSpace: "pre-wrap",
-                        }}
-                      >
+                      <div className="pcc-insights-body">
                         {monthlyPlanResult.aiStrategy
                           .split("\n")
                           .map((line, i) => (

@@ -105,8 +105,8 @@ export default function CampaignLaunch({ stepNumber }) {
   return (
     <ToolDashboardLayout
       id="campaign-launch"
-      title={lang === 'en' ? 'UTM Terminal & Live Assembler' : 'تجميع وتتبع روابط الإعلانات (UTM Terminal)'}
-      subtitle={lang === 'en' ? 'Real-time UTM assembly terminal with color-coded syntax and instant QR dispatch.' : 'مبنى وتجميع حي لروابط التتبع مع الترميز المباشر بالألوان ورمز الاستجابة السريعة.'}
+      title={lang === 'en' ? 'UTM Live Pipeline Builder' : 'منشئ ومجمّع مسار التتبع الحي (UTM Live Pipeline)'}
+      subtitle={lang === 'en' ? 'Real-time data streaming pipeline with interconnected glassmorphic nodes and instant UTM dispatch.' : 'مسار متكامل لتدفق بيانات التتبع لحظياً عبر محطات ذكية ومخرجات موجهة مباشرة.'}
       stepNumber={stepNumber}
       accentColor="#6366F1"
       timeEstimate="20 - 40"
@@ -114,171 +114,252 @@ export default function CampaignLaunch({ stepNumber }) {
     >
       <div className="cl-container" dir={isRtl ? 'rtl' : 'ltr'}>
         
-        {/* ═══════════════ 1. TOP CANVAS: LIVE INTERACTIVE URL TERMINAL (ALWAYS VISIBLE) ═══════════════ */}
-        <div className="cl-terminal-container">
-          <div className="cl-terminal-header">
-            <div className="cl-terminal-title">
-              <Terminal size={18} />
-              <span>{lang === 'en' ? 'Live Assembling UTM URL Terminal' : 'مبنى وتجميع رابط التتبع الحي'}</span>
-            </div>
-            <div className="cl-terminal-dots">
-              <span className="cl-terminal-dot" style={{ background: '#EF4444' }} />
-              <span className="cl-terminal-dot" style={{ background: '#F59E0B' }} />
-              <span className="cl-terminal-dot" style={{ background: '#10B981' }} />
-            </div>
-          </div>
-
-          {/* Real-time Color Coded Terminal Window */}
-          <div className="cl-terminal-body" dir="ltr">
-            <span className={rawBase ? "cl-token-base" : "cl-token-placeholder"}>
-              {rawBase || 'https://yourstore.com/offer'}
-            </span>
-            <span className="cl-token-sep">{sep}utm_source=</span>
-            <span className={source ? "cl-token-source" : "cl-token-placeholder"}>
-              {source || '[SELECT_SOURCE]'}
-            </span>
-            <span className="cl-token-sep">&utm_medium=</span>
-            <span className={medium ? "cl-token-medium" : "cl-token-placeholder"}>
-              {medium || '[SELECT_MEDIUM]'}
-            </span>
-            <span className="cl-token-sep">&utm_campaign=</span>
-            <span className={campaignName ? "cl-token-campaign" : "cl-token-placeholder"}>
-              {campaignName || '[CAMPAIGN_TAG]'}
-            </span>
-          </div>
-
-          {/* Parameter Breakdown Chips */}
-          <div className="cl-parameter-breakdown">
-            <div className="cl-breakdown-chip">
-              <Globe size={13} style={{ color: '#38BDF8' }} />
-              <span>Source: <strong>{source}</strong></span>
-            </div>
-            <div className="cl-breakdown-chip">
-              <MousePointerClick size={13} style={{ color: '#34D399' }} />
-              <span>Medium: <strong>{medium}</strong></span>
-            </div>
-            <div className="cl-breakdown-chip">
-              <Tag size={13} style={{ color: '#C084FC' }} />
-              <span>Campaign: <strong>{campaignName}</strong></span>
-            </div>
-          </div>
-        </div>
-
-        {/* ═══════════════ 2. CENTER WORKSPACE: HORIZONTAL MODULAR ATTRIBUTE DECK ═══════════════ */}
-        <div className="cl-attribute-deck-grid">
+        {/* ═══════════════ LIVE PIPELINE FLOW BUILDER ═══════════════ */}
+        <div className="cl-pipeline-flow-wrapper">
           
-          {/* Tile A: Target Landing Page Base URL */}
-          <div className="cl-module-tile">
-            <h5 className="cl-tile-title">
-              <Link size={15} />
-              <span>{lang === 'en' ? 'Target Landing Page URL' : 'رابط صفحة الهبوط الأساسي'}</span>
-            </h5>
-            <div className="cl-input-wrap">
-              <ExternalLink size={16} className="cl-input-icon" />
-              <input 
-                type="text" 
-                className="cl-input"
-                dir="ltr"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://yourstore.com/offer"
-              />
-            </div>
+          {/* PIPELINE GRID STATIONS (1 to 3) */}
+          <div className="cl-pipeline-grid">
+            
+            {/* 🚰 STATION 1: LANDING PAGE RESERVOIR */}
+            <motion.div 
+              className="cl-node-card cl-station-1"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="cl-node-header">
+                <div className="cl-station-badge">
+                  <span className="cl-badge-dot" />
+                  <span>{lang === 'en' ? 'Station 01 · Reservoir' : 'محطة 1 · خزان الرابط'}</span>
+                </div>
+                <Link size={16} className="cl-node-icon" />
+              </div>
+
+              <div className="cl-node-content">
+                <h5 className="cl-tile-title">
+                  <ExternalLink size={15} />
+                  <span>{lang === 'en' ? 'Target Landing Page URL' : 'رابط صفحة الهبوط الأساسي'}</span>
+                </h5>
+                <div className="cl-input-wrap">
+                  <ExternalLink size={16} className="cl-input-icon" />
+                  <input 
+                    type="text" 
+                    className="cl-input"
+                    dir="ltr"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder="https://yourstore.com/offer"
+                  />
+                </div>
+              </div>
+
+              {/* Glowing Connector Pipe to Station 2 */}
+              <div className="cl-connector-pipe vertical-mobile">
+                <motion.div 
+                  className="cl-pipe-glow-line"
+                  animate={{ backgroundPosition: ['0% 0%', '100% 100%'] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                />
+              </div>
+            </motion.div>
+
+            {/* 🔀 STATION 2: PARAMETER INJECTION STATION */}
+            <motion.div 
+              className="cl-node-card cl-station-2"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+            >
+              <div className="cl-node-header">
+                <div className="cl-station-badge">
+                  <span className="cl-badge-dot active" />
+                  <span>{lang === 'en' ? 'Station 02 · Injection' : 'محطة 2 · حقن المعاملات'}</span>
+                </div>
+                <Sliders size={16} className="cl-node-icon" />
+              </div>
+
+              <div className="cl-dual-branch-container">
+                {/* TOP BRANCH: SOURCE PLATFORMS */}
+                <div className="cl-branch-channel">
+                  <h5 className="cl-tile-title">
+                    <Globe size={15} />
+                    <span>{lang === 'en' ? 'Source Platform Channels' : 'قنوات منصة المصدر (Source)'}</span>
+                  </h5>
+                  <div className="cl-chip-flow scrollable">
+                    {sources.map(s => {
+                      const SourceIcon = s.IconComp;
+                      const isActive = source === s.id;
+                      return (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => setSource(s.id)}
+                          className={`cl-chip-btn ${isActive ? 'active' : ''}`}
+                        >
+                          <SourceIcon size={14} color={isActive ? '#818CF8' : '#94A3B8'} />
+                          <span>{s.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="cl-branch-divider" />
+
+                {/* BOTTOM BRANCH: MEDIUM PRESETS */}
+                <div className="cl-branch-channel">
+                  <h5 className="cl-tile-title">
+                    <MousePointerClick size={15} />
+                    <span>{lang === 'en' ? 'Medium Presets Channels' : 'وسائط التناقل (Medium)'}</span>
+                  </h5>
+                  <div className="cl-chip-flow scrollable">
+                    {mediums.map(m => {
+                      const MediumIcon = m.IconComp;
+                      const isActive = medium === m.id;
+                      return (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => setMedium(m.id)}
+                          className={`cl-chip-btn ${isActive ? 'active' : ''}`}
+                        >
+                          <MediumIcon size={14} color={isActive ? '#818CF8' : '#94A3B8'} />
+                          <span>{m.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Converging Junction Pipe to Station 3 */}
+              <div className="cl-connector-pipe vertical-mobile">
+                <motion.div 
+                  className="cl-pipe-glow-line"
+                  animate={{ backgroundPosition: ['0% 0%', '100% 100%'] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                />
+              </div>
+            </motion.div>
+
+            {/* 🏷️ STATION 3: CAMPAIGN TAGGING STATION */}
+            <motion.div 
+              className="cl-node-card cl-station-3"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+            >
+              <div className="cl-node-header">
+                <div className="cl-station-badge">
+                  <span className="cl-badge-dot purple" />
+                  <span>{lang === 'en' ? 'Station 03 · Tagging' : 'محطة 3 · وسم الحملة'}</span>
+                </div>
+                <Tag size={16} className="cl-node-icon" />
+              </div>
+
+              <div className="cl-node-content">
+                <h5 className="cl-tile-title">
+                  <Tag size={15} />
+                  <span>{lang === 'en' ? 'Campaign Tag Name' : 'اسم وسجل الحملة (Campaign Tag)'}</span>
+                </h5>
+                <div className="cl-input-wrap">
+                  <Tag size={16} className="cl-input-icon" />
+                  <input 
+                    type="text" 
+                    className="cl-input"
+                    dir="ltr"
+                    value={campaignName}
+                    onChange={(e) => setCampaignName(e.target.value.replace(/\s+/g, '_'))}
+                    placeholder="summer_sale_2026"
+                  />
+                </div>
+                <span className="cl-node-subnote">
+                  {lang === 'en' ? 'Spaces automatically convert to underscores.' : 'تحويل المسافات تلقائياً إلى شرطة سفلية _'}
+                </span>
+              </div>
+            </motion.div>
+
           </div>
 
-          {/* Tile B: Campaign Tag Name */}
-          <div className="cl-module-tile">
-            <h5 className="cl-tile-title">
-              <Tag size={15} />
-              <span>{lang === 'en' ? 'Campaign Tag Name' : 'اسم الحملة (Campaign Tag)'}</span>
-            </h5>
-            <div className="cl-input-wrap">
-              <Tag size={16} className="cl-input-icon" />
-              <input 
-                type="text" 
-                className="cl-input"
-                dir="ltr"
-                value={campaignName}
-                onChange={(e) => setCampaignName(e.target.value.replace(/\s+/g, '_'))}
-                placeholder="summer_sale_2026"
-              />
-            </div>
-          </div>
-
-          {/* Tile C: Source Platform Chips */}
-          <div className="cl-module-tile">
-            <h5 className="cl-tile-title">
-              <Globe size={15} />
-              <span>{lang === 'en' ? 'Source Platform' : 'منصة مصدر الحركة (Source)'}</span>
-            </h5>
-            <div className="cl-chip-flow">
-              {sources.map(s => {
-                const SourceIcon = s.IconComp;
-                const isActive = source === s.id;
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => setSource(s.id)}
-                    className={`cl-chip-btn ${isActive ? 'active' : ''}`}
-                  >
-                    <SourceIcon size={14} color={isActive ? '#818CF8' : '#94A3B8'} />
-                    <span>{s.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Tile D: Medium Traffic Type Chips */}
-          <div className="cl-module-tile">
-            <h5 className="cl-tile-title">
-              <MousePointerClick size={15} />
-              <span>{lang === 'en' ? 'Medium Presets' : 'نوع الوسيط (Medium)'}</span>
-            </h5>
-            <div className="cl-chip-flow">
-              {mediums.map(m => {
-                const MediumIcon = m.IconComp;
-                const isActive = medium === m.id;
-                return (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => setMedium(m.id)}
-                    className={`cl-chip-btn ${isActive ? 'active' : ''}`}
-                  >
-                    <MediumIcon size={14} color={isActive ? '#818CF8' : '#94A3B8'} />
-                    <span>{m.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-        </div>
-
-        {/* ═══════════════ 3. ACTION DOCK: INSTANT DISPATCH BAR ═══════════════ */}
-        <div className="cl-tactical-dock">
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="cl-dock-btn primary"
+          {/* 🛢️ STATION 4: THE FINAL UTM TERMINAL VAULT */}
+          <motion.div 
+            className="cl-terminal-container cl-station-4-vault"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
           >
-            <Copy size={16} />
-            <span>{lang === 'en' ? '1-Click Copy UTM Link' : 'نسخ فوري لرابط الـ UTM'}</span>
-          </button>
+            <div className="cl-terminal-header">
+              <div className="cl-terminal-title">
+                <Terminal size={18} />
+                <span>{lang === 'en' ? 'Station 04 · UTM Terminal Vault' : 'محطة 4 · خزنة ومخرج رابط الـ UTM النهائي'}</span>
+              </div>
+              <div className="cl-terminal-dots">
+                <span className="cl-terminal-dot" style={{ background: '#EF4444' }} />
+                <span className="cl-terminal-dot" style={{ background: '#F59E0B' }} />
+                <span className="cl-terminal-dot" style={{ background: '#10B981' }} />
+              </div>
+            </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              dispatch({ type: 'COMPLETE_STEP', payload: 'campaign-launch' });
-              toast(lang === 'en' ? 'Campaign Tag saved to tracker!' : 'تم حفظ اسم وسجل الحملة بنجاح!', 'success');
-            }}
-            className="cl-dock-btn"
-          >
-            <CheckCircle2 size={16} style={{ color: '#34D399' }} />
-            <span>{lang === 'en' ? 'Save Campaign Tag' : 'حفظ وسجل الحملة'}</span>
-          </button>
+            {/* Real-time Color Coded Terminal Window */}
+            <div className="cl-terminal-body" dir="ltr">
+              <span className={rawBase ? "cl-token-base" : "cl-token-placeholder"}>
+                {rawBase || 'https://yourstore.com/offer'}
+              </span>
+              <span className="cl-token-sep">{sep}utm_source=</span>
+              <span className={source ? "cl-token-source" : "cl-token-placeholder"}>
+                {source || '[SELECT_SOURCE]'}
+              </span>
+              <span className="cl-token-sep">&utm_medium=</span>
+              <span className={medium ? "cl-token-medium" : "cl-token-placeholder"}>
+                {medium || '[SELECT_MEDIUM]'}
+              </span>
+              <span className="cl-token-sep">&utm_campaign=</span>
+              <span className={campaignName ? "cl-token-campaign" : "cl-token-placeholder"}>
+                {campaignName || '[CAMPAIGN_TAG]'}
+              </span>
+            </div>
+
+            {/* Digital Telemetry Gauges */}
+            <div className="cl-parameter-breakdown">
+              <div className="cl-breakdown-chip telemetry-source">
+                <Globe size={13} style={{ color: '#38BDF8' }} />
+                <span>Source Gauge: <strong>{source}</strong></span>
+              </div>
+              <div className="cl-breakdown-chip telemetry-medium">
+                <MousePointerClick size={13} style={{ color: '#34D399' }} />
+                <span>Medium Gauge: <strong>{medium}</strong></span>
+              </div>
+              <div className="cl-breakdown-chip telemetry-campaign">
+                <Tag size={13} style={{ color: '#C084FC' }} />
+                <span>Campaign Gauge: <strong>{campaignName}</strong></span>
+              </div>
+            </div>
+
+            {/* Tactical Action Dock Valves */}
+            <div className="cl-tactical-dock">
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="cl-dock-btn primary"
+              >
+                <Copy size={16} />
+                <span>{lang === 'en' ? '1-Click Copy UTM Link' : 'نسخ فوري لرابط الـ UTM'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  dispatch({ type: 'COMPLETE_STEP', payload: 'campaign-launch' });
+                  toast(lang === 'en' ? 'Campaign Tag saved to tracker!' : 'تم حفظ اسم وسجل الحملة بنجاح!', 'success');
+                }}
+                className="cl-dock-btn"
+              >
+                <CheckCircle2 size={16} style={{ color: '#34D399' }} />
+                <span>{lang === 'en' ? 'Save Campaign Tag' : 'حفظ وسجل الحملة'}</span>
+              </button>
+            </div>
+          </motion.div>
+
         </div>
 
       </div>

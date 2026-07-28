@@ -191,27 +191,23 @@ function TargetMarketDropdown({ value, onChange, options, lang }) {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
+        className="ns-dropdown-trigger"
         style={{
           width: '100%',
           minHeight: '46px',
-          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8))',
-          border: '1px solid rgba(99, 102, 241, 0.4)',
           borderRadius: '14px',
-          color: '#fff',
           padding: '0 14px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           cursor: 'pointer',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.25)',
-          backdropFilter: 'blur(10px)',
           transition: 'all 0.2s ease',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '20px' }}>{selectedOption.flag}</span>
           <div style={{ textAlign: lang === 'ar' ? 'right' : 'left' }}>
-            <div style={{ fontSize: '13px', fontWeight: '800', color: '#fff' }}>
+            <div className="ns-heading-title" style={{ fontSize: '13px', fontWeight: '800' }}>
               {lang === 'en' ? selectedOption.name_en : selectedOption.name_ar}
             </div>
             {selectedOption.region && (
@@ -241,18 +237,15 @@ function TargetMarketDropdown({ value, onChange, options, lang }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.15 }}
+            className="ns-dropdown-menu"
             style={{
               position: 'absolute',
               top: 'calc(100% + 6px)',
               left: 0,
               right: 0,
               zIndex: 9999,
-              background: '#0F172A',
-              border: '1px solid rgba(99, 102, 241, 0.4)',
               borderRadius: '14px',
               padding: '10px',
-              boxShadow: '0 15px 40px rgba(0, 0, 0, 0.6)',
-              backdropFilter: 'blur(16px)',
               maxHeight: '340px',
               display: 'flex',
               flexDirection: 'column',
@@ -266,13 +259,11 @@ function TargetMarketDropdown({ value, onChange, options, lang }) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={lang === 'en' ? 'Search market or country...' : 'ابحث عن الدولة أو السوق...'}
+                className="ns-dropdown-search-input"
                 style={{
                   width: '100%',
                   padding: lang === 'ar' ? '8px 32px 8px 12px' : '8px 12px 8px 32px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '10px',
-                  color: '#fff',
                   fontSize: '12px',
                   outline: 'none',
                 }}
@@ -281,7 +272,7 @@ function TargetMarketDropdown({ value, onChange, options, lang }) {
 
             <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
               {filteredOptions.length === 0 ? (
-                <div style={{ padding: '12px', textAlign: 'center', fontSize: '12px', color: '#64748B' }}>
+                <div className="ns-subtext" style={{ padding: '12px', textAlign: 'center', fontSize: '12px' }}>
                   {lang === 'en' ? 'No markets found' : 'لم يتم العثور على نتائج'}
                 </div>
               ) : (
@@ -295,6 +286,7 @@ function TargetMarketDropdown({ value, onChange, options, lang }) {
                         setIsOpen(false);
                         setSearchQuery('');
                       }}
+                      className={`ns-dropdown-option ${isSelected ? 'selected' : ''}`}
                       style={{
                         padding: '10px 12px',
                         borderRadius: '10px',
@@ -302,15 +294,13 @@ function TargetMarketDropdown({ value, onChange, options, lang }) {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        background: isSelected ? 'rgba(99, 102, 241, 0.2)' : 'transparent',
-                        border: `1px solid ${isSelected ? 'rgba(99, 102, 241, 0.4)' : 'transparent'}`,
                         transition: 'all 0.15s ease',
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <span style={{ fontSize: '18px' }}>{opt.flag}</span>
                         <div>
-                          <div style={{ fontSize: '12px', fontWeight: isSelected ? '800' : '600', color: isSelected ? '#fff' : '#CBD5E1' }}>
+                          <div className="ns-dropdown-option-title" style={{ fontSize: '12px', fontWeight: isSelected ? '800' : '600' }}>
                             {lang === 'en' ? opt.name_en : opt.name_ar}
                           </div>
                         </div>
@@ -1436,14 +1426,10 @@ export default function AnalysisIdentity() {
 
           {/* ═══════════════ 1. TARGET MARKET & GLOBAL BENCHMARK FILTER BAR ═══════════════ */}
           <div
+            className="ns-panel-card"
             style={{
-              background: 'linear-gradient(135deg, rgba(17, 24, 39, 0.9), rgba(13, 18, 32, 0.95))',
-              border: '1px solid rgba(99, 102, 241, 0.25)',
-              borderRadius: '16px',
               padding: '18px 20px',
               marginBottom: '20px',
-              boxShadow: '0 8px 24px -6px rgba(0, 0, 0, 0.3)',
-              backdropFilter: 'blur(10px)',
               position: 'relative',
               zIndex: 100,
             }}
@@ -1460,13 +1446,13 @@ export default function AnalysisIdentity() {
               {/* Target Country Selector */}
               <div style={{ flex: '1 1 280px', position: 'relative', zIndex: 200 }}>
                 <label
+                  className="ns-label"
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
                     fontSize: '13px',
                     fontWeight: '800',
-                    color: '#C7D2FE',
                     marginBottom: '8px',
                   }}
                 >
@@ -1489,13 +1475,14 @@ export default function AnalysisIdentity() {
               <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div
                   onClick={() => setIsGlobalBenchmark(!isGlobalBenchmark)}
+                  className="ns-benchmark-btn"
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '10px',
                     background: isGlobalBenchmark
                       ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(16, 185, 129, 0.25))'
-                      : 'rgba(255, 255, 255, 0.05)',
+                      : 'transparent',
                     border: `1px solid ${isGlobalBenchmark ? '#6366F1' : 'rgba(255, 255, 255, 0.1)'}`,
                     padding: '10px 18px',
                     borderRadius: '14px',
@@ -1505,10 +1492,10 @@ export default function AnalysisIdentity() {
                 >
                   <Globe size={18} color={isGlobalBenchmark ? '#10B981' : '#94A3B8'} />
                   <div>
-                    <div style={{ fontSize: '13px', fontWeight: '800', color: isGlobalBenchmark ? '#fff' : '#CBD5E1' }}>
+                    <div className="ns-heading-title" style={{ fontSize: '13px', fontWeight: '800' }}>
                       {lang === 'en' ? 'Global Benchmark / عالمي' : 'المقارنة المرجعية العالمية (Global)'}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#94A3B8' }}>
+                    <div className="ns-subtext" style={{ fontSize: '11px' }}>
                       {lang === 'en' ? 'Compare primary vs. top potential market' : 'قارن سوقك المحلي بأفضل سوق بديل'}
                     </div>
                   </div>
@@ -1543,11 +1530,10 @@ export default function AnalysisIdentity() {
             {/* Global Benchmark Comparative Summary Box */}
             {isGlobalBenchmark && (
               <div
+                className="ns-global-card"
                 style={{
                   marginTop: '16px',
                   padding: '16px',
-                  background: 'rgba(99, 102, 241, 0.08)',
-                  border: '1px solid rgba(99, 102, 241, 0.3)',
                   borderRadius: '14px',
                   display: 'flex',
                   flexDirection: 'column',
@@ -1571,11 +1557,11 @@ export default function AnalysisIdentity() {
                 ) : aiData.benchmark ? (
                   <>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
-                      <div style={{ background: 'rgba(0, 0, 0, 0.3)', padding: '14px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                        <div style={{ fontSize: '12px', color: '#94A3B8', fontWeight: '700' }}>
+                      <div className="ns-subcard" style={{ padding: '14px', borderRadius: '12px' }}>
+                        <div className="ns-subtext" style={{ fontSize: '12px', fontWeight: '700' }}>
                           {lang === 'en' ? 'Primary Target Country:' : 'سوقك المستهدف الأساسي:'}
                         </div>
-                        <div style={{ fontSize: '15px', fontWeight: '900', color: '#fff', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div className="ns-heading-title" style={{ fontSize: '15px', fontWeight: '900', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <span>{COUNTRY_OPTIONS.find(c => c.id === targetCountry)?.flag || '🇸🇦'}</span>
                           <span>{lang === 'en' ? COUNTRY_OPTIONS.find(c => c.id === targetCountry)?.name_en : COUNTRY_OPTIONS.find(c => c.id === targetCountry)?.name_ar}</span>
                         </div>
@@ -1585,14 +1571,14 @@ export default function AnalysisIdentity() {
                         </div>
                       </div>
 
-                      <div style={{ background: 'rgba(16, 185, 129, 0.08)', padding: '14px', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+                      <div className="ns-opp-card-green" style={{ padding: '14px', borderRadius: '12px' }}>
                         <div style={{ fontSize: '12px', color: '#10B981', fontWeight: '700' }}>
                           {lang === 'en' ? 'Recommended Benchmark Country:' : 'السوق المرجعي الموصى به:'}
                         </div>
-                        <div style={{ fontSize: '15px', fontWeight: '900', color: '#fff', marginTop: '4px' }}>
+                        <div className="ns-heading-title" style={{ fontSize: '15px', fontWeight: '900', marginTop: '4px' }}>
                           {aiData.benchmark.alternativeMarket?.name || '—'}
                         </div>
-                        <div style={{ fontSize: '11px', color: '#E2E8F0', marginTop: '6px', lineHeight: '1.4', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div className="ns-list-item" style={{ fontSize: '11px', marginTop: '6px', lineHeight: '1.4', display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <Zap size={14} color="#F59E0B" />
                           <span>{aiData.benchmark.alternativeMarket?.surge || '—'}</span>
                         </div>
@@ -1600,14 +1586,14 @@ export default function AnalysisIdentity() {
                     </div>
 
                     {aiData.benchmark.recommendation && (
-                      <div style={{ fontSize: '12px', color: '#CBD5E1', background: 'rgba(0, 0, 0, 0.25)', padding: '10px 14px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div className="ns-subcard" style={{ fontSize: '12px', padding: '10px 14px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Sparkles size={14} color="#F59E0B" />
-                        <span>{aiData.benchmark.recommendation}</span>
+                        <span className="ns-list-item">{aiData.benchmark.recommendation}</span>
                       </div>
                     )}
                   </>
                 ) : (
-                  <div style={{ fontSize: '12px', color: '#64748B', textAlign: 'center', padding: '10px' }}>
+                  <div className="ns-subtext" style={{ fontSize: '12px', textAlign: 'center', padding: '10px' }}>
                     {lang === 'en' ? 'Select a niche to calculate benchmark comparison.' : 'اختر تخصصاً لحساب المقارنة المرجعية.'}
                   </div>
                 )}
@@ -1648,25 +1634,22 @@ export default function AnalysisIdentity() {
           {/* ═══════════════ 2. MAIN NICHE STATS CARDS ═══════════════ */}
           {selectedNiche && (
             <div
+              className="ns-panel-card"
               style={{
-                background: 'linear-gradient(135deg, rgba(17, 24, 39, 0.85), rgba(13, 18, 32, 0.95))',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
-                borderRadius: '16px',
                 padding: '18px 20px',
                 marginBottom: '20px',
-                backdropFilter: 'blur(12px)',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
                 <BarChart3 size={20} color="#6366F1" />
-                <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '900', color: '#fff' }}>
+                <h4 className="ns-heading-title" style={{ margin: 0, fontSize: '14px', fontWeight: '900' }}>
                   {lang === 'en' ? `AI Market Insights: ${selectedNiche.label_en || selectedNiche.id}` : `مؤشرات الذكاء الاصطناعي لتخصص: ${selectedNiche.label_ar || selectedNiche.id}`}
                 </h4>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-                <div style={{ background: 'rgba(0, 0, 0, 0.3)', padding: '14px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                  <div style={{ fontSize: '11px', fontWeight: '700', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div className="ns-subcard" style={{ padding: '14px', borderRadius: '12px' }}>
+                  <div className="ns-subtext" style={{ fontSize: '11px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <TrendingUp size={14} color="#10B981" />
                     <span>{lang === 'en' ? 'Market Growth Rate' : 'حجم نمو المجال (CAGR)'}</span>
                   </div>
@@ -1675,8 +1658,8 @@ export default function AnalysisIdentity() {
                   </div>
                 </div>
 
-                <div style={{ background: 'rgba(0, 0, 0, 0.3)', padding: '14px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                  <div style={{ fontSize: '11px', fontWeight: '700', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div className="ns-subcard" style={{ padding: '14px', borderRadius: '12px' }}>
+                  <div className="ns-subtext" style={{ fontSize: '11px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Compass size={14} color="#3B82F6" />
                     <span>{lang === 'en' ? 'Market Saturation' : 'مدى تشبع السوق'}</span>
                   </div>
@@ -1698,8 +1681,8 @@ export default function AnalysisIdentity() {
                   </div>
                 </div>
 
-                <div style={{ background: 'rgba(0, 0, 0, 0.3)', padding: '14px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                  <div style={{ fontSize: '11px', fontWeight: '700', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div className="ns-subcard" style={{ padding: '14px', borderRadius: '12px' }}>
+                  <div className="ns-subtext" style={{ fontSize: '11px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Coins size={14} color="#F59E0B" />
                     <span>{lang === 'en' ? 'Expected ROI' : 'العائد المتوقع على الاستثمار'}</span>
                   </div>
@@ -1731,10 +1714,8 @@ export default function AnalysisIdentity() {
           {/* Sub-niches Advanced List */}
           {selectedNiche && (
             <div
+              className="ns-panel-card"
               style={{
-                background: "rgba(11, 15, 23, 0.5)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "12px",
                 padding: "18px",
                 marginBottom: "20px",
               }}
@@ -1906,10 +1887,8 @@ export default function AnalysisIdentity() {
               {/* ═══════════════ 3. MICRO-NICHE DEEP DIVE VIEWS (2-TAB COMPONENT) ═══════════════ */}
               {state.subNiche && (
                 <div
+                  className="ns-panel-card"
                   style={{
-                    background: 'rgba(0, 0, 0, 0.35)',
-                    border: '1px solid rgba(99, 102, 241, 0.25)',
-                    borderRadius: '16px',
                     padding: '18px',
                     marginBottom: '20px',
                     marginTop: '16px',
@@ -1975,14 +1954,14 @@ export default function AnalysisIdentity() {
                       </div>
                     ) : aiData.marketOpportunities ? (
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
-                        <div style={{ background: 'rgba(16, 185, 129, 0.06)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '12px', padding: '14px' }}>
+                        <div className="ns-opp-card-green" style={{ borderRadius: '12px', padding: '14px' }}>
                           <div style={{ fontSize: '13px', fontWeight: '800', color: '#10B981', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <CheckCircle2 size={16} />
                             <span>{lang === 'en' ? 'Strengths & Growth Drivers' : 'نقاط القوة والمزايا التنافسية'}</span>
                           </div>
                           <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             {(aiData.marketOpportunities.strengths || []).map((item, idx) => (
-                              <li key={idx} style={{ fontSize: '12px', color: '#E2E8F0', lineHeight: '1.6', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                              <li key={idx} className="ns-list-item" style={{ fontSize: '12px', lineHeight: '1.6', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                                 <ShieldCheck size={14} color="#10B981" style={{ marginTop: 2, flexShrink: 0 }} />
                                 <span>{item}</span>
                               </li>
@@ -1990,14 +1969,14 @@ export default function AnalysisIdentity() {
                           </ul>
                         </div>
 
-                        <div style={{ background: 'rgba(99, 102, 241, 0.06)', border: '1px solid rgba(99, 102, 241, 0.2)', borderRadius: '12px', padding: '14px' }}>
+                        <div className="ns-opp-card-indigo" style={{ borderRadius: '12px', padding: '14px' }}>
                           <div style={{ fontSize: '13px', fontWeight: '800', color: '#818CF8', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <Target size={16} />
                             <span>{lang === 'en' ? 'Market Gaps & Opportunities' : 'الفجوات والفرص المتاحة في السوق'}</span>
                           </div>
                           <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             {(aiData.marketOpportunities.gaps || []).map((item, idx) => (
-                              <li key={idx} style={{ fontSize: '12px', color: '#E2E8F0', lineHeight: '1.6', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                              <li key={idx} className="ns-list-item" style={{ fontSize: '12px', lineHeight: '1.6', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                                 <Target size={14} color="#818CF8" style={{ marginTop: 2, flexShrink: 0 }} />
                                 <span>{item}</span>
                               </li>
@@ -2006,7 +1985,7 @@ export default function AnalysisIdentity() {
                         </div>
                       </div>
                     ) : (
-                      <div style={{ textAlign: 'center', padding: '24px', color: '#64748B', fontSize: '13px' }}>
+                      <div className="ns-subtext" style={{ textAlign: 'center', padding: '24px', fontSize: '13px' }}>
                         {lang === 'en' ? 'Click "Analyze Niche" below to fetch live market opportunities.' : 'اضغط "تحليل الفرصة" أدناه لعرض فرص السوق المباشرة.'}
                       </div>
                     )
@@ -2022,7 +2001,7 @@ export default function AnalysisIdentity() {
                       <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                           <thead>
-                            <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', color: '#94A3B8', textAlign: lang === 'en' ? 'left' : 'right' }}>
+                            <tr className="ns-table-head-row" style={{ textAlign: lang === 'en' ? 'left' : 'right' }}>
                               <th style={{ padding: '10px' }}>#</th>
                               <th style={{ padding: '10px' }}>{lang === 'en' ? 'Company Name' : 'اسم الشركة الرائدة'}</th>
                               <th style={{ padding: '10px' }}>{lang === 'en' ? 'Secret Sauce / Core Strategy' : 'سر التميز وما الذي جعلها تنجح'}</th>
@@ -2031,14 +2010,14 @@ export default function AnalysisIdentity() {
                           </thead>
                           <tbody>
                             {aiData.topLeaders.map((leader, index) => (
-                              <tr key={index} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)', color: '#E2E8F0' }}>
+                              <tr key={index} className="ns-table-row">
                                 <td style={{ padding: '10px', fontWeight: '800', color: '#10B981' }}>
                                   {index + 1}
                                 </td>
-                                <td style={{ padding: '10px', fontWeight: '800', color: '#fff' }}>
+                                <td className="ns-heading-title" style={{ padding: '10px', fontWeight: '800' }}>
                                   {leader.name}
                                 </td>
-                                <td style={{ padding: '10px', color: '#CBD5E1', lineHeight: '1.5' }}>
+                                <td className="ns-list-item" style={{ padding: '10px', lineHeight: '1.5' }}>
                                   {leader.secret}
                                 </td>
                                 <td style={{ padding: '10px', textAlign: 'center' }}>
@@ -2072,7 +2051,7 @@ export default function AnalysisIdentity() {
                         </table>
                       </div>
                     ) : (
-                      <div style={{ textAlign: 'center', padding: '24px', color: '#64748B', fontSize: '13px' }}>
+                      <div className="ns-subtext" style={{ textAlign: 'center', padding: '24px', fontSize: '13px' }}>
                         {lang === 'en' ? 'Click "Analyze Niche" below to reveal top market leaders.' : 'اضغط "تحليل الفرصة" أدناه لعرض رواد هذا المجال.'}
                       </div>
                     )
@@ -2157,11 +2136,10 @@ export default function AnalysisIdentity() {
 
               {/* Current Selected Field & Analyze Section Header */}
               <div
+                className="ns-panel-card"
                 style={{
                   marginTop: "16px",
                   padding: "16px",
-                  background: "rgba(15, 23, 42, 0.6)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
                   borderRadius: "14px",
                   display: "flex",
                   flexDirection: "column",
@@ -2171,9 +2149,9 @@ export default function AnalysisIdentity() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
                   <div style={{ flex: 1 }}>
                     <span
+                      className="ns-subtext"
                       style={{
                         fontSize: "10px",
-                        color: "#64748B",
                         fontWeight: "700",
                         textTransform: "uppercase",
                         letterSpacing: "0.04em",
@@ -2187,7 +2165,7 @@ export default function AnalysisIdentity() {
                       style={{
                         fontSize: "14px",
                         color: "#6366F1",
-                        fontWeight: "700",
+                        fontWeight: "800",
                       }}
                     >
                       {state.subNiche ||
@@ -2198,7 +2176,7 @@ export default function AnalysisIdentity() {
                   </div>
 
                   {/* 2. SECOND MODE SWITCH */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(0,0,0,0.4)", padding: "5px 8px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)" }}>
+                  <div className="ai-mode-switch-bar" style={{ display: "flex", alignItems: "center", gap: "8px", padding: "5px 8px", borderRadius: "12px" }}>
                     <span style={{ fontSize: "11px", color: "#94A3B8", fontWeight: "700", paddingLeft: "4px" }}>
                       {lang === "en" ? "Analysis Depth:" : "عمق التحليل:"}
                     </span>
@@ -2249,14 +2227,12 @@ export default function AnalysisIdentity() {
 
                 {/* Active Badge Indicator for Analysis Mode */}
                 <div
+                  className="ai-status-indicator-banner"
                   style={{
-                    background: analysisMode === "fast" ? "rgba(16, 185, 129, 0.08)" : "rgba(99, 102, 241, 0.08)",
-                    border: `1px solid ${analysisMode === "fast" ? "rgba(16, 185, 129, 0.25)" : "rgba(99, 102, 241, 0.25)"}`,
                     borderRadius: "10px",
                     padding: "10px 14px",
                     fontSize: "12px",
                     fontWeight: "700",
-                    color: "#E2E8F0",
                     display: "flex",
                     alignItems: "center",
                     gap: "8px",
@@ -2265,12 +2241,12 @@ export default function AnalysisIdentity() {
                   {analysisMode === "fast" ? (
                     <>
                       <Zap size={15} color="#10B981" />
-                      <span>{lang === "en" ? "⚡ Fast Mode Active: Instant radar scoring, basic ICP persona, and fast execution roadmap." : "⚡ النمط السريع مفعّل: تتبع فوري للسكور، تحديد العميل المثالي وخطة تنفيذ سريعة."}</span>
+                      <span>{lang === "en" ? "Fast Mode Active: Instant radar scoring, basic ICP persona, and fast execution roadmap." : "النمط السريع مفعّل: تتبع فوري للسكور، تحديد العميل المثالي وخطة تنفيذ سريعة."}</span>
                     </>
                   ) : (
                     <>
                       <Bot size={15} color="#818CF8" />
-                      <span>{lang === "en" ? "🤖 Live AI Deep Strategic Analysis Active: Real-time OpenAI deep-dive into market opportunities & positioning strategy." : "🤖 التحليل الاستراتيجي العميق مفعّل: تحليل دراسة جدوى وتنافسية كاملة بالذكاء الاصطناعي عبر OpenAI."}</span>
+                      <span>{lang === "en" ? "Live AI Deep Strategic Analysis Active: Real-time OpenAI deep-dive into market opportunities & positioning strategy." : "التحليل الاستراتيجي العميق مفعّل: تحليل دراسة جدوى وتنافسية كاملة بالذكاء الاصطناعي عبر OpenAI."}</span>
                     </>
                   )}
                 </div>
@@ -2389,8 +2365,8 @@ export default function AnalysisIdentity() {
                   <Zap size={12} strokeWidth={1.5} />
                   <span>
                     {lang === "en"
-                      ? "⚡ Fast Market Radar"
-                      : "⚡ رادار السوق السريع"}
+                      ? "Fast Market Radar"
+                      : "رادار السوق السريع"}
                   </span>
                 </button>
                 <button
@@ -2400,8 +2376,8 @@ export default function AnalysisIdentity() {
                   <Brain size={12} strokeWidth={1.5} />
                   <span>
                     {lang === "en"
-                      ? "🔮 Deep 360° Strategic Breakdown"
-                      : "🔮 التحليل الاستراتيجي الشامل"}
+                      ? "Deep 360° Strategic Breakdown"
+                      : "التحليل الاستراتيجي الشامل"}
                   </span>
                 </button>
               </div>
@@ -2478,9 +2454,9 @@ export default function AnalysisIdentity() {
                         </span>
                       </h4>
                       <p
+                        className="result-card-desc"
                         style={{
                           fontSize: "12px",
-                          color: "#F8FAFC",
                           lineHeight: "1.5",
                           margin: 0,
                         }}
@@ -2548,9 +2524,9 @@ export default function AnalysisIdentity() {
                       </span>
                     </div>
                     <div
+                      className="result-card-desc"
                       style={{
                         fontSize: "12px",
-                        color: "#F8FAFC",
                         lineHeight: 1.6,
                       }}
                     >
@@ -2586,9 +2562,9 @@ export default function AnalysisIdentity() {
                       </span>
                     </div>
                     <div
+                      className="result-card-desc"
                       style={{
                         fontSize: "12px",
-                        color: "#F8FAFC",
                         lineHeight: 1.6,
                       }}
                     >
@@ -2729,6 +2705,7 @@ export default function AnalysisIdentity() {
                       onClick={() => setNamingCategory(cat.id)}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
+                      className={`bn-cat-btn ${isCatSelected ? 'active' : ''}`}
                       style={{
                         flex: 1,
                         minWidth: "120px",
@@ -2736,11 +2713,6 @@ export default function AnalysisIdentity() {
                         fontSize: "12px",
                         borderRadius: "10px",
                         fontWeight: "600",
-                        background: isCatSelected
-                          ? "rgba(99, 102, 241, 0.18)"
-                          : "rgba(255, 255, 255, 0.03)",
-                        border: `1px solid ${isCatSelected ? "#6366F1" : "rgba(255, 255, 255, 0.08)"}`,
-                        color: isCatSelected ? "#ffffff" : "#94A3B8",
                         cursor: "pointer",
                         transition: "all 0.2s ease",
                         display: "flex",
@@ -2828,18 +2800,13 @@ export default function AnalysisIdentity() {
                     <button
                       key={opt.id}
                       onClick={() => setNameLanguage(opt.id)}
+                      className={`bn-lang-btn ${nameLanguage === opt.id ? 'active' : ''}`}
                       style={{
                         flex: 1,
                         padding: "8px 10px",
                         fontSize: "11px",
                         borderRadius: "8px",
                         fontWeight: "600",
-                        background:
-                          nameLanguage === opt.id
-                            ? "#6366F1"
-                            : "rgba(255, 255, 255, 0.03)",
-                        border: `1px solid ${nameLanguage === opt.id ? "#6366F1" : "rgba(255, 255, 255, 0.08)"}`,
-                        color: nameLanguage === opt.id ? "#fff" : "#94A3B8",
                         cursor: "pointer",
                         transition: "all 0.2s ease",
                       }}
@@ -2958,16 +2925,12 @@ export default function AnalysisIdentity() {
                             : [...prev, cat.id],
                         );
                       }}
+                      className={`bn-catalog-btn ${isChecked ? 'active' : ''}`}
                       style={{
                         padding: "6px 12px",
                         fontSize: "11px",
                         borderRadius: "8px",
                         fontWeight: "600",
-                        background: isChecked
-                          ? "rgba(99, 102, 241, 0.15)"
-                          : "rgba(255, 255, 255, 0.03)",
-                        border: `1px solid ${isChecked ? "#6366F1" : "rgba(255, 255, 255, 0.08)"}`,
-                        color: isChecked ? "#818CF8" : "#94A3B8",
                         cursor: "pointer",
                         transition: "all 0.2s ease",
                         display: "inline-flex",
@@ -3046,18 +3009,16 @@ export default function AnalysisIdentity() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
                 transition={{ duration: 0.3, ease: "easeOut" }}
+                className="naming-config-panel-2030"
                 style={{
-                  background: "rgba(11, 15, 23, 0.6)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                  borderRadius: "16px",
                   padding: "20px 24px",
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", borderBottom: "1px solid rgba(255,255,255,0.08)", paddingBottom: "10px" }}>
                   <h4
+                    className="ns-heading-title"
                     style={{
                       fontSize: "14px",
-                      color: "#fff",
                       fontWeight: "700",
                       margin: 0,
                       display: "flex",

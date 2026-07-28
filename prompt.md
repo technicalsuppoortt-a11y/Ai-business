@@ -1,7 +1,11 @@
-- in socialmedia:
-  - remove Tone of Voice from top
-  - make popup of Overcome Business Challenges and Leverage Product Advantages
-    - more professioanl popup
-    - it open in center of view
-    - and must work with https://api.openai.com/v1/chat/completions
+- Strategic Niche Selection in light mode
+
+  - Tab 1: Market Opportunities data is not appaer well
+  - Tab 2: Top 10 Leaders data is not appaer well
+  - data is not appaer well
+    - SELECTED SPECIALIZATION
+    - Tactical Fitness (Police/Military)
+
+- Brand Naming Studio
+  - cards is not appear well 
   

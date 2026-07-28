@@ -76,30 +76,20 @@ const CustomStudioSelectPill = ({ icon: IconComp, label, value, options, onChang
   }, []);
 
   return (
-    <div ref={dropdownRef} style={{ position: 'relative', display: 'inline-block' }}>
+    <div ref={dropdownRef} className="ps-select-pill-wrapper">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
+        className={`ps-select-pill-btn ${isOpen ? 'open' : ''}`}
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          background: 'rgba(15, 23, 42, 0.75)',
-          border: isOpen ? `1px solid ${color}` : '1px solid rgba(99, 102, 241, 0.25)',
-          boxShadow: isOpen ? `0 0 16px ${color}40` : 'none',
-          padding: '8px 14px',
-          borderRadius: '14px',
-          color: 'var(--text, #F8FAFC)',
-          fontSize: '12.5px',
-          fontWeight: '800',
-          cursor: 'pointer',
-          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          border: isOpen ? `1px solid ${color}` : undefined,
+          boxShadow: isOpen ? `0 0 16px ${color}40` : undefined,
         }}
       >
-        <IconComp size={14} color={color} />
-        <span style={{ color: '#818CF8', fontWeight: '700' }}>{label}:</span>
-        <span style={{ color: '#F8FAFC' }}>{lang === 'en' ? selectedOption?.name_en : selectedOption?.name_ar}</span>
-        <ChevronDown size={14} color="#818CF8" style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
+        <IconComp size={14} color={color} style={{ flexShrink: 0 }} />
+        <span style={{ color: color, fontWeight: '700' }}>{label}:</span>
+        <span className="ps-pill-val-text">{lang === 'en' ? selectedOption?.name_en : selectedOption?.name_ar}</span>
+        <ChevronDown size={14} color={color} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease', flexShrink: 0 }} />
       </button>
 
       <AnimatePresence>
@@ -109,20 +99,10 @@ const CustomStudioSelectPill = ({ icon: IconComp, label, value, options, onChang
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.98 }}
             transition={{ duration: 0.15 }}
+            className="ps-select-dropdown-card"
             style={{
-              position: 'absolute',
-              top: 'calc(100% + 6px)',
               [isRtl ? 'right' : 'left']: 0,
-              zIndex: 999,
-              minWidth: '220px',
-              background: '#0F172A',
               border: `1px solid ${color}60`,
-              borderRadius: '16px',
-              padding: '6px',
-              boxShadow: '0 16px 40px rgba(0,0,0,0.7), 0 0 20px rgba(99, 102, 241, 0.15)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '4px'
             }}
           >
             {options?.map(opt => {
@@ -135,20 +115,10 @@ const CustomStudioSelectPill = ({ icon: IconComp, label, value, options, onChang
                     onChange(opt.id);
                     setIsOpen(false);
                   }}
+                  className={`ps-select-dropdown-item ${isSelected ? 'selected' : ''}`}
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '8px 12px',
-                    borderRadius: '10px',
-                    background: isSelected ? `${color}25` : 'transparent',
-                    color: isSelected ? '#FFFFFF' : '#94A3B8',
-                    border: 'none',
-                    fontSize: '12.5px',
-                    fontWeight: isSelected ? '900' : '700',
-                    cursor: 'pointer',
+                    background: isSelected ? `${color}25` : undefined,
                     textAlign: isRtl ? 'right' : 'left',
-                    transition: 'all 0.15s ease'
                   }}
                 >
                   <span>{lang === 'en' ? opt.name_en : opt.name_ar}</span>
@@ -539,25 +509,31 @@ Generate step-by-step creation tools in ${isArabic ? 'Arabic' : 'English'}.`;
 
   const handleToggleProductCompleted = (productId, e) => {
     e?.stopPropagation();
-    setMyProducts(prev => {
-      let isCompleted = false;
-      const updated = prev.map(p => {
+
+    const targetItem = myProducts.find(p => p.id === productId);
+    if (!targetItem) return;
+
+    const willBeCompleted = !targetItem.completed;
+
+    setMyProducts(prev =>
+      prev.map(p => {
         if (p.id === productId) {
-          isCompleted = !p.completed;
-          return { ...p, completed: isCompleted, completedAt: isCompleted ? new Date().toISOString() : null };
+          return {
+            ...p,
+            completed: willBeCompleted,
+            completedAt: willBeCompleted ? new Date().toISOString() : null,
+          };
         }
         return p;
-      });
+      })
+    );
 
-      toast(
-        isCompleted
-          ? (lang === 'en' ? 'Product marked as Completed! Shifted to Completed Archive' : 'مبروك! تم نقل المنتج إلى قائمة المنتجات المنجزة')
-          : (lang === 'en' ? 'Product restored to Active Dock' : 'تمت إعادة المنتج إلى قائمة منتجاتي قيد التنفيذ'),
-        isCompleted ? 'success' : 'info'
-      );
-
-      return updated;
-    });
+    toast(
+      willBeCompleted
+        ? (lang === 'en' ? 'Product marked as Completed! Shifted to Completed Archive' : 'مبروك! تم نقل المنتج إلى قائمة المنتجات المنجزة')
+        : (lang === 'en' ? 'Product restored to Active Dock' : 'تمت إعادة المنتج إلى قائمة منتجاتي قيد التنفيذ'),
+      willBeCompleted ? 'success' : 'info'
+    );
   };
 
   // Filtered Lists
@@ -658,7 +634,7 @@ Generate step-by-step creation tools in ${isArabic ? 'Arabic' : 'English'}.`;
               )}
 
               {/* Analysis Mode Switcher */}
-              <div style={{ transform: 'scale(0.9)', transformOrigin: isRtl ? 'right center' : 'left center' }}>
+              <div className="ps-ams-wrap">
                 <AnalysisModeSelector 
                   mode={analysisMode} 
                   onChange={setAnalysisMode} 
@@ -669,7 +645,7 @@ Generate step-by-step creation tools in ${isArabic ? 'Arabic' : 'English'}.`;
             </div>
 
             {/* Search + PRIMARY STUDIO CTA BUTTON */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="ps-search-wrap" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{ position: 'relative', width: '220px' }}>
                 <Search size={14} color="#818CF8" style={{ position: 'absolute', [isRtl ? 'right' : 'left']: '12px', top: '50%', transform: 'translateY(-50%)' }} />
                 <input
@@ -677,13 +653,11 @@ Generate step-by-step creation tools in ${isArabic ? 'Arabic' : 'English'}.`;
                   placeholder={lang === 'en' ? 'Search ideas...' : 'بحث في الرادار...'}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  className="ps-search-input"
                   style={{
                     width: '100%',
                     height: '40px',
                     borderRadius: '12px',
-                    background: 'rgba(15, 23, 42, 0.75)',
-                    border: '1px solid rgba(99, 102, 241, 0.25)',
-                    color: 'var(--text, #F8FAFC)',
                     fontSize: '12px',
                     [isRtl ? 'paddingRight' : 'paddingLeft']: '34px'
                   }}
@@ -755,34 +729,36 @@ Generate step-by-step creation tools in ${isArabic ? 'Arabic' : 'English'}.`;
                         exit={{ opacity: 0, scale: 0.95 }}
                         className="ps-saas-card"
                         style={{
-                          background: 'rgba(15, 23, 42, 0.75)',
-                          border: '1px solid rgba(99, 102, 241, 0.25)',
-                          borderRadius: '20px',
-                          padding: '20px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          height: '100%',
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(99, 102, 241, 0.12)', border: '1px solid rgba(99, 102, 241, 0.3)', color: '#818CF8', padding: '3px 8px', borderRadius: '8px', fontSize: '11px', fontWeight: '800' }}>
-                            <Flame size={12} />
-                            <span>{idea.etsy_rank || `#${i + 1} Best Seller`}</span>
-                          </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(99, 102, 241, 0.12)', border: '1px solid rgba(99, 102, 241, 0.3)', color: '#818CF8', padding: '3px 8px', borderRadius: '8px', fontSize: '11px', fontWeight: '800' }}>
+                              <Flame size={12} />
+                              <span>{idea.etsy_rank || `#${i + 1} Best Seller`}</span>
+                            </span>
 
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34D399', padding: '3px 8px', borderRadius: '8px', fontSize: '11px', fontWeight: '800' }}>
-                            <DollarSign size={12} />
-                            <span>{lang === 'en' && idea.price_en ? idea.price_en : (idea.price_ar || idea.price)}</span>
-                          </span>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34D399', padding: '3px 8px', borderRadius: '8px', fontSize: '11px', fontWeight: '800' }}>
+                              <DollarSign size={12} />
+                              <span>{lang === 'en' && idea.price_en ? idea.price_en : (idea.price_ar || idea.price)}</span>
+                            </span>
+                          </div>
+
+                          <div>
+                            <h4 style={{ color: 'var(--text, #F8FAFC)', fontSize: '15px', fontWeight: '900', margin: '0 0 6px 0', lineHeight: 1.4 }}>
+                              {lang === 'en' && idea.name_en ? idea.name_en : (idea.name_ar || idea.name)}
+                            </h4>
+                            <p style={{ color: 'var(--text2, #94A3B8)', fontSize: '12.5px', lineHeight: 1.5, margin: 0 }}>
+                              {lang === 'en' && idea.desc_en ? idea.desc_en : (idea.desc_ar || idea.desc)}
+                            </p>
+                          </div>
                         </div>
 
-                        <div>
-                          <h4 style={{ color: 'var(--text, #F8FAFC)', fontSize: '15px', fontWeight: '900', margin: '0 0 6px 0', lineHeight: 1.4 }}>
-                            {lang === 'en' && idea.name_en ? idea.name_en : (idea.name_ar || idea.name)}
-                          </h4>
-                          <p style={{ color: 'var(--text2, #94A3B8)', fontSize: '12.5px', lineHeight: 1.5, margin: 0 }}>
-                            {lang === 'en' && idea.desc_en ? idea.desc_en : (idea.desc_ar || idea.desc)}
-                          </p>
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '16px' }}>
                           <button
                             type="button"
                             onClick={(e) => handleHelpBuildMyOwn(idea, e)}
@@ -929,23 +905,15 @@ Generate step-by-step creation tools in ${isArabic ? 'Arabic' : 'English'}.`;
                     {completedProducts.map((product, idx) => (
                       <div
                         key={product.id || idx}
-                        style={{
-                          background: 'rgba(16, 185, 129, 0.08)',
-                          border: '1px solid rgba(16, 185, 129, 0.3)',
-                          borderRadius: '12px',
-                          padding: '10px 12px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between'
-                        }}
+                        className="ps-completed-product-card"
                       >
-                        <span style={{ color: '#F8FAFC', fontSize: '12px', fontWeight: '800' }}>
+                        <span className="ps-completed-product-title">
                           {lang === 'en' && product.name_en ? product.name_en : (product.name_ar || product.name)}
                         </span>
                         <button
                           type="button"
                           onClick={(e) => handleToggleProductCompleted(product.id, e)}
-                          style={{ background: 'transparent', border: 'none', color: '#94A3B8', cursor: 'pointer' }}
+                          className="ps-restore-btn"
                         >
                           <RotateCcw size={13} />
                         </button>

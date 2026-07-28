@@ -923,7 +923,10 @@ export default function SocialMedia({ stepNumber }) {
         });
       } else {
         await new Promise((r) => setTimeout(r, 400));
-        res = `الكابشن الاحترافي:\n\n${captionTopic}\n\n💡 النكشة الأساسية: لا تنتظر الظروف المثالية لبدء عملك الرقمي، ابدأ بالموارد المتاحة حالياً وضاعف أرباحك باستمرار.\n\n👇 احفظ البوست عندك عشان ترجعله، وشاركنا رأيك في التعليقات!\n\n#${nicheField.replace(/\s+/g, "_")} ${attachedHashtag} #تسويق #عمل_حر #أرباح #ذكاء_اصطناعي`;
+        res =
+          lang === "en"
+            ? `### Professional Caption:\n\n${captionTopic}\n\n💡 **Core Hook:** Don't wait for perfect conditions to launch your digital business. Start with available resources today and scale consistently.\n\n👇 Save this post for later, and share your thoughts in the comments!\n\n#${nicheField.replace(/\s+/g, "_")} ${attachedHashtag || ""} #Marketing #Freelancing #Growth #AI`
+            : `الكابشن الاحترافي:\n\n${captionTopic}\n\n💡 النكشة الأساسية: لا تنتظر الظروف المثالية لبدء عملك الرقمي، ابدأ بالموارد المتاحة حالياً وضاعف أرباحك باستمرار.\n\n👇 احفظ البوست عندك عشان ترجعله، وشاركنا رأيك في التعليقات!\n\n#${nicheField.replace(/\s+/g, "_")} ${attachedHashtag} #تسويق #عمل_حر #أرباح #ذكاء_اصطناعي`;
       }
       setCaptionResult(res);
       dispatch({
@@ -973,7 +976,10 @@ export default function SocialMedia({ stepNumber }) {
         });
       } else {
         await new Promise((r) => setTimeout(r, 400));
-        res = `المحتوى المعاد صياغته بصيغة (${repurposeFormat}):\n\n1. **العنوان الرئيسي الجذاب:** "تجميعة أهم النقاط من النص الأصلي"\n\n2. **النقاط البصرية:**\n- النقطة الأولية: ${originalContent.slice(0, 60)}...\n- النقطة الثانية: أهم الخطوات التنفيذية للنجاح.\n\n3. **الخلاصة والدعوة للعمل:** تابع الحساب للمزيد من الشروحات القادمة!`;
+        res =
+          lang === "en"
+            ? `### Repurposed Content (${repurposeFormat}):\n\n1. **High Impact Title:** Key takeaways from original content\n\n2. **Visual Bullet Points:**\n- Point 1: ${originalContent.slice(0, 60)}...\n- Point 2: Core execution steps for growth and conversion.\n\n3. **Summary & CTA:** Follow for more insights!`
+            : `المحتوى المعاد صياغته بصيغة (${repurposeFormat}):\n\n1. **العنوان الرئيسي الجذاب:** "تجميعة أهم النقاط من النص الأصلي"\n\n2. **النقاط البصرية:**\n- النقطة الأولية: ${originalContent.slice(0, 60)}...\n- النقطة الثانية: أهم الخطوات التنفيذية للنجاح.\n\n3. **الخلاصة والدعوة للعمل:** تابع الحساب للمزيد من الشروحات القادمة!`;
       }
       setRepurposeResult(res);
       dispatch({
@@ -1022,7 +1028,10 @@ export default function SocialMedia({ stepNumber }) {
         });
       } else {
         await new Promise((r) => setTimeout(r, 400));
-        res = `الرد الاستراتيجي على سؤال (${qaQuestion}):\n\nأهلاً بك! سؤال ممتاز جداً. الإجابة المباشرة هي نعم، يمكنك تحقيق نتائج ممتازة في ${nicheField} من خلال اتباع خطوات مجربة بدون تعقيدات.\n\nأرسل لنا رسالة خاصة للحصول على التفاصيل الكاملة!`;
+        res =
+          lang === "en"
+            ? `### Strategic Response to Question (${qaQuestion}):\n\nWelcome! That is a great question. The direct answer is yes — you can achieve outstanding results in ${nicheField} by following proven steps with zero friction.\n\nDM us directly to get all the details!`
+            : `الرد الاستراتيجي على سؤال (${qaQuestion}):\n\nأهلاً بك! سؤال ممتاز جداً. الإجابة المباشرة هي نعم، يمكنك تحقيق نتائج ممتازة في ${nicheField} من خلال اتباع خطوات مجربة بدون تعقيدات.\n\nأرسل لنا رسالة خاصة للحصول على التفاصيل الكاملة!`;
       }
       setQaResult(res);
       dispatch({
@@ -2816,9 +2825,7 @@ export default function SocialMedia({ stepNumber }) {
                         gap: "12px",
                       }}
                     >
-                      <h5
-                        style={{ fontSize: "13px", color: "#94A3B8", margin: 0 }}
-                      >
+                      <h5 className="sm-section-heading-muted">
                         {lang === "en"
                           ? "Trending Hashtags:"
                           : "الهاشتاجات الرائجة:"}
@@ -2835,24 +2842,12 @@ export default function SocialMedia({ stepNumber }) {
                           } ${activeTrendingTopic === h.tag ? "active" : ""}`}
                         >
                           <div>
-                            <span
-                              style={{
-                                fontSize: "14px",
-                                fontWeight: "800",
-                                color: "#F8FAFC",
-                              }}
-                            >
+                            <span className="sm-trend-card-title">
                               {h.tag}
                             </span>
-                            <div
-                              style={{
-                                fontSize: "11px",
-                                color: "#94A3B8",
-                                marginTop: "2px",
-                              }}
-                            >
+                            <div className="sm-trend-card-subtext">
                               {lang === "en" ? "Growth:" : "معدل النمو:"}{" "}
-                              <strong style={{ color: "#34D399" }}>
+                              <strong style={{ color: "#10B981" }}>
                                 {h.growth}
                               </strong>
                             </div>
@@ -2890,9 +2885,7 @@ export default function SocialMedia({ stepNumber }) {
                         gap: "12px",
                       }}
                     >
-                      <h5
-                        style={{ fontSize: "13px", color: "#94A3B8", margin: 0 }}
-                      >
+                      <h5 className="sm-section-heading-muted">
                         {lang === "en"
                           ? "Trending Audio:"
                           : "الأصوات الصوتية الرائجة:"}
@@ -2913,16 +2906,10 @@ export default function SocialMedia({ stepNumber }) {
                           >
                             <Music2 size={16} style={{ color: "#C084FC" }} />
                             <div>
-                              <div
-                                style={{
-                                  fontSize: "13px",
-                                  fontWeight: "800",
-                                  color: "#F8FAFC",
-                                }}
-                              >
+                              <div className="sm-trend-card-title">
                                 {a.title}
                               </div>
-                              <div style={{ fontSize: "11px", color: "#94A3B8" }}>
+                              <div className="sm-trend-card-subtext">
                                 {a.creator} • {a.uses}
                               </div>
                             </div>
@@ -3000,7 +2987,7 @@ export default function SocialMedia({ stepNumber }) {
                         readOnly
                         value={selectedViralVideo ? selectedViralVideo.title : ""}
                         className="pcc-input"
-                        style={{ flex: 1, padding: "8px 14px", fontSize: "13px", color: "#F8FAFC" }}
+                        style={{ flex: 1, padding: "8px 14px", fontSize: "13px" }}
                       />
                       <button
                         type="button"
@@ -3022,7 +3009,7 @@ export default function SocialMedia({ stepNumber }) {
                     {isGeneratingAdaptation ? (
                       <div className="sm-processing-stage" style={{ minHeight: "220px", marginTop: "10px" }}>
                         <div className="sm-spinner-pulse" />
-                        <h3 style={{ fontSize: "15px", color: "#F8FAFC", margin: 0 }}>
+                        <h3 style={{ fontSize: "15px", margin: 0 }}>
                           {analysisMode === "live"
                             ? (lang === "en"
                                 ? "Generating live viral breakdown with OpenAI..."
@@ -3040,8 +3027,8 @@ export default function SocialMedia({ stepNumber }) {
                         style={{ display: "flex", flexDirection: "column", gap: "14px", marginTop: "10px" }}
                       >
                         {/* 1. Viral Video Idea Main Title */}
-                        <div className="sm-viral-exec-header" style={{ fontSize: "15px", color: "#60A5FA" }}>
-                          <Zap size={16} style={{ color: "#60A5FA" }} />
+                        <div className="sm-viral-exec-header" style={{ fontSize: "15px", color: "#2563EB" }}>
+                          <Zap size={16} style={{ color: "#2563EB" }} />
                           <span>
                             {lang === "en"
                               ? `✦ Viral Concept for ${nicheField}`
@@ -3050,7 +3037,7 @@ export default function SocialMedia({ stepNumber }) {
                         </div>
 
                         {/* 2. Introduction */}
-                        <p className="sm-viral-step-desc" style={{ background: "rgba(255,255,255,0.03)", padding: "12px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.06)", margin: 0 }}>
+                        <p className="sm-viral-step-desc" style={{ padding: "12px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.06)", margin: 0 }}>
                           {lang === "en"
                             ? `This trend leverages high visual curiosity. Adapting it for ${nicheField} establishes instant authority and converts viewers into direct leads.`
                             : `يعتمد هذا الترند على الجذب البصري السريع وفجوة الفضول، وتطبيقه في مجال ${nicheField} يبني الثقة المباشرة ويحفز المتابعين على اتخاذ إجراء.`}
@@ -3068,7 +3055,7 @@ export default function SocialMedia({ stepNumber }) {
 
                         {/* 4. Step-by-Step Action Plan */}
                         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                          <h5 style={{ fontSize: "13px", fontWeight: "800", color: "#F8FAFC", margin: 0 }}>
+                          <h5 className="sm-section-heading" style={{ fontSize: "13px", fontWeight: "800", margin: 0 }}>
                             {lang === "en" ? "✦ Step-by-Step Action Plan:" : "✦ خطوات تنفيذ الفيديو:"}
                           </h5>
 
@@ -3101,7 +3088,7 @@ export default function SocialMedia({ stepNumber }) {
                           {/* Step 3: Personal Branding Touch */}
                           <div className="sm-viral-step-card">
                             <div className="sm-viral-step-title">
-                              <User size={14} style={{ color: "#C084FC" }} />
+                              <User size={14} style={{ color: "#8B5CF6" }} />
                               <span>{lang === "en" ? "3. Personal Branding Touch & CTA" : "3. إضافة لمسة شخصية ودعوة للإجراء"}</span>
                             </div>
                             <div className="sm-viral-step-desc">
@@ -3130,7 +3117,7 @@ export default function SocialMedia({ stepNumber }) {
 
                   {/* 2. RIGHT PANE: VIRAL REELS LIST */}
                   <div className="sm-viral-pane">
-                    <h5 style={{ fontSize: "14px", fontWeight: "800", color: "#F8FAFC", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
+                    <h5 className="sm-section-heading" style={{ fontSize: "14px", fontWeight: "800", margin: 0, display: "flex", flexAlign: "center", gap: "8px" }}>
                       <Flame size={16} style={{ color: "#EF4444" }} />
                       <span>
                         {lang === "en"
@@ -3148,21 +3135,21 @@ export default function SocialMedia({ stepNumber }) {
                             onClick={() => handleSelectAndAdaptViralVideo(v)}
                             className={`sm-viral-reels-card ${isSelected ? "active" : ""}`}
                           >
-                            <div style={{ fontSize: "14px", fontWeight: "800", color: "#F8FAFC" }}>
+                            <div className="sm-reels-title">
                               {v.title}
                             </div>
 
                             <div className="sm-viral-card-meta">
                               <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                                <Music2 size={13} style={{ color: "#C084FC" }} />
+                                <Music2 size={13} style={{ color: "#8B5CF6" }} />
                                 <span>{v.audio}</span>
                               </span>
-                              <span style={{ display: "flex", alignItems: "center", gap: "4px", color: "#34D399" }}>
+                              <span style={{ display: "flex", alignItems: "center", gap: "4px", color: "#10B981" }}>
                                 <Flame size={12} style={{ color: "#EF4444" }} />
                                 <span>{v.views}</span>
                               </span>
-                              <span style={{ display: "flex", alignItems: "center", gap: "4px", color: "#60A5FA" }}>
-                                <Activity size={12} style={{ color: "#60A5FA" }} />
+                              <span style={{ display: "flex", alignItems: "center", gap: "4px", color: "#2563EB" }}>
+                                <Activity size={12} style={{ color: "#2563EB" }} />
                                 <span>{v.engagement}</span>
                               </span>
                             </div>
@@ -3176,7 +3163,7 @@ export default function SocialMedia({ stepNumber }) {
                               className="sm-pill-btn"
                               style={{
                                 borderColor: isSelected ? "#EF4444" : "rgba(255,255,255,0.15)",
-                                color: isSelected ? "#EF4444" : "#94A3B8",
+                                color: isSelected ? "#EF4444" : undefined,
                                 alignSelf: "flex-start",
                                 marginTop: "4px",
                               }}
@@ -3215,6 +3202,7 @@ export default function SocialMedia({ stepNumber }) {
                   </h4>
                 </div>
                 <div
+                  className="sm-energy-score-box"
                   style={{
                     background: "rgba(16,185,129,0.1)",
                     border: "1px solid rgba(16,185,129,0.3)",
@@ -3223,13 +3211,7 @@ export default function SocialMedia({ stepNumber }) {
                     textAlign: "center",
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: "12px",
-                      color: "#94A3B8",
-                      fontWeight: "800",
-                    }}
-                  >
+                  <span className="sm-energy-score-label">
                     {lang === "en"
                       ? "Current Creative Energy Score"
                       : "طاقة الإبداع الحالية"}
@@ -3238,19 +3220,13 @@ export default function SocialMedia({ stepNumber }) {
                     style={{
                       fontSize: "38px",
                       fontWeight: "900",
-                      color: "#34D399",
+                      color: "#10B981",
                       margin: "6px 0",
                     }}
                   >
                     {energyScore}%
                   </div>
-                  <span
-                    style={{
-                      fontSize: "13px",
-                      color: "#F8FAFC",
-                      fontWeight: "700",
-                    }}
-                  >
+                  <span className="sm-energy-score-status">
                     {lang === "en"
                       ? "Optimal balanced energy to maintain creation!"
                       : "حالة متزنة وممتازة لمواصلة الإنتاج!"}
@@ -3310,11 +3286,23 @@ export default function SocialMedia({ stepNumber }) {
                         : "توصيات الذكاء الاصطناعي لتفادي الإرهاق:"}
                     </strong>
                   </div>
-                  1. **نظام الدفعات (Batching):** قم بتسجيل الفيديوهات في يوم واحد فقط في الأسبوع لتقليل التشتت الذهني.
-                  <br />
-                  2. **أعِد استخدام المحتوى:** تحويل الفيديو الناجح إلى كاورسيل وبوست نصي يقلل مجهودك بنسبة 60%.
-                  <br />
-                  3. **خذ قسطاً من الراحة:** طاقتك الإبداعية الحالية {energyScore}% تتيح لك إنتاج {weeklyPostsCount} منشورات هذا الأسبوع بأريحية كاملة.
+                  {lang === "en" ? (
+                    <>
+                      1. <strong>Batching:</strong> Record all your videos in a single day per week to reduce mental fatigue.
+                      <br />
+                      2. <strong>Repurpose Content:</strong> Transforming a successful video into a carousel and text post reduces your effort by 60%.
+                      <br />
+                      3. <strong>Take Rest:</strong> Your current creative energy score of {energyScore}% allows you to comfortably produce {weeklyPostsCount} posts this week.
+                    </>
+                  ) : (
+                    <>
+                      1. <strong>نظام الدفعات (Batching):</strong> قم بتسجيل الفيديوهات في يوم واحد فقط في الأسبوع لتقليل التشتت الذهني.
+                      <br />
+                      2. <strong>أعِد استخدام المحتوى:</strong> تحويل الفيديو الناجح إلى كاورسيل وبوست نصي يقلل مجهودك بنسبة 60%.
+                      <br />
+                      3. <strong>خذ قسطاً من الراحة:</strong> طاقتك الإبداعية الحالية {energyScore}% تتيح لك إنتاج {weeklyPostsCount} منشورات هذا الأسبوع بأريحية كاملة.
+                    </>
+                  )}
                 </div>
               </motion.div>
             )}

@@ -229,6 +229,13 @@
   text-align: start;
 }
 
+.mp-radio-label {
+  font-weight: 800;
+  font-size: 13.5px;
+  color: #94A3B8;
+  transition: color 0.2s ease;
+}
+
 .mp-radio-card:hover {
   background: rgba(59, 130, 246, 0.08);
   border-color: rgba(59, 130, 246, 0.35);
@@ -240,6 +247,10 @@
   border-color: #3B82F6;
   color: #F8FAFC;
   box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
+}
+
+.mp-radio-card.active .mp-radio-label {
+  color: #F8FAFC;
 }
 
 .mp-radio-circle {
@@ -547,32 +558,88 @@
 
 /* Light Mode Support */
 :root.light-mode .mp-arc-nav,
+body.light-mode .mp-arc-nav,
+.light-mode .mp-arc-nav,
 :root.light-mode .mp-deck-canvas,
-:root.light-mode .mp-strategy-stage {
+body.light-mode .mp-deck-canvas,
+.light-mode .mp-deck-canvas,
+:root.light-mode .mp-strategy-stage,
+body.light-mode .mp-strategy-stage,
+.light-mode .mp-strategy-stage {
   background: #FFFFFF;
   border-color: #E2E8F0;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
 }
 
 :root.light-mode .mp-deck-title,
-:root.light-mode .mp-plan-block-title {
+body.light-mode .mp-deck-title,
+.light-mode .mp-deck-title,
+:root.light-mode .mp-plan-block-title,
+body.light-mode .mp-plan-block-title,
+.light-mode .mp-plan-block-title {
   color: #0F172A;
 }
 
 :root.light-mode .mp-deck-subtitle,
-:root.light-mode .mp-arc-step {
+body.light-mode .mp-deck-subtitle,
+.light-mode .mp-deck-subtitle,
+:root.light-mode .mp-arc-step,
+body.light-mode .mp-arc-step,
+.light-mode .mp-arc-step {
   color: #64748B;
 }
 
-:root.light-mode .mp-input,
-:root.light-mode .mp-radio-card,
-:root.light-mode .mp-plan-block {
-  background: #F8FAFC;
-  border-color: #E2E8F0;
-  color: #0F172A;
+:root.light-mode .mp-label,
+body.light-mode .mp-label,
+.light-mode .mp-label {
+  color: #2563EB;
 }
 
-:root.light-mode .mp-tactical-dock {
+:root.light-mode .mp-input,
+body.light-mode .mp-input,
+.light-mode .mp-input,
+:root.light-mode .mp-radio-card,
+body.light-mode .mp-radio-card,
+.light-mode .mp-radio-card,
+:root.light-mode .mp-plan-block,
+body.light-mode .mp-plan-block,
+.light-mode .mp-plan-block {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  color: #1E293B;
+}
+
+:root.light-mode .mp-radio-label,
+body.light-mode .mp-radio-label,
+.light-mode .mp-radio-label {
+  color: #475569;
+}
+
+:root.light-mode .mp-radio-card.active,
+body.light-mode .mp-radio-card.active,
+.light-mode .mp-radio-card.active {
+  background: #EFF6FF;
+  border-color: #3B82F6;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+}
+
+:root.light-mode .mp-radio-card.active .mp-radio-label,
+body.light-mode .mp-radio-card.active .mp-radio-label,
+.light-mode .mp-radio-card.active .mp-radio-label {
+  color: #1E40AF;
+}
+
+:root.light-mode .mp-btn-secondary,
+body.light-mode .mp-btn-secondary,
+.light-mode .mp-btn-secondary {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+  color: #1E293B;
+}
+
+:root.light-mode .mp-tactical-dock,
+body.light-mode .mp-tactical-dock,
+.light-mode .mp-tactical-dock {
   background: #FFFFFF;
   border-color: #CBD5E1;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);

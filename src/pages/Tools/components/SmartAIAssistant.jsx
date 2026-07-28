@@ -36,18 +36,22 @@ import {
   Copy,
   Check,
   RefreshCw,
-  ArrowRight,
-  ArrowLeft,
   X,
   ShieldCheck,
   Bot,
   Brain,
   Zap,
-  HelpCircle,
-  CheckCircle,
+  Terminal,
+  Save,
+  MessageSquarePlus,
+  SlidersHorizontal,
+  Layers,
+  Lightbulb,
   XCircle,
-  ChevronDown,
-  Lightbulb
+  CheckCircle,
+  Orbit,
+  Radio,
+  Compass
 } from 'lucide-react';
 import './SmartAIAssistant.css';
 
@@ -76,6 +80,54 @@ const PRICING_OPTIONS = [
   { id: 'mid', name_ar: 'متوسط ومنافس (Mid Ticket)', name_en: 'Mid Ticket / Competitive', IconComp: Banknote },
   { id: 'premium', name_ar: 'مرتفع/بريميوم (High Ticket)', name_en: 'High Ticket Premium', IconComp: Crown }
 ];
+
+const ORBITAL_COMMAND_NODES = [
+  {
+    id: 'outreach',
+    name_ar: 'صياغة تواصل بارد',
+    name_en: 'Write Cold Pitch',
+    IconComp: Mail,
+    color: '#3B82F6',
+    params: { selectedGoal: 'close_deal', selectedChannel: 'cold_email', selectedClient: 'creators', selectedPricing: 'mid' }
+  },
+  {
+    id: 'retainer',
+    name_ar: 'عقود ورتينر شركات',
+    name_en: 'Corporate Retainer',
+    IconComp: Building2,
+    color: '#8B5CF6',
+    params: { selectedGoal: 'retainer', selectedChannel: 'linkedin', selectedClient: 'enterprise', selectedPricing: 'premium' }
+  },
+  {
+    id: 'upsell',
+    name_ar: 'رفع قيمة عميل قائم',
+    name_en: 'Upsell Existing Client',
+    IconComp: TrendingUp,
+    color: '#10B981',
+    params: { selectedGoal: 'upsell', selectedChannel: 'instagram', selectedClient: 'startups', selectedPricing: 'mid' }
+  },
+  {
+    id: 'local_win',
+    name_ar: 'صفقات أنشطة محليّة',
+    name_en: 'Local Shop Wins',
+    IconComp: Store,
+    color: '#F59E0B',
+    params: { selectedGoal: 'close_deal', selectedChannel: 'upwork', selectedClient: 'local_shops', selectedPricing: 'low' }
+  }
+];
+
+const REVOLVING_STATUS_BADGES = {
+  ar: [
+    'Synthesizing Neural Logic... (جاري معالجة المنطق العصبي والنيش)',
+    'Formulating Precision Output... (جاري بناء سيكولوجية الاستهداف)',
+    'Formatting Matrix Output... (جاري تهيئة المصفوفة الاستراتيجية)'
+  ],
+  en: [
+    'Synthesizing Neural Logic...',
+    'Formulating Precision Output...',
+    'Formatting Matrix Output...'
+  ]
+};
 
 const extractJSON = (text) => {
   try {
@@ -113,15 +165,43 @@ export default function SmartAIAssistant({ stepNumber }) {
   // AI loading and output state
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingPhase, setLoadingPhase] = useState('');
+  const [loadingStatusIndex, setLoadingStatusIndex] = useState(0);
   const [result, setResult] = useState(null);
   const [copiedSection, setCopiedSection] = useState(null);
   const [isFallbackActive, setIsFallbackActive] = useState(false);
+
+  // Stage mode: 'input' (Stage 1), 'loading' (Stage 2), 'output' (Stage 3)
+  const [activeStage, setActiveStage] = useState('input');
 
   useEffect(() => {
     if (state.apiKey) {
       setTempApiKey(state.apiKey);
     }
   }, [state.apiKey]);
+
+  // Loading badge status interval
+  useEffect(() => {
+    let interval;
+    if (isGenerating) {
+      interval = setInterval(() => {
+        setLoadingStatusIndex((prev) => (prev + 1) % 3);
+      }, 1300);
+    }
+    return () => clearInterval(interval);
+  }, [isGenerating]);
+
+  const applyOrbitalPreset = (node) => {
+    setSelectedGoal(node.params.selectedGoal);
+    setSelectedChannel(node.params.selectedChannel);
+    setSelectedClient(node.params.selectedClient);
+    setSelectedPricing(node.params.selectedPricing);
+    toast(
+      lang === 'en' 
+        ? `Orbital Command Synced: ${node.name_en}` 
+        : `تم ربط الأمر المداري: ${node.name_ar}`, 
+      'info'
+    );
+  };
 
   const handleSaveApiKey = async () => {
     if (!tempApiKey.trim()) return;
@@ -141,6 +221,7 @@ export default function SmartAIAssistant({ stepNumber }) {
   const handleGenerate = async () => {
     if (analysisMode === 'live') {
       setIsGenerating(true);
+      setActiveStage('loading');
       setResult(null);
       try {
         const liveResult = await dispatchLiveAiAnalysis({
@@ -192,15 +273,17 @@ export default function SmartAIAssistant({ stepNumber }) {
         };
 
         setResult(formattedResult);
+        setActiveStage('output');
         dispatch({
           type: 'SAVE_TOOL_RESULT',
           toolId: 'smart-ai-assistant',
           data: { selectedGoal, selectedChannel, selectedClient, selectedPricing, result: formattedResult, mode: 'live' }
         });
-        toast(lang === 'en' ? 'AI Strategy generated successfully!' : 'تم تحليل وصياغة الاستراتيجية بنجاح!', 'success');
+        toast(lang === 'en' ? 'AI Core Fusion strategy synthesized!' : 'تم التوليد المداري للاستراتيجية بنجاح!', 'success');
       } catch (err) {
         console.error(err);
         toast(lang === 'en' ? 'Error generating live strategy' : 'حدث خطأ أثناء التوليد المباشر', 'error');
+        setActiveStage('input');
       } finally {
         setIsGenerating(false);
       }
@@ -215,6 +298,7 @@ export default function SmartAIAssistant({ stepNumber }) {
     }
 
     setIsGenerating(true);
+    setActiveStage('loading');
     setResult(null);
 
     const goalName = GOAL_OPTIONS.find(o => o.id === selectedGoal)?.[lang === 'en' ? 'name_en' : 'name_ar'];
@@ -264,23 +348,31 @@ export default function SmartAIAssistant({ stepNumber }) {
     `;
 
     try {
-      setLoadingPhase(lang === 'en' ? 'Analyzing target parameters...' : 'جاري تحليل إعدادات الاستهداف الخاصة بك...');
+      setLoadingPhase(lang === 'en' ? 'Synthesizing Neural Logic...' : 'جاري معالجة المنطق العصبي واختبار المعايير...');
       await new Promise(r => setTimeout(r, 600));
       
       setLoadingPhase(lang === 'en' ? 'Simulating strategic pathways...' : 'جاري محاكاة مسارات الاستراتيجية للمجال...');
       const responseText = await callGemini(prompt, activeKey);
       
-      setLoadingPhase(lang === 'en' ? 'Finalizing matrix & script generation...' : 'جاري صياغة الاستراتيجية ومصفوفة الردود...');
+      setLoadingPhase(lang === 'en' ? 'Formatting precision matrix...' : 'جاري تنسيق مصفوفة المخرجات والرسائل...');
       const cleanedJson = extractJSON(responseText).trim();
       const parsedData = JSON.parse(cleanedJson);
       
       setResult(parsedData);
       setIsFallbackActive(false);
-      toast(lang === 'en' ? 'AI Strategy generated successfully!' : 'تم تحليل وصياغة الاستراتيجية بنجاح!', 'success');
+      setActiveStage('output');
+      dispatch({
+        type: 'SAVE_TOOL_RESULT',
+        toolId: 'smart-ai-assistant',
+        data: { selectedGoal, selectedChannel, selectedClient, selectedPricing, result: parsedData, mode: 'fast' }
+      });
+      toast(lang === 'en' ? 'AI Core Fusion strategy synthesized!' : 'تم التوليد المداري للاستراتيجية بنجاح!', 'success');
     } catch (error) {
       console.error('AI Generation Error:', error);
       setIsFallbackActive(true);
-      setResult(getFallbackStrategy(state.niche, state.subNiche, clientTypeName, channelName, pricingTierName, goalName));
+      const fallback = getFallbackStrategy(state.niche, state.subNiche, clientTypeName, channelName, pricingTierName, goalName);
+      setResult(fallback);
+      setActiveStage('output');
     } finally {
       setIsGenerating(false);
       setLoadingPhase('');
@@ -336,68 +428,28 @@ export default function SmartAIAssistant({ stepNumber }) {
     setTimeout(() => setCopiedSection(null), 2000);
   };
 
+  const handleSaveToWorkspace = () => {
+    if (!result) return;
+    dispatch({
+      type: 'SAVE_TOOL_RESULT',
+      toolId: 'smart-ai-assistant',
+      data: { selectedGoal, selectedChannel, selectedClient, selectedPricing, result, mode: analysisMode }
+    });
+    toast(lang === 'en' ? 'Docked to Workspace successfully!' : 'تم التثبيت في مساحة العمل بنجاح!', 'success');
+  };
+
   return (
     <ToolDashboardLayout
       id="smart-ai-assistant"
-      title={lang === 'en' ? 'Freelance AI Strategist' : 'الخبير الاستراتيجي للعمل الحر'}
-      subtitle={lang === 'en' ? 'A smart system that evaluates your marketing choices, corrects errors, and drafts customized outreach plans.' : 'نظام ذكي يقيم اختياراتك التسويقية، يصحح أخطاء الاستهداف، ويصيغ لك استراتيجية مخصصة بالكامل لمجالك.'}
+      title={lang === 'en' ? 'The Radial AI Core & Orbital Studio' : 'المحرك المداري التفاعلي بالذكاء الاصطناعي'}
+      subtitle={lang === 'en' ? 'An interactive radial ecosystem to calculate market fit, client psychographics, and outreach blueprints.' : 'بيئة تفاعلية مدارية مبتكرة لتحليل ملاءمة السوق وصياغة الاستراتيجيات الحية.'}
       stepNumber={stepNumber}
-      accentColor="#6366F1"
+      accentColor="#3B82F6"
       timeEstimate="5 - 15"
     >
-      <div className="smart-assistant-container" dir={isRtl ? 'rtl' : 'ltr'}>
+      <div className="radial-ecosystem-root" dir={isRtl ? 'rtl' : 'ltr'}>
         
-        {/* BRAND & NICHE PROFILE BANNER */}
-        <motion.div 
-          className="assistant-profile-banner"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="assistant-profile-info">
-            <div className="assistant-avatar-icon">
-              <Target size={24} />
-            </div>
-            <div>
-              <h4 style={{ margin: '0 0 4px 0', fontSize: '15px', color: '#fff', fontWeight: '900' }}>
-                {lang === 'en' ? 'Your Active Business Profile' : 'ملفك التجاري الحالي'}
-              </h4>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '11px', background: 'rgba(99, 102, 241, 0.2)', color: '#A5B4FC', padding: '3px 12px', borderRadius: '20px', border: '1px solid rgba(99, 102, 241, 0.3)', fontWeight: '800' }}>
-                  {state.niche ? (lang === 'en' ? `Niche: ${state.niche}` : `النيش: ${state.niche}`) : (lang === 'en' ? 'No niche selected' : 'لم يتم تحديد نيش')}
-                </span>
-                {state.subNiche && (
-                  <span style={{ fontSize: '11px', background: 'rgba(16, 185, 129, 0.2)', color: '#34D399', padding: '3px 12px', borderRadius: '20px', border: '1px solid rgba(16, 185, 129, 0.3)', fontWeight: '800' }}>
-                    {state.subNiche}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* API KEY CONTROLLER BUTTON */}
-          <button
-            onClick={() => setShowKeyModal(true)}
-            style={{
-              background: 'rgba(255, 255, 255, 0.08)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              borderRadius: '12px',
-              padding: '10px 18px',
-              fontSize: '12px',
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: '800',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <Key size={16} color="#F59E0B" />
-            <span>{state.apiKey ? (lang === 'en' ? 'Change Gemini Key' : 'تعديل مفتاح Gemini') : (lang === 'en' ? 'Add Gemini Key' : 'إضافة مفتاح Gemini')}</span>
-          </button>
-        </motion.div>
-
-        {/* GEMINI KEY INTERACTIVE MODAL (CENTERED VIA PORTAL) */}
+        {/* GEMINI KEY INTERACTIVE MODAL */}
         {showKeyModal && createPortal(
           <AnimatePresence key="gemini-key-portal">
             <motion.div 
@@ -409,45 +461,58 @@ export default function SmartAIAssistant({ stepNumber }) {
             >
               <motion.div 
                 className="gemini-modal-card"
-                initial={{ scale: 0.9, y: 20 }}
+                initial={{ scale: 0.92, y: 16 }}
                 animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.9, y: 20 }}
+                exit={{ scale: 0.92, y: 16 }}
                 onClick={e => e.stopPropagation()}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '900', color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Key size={20} color="#F59E0B" />
-                    <span>{lang === 'en' ? 'Configure Gemini API Key' : 'إعداد مفتاح الـ API لـ Gemini'}</span>
-                  </h3>
+                <div className="gemini-modal-accent-line" />
+                
+                <div className="gemini-modal-header">
+                  <div className="gemini-modal-title-group">
+                    <div className="gemini-modal-icon-wrap">
+                      <Key size={20} color="#F59E0B" />
+                    </div>
+                    <div>
+                      <h3 className="gemini-modal-title">
+                        {lang === 'en' ? 'Configure Gemini API Key' : 'إعداد مفتاح الـ API لـ Gemini'}
+                      </h3>
+                      <span className="gemini-modal-subtitle">
+                        {lang === 'en' ? 'Direct AI Calculation Engine' : 'محرك التوليد المباشر'}
+                      </span>
+                    </div>
+                  </div>
+                  
                   <button 
                     onClick={() => setShowKeyModal(false)}
-                    style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}
+                    className="gemini-modal-close-btn"
+                    aria-label="Close modal"
                   >
-                    <X size={20} />
+                    <X size={18} />
                   </button>
                 </div>
 
-                <p style={{ color: '#94A3B8', fontSize: '12px', lineHeight: 1.6, marginBottom: 20 }}>
+                <p className="gemini-modal-desc">
                   {lang === 'en' 
                     ? 'Enter your Google Gemini API key to power direct client-side strategic AI calculations.' 
                     : 'أدخل مفتاح الـ API الخاص بـ Google Gemini لتشغيل خبير الاستراتيجيات الذكي مباشرة عبر المتصفح.'}
                 </p>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <input 
-                    type="password"
-                    className="setting-field-input"
-                    placeholder="AIzaSy..."
-                    value={tempApiKey}
-                    onChange={e => setTempApiKey(e.target.value)}
-                    style={{ fontSize: '14px' }}
-                  />
+                <div className="gemini-modal-body">
+                  <div className="gemini-input-wrapper">
+                    <input 
+                      type="password"
+                      className="gemini-modal-input"
+                      placeholder="AIzaSy..."
+                      value={tempApiKey}
+                      onChange={e => setTempApiKey(e.target.value)}
+                    />
+                  </div>
 
-                  <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                  <div className="gemini-modal-actions">
                     <button 
                       onClick={() => setShowKeyModal(false)}
-                      className="btn btn-secondary"
-                      style={{ padding: '10px 18px', borderRadius: '10px', fontSize: '12px' }}
+                      className="gemini-modal-btn cancel"
                     >
                       {lang === 'en' ? 'Cancel' : 'إلغاء'}
                     </button>
@@ -455,8 +520,7 @@ export default function SmartAIAssistant({ stepNumber }) {
                     <button 
                       onClick={handleSaveApiKey}
                       disabled={isSavingKey || !tempApiKey.trim()}
-                      className="btn btn-primary"
-                      style={{ background: '#6366F1', padding: '10px 22px', borderRadius: '10px', fontSize: '12px' }}
+                      className="gemini-modal-btn save"
                     >
                       {isSavingKey ? '...' : (lang === 'en' ? 'Save Key' : 'حفظ المفتاح')}
                     </button>
@@ -468,415 +532,461 @@ export default function SmartAIAssistant({ stepNumber }) {
           document.body
         )}
 
-        {/* MAIN TWO-COLUMN DASHBOARD */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', alignItems: 'start' }}>
+        <AnimatePresence mode="wait">
           
-          {/* LEFT COLUMN: PARAMETER CHOOSERS */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            
-            {/* GOAL SELECTOR */}
-            <div className="assistant-section-card">
-              <h4 className="assistant-section-title" style={{ color: '#6366F1' }}>
-                <Target size={18} />
-                <span>{lang === 'en' ? '1. Strategic Goal' : '1. الهدف الاستراتيجي للمشروع'}</span>
-              </h4>
-              <div className="assistant-options-grid">
-                {GOAL_OPTIONS.map(opt => {
-                  const OptIcon = opt.IconComp;
-                  const isSelected = selectedGoal === opt.id;
-                  return (
-                    <button
-                      key={opt.id}
-                      onClick={() => setSelectedGoal(opt.id)}
-                      className={`assistant-option-btn ${isSelected ? 'active' : ''}`}
-                      style={{
-                        '--opt-color': '#6366F1',
-                        '--opt-rgb': '99, 102, 241'
-                      }}
-                    >
-                      <div className="assistant-opt-icon">
-                        <OptIcon size={18} color={isSelected ? '#fff' : '#6366F1'} />
-                      </div>
-                      <span>{lang === 'en' ? opt.name_en : opt.name_ar}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* CLIENT TYPE SELECTOR */}
-            <div className="assistant-section-card">
-              <h4 className="assistant-section-title" style={{ color: '#10B981' }}>
-                <Building2 size={18} />
-                <span>{lang === 'en' ? '2. Target Client Type' : '2. الفئة المستهدفة للعملاء'}</span>
-              </h4>
-              <div className="assistant-options-grid">
-                {CLIENT_OPTIONS.map(opt => {
-                  const OptIcon = opt.IconComp;
-                  const isSelected = selectedClient === opt.id;
-                  return (
-                    <button
-                      key={opt.id}
-                      onClick={() => setSelectedClient(opt.id)}
-                      className={`assistant-option-btn ${isSelected ? 'active' : ''}`}
-                      style={{
-                        '--opt-color': '#10B981',
-                        '--opt-rgb': '16, 185, 129'
-                      }}
-                    >
-                      <div className="assistant-opt-icon">
-                        <OptIcon size={18} color={isSelected ? '#fff' : '#10B981'} />
-                      </div>
-                      <span>{lang === 'en' ? opt.name_en : opt.name_ar}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* OUTREACH CHANNEL */}
-            <div className="assistant-section-card">
-              <h4 className="assistant-section-title" style={{ color: '#3B82F6' }}>
-                <Mail size={18} />
-                <span>{lang === 'en' ? '3. Outreach Channel' : '3. قناة التواصل والوصول'}</span>
-              </h4>
-              <div className="assistant-options-grid">
-                {CHANNEL_OPTIONS.map(opt => {
-                  const OptIcon = opt.IconComp;
-                  const isSelected = selectedChannel === opt.id;
-                  return (
-                    <button
-                      key={opt.id}
-                      onClick={() => setSelectedChannel(opt.id)}
-                      className={`assistant-option-btn ${isSelected ? 'active' : ''}`}
-                      style={{
-                        '--opt-color': '#3B82F6',
-                        '--opt-rgb': '59, 130, 246'
-                      }}
-                    >
-                      <div className="assistant-opt-icon">
-                        <OptIcon size={18} color={isSelected ? '#fff' : '#3B82F6'} />
-                      </div>
-                      <span>{lang === 'en' ? opt.name_en : opt.name_ar}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* PRICING TIER */}
-            <div className="assistant-section-card">
-              <h4 className="assistant-section-title" style={{ color: '#F59E0B' }}>
-                <Tag size={18} />
-                <span>{lang === 'en' ? '4. Proposed Pricing' : '4. مستوى التسعير المقترح'}</span>
-              </h4>
-              <div className="assistant-options-grid">
-                {PRICING_OPTIONS.map(opt => {
-                  const OptIcon = opt.IconComp;
-                  const isSelected = selectedPricing === opt.id;
-                  return (
-                    <button
-                      key={opt.id}
-                      onClick={() => setSelectedPricing(opt.id)}
-                      className={`assistant-option-btn ${isSelected ? 'active' : ''}`}
-                      style={{
-                        '--opt-color': '#F59E0B',
-                        '--opt-rgb': '245, 158, 11'
-                      }}
-                    >
-                      <div className="assistant-opt-icon">
-                        <OptIcon size={18} color={isSelected ? '#fff' : '#F59E0B'} />
-                      </div>
-                      <span>{lang === 'en' ? opt.name_en : opt.name_ar}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Dual Mode Selector */}
-            <AnalysisModeSelector 
-              mode={analysisMode} 
-              onChange={setAnalysisMode} 
-              lang={lang} 
-              accentColor="#6366F1" 
-            />
-
-            {/* ACTION BUTTON */}
-            <button
-              onClick={handleGenerate}
-              disabled={isGenerating || !state.niche}
-              className="btn btn-primary"
-              style={{
-                background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
-                color: '#fff',
-                fontSize: '14px',
-                padding: '16px',
-                borderRadius: '14px',
-                boxShadow: '0 8px 24px rgba(99, 102, 241, 0.3)',
-                cursor: 'pointer',
-                fontWeight: '800',
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '10px'
-              }}
+          {/* ═══════════════ STAGE 1: FLOATING ORBITAL HUB ═══════════════ */}
+          {(activeStage === 'input' || (!isGenerating && !result)) && (
+            <motion.div 
+              key="stage-1-orbital-hub"
+              className="orbital-stage-wrapper"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.92 }}
+              transition={{ duration: 0.35 }}
             >
-              {isGenerating ? (
-                <>
-                  <span className="td-spinner" style={{ borderColor: 'rgba(255,255,255,0.2)', borderTopColor: '#fff', width: '18px', height: '18px' }} />
-                  <span>{loadingPhase}</span>
-                </>
-              ) : (
-                <>
-                  <Brain size={18} />
-                  <span>{lang === 'en' ? 'Analyze & Draft Strategy' : 'تحليل وتوليد الاستراتيجية الشاملة'}</span>
-                </>
-              )}
-            </button>
-          </div>
+              {/* ORBITAL COMMAND NODES RIBBON / ARC */}
+              <div className="orbital-nodes-arc">
+                <div className="orbital-ring-label">
+                  <Orbit size={16} className="orbit-spin-icon" />
+                  <span>{lang === 'en' ? 'Orbital Command Capsules:' : 'العُقد المدارية السريعة:'}</span>
+                </div>
 
-          {/* RIGHT COLUMN: AI CONVERSATION & OUTPUT */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            
-            {!result && !isGenerating && (
-              <div 
-                style={{
-                  background: 'rgba(15, 23, 42, 0.65)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  borderRadius: '24px',
-                  padding: '60px 24px',
-                  textAlign: 'center',
-                  minHeight: '420px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignItems: 'center'
-                }}
-              >
-                <Bot size={56} color="#818CF8" style={{ marginBottom: 16 }} />
-                <h3 style={{ color: '#fff', fontSize: '18px', fontWeight: '900', marginBottom: '8px' }}>
-                  {lang === 'en' ? 'AI Business Strategist is Waiting...' : 'الخبير الاستراتيجي للعمل الحر بانتظارك'}
-                </h3>
-                <p style={{ color: '#94A3B8', fontSize: '12.5px', lineHeight: '1.7', maxWidth: '380px', margin: 0 }}>
-                  {lang === 'en' 
-                    ? 'Set your goal, acquisition channel, target clients, and pricing. The AI will evaluate your plan, highlight errors, and output custom pitches.'
-                    : 'حدد أهدافك وقنوات الوصول والتسعير. وسيقوم الخبير الاستراتيجي بمراجعة خطتك، توجيهك للمسار الأصح وصياغة الرسائل المخصصة.'}
-                </p>
+                <div className="orbital-pills-row">
+                  {ORBITAL_COMMAND_NODES.map((node, i) => {
+                    const NodeIcon = node.IconComp;
+                    return (
+                      <motion.button
+                        key={node.id}
+                        onClick={() => applyOrbitalPreset(node)}
+                        className="orbital-pill-node"
+                        style={{ '--node-color': node.color }}
+                        animate={{ y: [i % 2 === 0 ? -4 : 4, i % 2 === 0 ? 4 : -4, i % 2 === 0 ? -4 : 4] }}
+                        transition={{ duration: 3 + i, repeat: Infinity, ease: 'easeInOut' }}
+                      >
+                        <NodeIcon size={14} />
+                        <span>{lang === 'en' ? node.name_en : node.name_ar}</span>
+                      </motion.button>
+                    );
+                  })}
+                </div>
               </div>
-            )}
 
-            {isGenerating && (
-              <div 
-                style={{
-                  background: 'rgba(15, 23, 42, 0.65)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  borderRadius: '24px',
-                  padding: '60px 24px',
-                  textAlign: 'center',
-                  minHeight: '420px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignItems: 'center'
-                }}
-              >
-                <div className="td-spinner" style={{ width: '48px', height: '48px', borderWidth: '4px', borderColor: 'rgba(99, 102, 241, 0.15)', borderTopColor: '#6366F1', marginBottom: '24px' }} />
-                <h4 style={{ color: '#fff', fontSize: '16px', fontWeight: '900', marginBottom: '8px' }}>
-                  {lang === 'en' ? 'Consulting Strategic Engine...' : 'جاري التشاور مع خبير الأعمال...'}
-                </h4>
-                <p style={{ color: '#818CF8', fontSize: '12px', fontWeight: '800' }}>
-                  {loadingPhase}
-                </p>
-              </div>
-            )}
+              {/* CENTRAL AI REACTOR NODE (RADIAL CORE) */}
+              <div className="radial-ai-core-hub">
+                <div className="core-spinning-neon-ring" />
+                <div className="core-glowing-inner-ring" />
 
-            {result && (
-              <motion.div 
-                className="animate-fade-in" 
-                style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-              >
-                
-                {isFallbackActive && (
-                  <div 
-                    style={{
-                      background: 'rgba(245, 158, 11, 0.1)',
-                      border: '1px solid rgba(245, 158, 11, 0.25)',
-                      borderRadius: '14px',
-                      padding: '14px 18px',
-                      color: '#F59E0B',
-                      fontSize: '12px',
-                      lineHeight: '1.6',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px'
-                    }}
+                {/* CORE HEADER */}
+                <div className="core-header-hud">
+                  <div className="core-identity-group">
+                    <div className="core-orb-pulse">
+                      <Brain size={24} className="core-brain-symbol" />
+                    </div>
+                    <div>
+                      <h3 className="core-matrix-title">
+                        {lang === 'en' ? 'RADIAL AI CORE MATRIX' : 'نواة التفاعل الذكي المداري'}
+                      </h3>
+                      <span className="core-matrix-niche">
+                        {state.niche ? `${state.niche} ${state.subNiche ? `• ${state.subNiche}` : ''}` : (lang === 'en' ? 'General Niche' : 'النيش العام')}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="core-top-actions">
+                    {/* Inline Engine Mode Micro-Toggle */}
+                    <div className="engine-micro-toggle">
+                      <button
+                        onClick={() => setAnalysisMode('fast')}
+                        className={`engine-pill ${analysisMode === 'fast' ? 'active-fast' : ''}`}
+                      >
+                        <Zap size={12} />
+                        <span>{lang === 'en' ? 'Fast AI' : 'سريع'}</span>
+                      </button>
+                      <button
+                        onClick={() => setAnalysisMode('live')}
+                        className={`engine-pill ${analysisMode === 'live' ? 'active-deep' : ''}`}
+                      >
+                        <Brain size={12} />
+                        <span>{lang === 'en' ? 'Deep AI' : 'عميق'}</span>
+                      </button>
+                    </div>
+
+                    <button
+                      onClick={() => setShowKeyModal(true)}
+                      className="core-key-btn"
+                    >
+                      <Key size={13} color="#F59E0B" />
+                      <span>{state.apiKey ? (lang === 'en' ? 'Key Set' : 'المفتاح') : (lang === 'en' ? 'Add Key' : 'إضافة المفتاح')}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* RADIAL PARAMETERS SECTORS */}
+                <div className="radial-sectors-matrix">
+                  
+                  {/* SECTOR 1: GOAL */}
+                  <div className="radial-sector-card cyan-tint">
+                    <div className="sector-title">
+                      <Target size={15} />
+                      <span>{lang === 'en' ? '1. Strategic Goal' : '1. الهدف الاستراتيجي'}</span>
+                    </div>
+                    <div className="sector-pills-wrap">
+                      {GOAL_OPTIONS.map((opt) => {
+                        const OptIcon = opt.IconComp;
+                        const isSelected = selectedGoal === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            onClick={() => setSelectedGoal(opt.id)}
+                            className={`sector-chip ${isSelected ? 'active cyan' : ''}`}
+                          >
+                            <OptIcon size={14} />
+                            <span>{lang === 'en' ? opt.name_en : opt.name_ar}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* SECTOR 2: CLIENT */}
+                  <div className="radial-sector-card emerald-tint">
+                    <div className="sector-title">
+                      <Building2 size={15} />
+                      <span>{lang === 'en' ? '2. Target Client Type' : '2. فئة العملاء'}</span>
+                    </div>
+                    <div className="sector-pills-wrap">
+                      {CLIENT_OPTIONS.map((opt) => {
+                        const OptIcon = opt.IconComp;
+                        const isSelected = selectedClient === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            onClick={() => setSelectedClient(opt.id)}
+                            className={`sector-chip ${isSelected ? 'active emerald' : ''}`}
+                          >
+                            <OptIcon size={14} />
+                            <span>{lang === 'en' ? opt.name_en : opt.name_ar}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* SECTOR 3: CHANNEL */}
+                  <div className="radial-sector-card purple-tint">
+                    <div className="sector-title">
+                      <Mail size={15} />
+                      <span>{lang === 'en' ? '3. Outreach Channel' : '3. قناة الوصول'}</span>
+                    </div>
+                    <div className="sector-pills-wrap">
+                      {CHANNEL_OPTIONS.map((opt) => {
+                        const OptIcon = opt.IconComp;
+                        const isSelected = selectedChannel === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            onClick={() => setSelectedChannel(opt.id)}
+                            className={`sector-chip ${isSelected ? 'active purple' : ''}`}
+                          >
+                            <OptIcon size={14} />
+                            <span>{lang === 'en' ? opt.name_en : opt.name_ar}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* SECTOR 4: PRICING */}
+                  <div className="radial-sector-card amber-tint">
+                    <div className="sector-title">
+                      <Tag size={15} />
+                      <span>{lang === 'en' ? '4. Proposed Pricing' : '4. مستوى التسعير'}</span>
+                    </div>
+                    <div className="sector-pills-wrap">
+                      {PRICING_OPTIONS.map((opt) => {
+                        const OptIcon = opt.IconComp;
+                        const isSelected = selectedPricing === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            onClick={() => setSelectedPricing(opt.id)}
+                            className={`sector-chip ${isSelected ? 'active amber' : ''}`}
+                          >
+                            <OptIcon size={14} />
+                            <span>{lang === 'en' ? opt.name_en : opt.name_ar}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* LAUNCH CORE FUSION TRIGGER BUTTON */}
+                <div className="core-fusion-trigger-row">
+                  <motion.button
+                    onClick={handleGenerate}
+                    disabled={isGenerating || !state.niche}
+                    className="core-fusion-launch-btn"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    <AlertTriangle size={18} />
+                    <Cpu size={22} className="fusion-spin-icon" />
                     <span>
-                      {lang === 'en' 
-                        ? 'Fallback strategy loaded. Please check your Gemini API key and connection settings.' 
-                        : 'تم تحميل الاستراتيجية الاحتياطية. يرجى التحقق من صحة مفتاح الـ API الخاص بـ Gemini وصلاحية الاتصال.'}
+                      {lang === 'en' ? 'LAUNCH CORE FUSION SYNTHESIS' : 'تشغيل محرك التوليد والاندماج المداري'}
+                    </span>
+                    <Zap size={20} />
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ═══════════════ STAGE 2: CORE FUSION ENGINE ═══════════════ */}
+          {activeStage === 'loading' && isGenerating && (
+            <motion.div 
+              key="stage-2-fusion-engine"
+              className="core-fusion-engine-stage"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 1.1, opacity: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <div className="fusion-holographic-orb-wrapper">
+                <div className="fusion-ring-1" />
+                <div className="fusion-ring-2" />
+                <div className="fusion-ring-3" />
+                
+                {/* Revolving Particle Nodes */}
+                <div className="fusion-particle p1" />
+                <div className="fusion-particle p2" />
+                <div className="fusion-particle p3" />
+
+                <div className="fusion-core-sphere">
+                  <Brain size={48} className="fusion-brain-pulse" />
+                </div>
+              </div>
+
+              <div className="fusion-status-display">
+                <h3 className="fusion-title">
+                  {lang === 'en' ? 'CORE FUSION ENGINE ACTIVE' : 'محرك الاندماج العصبوني نشط الان'}
+                </h3>
+                
+                {/* Dynamic Revolving Status Badge */}
+                <AnimatePresence mode="wait">
+                  <motion.div 
+                    key={loadingStatusIndex}
+                    className="revolving-status-pill"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    <Sparkles size={14} className="sparkle-revolve" />
+                    <span>{REVOLVING_STATUS_BADGES[lang][loadingStatusIndex]}</span>
+                  </motion.div>
+                </AnimatePresence>
+
+                <span className="fusion-phase-text">
+                  {loadingPhase || (lang === 'en' ? 'Synthesizing Neural Logic & Psychographics...' : 'جاري توليد المصفوفة وحساب المسارات...')}
+                </span>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ═══════════════ STAGE 3: EXPANDED RADIAL OUTPUT CANVAS ═══════════════ */}
+          {activeStage === 'output' && result && !isGenerating && (
+            <motion.div 
+              key="stage-3-expanded-canvas"
+              className="radial-output-canvas-stage"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.35 }}
+            >
+              {isFallbackActive && (
+                <div className="fallback-pill-alert">
+                  <AlertTriangle size={16} />
+                  <span>
+                    {lang === 'en' 
+                      ? 'Fallback strategy loaded. Please verify your Gemini API key.' 
+                      : 'تم تحميل الاستراتيجية الاحتياطية. يرجى التحقق من مفتاح API.'}
+                  </span>
+                </div>
+              )}
+
+              {/* EXPERT VERDICT & PATH CORRECTION CARD */}
+              <div className={`canvas-verdict-card ${result.is_combination_ideal ? 'ideal' : 'mismatch'}`}>
+                <div className="verdict-header-bar">
+                  <span className={`verdict-badge-tag ${result.is_combination_ideal ? 'ideal' : 'mismatch'}`}>
+                    {result.is_combination_ideal ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />}
+                    <span>{lang === 'en' ? result.verdict_badge_en : result.verdict_badge_ar}</span>
+                  </span>
+
+                  <button 
+                    onClick={() => setActiveStage('input')}
+                    className="reconfigure-orbit-btn"
+                  >
+                    <SlidersHorizontal size={13} />
+                    <span>{lang === 'en' ? 'Refine Orbital Core' : 'تعديل المعايير النواة'}</span>
+                  </button>
+                </div>
+
+                <h3 className="verdict-title-row">
+                  <ShieldCheck size={22} color={result.is_combination_ideal ? '#10B981' : '#EF4444'} />
+                  <span>{lang === 'en' ? 'AI Strategist Verdict:' : 'حكم وتوجيه الخبير الاستراتيجي:'}</span>
+                </h3>
+
+                <p className="verdict-body">
+                  {lang === 'en' ? result.expert_verdict_en : result.expert_verdict_ar}
+                </p>
+
+                {!result.is_combination_ideal && result.recommended_action_ar && (
+                  <div className="path-correction-box">
+                    <strong className="correction-tag">
+                      <Lightbulb size={14} />
+                      <span>{lang === 'en' ? 'Recommended Path Correction:' : 'تصحيح المسار المقترح من الخبير:'}</span>
+                    </strong>
+                    <span className="correction-text">
+                      {lang === 'en' ? result.recommended_action_en : result.recommended_action_ar}
                     </span>
                   </div>
                 )}
-                
-                {/* EXPERT VERDICT & PATH CORRECTION CARD */}
-                <div className={`verdict-result-card ${result.is_combination_ideal ? 'ideal' : 'mismatch'}`}>
-                  {/* Badge */}
-                  <div className={`verdict-status-badge ${result.is_combination_ideal ? 'ideal' : 'mismatch'}`}>
-                    {result.is_combination_ideal ? <CheckCircle2 size={12} /> : <AlertTriangle size={12} />}
-                    <span>{lang === 'en' ? result.verdict_badge_en : result.verdict_badge_ar}</span>
-                  </div>
+              </div>
 
-                  <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', color: '#fff', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <ShieldCheck size={20} color={result.is_combination_ideal ? '#10B981' : '#EF4444'} />
-                    <span>{lang === 'en' ? 'AI Strategist Verdict:' : 'حكم وتوجيه الخبير الاستراتيجي:'}</span>
-                  </h3>
-
-                  <p style={{ color: '#F1F5F9', fontSize: '13px', lineHeight: '1.8', margin: '0 0 16px 0' }}>
-                    {lang === 'en' ? result.expert_verdict_en : result.expert_verdict_ar}
-                  </p>
-
-                  {!result.is_combination_ideal && result.recommended_action_ar && (
-                    <div style={{ background: 'rgba(0,0,0,0.3)', padding: '14px 18px', borderRadius: '12px', borderInlineStart: '4px solid #EF4444' }}>
-                      <strong style={{ color: '#F87171', fontSize: '11px', display: 'flex', alignItems: 'center', gap: 4, marginBottom: '4px' }}>
-                        <Lightbulb size={14} />
-                        <span>{lang === 'en' ? 'Recommended Path Correction:' : 'تصحيح المسار المقترح من الخبير:'}</span>
-                      </strong>
-                      <span style={{ fontSize: '12.5px', color: '#fff', lineHeight: '1.6' }}>
-                        {lang === 'en' ? result.recommended_action_en : result.recommended_action_ar}
-                      </span>
-                    </div>
-                  )}
+              {/* PROPOSED STRATEGY CARD */}
+              <div className="canvas-section-card">
+                <div className="section-head">
+                  <Trophy size={16} className="text-purple-glow" />
+                  <h4>{lang === 'en' ? 'PROPOSED STRATEGY' : 'الاستراتيجية الشاملة المقترحة'}</h4>
                 </div>
+                <h3 className="strategy-headline">
+                  {lang === 'en' ? result.strategy_title_en : result.strategy_title_ar}
+                </h3>
+                <p className="strategy-paragraph">
+                  {lang === 'en' ? result.strategy_desc_en : result.strategy_desc_ar}
+                </p>
+              </div>
 
-                {/* OUTLINE STRATEGY DESCRIPTION */}
-                <div className="assistant-section-card">
-                  <h4 style={{ color: '#818CF8', fontSize: '11px', fontWeight: '900', margin: '0 0 8px 0', textTransform: 'uppercase', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Trophy size={14} color="#818CF8" />
-                    <span>{lang === 'en' ? 'PROPOSED STRATEGY' : 'الاستراتيجية الشاملة المقترحة'}</span>
-                  </h4>
-                  <h3 style={{ color: '#fff', fontSize: '16px', fontWeight: '900', margin: '0 0 12px 0' }}>
-                    {lang === 'en' ? result.strategy_title_en : result.strategy_title_ar}
-                  </h3>
-                  <p style={{ color: '#94A3B8', fontSize: '12.5px', lineHeight: '1.8', margin: 0 }}>
-                    {lang === 'en' ? result.strategy_desc_en : result.strategy_desc_ar}
-                  </p>
-                </div>
-
-                {/* CORE COMMUNICATIONS SCRIPT */}
-                <div className="assistant-section-card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: 10 }}>
+              {/* OUTREACH MESSAGE TEMPLATE */}
+              <div className="canvas-section-card">
+                <div className="section-head-between">
+                  <div className="section-head">
+                    <FileText size={16} className="text-emerald-glow" />
                     <div>
-                      <h4 style={{ color: '#34D399', fontSize: '11px', fontWeight: '900', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <FileText size={14} color="#34D399" />
-                        <span>{lang === 'en' ? 'Outreach Message Template' : 'سكريبت التواصل الأساسي المقترح'}</span>
-                      </h4>
-                      <span style={{ fontSize: '11px', color: '#94A3B8' }}>
-                        {lang === 'en' ? 'Fully tailored to client psychographics' : 'مكتوب بسيكولوجية عالية تناسب فئة العميل'}
+                      <h4>{lang === 'en' ? 'OUTREACH MESSAGE TEMPLATE' : 'سكريبت التواصل الأساسي المقترح'}</h4>
+                      <span className="section-subtitle">
+                        {lang === 'en' ? 'Tailored client psychographics pitch' : 'مكتوب بسيكولوجية عالية تناسب فئة العميل'}
                       </span>
                     </div>
-                    <button 
-                      onClick={() => copyToClipboard(lang === 'en' ? result.outreach_script_en : result.outreach_script_ar, 'script')}
-                      className="btn btn-secondary"
-                      style={{
-                        padding: '6px 14px',
-                        borderRadius: '10px',
-                        fontSize: '11px',
-                        fontWeight: '800',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6
-                      }}
-                    >
-                      <Copy size={13} />
-                      <span>{copiedSection === 'script' ? (lang === 'en' ? 'Copied!' : 'تم النسخ!') : (lang === 'en' ? 'Copy Pitch' : 'نسخ الرسالة')}</span>
-                    </button>
                   </div>
 
-                  {result.outreach_subject_ar && (
-                    <div style={{ background: 'rgba(0,0,0,0.3)', padding: '12px 16px', borderRadius: '10px', marginBottom: '14px', fontSize: '12px', color: '#fff', border: '1px solid rgba(255,255,255,0.06)' }}>
-                      <strong style={{ color: '#94A3B8' }}>{lang === 'en' ? 'Subject / Hook:' : 'عنوان الرسالة / الخطاف:'}</strong> {lang === 'en' ? result.outreach_subject_en : result.outreach_subject_ar}
+                  <button 
+                    onClick={() => copyToClipboard(lang === 'en' ? result.outreach_script_en : result.outreach_script_ar, 'script')}
+                    className="copy-pill-btn"
+                  >
+                    <Copy size={13} />
+                    <span>{copiedSection === 'script' ? (lang === 'en' ? 'Copied!' : 'تم النسخ!') : (lang === 'en' ? 'Copy Pitch' : 'نسخ الرسالة')}</span>
+                  </button>
+                </div>
+
+                {result.outreach_subject_ar && (
+                  <div className="subject-hook-pill">
+                    <strong className="subject-title">{lang === 'en' ? 'Subject / Hook:' : 'عنوان الرسالة / الخطاف:'}</strong>
+                    <span>{lang === 'en' ? result.outreach_subject_en : result.outreach_subject_ar}</span>
+                  </div>
+                )}
+
+                <div className="pitch-code-matrix">
+                  {lang === 'en' ? result.outreach_script_en : result.outreach_script_ar}
+                </div>
+              </div>
+
+              {/* OBJECTION HANDLING MATRIX */}
+              <div className="canvas-section-card">
+                <div className="section-head">
+                  <ShieldAlert size={16} className="text-amber-glow" />
+                  <h4>{lang === 'en' ? 'OBJECTION HANDLING MATRIX' : 'مصفوفة معالجة الاعتراضات المحتملة'}</h4>
+                </div>
+                
+                <div className="objections-wrapper">
+                  {result.objections?.map((obj, idx) => (
+                    <div key={idx} className="objection-card-row">
+                      <div className="client-say-line">
+                        <XCircle size={14} />
+                        <span>{lang === 'en' ? 'If Client says:' : 'إذا قال العميل:'} "{lang === 'en' ? obj.objection_en : obj.objection_ar}"</span>
+                      </div>
+                      <div className="strategic-reply-line">
+                        <CheckCircle size={14} />
+                        <span>{lang === 'en' ? 'Strategic Response:' : 'الرد الاستراتيجي:'} {lang === 'en' ? obj.response_en : obj.response_ar}</span>
+                      </div>
                     </div>
-                  )}
+                  ))}
+                </div>
+              </div>
 
-                  <div className="script-code-container">
-                    {lang === 'en' ? result.outreach_script_en : result.outreach_script_ar}
-                  </div>
+              {/* FOLLOW-UP TIMELINE SEQUENCE */}
+              <div className="canvas-section-card">
+                <div className="section-head">
+                  <Calendar size={16} className="text-cyan-glow" />
+                  <h4>{lang === 'en' ? 'FOLLOW-UP SEQUENCE ROADMAP' : 'خطة المتابعة التسلسلية (Follow-ups)'}</h4>
                 </div>
 
-                {/* OBJECTION HANDLING MATRIX */}
-                <div className="assistant-section-card">
-                  <h4 style={{ color: '#F59E0B', fontSize: '11px', fontWeight: '900', margin: '0 0 16px 0', textTransform: 'uppercase', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <ShieldAlert size={16} color="#F59E0B" />
-                    <span>{lang === 'en' ? 'Objection Handling Matrix' : 'مصفوفة معالجة الاعتراضات المحتملة'}</span>
-                  </h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {result.objections?.map((obj, idx) => (
-                      <div key={idx} className="objection-card-item">
-                        <div style={{ color: '#F87171', fontSize: '12px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <XCircle size={14} color="#F87171" />
-                          <span>{lang === 'en' ? 'If Client says:' : 'إذا قال العميل:'} "{lang === 'en' ? obj.objection_en : obj.objection_ar}"</span>
-                        </div>
-                        <div style={{ color: '#34D399', fontSize: '12px', lineHeight: '1.6', display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <CheckCircle size={14} color="#34D399" />
-                          <span>{lang === 'en' ? 'Respond with:' : 'الرد الاستراتيجي:'} {lang === 'en' ? obj.response_en : obj.response_ar}</span>
-                        </div>
+                <div className="timeline-sequence-list">
+                  {result.followups?.map((fup, idx) => (
+                    <div key={idx} className="timeline-node-item">
+                      <div className="timeline-glow-dot" />
+                      <div className="timeline-day-header">
+                        <Clock size={13} />
+                        <span>{lang === 'en' ? fup.day_en : fup.day_ar}</span>
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* FOLLOW-UP TIMELINE SEQUENCE */}
-                <div className="assistant-section-card">
-                  <h4 style={{ color: '#60A5FA', fontSize: '11px', fontWeight: '900', margin: '0 0 16px 0', textTransform: 'uppercase', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Calendar size={16} color="#60A5FA" />
-                    <span>{lang === 'en' ? 'Follow-Up Sequence Roadmap' : 'خطة المتابعة التسلسلية (Follow-ups)'}</span>
-                  </h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative', paddingInlineStart: '12px' }}>
-                    {result.followups?.map((fup, idx) => (
-                      <div 
-                        key={idx}
-                        style={{
-                          borderInlineStart: '2px solid rgba(96, 165, 250, 0.4)',
-                          paddingInlineStart: '16px',
-                          position: 'relative'
-                        }}
-                      >
-                        <div 
-                          style={{
-                            width: '10px',
-                            height: '10px',
-                            borderRadius: '50%',
-                            background: '#60A5FA',
-                            position: 'absolute',
-                            top: '4px',
-                            insetInlineStart: '-6px',
-                            boxShadow: '0 0 10px #60A5FA'
-                          }}
-                        />
-                        <div style={{ color: '#fff', fontSize: '12px', fontWeight: '900', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <Clock size={13} color="#60A5FA" />
-                          <span>{lang === 'en' ? fup.day_en : fup.day_ar}</span>
-                        </div>
-                        <div style={{ color: '#94A3B8', fontSize: '12px', lineHeight: '1.7', background: 'rgba(0,0,0,0.2)', padding: '12px 14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                          {lang === 'en' ? fup.message_en : fup.message_ar}
-                        </div>
+                      <div className="timeline-msg-bubble">
+                        {lang === 'en' ? fup.message_en : fup.message_ar}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
+              </div>
 
-              </motion.div>
-            )}
+              {/* FLOATING TACTICAL ORBITAL DOCK */}
+              <div className="tactical-orbital-dock">
+                <button 
+                  onClick={() => copyToClipboard(lang === 'en' ? result.outreach_script_en : result.outreach_script_ar, 'full')}
+                  className="orbital-dock-pill copy"
+                >
+                  <Copy size={15} />
+                  <span>{copiedSection === 'full' ? (lang === 'en' ? 'Copied!' : 'تم النسخ!') : (lang === 'en' ? 'Copy Response' : 'نسخ الاستراتيجية')}</span>
+                </button>
 
-          </div>
+                <button 
+                  onClick={handleGenerate}
+                  className="orbital-dock-pill regen"
+                >
+                  <RefreshCw size={15} />
+                  <span>{lang === 'en' ? 'Re-Orbit (Regenerate)' : 'إعادة التوليد المداري'}</span>
+                </button>
 
-        </div>
+                <button 
+                  onClick={() => setActiveStage('input')}
+                  className="orbital-dock-pill branch"
+                >
+                  <MessageSquarePlus size={15} />
+                  <span>{lang === 'en' ? 'Branch Query (Refine)' : 'تعديل مدخلات النواة'}</span>
+                </button>
+
+                <button 
+                  onClick={handleSaveToWorkspace}
+                  className="orbital-dock-pill dock"
+                >
+                  <Save size={15} />
+                  <span>{lang === 'en' ? 'Dock to Workspace' : 'تثبيت بالمساحة'}</span>
+                </button>
+              </div>
+
+            </motion.div>
+          )}
+
+        </AnimatePresence>
 
       </div>
     </ToolDashboardLayout>

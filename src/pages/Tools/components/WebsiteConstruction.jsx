@@ -12,6 +12,7 @@ import {
   updateGatewayStatus,
   updateVatStatus,
 } from "../../../services/websiteConstructionService";
+import { callGemini } from "../../../services/geminiService";
 import AnalysisModeSelector from "../../../components/common/AnalysisModeSelector";
 import { dispatchLiveAiAnalysis } from "../../../services/liveAiService";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -75,15 +76,11 @@ function CustomGlassSelect({ options, value, onChange }) {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
+        className={`wc-glass-select-btn ${isOpen ? 'open' : ''}`}
         style={{
           width: "100%",
           padding: "10px 14px",
           borderRadius: "10px",
-          background: "rgba(7, 10, 16, 0.75)",
-          border: isOpen
-            ? "1px solid #6366F1"
-            : "1px solid rgba(255, 255, 255, 0.12)",
-          color: "#FFFFFF",
           fontSize: "12.5px",
           fontWeight: "600",
           display: "flex",
@@ -92,7 +89,6 @@ function CustomGlassSelect({ options, value, onChange }) {
           cursor: "pointer",
           backdropFilter: "blur(12px)",
           transition: "all 0.2s ease",
-          boxShadow: isOpen ? "0 0 16px rgba(99, 102, 241, 0.35)" : "none",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -116,18 +112,16 @@ function CustomGlassSelect({ options, value, onChange }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.98 }}
             transition={{ duration: 0.15 }}
+            className="wc-glass-select-menu"
             style={{
               position: "absolute",
               top: "calc(100% + 6px)",
               left: 0,
               right: 0,
               zIndex: 100,
-              background: "rgba(11, 15, 23, 0.95)",
-              border: "1px solid rgba(255, 255, 255, 0.14)",
               borderRadius: "12px",
               padding: "6px",
               backdropFilter: "blur(20px)",
-              boxShadow: "0 12px 32px rgba(0, 0, 0, 0.6)",
               display: "flex",
               flexDirection: "column",
               gap: "2px",
@@ -143,36 +137,7 @@ function CustomGlassSelect({ options, value, onChange }) {
                     onChange(opt.value);
                     setIsOpen(false);
                   }}
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: "8px",
-                    background: isSelected
-                      ? "rgba(99, 102, 241, 0.2)"
-                      : "transparent",
-                    color: isSelected ? "#FFFFFF" : "#94A3B8",
-                    fontSize: "12px",
-                    fontWeight: "500",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    border: "none",
-                    cursor: "pointer",
-                    transition: "all 0.15s ease",
-                    textAlign: "left",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isSelected) {
-                      e.currentTarget.style.background =
-                        "rgba(255, 255, 255, 0.05)";
-                      e.currentTarget.style.color = "#FFFFFF";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isSelected) {
-                      e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.color = "#94A3B8";
-                    }
-                  }}
+                  className={`wc-glass-select-option ${isSelected ? "selected" : ""}`}
                 >
                   <div
                     style={{
@@ -1729,7 +1694,7 @@ export default function WebsiteConstruction({ stepNumber }) {
           <Activity size={14} color="#10B981" />
           <span>
             {lang === "en" ? "System Status:" : "حالة النظام:"}{" "}
-            <strong>{lang === "en" ? "Online 🟢" : "متصل 🟢"}</strong>
+            <strong>{lang === "en" ? "Online" : "متصل"}</strong>
           </span>
         </div>
         <div className="wc-status-rail-item">
@@ -1737,7 +1702,7 @@ export default function WebsiteConstruction({ stepNumber }) {
           <span>
             {lang === "en" ? "Encryption:" : "التشفير:"}{" "}
             <strong>
-              {lang === "en" ? "TLS 1.3 Active 🔒" : "مفعل 🔒 (256-bit)"}
+              {lang === "en" ? "TLS 1.3 Active" : "مفعل (256-bit)"}
             </strong>
           </span>
         </div>
@@ -1745,7 +1710,7 @@ export default function WebsiteConstruction({ stepNumber }) {
           <Zap size={14} color="#818CF8" />
           <span>
             {lang === "en" ? "DNS Propagation:" : "انتشار DNS:"}{" "}
-            <strong>{lang === "en" ? "Ready ⚡" : "جاهز ⚡"}</strong>
+            <strong>{lang === "en" ? "Ready" : "جاهز"}</strong>
           </span>
         </div>
       </div>
@@ -1753,8 +1718,26 @@ export default function WebsiteConstruction({ stepNumber }) {
       {/* Central Interactive Visual Node Map Canvas */}
       <div className="wc-node-map-canvas">
         {/* Central Core Node */}
-        <motion.div className="wc-node-central" whileHover={{ scale: 1.05 }}>
-          <Globe size={28} />
+        <motion.div
+          className="wc-node-central"
+          animate={{
+            scale: [1, 1.05, 1],
+            boxShadow: [
+              "0 0 25px rgba(99, 102, 241, 0.35)",
+              "0 0 55px rgba(99, 102, 241, 0.7)",
+              "0 0 25px rgba(99, 102, 241, 0.35)"
+            ]
+          }}
+          transition={{
+            duration: 3.2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+          whileHover={{ scale: 1.08 }}
+        >
+          <div className="wc-node-central-icon-wrap">
+            <Globe size={32} color="#6366F1" />
+          </div>
           <h4 className="wc-node-central-title">
             {state?.brandName || "Brand Core"}
           </h4>

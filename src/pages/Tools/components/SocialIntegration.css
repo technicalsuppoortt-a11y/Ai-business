@@ -492,24 +492,208 @@
   border-color: rgba(99, 102, 241, 0.4);
 }
 
-/* ═══════════════ MOBILE RESPONSIVENESS ═══════════════ */
+/* ═══════════════ MOBILE & TABLET RESPONSIVENESS ═══════════════ */
+@media (max-width: 1024px) {
+  .si-orbit-canvas-container {
+    height: 520px;
+  }
+
+  .si-core-inner {
+    width: 180px;
+    height: 180px;
+  }
+
+  .si-node-name {
+    font-size: 12px;
+    max-width: 120px;
+    white-space: normal;
+    word-break: break-word;
+  }
+}
+
 @media (max-width: 768px) {
   .si-mobile-deck {
     display: flex;
   }
+
   .si-orbit-canvas-container {
-    height: 480px;
+    height: auto;
+    min-height: initial;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
   }
-  .si-orbit-node {
-    padding: 10px 12px;
-    gap: 8px;
+
+  .si-orbit-svg-lines {
+    display: none;
   }
-  .si-node-name {
+
+  .si-orbit-core-node {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    margin: 10px 0;
+  }
+
+  .si-core-pulse-ring {
+    width: 180px;
+    height: 180px;
+  }
+
+  .si-core-inner {
+    width: 160px;
+    height: 160px;
+    padding: 12px;
+  }
+
+  .si-core-title {
     font-size: 11.5px;
   }
-  .si-core-inner {
-    width: 170px;
-    height: 170px;
+
+  .si-orbit-node {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px 16px;
+    justify-content: flex-start;
   }
+
+  .si-node-name {
+    font-size: 13px;
+    max-width: none;
+    white-space: normal;
+  }
+
+  .si-actions-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .si-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .si-orbit-inspector-card {
+    padding: 20px 16px;
+    border-radius: 20px;
+    max-height: 90vh;
+  }
+}
+
+/* ═══════════════ LIGHT MODE SUPPORT FOR SOCIAL INTEGRATION ═══════════════ */
+:root.light-mode .si-orbit-canvas-container,
+body.light-mode .si-orbit-canvas-container,
+.light-mode .si-orbit-canvas-container,
+:root.light-mode .si-orbit-inspector-card,
+body.light-mode .si-orbit-inspector-card,
+.light-mode .si-orbit-inspector-card {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+:root.light-mode .si-core-inner,
+body.light-mode .si-core-inner,
+.light-mode .si-core-inner {
+  background: #F8FAFC !important;
+  border-color: #6366F1 !important;
+  box-shadow: 0 0 25px rgba(99, 102, 241, 0.2);
+}
+
+:root.light-mode .si-core-title,
+body.light-mode .si-core-title,
+.light-mode .si-core-title,
+:root.light-mode .si-node-name,
+body.light-mode .si-node-name,
+.light-mode .si-node-name,
+:root.light-mode .si-inspector-title,
+body.light-mode .si-inspector-title,
+.light-mode .si-inspector-title,
+:root.light-mode .si-section-subtitle,
+body.light-mode .si-section-subtitle,
+.light-mode .si-section-subtitle,
+:root.light-mode .si-step-item,
+body.light-mode .si-step-item,
+.light-mode .si-step-item {
+  color: #0F172A !important;
+}
+
+:root.light-mode .si-inspector-sub,
+body.light-mode .si-inspector-sub,
+.light-mode .si-inspector-sub,
+:root.light-mode .si-core-metrics,
+body.light-mode .si-core-metrics,
+.light-mode .si-core-metrics {
+  color: #64748B !important;
+}
+
+:root.light-mode .si-orbit-node,
+body.light-mode .si-orbit-node,
+.light-mode .si-orbit-node {
+  background: #F8FAFC !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+
+:root.light-mode .si-orbit-node:hover,
+body.light-mode .si-orbit-node:hover,
+.light-mode .si-orbit-node:hover,
+:root.light-mode .si-orbit-node.active,
+body.light-mode .si-orbit-node.active,
+.light-mode .si-orbit-node.active {
+  background: #EFF6FF !important;
+  border-color: #6366F1 !important;
+}
+
+:root.light-mode .si-mobile-chip,
+body.light-mode .si-mobile-chip,
+.light-mode .si-mobile-chip {
+  background: #F8FAFC !important;
+  border-color: #CBD5E1 !important;
+  color: #475569 !important;
+}
+
+:root.light-mode .si-mobile-chip.active,
+body.light-mode .si-mobile-chip.active,
+.light-mode .si-mobile-chip.active {
+  background: #EFF6FF !important;
+  border-color: #6366F1 !important;
+  color: #1E40AF !important;
+}
+
+:root.light-mode .si-step-item,
+body.light-mode .si-step-item,
+.light-mode .si-step-item {
+  background: #F8FAFC !important;
+  border-color: #E2E8F0 !important;
+}
+
+:root.light-mode .si-tip-card,
+body.light-mode .si-tip-card,
+.light-mode .si-tip-card {
+  background: #F0F4FF !important;
+  border-color: #C7D2FE !important;
+}
+
+:root.light-mode .si-tip-text,
+body.light-mode .si-tip-text,
+.light-mode .si-tip-text {
+  color: #334155 !important;
+}
+
+:root.light-mode .si-btn-secondary,
+body.light-mode .si-btn-secondary,
+.light-mode .si-btn-secondary {
+  background: #F1F5F9 !important;
+  border-color: #CBD5E1 !important;
+  color: #0F172A !important;
 }
 

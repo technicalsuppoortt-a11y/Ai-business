@@ -420,18 +420,190 @@
   align-items: center;
 }
 
-@media (max-width: 1023px) {
+/* ═══════════════ LIGHT MODE OVERRIDES FOR LEGAL CANVAS ═══════════════ */
+:root.light-mode,
+body.light-mode,
+.light-mode {
+  --lp-bg-base: #F8FAFC;
+  --lp-bg-card: #FFFFFF;
+  --lp-border: #E2E8F0;
+  --lp-border-bright: #CBD5E1;
+  --lp-text-primary: #0F172A;
+  --lp-text-muted: #64748B;
+  --lp-text-subtle: #94A3B8;
+}
+
+:root.light-mode .lp-floating-header,
+body.light-mode .lp-floating-header,
+.light-mode .lp-floating-header {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+:root.light-mode .lp-doc-tab-btn-2030,
+body.light-mode .lp-doc-tab-btn-2030,
+.light-mode .lp-doc-tab-btn-2030 {
+  color: #475569;
+}
+
+:root.light-mode .lp-doc-tab-btn-2030:hover:not(.active),
+body.light-mode .lp-doc-tab-btn-2030:hover:not(.active),
+.light-mode .lp-doc-tab-btn-2030:hover:not(.active) {
+  color: #0F172A;
+  background: #F1F5F9;
+}
+
+:root.light-mode .lp-btn-action-ghost,
+body.light-mode .lp-btn-action-ghost,
+.light-mode .lp-btn-action-ghost {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  color: #475569;
+}
+
+:root.light-mode .lp-btn-action-ghost:hover,
+body.light-mode .lp-btn-action-ghost:hover,
+.light-mode .lp-btn-action-ghost:hover {
+  background: #EFF6FF;
+  color: #1E40AF;
+  border-color: #3B82F6;
+}
+
+:root.light-mode .lp-full-canvas,
+body.light-mode .lp-full-canvas,
+.light-mode .lp-full-canvas {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+
+:root.light-mode .lp-document-paper-card,
+body.light-mode .lp-document-paper-card,
+.light-mode .lp-document-paper-card {
+  background: #F8FAFC !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+:root.light-mode .lp-document-paper-card pre,
+body.light-mode .lp-document-paper-card pre,
+.light-mode .lp-document-paper-card pre {
+  color: #0F172A !important;
+}
+
+:root.light-mode .lp-drawer-panel,
+body.light-mode .lp-drawer-panel,
+.light-mode .lp-drawer-panel {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+
+:root.light-mode .lp-input,
+body.light-mode .lp-input,
+.light-mode .lp-input,
+:root.light-mode .lp-dropdown-trigger,
+body.light-mode .lp-dropdown-trigger,
+.light-mode .lp-dropdown-trigger {
+  background: #F8FAFC !important;
+  border-color: #CBD5E1 !important;
+  color: #0F172A !important;
+}
+
+:root.light-mode .lp-dropdown-menu,
+body.light-mode .lp-dropdown-menu,
+.light-mode .lp-dropdown-menu {
+  background: #FFFFFF !important;
+  border-color: #CBD5E1 !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1);
+}
+
+:root.light-mode .lp-dropdown-option,
+body.light-mode .lp-dropdown-option,
+.light-mode .lp-dropdown-option {
+  color: #475569;
+}
+
+:root.light-mode .lp-dropdown-option:hover,
+body.light-mode .lp-dropdown-option:hover,
+.light-mode .lp-dropdown-option:hover {
+  background: #F1F5F9;
+  color: #0F172A;
+}
+
+/* ═══════════════ RESPONSIVE MEDIA QUERIES ═══════════════ */
+@media (max-width: 1024px) {
+  .lp-floating-header {
+    border-radius: 20px;
+    padding: 12px 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .lp-doc-tabs-2030 {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .lp-doc-tabs-2030::-webkit-scrollbar {
+    display: none;
+  }
+
+  .lp-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
   .lp-mobile-sticky-bar-2030 {
     display: flex;
+  }
+
+  .lp-header-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .lp-btn-inspector-trigger {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+
+  .lp-btn-action-ghost {
+    justify-content: center;
+  }
+
+  .lp-canvas-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .lp-drawer-panel {
+    max-width: 100%;
+    padding: 20px 16px;
   }
 }
 
 @media (max-width: 640px) {
   .lp-full-canvas {
-    padding: 20px 16px;
+    padding: 16px;
     border-radius: 18px;
   }
+
   .lp-document-paper-card {
-    padding: 20px;
+    padding: 16px;
+    min-height: 360px;
+    max-height: 55vh;
+  }
+
+  .lp-document-paper-card pre {
+    font-size: 12.5px;
+    line-height: 1.7;
   }
 }

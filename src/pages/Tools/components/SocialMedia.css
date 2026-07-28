@@ -2114,3 +2114,616 @@
   color: #34D399;
 }
 
+/* ═══════════════ LIGHT MODE SUPPORT ═══════════════ */
+:root.light-mode .sm-master-canvas,
+body.light-mode .sm-master-canvas,
+.light-mode .sm-master-canvas {
+  --bg: #FFFFFF;
+  --bg2: #F8FAFC;
+  --text: #0F172A;
+  --text2: #475569;
+  --line: #E2E8F0;
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+:root.light-mode .sm-top-tabs,
+body.light-mode .sm-top-tabs,
+.light-mode .sm-top-tabs,
+:root.light-mode .sm-identity-panel,
+body.light-mode .sm-identity-panel,
+.light-mode .sm-identity-panel,
+:root.light-mode .sm-subnav-pill-bar,
+body.light-mode .sm-subnav-pill-bar,
+.light-mode .sm-subnav-pill-bar,
+:root.light-mode .sm-idea-pro-card,
+body.light-mode .sm-idea-pro-card,
+.light-mode .sm-idea-pro-card {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+
+:root.light-mode .sm-idea-card-text,
+body.light-mode .sm-idea-card-text,
+.light-mode .sm-idea-card-text {
+  color: #0F172A;
+}
+
+:root.light-mode .sm-tab-btn,
+body.light-mode .sm-tab-btn,
+.light-mode .sm-tab-btn,
+:root.light-mode .sm-idea-action-btn,
+body.light-mode .sm-idea-action-btn,
+.light-mode .sm-idea-action-btn {
+  color: #475569;
+}
+
+:root.light-mode .sm-tab-btn.active,
+body.light-mode .sm-tab-btn.active,
+.light-mode .sm-tab-btn.active {
+  color: #0F172A;
+}
+
+:root.light-mode .sm-action-chip,
+body.light-mode .sm-action-chip,
+.light-mode .sm-action-chip {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  color: #1E293B;
+}
+
+/* ═══════════════ SOCIAL MEDIA PORTAL MODAL ═══════════════ */
+.sm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(3, 7, 18, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.sm-modal-card {
+  background: #0F172A;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 26px;
+  padding: 28px;
+  width: 100%;
+  max-width: 540px;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 24px rgba(59, 130, 246, 0.2);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sm-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sm-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 900;
+  color: #F8FAFC;
+}
+
+.sm-script-textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(8, 12, 20, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #F8FAFC;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.6;
+  outline: none;
+  resize: vertical;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.sm-script-textarea:focus {
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.sm-script-textarea::placeholder,
+input::placeholder,
+textarea::placeholder {
+  color: #94A3B8;
+  opacity: 1;
+}
+
+/* Light Mode Overrides for Social Media Popup Modal & Inputs */
+:root.light-mode .sm-modal-backdrop,
+body.light-mode .sm-modal-backdrop,
+.light-mode .sm-modal-backdrop {
+  background: rgba(15, 23, 42, 0.45);
+}
+
+:root.light-mode .sm-modal-card,
+body.light-mode .sm-modal-card,
+.light-mode .sm-modal-card {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.18), 0 0 24px rgba(59, 130, 246, 0.1);
+}
+
+:root.light-mode .sm-modal-header,
+body.light-mode .sm-modal-header,
+.light-mode .sm-modal-header {
+  border-bottom-color: #E2E8F0;
+}
+
+:root.light-mode .sm-modal-title,
+body.light-mode .sm-modal-title,
+.light-mode .sm-modal-title {
+  color: #0F172A;
+}
+
+:root.light-mode .sm-script-textarea,
+body.light-mode .sm-script-textarea,
+.light-mode .sm-script-textarea {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  color: #0F172A;
+}
+
+:root.light-mode .sm-script-textarea::placeholder,
+body.light-mode .sm-script-textarea::placeholder,
+.light-mode .sm-script-textarea::placeholder,
+:root.light-mode input::placeholder,
+body.light-mode input::placeholder,
+.light-mode input::placeholder,
+:root.light-mode textarea::placeholder,
+body.light-mode textarea::placeholder,
+.light-mode textarea::placeholder,
+:root.light-mode .custom-select-search-input::placeholder,
+body.light-mode .custom-select-search-input::placeholder,
+.light-mode .custom-select-search-input::placeholder {
+  color: #64748B !important;
+  opacity: 1 !important;
+}
+
+/* ═══════════════ TABS & DUAL MODE BAR LIGHT MODE ═══════════════ */
+:root.light-mode .sm-subnav-pill,
+body.light-mode .sm-subnav-pill,
+.light-mode .sm-subnav-pill {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  color: #475569;
+}
+
+:root.light-mode .sm-subnav-pill.active,
+body.light-mode .sm-subnav-pill.active,
+.light-mode .sm-subnav-pill.active {
+  background: #EFF6FF;
+  border-color: #3B82F6;
+  color: #1E40AF;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.2);
+}
+
+:root.light-mode .sm-dual-mode-bar,
+body.light-mode .sm-dual-mode-bar,
+.light-mode .sm-dual-mode-bar {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+}
+
+:root.light-mode .sm-dual-mode-btn,
+body.light-mode .sm-dual-mode-btn,
+.light-mode .sm-dual-mode-btn {
+  color: #64748B;
+}
+
+:root.light-mode .sm-dual-mode-btn.active.fast,
+body.light-mode .sm-dual-mode-btn.active.fast,
+.light-mode .sm-dual-mode-btn.active.fast {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border-color: #3B82F6;
+}
+
+:root.light-mode .sm-dual-mode-btn.active.live,
+body.light-mode .sm-dual-mode-btn.active.live,
+.light-mode .sm-dual-mode-btn.active.live {
+  background: #ECFDF5;
+  color: #047857;
+  border-color: #10B981;
+}
+
+/* ═══════════════ SCRIPT WRITER & HOOK FRAMEWORK LIGHT MODE ═══════════════ */
+:root.light-mode .sm-hook-pill-btn,
+body.light-mode .sm-hook-pill-btn,
+.light-mode .sm-hook-pill-btn {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  color: #334155;
+}
+
+:root.light-mode .sm-hook-pill-btn.active,
+body.light-mode .sm-hook-pill-btn.active,
+.light-mode .sm-hook-pill-btn.active {
+  background: #EFF6FF;
+  border-color: #3B82F6;
+  color: #1E40AF;
+}
+
+:root.light-mode .custom-select-trigger,
+body.light-mode .custom-select-trigger,
+.light-mode .custom-select-trigger {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  color: #0F172A;
+}
+
+:root.light-mode .custom-select-dropdown,
+body.light-mode .custom-select-dropdown,
+.light-mode .custom-select-dropdown {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+}
+
+:root.light-mode .custom-select-option,
+body.light-mode .custom-select-option,
+.light-mode .custom-select-option {
+  color: #475569;
+}
+
+:root.light-mode .custom-select-option:hover,
+body.light-mode .custom-select-option:hover,
+.light-mode .custom-select-option:hover {
+  background: #F1F5F9;
+  color: #0F172A;
+}
+
+:root.light-mode .custom-select-option.selected,
+body.light-mode .custom-select-option.selected,
+.light-mode .custom-select-option.selected {
+  background: #EFF6FF;
+  color: #1E40AF;
+}
+
+:root.light-mode .sm-script-label,
+body.light-mode .sm-script-label,
+.light-mode .sm-script-label,
+:root.light-mode .pcc-label,
+body.light-mode .pcc-label,
+.light-mode .pcc-label {
+  color: #0F172A;
+}
+
+:root.light-mode .sm-script-select,
+body.light-mode .sm-script-select,
+.light-mode .sm-script-select,
+:root.light-mode .pcc-input,
+body.light-mode .pcc-input,
+.light-mode .pcc-input {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  color: #0F172A;
+}
+
+:root.light-mode .sm-showcase-stage,
+body.light-mode .sm-showcase-stage,
+.light-mode .sm-showcase-stage {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+}
+
+:root.light-mode .sm-showcase-content,
+body.light-mode .sm-showcase-content,
+.light-mode .sm-showcase-content {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: #0F172A;
+}
+
+/* ═══════════════ TACTICAL DOCK & GENERATE BUTTONS LIGHT MODE ═══════════════ */
+:root.light-mode .sm-tactical-dock,
+body.light-mode .sm-tactical-dock,
+.light-mode .sm-tactical-dock {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+:root.light-mode .sm-dock-btn,
+body.light-mode .sm-dock-btn,
+.light-mode .sm-dock-btn {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  color: #1E293B !important;
+}
+
+:root.light-mode .sm-dock-btn:hover,
+body.light-mode .sm-dock-btn:hover,
+.light-mode .sm-dock-btn:hover {
+  background: #EFF6FF;
+  border-color: #3B82F6;
+  color: #1E40AF !important;
+}
+
+:root.light-mode .sm-dock-btn.primary,
+body.light-mode .sm-dock-btn.primary,
+.light-mode .sm-dock-btn.primary {
+  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+  border-color: #2563EB;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+}
+
+:root.light-mode .sm-generate-script-btn,
+body.light-mode .sm-generate-script-btn,
+.light-mode .sm-generate-script-btn,
+:root.light-mode .sm-deck-btn,
+body.light-mode .sm-deck-btn,
+.light-mode .sm-deck-btn {
+  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35) !important;
+}
+
+/* ═══════════════ TRENDING TOPICS & AUDIO DEEP LIGHT MODE ═══════════════ */
+:root.light-mode .sm-trend-card,
+body.light-mode .sm-trend-card,
+.light-mode .sm-trend-card {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  color: #0F172A;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+
+:root.light-mode .sm-trend-card *,
+body.light-mode .sm-trend-card *,
+.light-mode .sm-trend-card * {
+  color: #0F172A;
+}
+
+:root.light-mode .sm-trend-card .sm-trend-badge.hot,
+body.light-mode .sm-trend-card .sm-trend-badge.hot,
+.light-mode .sm-trend-card .sm-trend-badge.hot {
+  background: #FEF2F2;
+  color: #991B1B !important;
+  border-color: #FECACA;
+}
+
+:root.light-mode .sm-trend-card .sm-trend-badge.rising,
+body.light-mode .sm-trend-card .sm-trend-badge.rising,
+.light-mode .sm-trend-card .sm-trend-badge.rising {
+  background: #ECFDF5;
+  color: #065F46 !important;
+  border-color: #A7F3D0;
+}
+
+:root.light-mode .sm-trend-card .sm-trend-badge.upcoming,
+body.light-mode .sm-trend-card .sm-trend-badge.upcoming,
+.light-mode .sm-trend-card .sm-trend-badge.upcoming {
+  background: #EFF6FF;
+  color: #1E40AF !important;
+  border-color: #BFDBFE;
+}
+
+/* ═══════════════ TRENDING VIRAL REELS STUDIO LIGHT MODE ═══════════════ */
+:root.light-mode .sm-viral-pane,
+body.light-mode .sm-viral-pane,
+.light-mode .sm-viral-pane {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  color: #0F172A;
+}
+
+:root.light-mode .sm-viral-reels-card,
+body.light-mode .sm-viral-reels-card,
+.light-mode .sm-viral-reels-card {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: #0F172A;
+}
+
+:root.light-mode .sm-viral-reels-card *,
+body.light-mode .sm-viral-reels-card *,
+.light-mode .sm-viral-reels-card * {
+  color: #0F172A;
+}
+
+:root.light-mode .sm-viral-card-meta,
+body.light-mode .sm-viral-card-meta,
+.light-mode .sm-viral-card-meta {
+  color: #64748B !important;
+}
+
+:root.light-mode .sm-viral-step-card,
+body.light-mode .sm-viral-step-card,
+.light-mode .sm-viral-step-card {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: #0F172A;
+}
+
+:root.light-mode .sm-viral-step-title,
+body.light-mode .sm-viral-step-title,
+.light-mode .sm-viral-step-title {
+  color: #2563EB !important;
+}
+
+:root.light-mode .sm-viral-step-desc,
+body.light-mode .sm-viral-step-desc,
+.light-mode .sm-viral-step-desc {
+  color: #334155 !important;
+}
+
+:root.light-mode .sm-viral-exec-header,
+body.light-mode .sm-viral-exec-header,
+.light-mode .sm-viral-exec-header {
+  color: #0F172A !important;
+}
+
+:root.light-mode .sm-viral-badge-box,
+body.light-mode .sm-viral-badge-box,
+.light-mode .sm-viral-badge-box {
+  background: #FEF2F2;
+  border-color: #FECACA;
+  color: #991B1B !important;
+}
+
+/* ═══════════════ BURNOUT GUARD & CREATIVE ENERGY METER LIGHT MODE ═══════════════ */
+:root.light-mode .sm-showcase-content,
+body.light-mode .sm-showcase-content,
+.light-mode .sm-showcase-content {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: #0F172A !important;
+}
+
+:root.light-mode .sm-showcase-content *,
+body.light-mode .sm-showcase-content *,
+.light-mode .sm-showcase-content * {
+  color: #0F172A !important;
+}
+
+:root.light-mode .sm-showcase-content strong,
+body.light-mode .sm-showcase-content strong,
+.light-mode .sm-showcase-content strong {
+  color: #0F172A !important;
+}
+
+:root.light-mode .sm-energy-btn,
+body.light-mode .sm-energy-btn,
+.light-mode .sm-energy-btn {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  color: #334155 !important;
+}
+
+:root.light-mode .sm-energy-btn.active,
+body.light-mode .sm-energy-btn.active,
+.light-mode .sm-energy-btn.active {
+  background: #ECFDF5;
+  border-color: #10B981;
+  color: #047857 !important;
+}
+
+:root.light-mode .sm-tweak-chip,
+body.light-mode .sm-tweak-chip,
+.light-mode .sm-tweak-chip {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  color: #334155 !important;
+}
+
+:root.light-mode .sm-modal-output-scroll,
+body.light-mode .sm-modal-output-scroll,
+.light-mode .sm-modal-output-scroll {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: #0F172A !important;
+}
+
+/* ═══════════════ NEW CLASS DEFINITIONS & LIGHT MODE OVERRIDES ═══════════════ */
+.sm-section-heading-muted {
+  font-size: 13px;
+  color: #94A3B8;
+  margin: 0;
+}
+
+.sm-trend-card-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #F8FAFC;
+}
+
+.sm-trend-card-subtext {
+  font-size: 11px;
+  color: #94A3B8;
+  margin-top: 2px;
+}
+
+.sm-section-heading {
+  font-size: 14px;
+  font-weight: 800;
+  color: #F8FAFC;
+  margin: 0;
+}
+
+.sm-reels-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #F8FAFC;
+}
+
+.sm-energy-score-label {
+  font-size: 12px;
+  color: #94A3B8;
+  font-weight: 800;
+}
+
+.sm-energy-score-status {
+  font-size: 13px;
+  color: #F8FAFC;
+  font-weight: 700;
+}
+
+/* Light Mode Overrides */
+:root.light-mode .sm-section-heading-muted,
+body.light-mode .sm-section-heading-muted,
+.light-mode .sm-section-heading-muted {
+  color: #475569 !important;
+}
+
+:root.light-mode .sm-trend-card-title,
+body.light-mode .sm-trend-card-title,
+.light-mode .sm-trend-card-title,
+:root.light-mode .sm-section-heading,
+body.light-mode .sm-section-heading,
+.light-mode .sm-section-heading,
+:root.light-mode .sm-reels-title,
+body.light-mode .sm-reels-title,
+.light-mode .sm-reels-title {
+  color: #0F172A !important;
+}
+
+:root.light-mode .sm-trend-card-subtext,
+body.light-mode .sm-trend-card-subtext,
+.light-mode .sm-trend-card-subtext {
+  color: #64748B !important;
+}
+
+:root.light-mode .sm-energy-score-box,
+body.light-mode .sm-energy-score-box,
+.light-mode .sm-energy-score-box {
+  background: #F0FDF4 !important;
+  border-color: #A7F3D0 !important;
+}
+
+:root.light-mode .sm-energy-score-label,
+body.light-mode .sm-energy-score-label,
+.light-mode .sm-energy-score-label {
+  color: #047857 !important;
+}
+
+:root.light-mode .sm-energy-score-status,
+body.light-mode .sm-energy-score-status,
+.light-mode .sm-energy-score-status {
+  color: #0F172A !important;
+}
+

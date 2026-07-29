@@ -740,7 +740,7 @@ export default function SocialMedia({ stepNumber }) {
       setModalAiResult(res);
       toast(
         lang === "en"
-          ? "Strategy generated via OpenAI!"
+          ? "Strategy generated via Live AI!"
           : "تم توليد الاستراتيجية عبر الذكاء الاصطناعي الحي!",
         "success",
       );
@@ -3012,7 +3012,7 @@ export default function SocialMedia({ stepNumber }) {
                         <h3 style={{ fontSize: "15px", margin: 0 }}>
                           {analysisMode === "live"
                             ? (lang === "en"
-                                ? "Generating live viral breakdown with OpenAI..."
+                                ? "Generating live viral breakdown with Live AI..."
                                 : "جاري تحليل وتفكيك الترند بالذكاء الاصطناعي الحي...")
                             : (lang === "en"
                                 ? "Building step-by-step video execution plan..."
@@ -3338,7 +3338,7 @@ export default function SocialMedia({ stepNumber }) {
                           />
                           <span>
                             {lang === "en"
-                              ? "Overcome Business Challenges (OpenAI)"
+                              ? "Overcome Business Challenges (Live AI)"
                               : "مقاومة التحديات التجارية (Live AI Strategy)"}
                           </span>
                         </>
@@ -3347,7 +3347,7 @@ export default function SocialMedia({ stepNumber }) {
                           <Award size={22} style={{ color: "#34D399" }} />
                           <span>
                             {lang === "en"
-                              ? "Leverage Product Advantages (OpenAI)"
+                              ? "Leverage Product Advantages (Live AI)"
                               : "استغلال مميزات المنتج استراتيجياً (Live AI Strategy)"}
                           </span>
                         </>
@@ -3427,15 +3427,15 @@ export default function SocialMedia({ stepNumber }) {
                       <span>
                         {isGeneratingModal
                           ? lang === "en"
-                            ? "Generating via OpenAI..."
-                            : "جاري التحليل من OpenAI..."
+                            ? "Generating via Live AI..."
+                            : "جاري التحليل بالذكاء الاصطناعي..."
                           : activeModal === "challenges"
                             ? lang === "en"
                               ? "Overcome Challenges"
-                              : "مقاومة التحديات (OpenAI)"
+                              : "مقاومة التحديات (Live AI)"
                             : lang === "en"
                               ? "Leverage Advantages"
-                              : "استغلال المميزات (OpenAI)"}
+                              : "استغلال المميزات (Live AI)"}
                       </span>
                     </button>
                   </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useApp } from "../../../context/AppContext";
 import { useToast } from "../../../context/ToastContext";
 import ToolDashboardLayout from "./ToolDashboardLayout";
@@ -25,10 +26,21 @@ import {
   Cpu,
   Download,
   ShoppingBag,
-  ChevronLeft,
-  ChevronRight,
   Maximize2,
   Minimize2,
+  X,
+  RefreshCw,
+  ExternalLink,
+  ShieldCheck,
+  Star,
+  Flame,
+  ArrowRight,
+  ArrowLeft,
+  Eye,
+  CheckCircle2,
+  Globe,
+  Monitor,
+  Rocket,
 } from "lucide-react";
 import "./LandingPageContent.css";
 
@@ -125,6 +137,8 @@ export default function LandingPageContent({ stepNumber }) {
   const [analysisMode, setAnalysisMode] = useState("fast"); // 'fast' | 'live'
   const [activeSectionIndex, setActiveSectionIndex] = useState(0); // 0: config, 1: hero, 2: problem, 3: offer, 4: proof, 5: cta
   const [isConsoleCollapsed, setIsConsoleCollapsed] = useState(false);
+  const [isInputDrawerOpen, setIsInputDrawerOpen] = useState(false);
+  const [scanningStep, setScanningStep] = useState(0);
 
   // Base Inputs
   const [productName, setProductName] = useState(state.brandName || "");
@@ -148,6 +162,18 @@ export default function LandingPageContent({ stepNumber }) {
     4: 0,
     5: 0,
   });
+
+  // Cycle real-time status badges when generating
+  useEffect(() => {
+    let interval;
+    if (isGenerating) {
+      setScanningStep(0);
+      interval = setInterval(() => {
+        setScanningStep((prev) => (prev + 1) % 3);
+      }, 1500);
+    }
+    return () => clearInterval(interval);
+  }, [isGenerating]);
 
   // Dropdown Options Definitions
   const objectiveOptions = [
@@ -249,7 +275,61 @@ export default function LandingPageContent({ stepNumber }) {
     },
   ];
 
-  // Dock Navigator Section Configuration
+  // Canvas Live Section Definitions
+  const canvasSections = [
+    {
+      id: 1,
+      key: "hero",
+      title_ar: "1. قسم البطل (Hero)",
+      title_en: "1. Hero Section",
+      icon: Sparkles,
+      badge: "HERO",
+      badgeColor: "#3B82F6",
+      glowColor: "rgba(59, 130, 246, 0.4)",
+    },
+    {
+      id: 2,
+      key: "problem",
+      title_ar: "2. المشكلة والألم (Problem)",
+      title_en: "2. Problem & Pain",
+      icon: AlertTriangle,
+      badge: "PROBLEM",
+      badgeColor: "#F59E0B",
+      glowColor: "rgba(245, 158, 11, 0.4)",
+    },
+    {
+      id: 3,
+      key: "offer",
+      title_ar: "3. العرض والفوائد (Offer)",
+      title_en: "3. Offer & Benefits",
+      icon: Award,
+      badge: "OFFER",
+      badgeColor: "#10B981",
+      glowColor: "rgba(16, 185, 129, 0.4)",
+    },
+    {
+      id: 4,
+      key: "proof",
+      title_ar: "4. الإثبات والتوصيات (Proof)",
+      title_en: "4. Social Proof",
+      icon: Users,
+      badge: "PROOF",
+      badgeColor: "#8B5CF6",
+      glowColor: "rgba(139, 92, 246, 0.4)",
+    },
+    {
+      id: 5,
+      key: "cta",
+      title_ar: "5. النداء لاتخاذ إجراء (CTA)",
+      title_en: "5. Call to Action",
+      icon: Zap,
+      badge: "CTA",
+      badgeColor: "#EC4899",
+      glowColor: "rgba(236, 72, 153, 0.4)",
+    },
+  ];
+
+  // Dock Navigator Section Configuration (Preserved for compatibility)
   const dockSections = [
     {
       id: 0,
@@ -258,41 +338,7 @@ export default function LandingPageContent({ stepNumber }) {
       icon: Sliders,
       badge: "CONSOLE",
     },
-    {
-      id: 1,
-      title_ar: "1. قسم البطل (Hero)",
-      title_en: "1. Hero Section",
-      icon: Sparkles,
-      badge: "HERO",
-    },
-    {
-      id: 2,
-      title_ar: "2. المشكلة والألم (Problem)",
-      title_en: "2. Problem & Pain",
-      icon: AlertTriangle,
-      badge: "PROBLEM",
-    },
-    {
-      id: 3,
-      title_ar: "3. العرض والفوائد (Offer)",
-      title_en: "3. Offer & Benefits",
-      icon: Award,
-      badge: "OFFER",
-    },
-    {
-      id: 4,
-      title_ar: "4. الإثبات والتوصيات (Proof)",
-      title_en: "4. Social Proof",
-      icon: Users,
-      badge: "PROOF",
-    },
-    {
-      id: 5,
-      title_ar: "5. النداء لاتخاذ إجراء (CTA)",
-      title_en: "5. Call to Action",
-      icon: Zap,
-      badge: "CTA",
-    },
+    ...canvasSections,
   ];
 
   // Safe Copy helper
@@ -344,11 +390,13 @@ export default function LandingPageContent({ stepNumber }) {
           : "يرجى ملء الحقول المطلوبة.",
         "warning",
       );
+      setIsInputDrawerOpen(true);
       return;
     }
     setValidationError("");
     setIsGenerating(true);
     setGeneratedContent(null);
+    setIsInputDrawerOpen(false); // Close drawer to show canvas loading
 
     try {
       if (analysisMode === "live") {
@@ -465,8 +513,8 @@ export default function LandingPageContent({ stepNumber }) {
           hero: hIdea ? [formatIdea(hIdea)] : ["Hero Section"],
           problem: pIdea ? [formatIdea(pIdea)] : ["Problem Section"],
           offer: oIdea ? [formatIdea(oIdea)] : ["Offer Section"],
-          proof: prIdea ? [formatIdea(prIdea)] : ["Social Proof Section"],
-          cta: cIdea ? [formatIdea(cIdea)] : ["CTA Section"],
+          proof: prIdea ? [formatIdea(proofMatrix)] : ["Social Proof Section"],
+          cta: cIdea ? [formatIdea(ctaMatrix)] : ["CTA Section"],
         };
 
         setGeneratedContent(content);
@@ -492,7 +540,6 @@ export default function LandingPageContent({ stepNumber }) {
         );
       }
 
-      // Auto collapse console & focus Hero section
       setIsConsoleCollapsed(true);
       setActiveSectionIndex(1);
     } catch (err) {
@@ -509,8 +556,8 @@ export default function LandingPageContent({ stepNumber }) {
   const copySection = (text) => {
     safeCopyToClipboard(
       text,
-      "Section text copied to clipboard! ✅",
-      "تم نسخ نص القسم إلى الحافظة! ✅",
+      "Section text copied to clipboard!",
+      "تم نسخ نص القسم إلى الحافظة!",
     );
   };
 
@@ -532,8 +579,8 @@ export default function LandingPageContent({ stepNumber }) {
 
     safeCopyToClipboard(
       fullMarkdown,
-      "Complete landing page markdown copied to clipboard! ✅",
-      "تم نسخ الهيكل الكامل لصفحة الهبوط إلى الحافظة! ✅",
+      "Complete landing page markdown copied to clipboard!",
+      "تم نسخ الهيكل الكامل لصفحة الهبوط إلى الحافظة!",
     );
   };
 
@@ -563,8 +610,8 @@ export default function LandingPageContent({ stepNumber }) {
       URL.revokeObjectURL(url);
       toast(
         lang === "en"
-          ? "Landing page JSON exported! ✅"
-          : "تم تصدير ملف JSON بنجاح! ✅",
+          ? "Landing page JSON exported!"
+          : "تم تصدير ملف JSON بنجاح!",
         "success",
       );
     } catch (err) {
@@ -622,6 +669,13 @@ export default function LandingPageContent({ stepNumber }) {
 
   const activeSectionData = getSectionDataByIndex(activeSectionIndex);
 
+  // Professional Status Badges sweeping during loading
+  const scanningBadges = [
+    lang === "en" ? "Framing High-Converting Hero..." : "صياغة قسم البطل وتصميم العنونة...",
+    lang === "en" ? "Synthesizing Value Proposition & Proof..." : "تحليل مصفوفة المشكلة وإثبات الجودة...",
+    lang === "en" ? "Fitting Action-Oriented CTA..." : "ضبط زر اتخاذ الإجراء وحساب التحويل...",
+  ];
+
   return (
     <ToolDashboardLayout
       id="landing-page-content"
@@ -632,132 +686,114 @@ export default function LandingPageContent({ stepNumber }) {
       }
       subtitle={
         lang === "en"
-          ? "Interactive Collapsible Command Deck for high-converting multi-variable landing page copy."
-          : "لوحة تحكم تفاعلية قابلة للطي لصياغة محتوى صفحة الهبوط بناءً على 4 أبعاد نفسية."
+          ? "Interactive Live Canvas Editor for high-converting multi-variable landing page copy."
+          : "كانفاس تفاعلي مباشر لصياغة محتوى صفحة الهبوط بناءً على 4 أبعاد نفسية."
       }
       stepNumber={stepNumber}
       accentColor="#6366F1"
       timeEstimate="10 - 20"
     >
       <div className="lpc-deck-workspace" dir={isRtl ? "rtl" : "ltr"}>
-        {/* ═══════════════ 1. MINIMALIST TOP DOCK FLOATING NAVIGATOR ═══════════════ */}
-        <div className="lpc-floating-dock-bar">
-          {dockSections.map((sec) => {
-            const IconComp = sec.icon;
-            const isActive = activeSectionIndex === sec.id;
-            return (
-              <button
-                key={sec.id}
-                type="button"
-                onClick={() => {
-                  setActiveSectionIndex(sec.id);
-                  if (sec.id === 0) setIsConsoleCollapsed(false);
-                }}
-                className={`lpc-dock-pill ${isActive ? "active" : ""}`}
-              >
-                <div className="lpc-dock-pill-icon">
-                  <IconComp
-                    size={15}
-                    color={isActive ? "#FFFFFF" : "#818CF8"}
-                  />
-                </div>
-                <span className="lpc-dock-pill-title">
-                  {lang === "en" ? sec.title_en : sec.title_ar}
-                </span>
-                <span className="lpc-dock-pill-badge">{sec.badge}</span>
-              </button>
-            );
-          })}
+
+        {/* ═══════════════ 1. SLEEK TOP GLASSBAR & MASTER INPUT TRIGGER ═══════════════ */}
+        <div className="lpc-canvas-top-bar">
+          <div className="lpc-top-bar-info">
+            <div className="lpc-live-indicator">
+              <span className="lpc-pulse-dot" />
+              <span className="lpc-indicator-title">
+                {lang === "en" ? "LIVE CANVAS" : "كانفاس مباشر"}
+              </span>
+            </div>
+            
+            {productName ? (
+              <div className="lpc-product-chip">
+                <ShoppingBag size={13} color="#818CF8" />
+                <span>{productName}</span>
+              </div>
+            ) : (
+              <span className="lpc-placeholder-chip">
+                {lang === "en" ? "No Product Specified" : "لم يتم تحديد منتج بعد"}
+              </span>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsInputDrawerOpen(true)}
+            className="lpc-drawer-trigger-btn"
+          >
+            <Sliders size={15} color="#3B82F6" />
+            <span>
+              {lang === "en"
+                ? "Edit Parameters & 4 Dimensions"
+                : "ضبط المدخلات والأبعاد الأربعة"}
+            </span>
+          </button>
         </div>
 
-        {/* ═══════════════ 2. DYNAMIC INPUT COMMAND PANEL (SECTION 0 REFACTOR) ═══════════════ */}
-        {activeSectionIndex === 0 && (
-          <motion.div
-            className="lpc-command-console"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25 }}
-          >
-            {/* Console Header Rail */}
-            <div className="lpc-console-rail">
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "12px" }}
-              >
-                <div className="lpc-console-badge-icon">
-                  <Sliders size={18} color="#818CF8" />
-                </div>
-                <div>
-                  <h3 className="lpc-console-heading">
-                    {lang === "en"
-                      ? "4-Dimensional Command Console"
-                      : "منصة التحكم البرمجية ومصفوفة الأبعاد الأربعة"}
-                  </h3>
-                  <p className="lpc-console-subtext">
-                    {lang === "en"
-                      ? "Define offer details & psychological drivers."
-                      : "حدد بيانات العرض والدوافع النفسية لجمهورك."}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsConsoleCollapsed(!isConsoleCollapsed)}
-                className="wc-btn wc-btn-secondary"
-                style={{ padding: "6px 14px", fontSize: "11px" }}
-              >
-                {isConsoleCollapsed ? (
-                  <Maximize2 size={13} />
-                ) : (
-                  <Minimize2 size={13} />
-                )}
-                <span>
-                  {isConsoleCollapsed
-                    ? lang === "en"
-                      ? "Expand"
-                      : "توسيع"
-                    : lang === "en"
-                      ? "Collapse"
-                      : "طـي"}
-                </span>
-              </button>
-            </div>
-
-            {/* Validation Alert */}
-            <AnimatePresence>
-              {validationError && (
+        {/* ═══════════════ 2. MASTER OVERLAY INPUT DRAWER / MODAL (PORTAL TO BODY) ═══════════════ */}
+        {createPortal(
+          <AnimatePresence>
+            {isInputDrawerOpen && (
+              <div className="lpc-drawer-backdrop-wrapper">
                 <motion.div
-                  className="lpc-validation-alert"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                >
-                  <AlertTriangle size={16} flexShrink={0} />
-                  <span>{validationError}</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  className="lpc-drawer-backdrop"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setIsInputDrawerOpen(false)}
+                />
 
-            {/* Collapsible Console Body */}
-            <AnimatePresence initial={false}>
-              {!isConsoleCollapsed && (
                 <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.25 }}
-                  style={{ overflow: "hidden" }}
+                  className="lpc-drawer-content"
+                  initial={{ opacity: 0, scale: 0.92, y: 0 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.92, y: 0 }}
+                  transition={{ duration: 0.22, ease: "easeOut" }}
                 >
-                  <div className="lpc-console-body">
-                    {/* Base Text Inputs Row (2 Columns) */}
+                  {/* Drawer Header */}
+                  <div className="lpc-drawer-header">
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div className="lpc-drawer-header-icon">
+                        <Sliders size={18} color="#3B82F6" />
+                      </div>
+                      <div>
+                        <h3 className="lpc-drawer-title">
+                          {lang === "en"
+                            ? "Master Input Console & 4-D Matrix"
+                            : "منصة التحكم البرمجية ومصفوفة الأبعاد الأربعة"}
+                        </h3>
+                        <p className="lpc-drawer-sub">
+                          {lang === "en"
+                            ? "Adjust parameters to synthesize high-converting copy"
+                            : "اضبط بيانات العرض والدوافع النفسية لجمهورك"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsInputDrawerOpen(false)}
+                      className="lpc-drawer-close-btn"
+                    >
+                      <X size={18} color="#94A3B8" />
+                    </button>
+                  </div>
+
+                  {/* Validation Alert */}
+                  {validationError && (
+                    <div className="lpc-validation-alert">
+                      <AlertTriangle size={16} />
+                      <span>{validationError}</span>
+                    </div>
+                  )}
+
+                  {/* Main Input Form */}
+                  <div className="lpc-drawer-body">
                     <div className="lpc-inputs-2col-grid">
                       <div className="lpc-form-group">
                         <label className="lpc-label">
-                          <ShoppingBag
-                            size={13}
-                            color="#818CF8"
-                            strokeWidth={1.5}
-                          />
+                          <ShoppingBag size={13} color="#818CF8" strokeWidth={1.5} />
                           <span>
                             {lang === "en"
                               ? "Product / Offer Name"
@@ -810,7 +846,7 @@ export default function LandingPageContent({ stepNumber }) {
                       </div>
                     </div>
 
-                    {/* 4 Psychological Dimension Dropdowns (2x2 Clean Grid) */}
+                    {/* 4 Psychological Dimension Dropdowns */}
                     <div className="lpc-dropdowns-2x2-grid">
                       <CustomDropdown
                         label={
@@ -865,252 +901,308 @@ export default function LandingPageContent({ stepNumber }) {
                       />
                     </div>
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
 
-            {/* Bottom Distinct Action Bar */}
-            <div className="lpc-console-action-bar">
-              <AnalysisModeSelector
-                mode={analysisMode}
-                onChange={setAnalysisMode}
-                lang={lang}
-                accentColor="#6366F1"
-              />
+                  {/* Drawer Footer Actions */}
+                  <div className="lpc-drawer-footer">
+                    <AnalysisModeSelector
+                      mode={analysisMode}
+                      onChange={setAnalysisMode}
+                      lang={lang}
+                      accentColor="#6366F1"
+                    />
 
-              <button
-                onClick={handleGenerate}
-                disabled={isGenerating}
-                className="lpc-btn-primary"
-              >
-                {isGenerating ? (
-                  <span
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 8,
-                    }}
-                  >
-                    <span className="td-spinner" />{" "}
-                    {lang === "en"
-                      ? "Assembling Matrix..."
-                      : "جاري تجميع محتوى الصفحة..."}
-                  </span>
-                ) : (
-                  <span
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 8,
-                    }}
-                  >
-                    <Cpu size={16} strokeWidth={1.5} />{" "}
-                    {lang === "en"
-                      ? "Generate Intelligent Content"
-                      : "توليد محتوى ذكي وموجه"}
-                  </span>
-                )}
-              </button>
-            </div>
-          </motion.div>
-        )}
-
-        {/* ═══════════════ 3. IN-CONTEXT CONTENT CANVAS SPOTLIGHT (SECTIONS 1 TO 5) ═══════════════ */}
-        {activeSectionIndex >= 1 && activeSectionIndex <= 5 && (
-          <div className="lpc-spotlight-copy-wrapper">
-            {!generatedContent && !isGenerating ? (
-              <div className="lpc-empty-deck-card">
-                <FileText size={36} color="#818CF8" />
-                <h4>
-                  {lang === "en"
-                    ? "Configure parameters & click generate"
-                    : "حدد الأبعاد الأربعة ثم اضغط توليد المحتوى"}
-                </h4>
-                <p>
-                  {lang === "en"
-                    ? "Switch to Section 0 to set product name and target audience."
-                    : "انتقل للمحطة 0 لإدخال بيانات المنتج والجمهور المستهدف."}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveSectionIndex(0);
-                    setIsConsoleCollapsed(false);
-                  }}
-                  className="wc-btn wc-btn-primary"
-                  style={{ marginTop: "14px" }}
-                >
-                  <Sliders size={14} />
-                  <span>
-                    {lang === "en"
-                      ? "Go to Command Deck"
-                      : "الانتقال لمنصة التحكم"}
-                  </span>
-                </button>
-              </div>
-            ) : isGenerating ? (
-              <div className="lpc-loading-deck-card">
-                <div className="td-spinner" style={{ width: 32, height: 32 }} />
-                <span>
-                  {lang === "en"
-                    ? "Generating section copy..."
-                    : "جاري صياغة وتوليد محتوى القسم..."}
-                </span>
-              </div>
-            ) : (
-              activeSectionData && (
-                <motion.div
-                  className="lpc-live-copy-card"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25 }}
-                >
-                  {/* Card Header Rail */}
-                  <div className="lpc-copy-card-header">
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                      }}
+                    <button
+                      type="button"
+                      onClick={handleGenerate}
+                      disabled={isGenerating}
+                      className="lpc-btn-primary"
                     >
-                      <div className="lpc-copy-card-icon">
-                        {React.createElement(
-                          activeSectionData.icon || Sparkles,
-                          { size: 18, color: "#818CF8" },
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="lpc-copy-card-title">
+                      {isGenerating ? (
+                        <span className="lpc-btn-content">
+                          <span className="td-spinner" />
                           {lang === "en"
-                            ? activeSectionData.title_en
-                            : activeSectionData.title_ar}
-                        </h3>
-                        <span className="lpc-copy-card-tag">
-                          SPOTLIGHT COPY ⚡
+                            ? "Assembling Matrix..."
+                            : "جاري تجميع محتوى الصفحة..."}
                         </span>
-                      </div>
-                    </div>
-
-                    {/* Option Switcher & Copy Action */}
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                      }}
-                    >
-                      <div style={{ display: "flex", gap: "4px" }}>
-                        {(activeSectionData.ideas || []).map((_, i) => (
-                          <button
-                            key={i}
-                            type="button"
-                            onClick={() =>
-                              setActiveIdeaIndex((prev) => ({
-                                ...prev,
-                                [activeSectionIndex]: i,
-                              }))
-                            }
-                            className={`lpc-idea-pill ${(activeIdeaIndex[activeSectionIndex] || 0) === i ? "active" : ""}`}
-                          >
-                            {lang === "en"
-                              ? `Option ${i + 1}`
-                              : `خيار ${i + 1}`}
-                          </button>
-                        ))}
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          copySection(
-                            (activeSectionData.ideas || [])[
-                              activeIdeaIndex[activeSectionIndex] || 0
-                            ],
-                          )
-                        }
-                        className="lpc-btn lpc-btn-primary"
-                        style={{ padding: "6px 14px", fontSize: "11.5px" }}
-                      >
-                        <Copy size={13} />
-                        <span>{lang === "en" ? "Copy Text" : "نسخ النص"}</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Card Main Body */}
-                  <div className="lpc-copy-card-body">
-                    <pre
-                      dir={isRtl ? "rtl" : "ltr"}
-                      style={{ textAlign: isRtl ? "right" : "left" }}
-                    >
-                      {
-                        (activeSectionData.ideas || [])[
-                          activeIdeaIndex[activeSectionIndex] || 0
-                        ]
-                      }
-                    </pre>
+                      ) : (
+                        <span className="lpc-btn-content">
+                          <Cpu size={16} strokeWidth={1.5} />
+                          {lang === "en"
+                            ? "Generate Intelligent Content"
+                            : "توليد محتوى ذكي وموجه"}
+                        </span>
+                      )}
+                    </button>
                   </div>
                 </motion.div>
-              )
+              </div>
             )}
-          </div>
+          </AnimatePresence>,
+          document.body
         )}
 
-        {/* ═══════════════ FLOATING BOTTOM UTILITY DOCK ═══════════════ */}
-        <div className="lpc-bottom-utility-dock">
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button
-              type="button"
-              disabled={activeSectionIndex === 0}
-              onClick={() =>
-                setActiveSectionIndex((prev) => Math.max(0, prev - 1))
-              }
-              className="lpc-btn lpc-btn-secondary"
-            >
-              {isRtl ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
-              <span>{lang === "en" ? "Previous" : "السابق"}</span>
-            </button>
+        {/* ═══════════════ 3. THE CENTRAL LIVE PAGE CANVAS (FULL PAGE SHOWCASE) ═══════════════ */}
+        <div className="lpc-canvas-viewport-wrapper">
+          <div className="lpc-browser-frame">
+            
+            {/* Browser Window Bar */}
+            <div className="lpc-browser-bar">
+              <div className="lpc-browser-dots">
+                <span className="dot dot-red" />
+                <span className="dot dot-yellow" />
+                <span className="dot dot-green" />
+              </div>
 
-            <button
-              type="button"
-              disabled={activeSectionIndex === 5}
-              onClick={() =>
-                setActiveSectionIndex((prev) => Math.min(5, prev + 1))
-              }
-              className="lpc-btn lpc-btn-secondary"
-            >
-              <span>{lang === "en" ? "Next" : "التالي"}</span>
-              {isRtl ? <ChevronLeft size={15} /> : <ChevronRight size={15} />}
-            </button>
-          </div>
-
-          {generatedContent && !isGenerating && (
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button
-                type="button"
-                onClick={copyAllMarkdown}
-                className="lpc-btn lpc-btn-secondary"
-              >
-                <Copy size={13} />
-                <span style={{ textWrap: "nowrap" }}>
-                  {lang === "en" ? "Copy All Markdown" : "نسخ الكل"}
+              <div className="lpc-browser-address-bar">
+                <Globe size={12} color="#94A3B8" />
+                <span className="url">
+                  https://{(productName || "brand").toLowerCase().replace(/[^a-z0-9]/g, "")}.com/landing-page
                 </span>
-              </button>
+                <span className="ssl-badge">
+                  <ShieldCheck size={11} color="#10B981" /> SSL
+                </span>
+              </div>
 
-              <button
-                type="button"
-                onClick={exportJson}
-                className="lpc-btn lpc-btn-primary"
-              >
-                <Download size={13} />
-                <span>{lang === "en" ? "Export JSON" : "تصدير JSON"}</span>
-              </button>
+              <div className="lpc-browser-controls">
+                <span className="viewport-badge">
+                  <Monitor size={12} /> 100% Desktop View
+                </span>
+              </div>
             </div>
-          )}
+
+            {/* Canvas Body (Generated Sections / Loading Scanner / Empty State) */}
+            <div className="lpc-canvas-body">
+              
+              {/* ANIMATED GENERATION SCANNER STATE */}
+              {isGenerating && (
+                <div className="lpc-scanner-overlay">
+                  {/* Visual Beam */}
+                  <motion.div
+                    className="lpc-scanner-beam"
+                    animate={{ y: ["0%", "100%", "0%"] }}
+                    transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                  />
+
+                  {/* Sweeping Real-Time Status Badge */}
+                  <div className="lpc-scanner-badge-box">
+                    <motion.div
+                      key={scanningStep}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="lpc-scanner-badge"
+                    >
+                      <Sparkles size={16} className="lpc-spin-icon" color="#3B82F6" />
+                      <span>{scanningBadges[scanningStep]}</span>
+                    </motion.div>
+                  </div>
+
+                  {/* Skeleton Sections */}
+                  <div className="lpc-skeleton-canvas">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div key={i} className="lpc-skeleton-section">
+                        <div className="lpc-skeleton-title shimmer" />
+                        <div className="lpc-skeleton-text shimmer" style={{ width: "80%" }} />
+                        <div className="lpc-skeleton-text shimmer" style={{ width: "60%" }} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* EMPTY CANVAS STATE */}
+              {!generatedContent && !isGenerating && (
+                <div className="lpc-empty-canvas">
+                  <div className="lpc-empty-icon-glow">
+                    <Layout size={40} color="#3B82F6" />
+                  </div>
+                  <h4>
+                    {lang === "en"
+                      ? "Interactive Page Canvas Ready"
+                      : "كانفاس صفحة الهبوط المباشر جاهز للتصميم"}
+                  </h4>
+                  <p>
+                    {lang === "en"
+                      ? "Click the parameter controller to input your product details & synthesize landing page copy."
+                      : "اضغط على زر ضبط المدخلات لإدخال تفاصيل المنتج وتوليد محتوى موجه بالذكاء الاصطناعي."}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setIsInputDrawerOpen(true)}
+                    className="lpc-btn-primary"
+                    style={{ maxWidth: 300, marginTop: 12 }}
+                  >
+                    <Sliders size={16} />
+                    <span>
+                      {lang === "en"
+                        ? "Edit Parameters & Generate"
+                        : "ضبط المدخلات وبدء التوليد"}
+                    </span>
+                  </button>
+                </div>
+              )}
+
+              {/* LIVE GENERATED SECTIONS SHOWCASE */}
+              {generatedContent && !isGenerating && (
+                <div className="lpc-sections-stack">
+                  {canvasSections.map((sec) => {
+                    const SecIcon = sec.icon;
+                    const ideas = generatedContent[sec.key] || [];
+                    const activeIdx = activeIdeaIndex[sec.id] || 0;
+                    const currentText = ideas[activeIdx] || ideas[0] || "";
+
+                    return (
+                      <div
+                        key={sec.id}
+                        className="lpc-canvas-section-block"
+                        style={{ "--sec-glow": sec.glowColor, "--sec-accent": sec.badgeColor }}
+                      >
+                        {/* On-Hover Glass Floating Micro-Toolbar */}
+                        <div className="lpc-section-hover-toolbar">
+                          <div className="lpc-toolbar-badge">
+                            <SecIcon size={14} color={sec.badgeColor} />
+                            <span className="title">
+                              {lang === "en" ? sec.title_en : sec.title_ar}
+                            </span>
+                            <span className="tag" style={{ background: sec.badgeColor }}>
+                              {sec.badge}
+                            </span>
+                          </div>
+
+                          {/* Variant Pills Selector */}
+                          <div className="lpc-toolbar-variants">
+                            {ideas.map((_, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() =>
+                                  setActiveIdeaIndex((prev) => ({
+                                    ...prev,
+                                    [sec.id]: idx,
+                                  }))
+                                }
+                                className={`lpc-variant-pill ${activeIdx === idx ? "active" : ""}`}
+                              >
+                                {lang === "en" ? `Option ${idx + 1}` : `خيار ${idx + 1}`}
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Copy Section Action Button */}
+                          <button
+                            type="button"
+                            onClick={() => copySection(currentText)}
+                            className="lpc-toolbar-copy-btn"
+                          >
+                            <Copy size={13} />
+                            <span>{lang === "en" ? "Copy Copy" : "نسخ النص"}</span>
+                          </button>
+                        </div>
+
+                        {/* Visual Section Content Render */}
+                        <div className="lpc-section-view-wrapper">
+                          {sec.key === "hero" && (
+                            <div className="lpc-mockup-hero">
+                              <div className="lpc-hero-badge-tag">
+                                <Sparkles size={12} color="#3B82F6" />
+                                <span>{productName || "BRAND OFFER"}</span>
+                              </div>
+                              <pre className="lpc-copy-raw-text">{currentText}</pre>
+                              <div className="lpc-mockup-btn">
+                                <Rocket size={14} />
+                                <span>{lang === "en" ? "Get Started Now" : "احصل عليه الآن"}</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {sec.key === "problem" && (
+                            <div className="lpc-mockup-problem">
+                              <div className="lpc-problem-alert-bar">
+                                <AlertTriangle size={14} color="#F59E0B" />
+                                <span>{lang === "en" ? "PAIN POINT ANALYSIS" : "تحليل المشكلة والألم"}</span>
+                              </div>
+                              <pre className="lpc-copy-raw-text">{currentText}</pre>
+                            </div>
+                          )}
+
+                          {sec.key === "offer" && (
+                            <div className="lpc-mockup-offer">
+                              <div className="lpc-offer-badge">
+                                <Award size={14} color="#10B981" />
+                                <span>{lang === "en" ? "VALUE PROPOSITION" : "القيمة المضافة والعرض"}</span>
+                              </div>
+                              <pre className="lpc-copy-raw-text">{currentText}</pre>
+                            </div>
+                          )}
+
+                          {sec.key === "proof" && (
+                            <div className="lpc-mockup-proof">
+                              <div className="lpc-proof-stars">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star key={i} size={14} color="#F59E0B" fill="#F59E0B" />
+                                ))}
+                                <span className="proof-tag">5.0 Star Rating</span>
+                              </div>
+                              <pre className="lpc-copy-raw-text">{currentText}</pre>
+                            </div>
+                          )}
+
+                          {sec.key === "cta" && (
+                            <div className="lpc-mockup-cta">
+                              <div className="lpc-cta-urgency">
+                                <Flame size={14} color="#EC4899" />
+                                <span>{lang === "en" ? "HIGH-CONVERTING CTA" : "دعوة لاتخاذ إجراء مباشر"}</span>
+                              </div>
+                              <pre className="lpc-copy-raw-text">{currentText}</pre>
+                              <div className="lpc-mockup-btn cta-btn">
+                                <Zap size={14} />
+                                <span>{lang === "en" ? "Take Action Today" : "ابدأ الآن بدون مخاطرة"}</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
+
+        {/* ═══════════════ 4. FLOATING MASTER ACTION DOCK (BOTTOM CENTER) ═══════════════ */}
+        <div className="lpc-floating-master-dock">
+          <button
+            type="button"
+            onClick={copyAllMarkdown}
+            disabled={!generatedContent || isGenerating}
+            className="lpc-dock-action-btn"
+          >
+            <Copy size={15} color="#3B82F6" />
+            <span>{lang === "en" ? "Copy Complete Page Copy" : "نسخ الهيكل الكامل"}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={exportJson}
+            disabled={!generatedContent || isGenerating}
+            className="lpc-dock-action-btn"
+          >
+            <Download size={15} color="#10B981" />
+            <span>{lang === "en" ? "Export Structured JSON" : "تصدير JSON"}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={isGenerating}
+            className="lpc-dock-action-btn primary"
+          >
+            <RefreshCw size={15} className={isGenerating ? "lpc-spin-icon" : ""} />
+            <span>{lang === "en" ? "Regenerate Whole Page" : "إعادة التوليد"}</span>
+          </button>
+        </div>
+
       </div>
     </ToolDashboardLayout>
   );

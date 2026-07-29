@@ -721,7 +721,7 @@ export default function MarketingPlan({ stepNumber }) {
                         <span>{lang === 'en' ? 'Step 3: Strategy Mode & AI Execution' : 'الخطوة 3: نمط التوليد وتنفيذ الخطة'}</span>
                       </h4>
                       <p className="mp-deck-subtitle">
-                        {lang === 'en' ? 'Choose Fast DB lookup or Live OpenAI synthesis for custom insights.' : 'اختر التوليد السريع من قاعدة البيانات أو التفكير الحي عبر الذكاء الاصطناعي.'}
+                        {lang === 'en' ? 'Choose Fast DB lookup or Live AI synthesis for custom insights.' : 'اختر التوليد السريع من قاعدة البيانات أو التفكير الحي عبر الذكاء الاصطناعي.'}
                       </p>
                     </div>
                   </div>

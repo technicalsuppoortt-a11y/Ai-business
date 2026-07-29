@@ -38,6 +38,7 @@ import {
   Sparkles,
   Cpu,
   Zap,
+  Edit3,
   Flame,
   Coins,
   TrendingUp,
@@ -47,6 +48,8 @@ import {
   ArrowLeft,
   Copy,
   Search,
+  Filter,
+  X,
   AlertTriangle,
   ShoppingCart,
   Gem,
@@ -57,7 +60,6 @@ import {
   Bookmark,
   CheckSquare,
   Square,
-  Filter,
   RefreshCw,
   Share2,
   ExternalLink,
@@ -159,7 +161,129 @@ const COUNTRY_OPTIONS = [
   { id: 'global', name_ar: 'السوق العالمي الشامل', name_en: 'Worldwide Global Market', flag: '🌐', region: 'Global' },
 ];
 
-function TargetMarketDropdown({ value, onChange, options, lang }) {
+function CategorySelectPrompt({ lang }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -10, scale: 0.98 }}
+      className="ns-panel-card"
+      style={{
+        padding: '40px 24px',
+        textAlign: 'center',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '18px',
+        margin: '20px 0',
+      }}
+    >
+      <div
+        style={{
+          width: '68px',
+          height: '68px',
+          borderRadius: '22px',
+          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(16, 185, 129, 0.25))',
+          border: '1px solid rgba(99, 102, 241, 0.4)',
+          boxShadow: '0 8px 24px rgba(99, 102, 241, 0.15)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Target size={34} color="#6366F1" />
+      </div>
+
+      <div>
+        <h3 className="ns-heading-title" style={{ fontSize: '18px', fontWeight: '900', margin: 0 }}>
+          {lang === 'en' ? 'Select a Business Category Above' : 'اختر تخصص البزنس من الأعلى للبدء'}
+        </h3>
+        <p className="ns-subtext" style={{ fontSize: '13px', maxWidth: '520px', margin: '8px auto 0', lineHeight: '1.6' }}>
+          {lang === 'en'
+            ? 'Choose any business category (e.g., Real Estate & Finance, AI & Automation, E-Commerce) to activate real-time market intelligence, CAGR metrics, and micro-niche opportunities.'
+            : 'اختر أي مجال وتخصص من البطاقات أعلاه (مثل العقارات والخدمات المالية، الذكاء الاصطناعي، التجارة الإلكترونية) لتفعيل التحليل الاستراتيجي المباشر واستكشاف الفرص الفريدة.'}
+        </p>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#818CF8', fontSize: '12px', fontWeight: '800', background: 'rgba(99, 102, 241, 0.12)', padding: '8px 16px', borderRadius: '20px', border: '1px solid rgba(99, 102, 241, 0.25)' }}>
+        <Sparkles size={16} color="#818CF8" />
+        <span>{lang === 'en' ? 'Click any category card above to begin' : 'انقر على أي تخصص في الأعلى للبدء بالتحليل'}</span>
+      </div>
+    </motion.div>
+  );
+}
+
+function FullPageCategoryLoader({ selectedNiche, lang }) {
+  const label = lang === 'en' ? (selectedNiche?.label_en || selectedNiche?.id) : (selectedNiche?.label_ar || selectedNiche?.id);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -12, scale: 0.98 }}
+      transition={{ duration: 0.3 }}
+      className="ns-full-category-loader"
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px', textAlign: 'center', gap: '20px' }}>
+        <div style={{ position: 'relative', width: '80px', height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              border: '3px solid rgba(99, 102, 241, 0.2)',
+              borderTopColor: '#6366F1',
+              animation: 'spin 1s infinite linear'
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              inset: '8px',
+              borderRadius: '50%',
+              border: '3px solid rgba(16, 185, 129, 0.2)',
+              borderBottomColor: '#10B981',
+              animation: 'spin 1.5s infinite linear reverse'
+            }}
+          />
+          <Target size={28} color="#6366F1" />
+        </div>
+
+        <div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(99, 102, 241, 0.15)', border: '1px solid rgba(99, 102, 241, 0.3)', padding: '6px 14px', borderRadius: '20px', marginBottom: '12px' }}>
+            <Sparkles size={14} color="#6366F1" />
+            <span style={{ fontSize: '12px', fontWeight: '800', color: '#818CF8' }}>
+              {lang === 'en' ? `Analyzing Category: ${label}` : `جاري تحليل قطاع: ${label}`}
+            </span>
+          </div>
+
+          <h3 className="ns-heading-title" style={{ fontSize: '16px', fontWeight: '900', margin: 0 }}>
+            {lang === 'en'
+              ? `Generating Deep Market Intelligence for ${label}...`
+              : `جاري تجميع دراسة الجدوى والفرص الاستراتيجية لـ ${label}...`}
+          </h3>
+          <p className="ns-subtext" style={{ fontSize: '12px', maxWidth: '480px', margin: '8px auto 0', lineHeight: '1.6' }}>
+            {lang === 'en'
+              ? 'Fetching CAGR benchmarks, saturation levels, top market leaders, and high-demand micro-niche opportunities.'
+              : 'جاري استدعاء معدلات النمو، درجة تشبع السوق، أبرز المنافسين وأفكار الخدمات الدقيقة عالية الربحية.'}
+          </p>
+        </div>
+
+        <div style={{ width: '100%', maxWidth: '700px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginTop: '10px' }}>
+          <div className="ns-subcard td-skeleton" style={{ height: '70px', borderRadius: '12px', opacity: 0.25 }} />
+          <div className="ns-subcard td-skeleton" style={{ height: '70px', borderRadius: '12px', opacity: 0.25 }} />
+          <div className="ns-subcard td-skeleton" style={{ height: '70px', borderRadius: '12px', opacity: 0.25 }} />
+        </div>
+
+        <div className="ns-progress-track" style={{ width: '100%', maxWidth: '400px' }}>
+          <div className="ns-progress-bar-fill" />
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function TargetMarketDropdown({ value, onChange, options, lang, isLoading }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const dropdownRef = useRef(null);
@@ -191,7 +315,7 @@ function TargetMarketDropdown({ value, onChange, options, lang }) {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="ns-dropdown-trigger"
+        className={`ns-dropdown-trigger ${isLoading ? 'is-loading' : ''}`}
         style={{
           width: '100%',
           minHeight: '46px',
@@ -205,10 +329,44 @@ function TargetMarketDropdown({ value, onChange, options, lang }) {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '20px' }}>{selectedOption.flag}</span>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <span style={{ fontSize: '20px' }}>{selectedOption.flag}</span>
+            {isLoading && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '-4px',
+                  right: '-4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: '#6366F1',
+                  borderRadius: '50%',
+                  width: '12px',
+                  height: '12px',
+                }}
+              >
+                <Loader2 size={8} color="#fff" className="spin" />
+              </span>
+            )}
+          </div>
           <div style={{ textAlign: lang === 'ar' ? 'right' : 'left' }}>
-            <div className="ns-heading-title" style={{ fontSize: '13px', fontWeight: '800' }}>
-              {lang === 'en' ? selectedOption.name_en : selectedOption.name_ar}
+            <div className="ns-heading-title" style={{ fontSize: '13px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span>{lang === 'en' ? selectedOption.name_en : selectedOption.name_ar}</span>
+              {isLoading && (
+                <span
+                  style={{
+                    fontSize: '10px',
+                    color: '#6366F1',
+                    background: 'rgba(99,102,241,0.12)',
+                    padding: '1px 6px',
+                    borderRadius: '4px',
+                    fontWeight: '700'
+                  }}
+                >
+                  {lang === 'en' ? 'Updating...' : 'جاري التحديث...'}
+                </span>
+              )}
             </div>
             {selectedOption.region && (
               <span style={{ fontSize: '10px', color: '#818CF8', fontWeight: '700' }}>
@@ -222,11 +380,15 @@ function TargetMarketDropdown({ value, onChange, options, lang }) {
           <span style={{ fontSize: '11px', background: 'rgba(99, 102, 241, 0.15)', color: '#818CF8', padding: '2px 8px', borderRadius: '6px', fontWeight: '700' }}>
             {options.length} {lang === 'en' ? 'Markets' : 'أسواق'}
           </span>
-          <ChevronDown
-            size={16}
-            color="#94A3B8"
-            style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
-          />
+          {isLoading ? (
+            <Loader2 size={16} color="#6366F1" className="spin" />
+          ) : (
+            <ChevronDown
+              size={16}
+              color="#94A3B8"
+              style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+            />
+          )}
         </div>
       </button>
 
@@ -402,8 +564,7 @@ function CustomDropdown({ value, onChange, options, placeholder }) {
 
 export default function AnalysisIdentity() {
   const { state, dispatch } = useApp();
-  const toastContext = useToast();
-  const toast = toastContext?.toast || ((msg) => console.log(msg));
+  const toast = useToast();
 
   const lang = state.language || "ar";
   const isRtl = lang === "ar";
@@ -423,17 +584,21 @@ export default function AnalysisIdentity() {
   const [selectedNiche, setSelectedNiche] = useState(null);
   const [customNicheInput, setCustomNicheInput] = useState("");
   const [microSearchQuery, setMicroSearchQuery] = useState("");
+  const [microFilterBadge, setMicroFilterBadge] = useState("all"); // 'all' | 'trend' | 'profit' | 'stable' | 'freelance'
   const [showAllMicroNiches, setShowAllMicroNiches] = useState(false);
   const [isAnalyzingNiche, setIsAnalyzingNiche] = useState(false);
   const [targetCountry, setTargetCountry] = useState("sa");
+  const [isChangingMarket, setIsChangingMarket] = useState(false);
+  const [isChangingCategory, setIsChangingCategory] = useState(false);
   const [isGlobalBenchmark, setIsGlobalBenchmark] = useState(false);
+
   const [microNicheActiveTab, setMicroNicheActiveTab] = useState("opportunities"); // 'opportunities' | 'leaders'
   const [liveAiMicroIdeas, setLiveAiMicroIdeas] = useState([]);
   const [isFetchingLiveNiches, setIsFetchingLiveNiches] = useState(false);
   const [nicheAnalysis, setNicheAnalysis] = useState(null);
   const [nicheAnalysisOption, setNicheAnalysisOption] = useState("fast_radar"); // 'fast_radar' | 'deep_360'
 
-  // ── Unified AI State (100% Dynamic OpenAI Integration) ─────────────
+  // ── Unified AI State (100% Dynamic Integration) ─────────────
   const [aiData, setAiData] = useState({
     benchmark: null,
     microNiches: [],
@@ -447,6 +612,18 @@ export default function AnalysisIdentity() {
     },
     error: null
   });
+
+  const handleTargetCountryChange = (val) => {
+    if (val === targetCountry) return;
+    setIsChangingMarket(true);
+    setTargetCountry(val);
+    setTimeout(() => {
+      setIsChangingMarket(false);
+    }, 1600);
+  };
+
+  const isMarketLoading = isChangingMarket || aiData.loading.benchmark || aiData.loading.microNiches || isFetchingLiveNiches;
+  const isCategoryLoading = isChangingCategory || (selectedNiche && (aiData.loading.benchmark || aiData.loading.microNiches));
 
   // ── Unified AI Data Fetcher ─────────────────────────────────────────
   const fetchAIData = async (type, params = {}) => {
@@ -689,6 +866,8 @@ export default function AnalysisIdentity() {
 
   // Sync state variables back to global context
   const handleNicheSelect = (n) => {
+    if (selectedNiche?.id === n.id) return;
+    setIsChangingCategory(true);
     setSelectedNiche(n);
     dispatch({ type: "SET_FIELD", field: "niche", value: n.id });
     dispatch({ type: "SET_FIELD", field: "subNiche", value: "" });
@@ -696,6 +875,25 @@ export default function AnalysisIdentity() {
     setCustomNicheInput("");
     setMicroSearchQuery("");
     setShowAllMicroNiches(false);
+
+    setAiData({
+      benchmark: null,
+      microNiches: [],
+      marketOpportunities: null,
+      topLeaders: [],
+      loading: {
+        benchmark: true,
+        microNiches: true,
+        opportunities: false,
+        leaders: false
+      },
+      error: null
+    });
+    setLiveAiMicroIdeas([]);
+
+    setTimeout(() => {
+      setIsChangingCategory(false);
+    }, 1600);
   };
 
   const handleSubNicheSelect = (sub) => {
@@ -708,11 +906,6 @@ export default function AnalysisIdentity() {
 
   const handleCustomNicheChange = (val) => {
     setCustomNicheInput(val);
-    dispatch({ type: "SET_FIELD", field: "subNiche", value: val });
-    if (val.trim()) {
-      fetchAIData('opportunities', { microNiche: val });
-      fetchAIData('leaders', { microNiche: val });
-    }
   };
 
   // Helper to determine if a niche is complex/unsuitable for beginners
@@ -997,10 +1190,56 @@ export default function AnalysisIdentity() {
     setIsAnalyzingNiche(true);
 
     try {
-      await Promise.all([
-        fetchAIData('opportunities'),
-        fetchAIData('leaders')
-      ]);
+      if (analysisMode === "live") {
+        await Promise.all([
+          fetchAIData('opportunities'),
+          fetchAIData('leaders')
+        ]);
+      } else {
+        // Fast Radar Mode -> Load directly from Firebase / Firestore local DB
+        let dbResult = null;
+        try {
+          dbResult = await getNicheAnalysis(state.subNiche);
+        } catch (e) {
+          console.log("Firebase getNicheAnalysis fetch:", e);
+        }
+
+        if (dbResult && (dbResult.opportunities || dbResult.strengths)) {
+          setAiData(prev => ({
+            ...prev,
+            marketOpportunities: dbResult.opportunities || {
+              strengths: dbResult.strengths || [],
+              gaps: dbResult.gaps || [],
+              recommendations: dbResult.recommendations || []
+            },
+            topLeaders: dbResult.leaders || dbResult.topLeaders || []
+          }));
+        } else {
+          // Fast Mode Firebase / Local Preset Metrics
+          setAiData(prev => ({
+            ...prev,
+            marketOpportunities: {
+              strengths: [
+                lang === 'en' ? 'High market demand & strong scalability' : 'طلب مرتفع وإمكانية توسّع ممتازة في السوق',
+                lang === 'en' ? 'Low overhead start-up investment' : 'استثمار أولي منخفض التكاليف التشغيلية',
+                lang === 'en' ? 'Recurring monthly retainer potential' : 'فرصة بناء عوائد شهرية متكررة Retainers'
+              ],
+              gaps: [
+                lang === 'en' ? 'Lack of specialized local service providers' : 'نقص بالمزودين المتخصصين ذوي الجودة العالية',
+                lang === 'en' ? 'Standardized pricing & packaging gap' : 'غياب معايير تسعير وباقات واضحة في السوق'
+              ],
+              recommendations: [
+                lang === 'en' ? 'Focus on high-ticket specialized offers' : 'التركيز على العروض المتخصصة عالية القيمة',
+                lang === 'en' ? 'Build strong client case studies early' : 'بناء دراسات حالة ونتائج سريعة للعملاء الأوائل'
+              ]
+            },
+            topLeaders: [
+              { name: `${state.subNiche} Hub`, secret: 'Market specialization & speed', url: '#' },
+              { name: `Pro ${state.subNiche} Solutions`, secret: 'Automated client acquisition', url: '#' }
+            ]
+          }));
+        }
+      }
 
       const subName = state.subNiche;
       setNicheAnalysis({
@@ -1018,8 +1257,8 @@ export default function AnalysisIdentity() {
       dispatch({ type: "COMPLETE_STEP", step: "niche-selection" });
       toast(
         lang === "en"
-          ? "Niche opportunity analyzed via OpenAI!"
-          : "تم تحليل فرصة النيش بنجاح عبر OpenAI!",
+          ? (analysisMode === "live" ? "Niche opportunity analyzed via Live AI!" : "Fast Radar analysis loaded from database!")
+          : (analysisMode === "live" ? "تم تحليل فرصة النيش بنجاح بالذكاء الاصطناعي!" : "تم تحميل تحليل الرادار السريع من قاعدة البيانات!"),
         "success",
       );
     } catch (err) {
@@ -1031,11 +1270,15 @@ export default function AnalysisIdentity() {
 
   // Tab 2: Brand naming generation
   const handleGenerateNames = async () => {
-    if (selectedCatalogs.length === 0 && analysisMode !== "live") {
+    if (selectedCatalogs.length === 0) {
+      const sampleCat = currentCatalogs && currentCatalogs[0]
+        ? (lang === "en" ? `+ ${currentCatalogs[0].label_en}` : `+ ${currentCatalogs[0].label_ar}`)
+        : "+ Streetwear";
+
       toast(
         lang === "en"
-          ? "Please select at least one catalog."
-          : "الرجاء تحديد كتالوج واحد على الأقل.",
+          ? `Please select at least one catalog category (e.g., ${sampleCat}) under 'SELECT CATALOGS TO LOAD' before generating names.`
+          : `الرجاء اختيار كتالوج واحد على الأقل (مثل: ${sampleCat}) من قوائم الكتالوج المتاحة قبل توليد الأسماء.`,
         "warning",
       );
       return;
@@ -1465,9 +1708,10 @@ export default function AnalysisIdentity() {
                 </label>
                 <TargetMarketDropdown
                   value={targetCountry}
-                  onChange={(val) => setTargetCountry(val)}
+                  onChange={handleTargetCountryChange}
                   options={COUNTRY_OPTIONS}
                   lang={lang}
+                  isLoading={isMarketLoading}
                 />
               </div>
 
@@ -1527,6 +1771,63 @@ export default function AnalysisIdentity() {
               </div>
             </div>
 
+            {/* Professional Target Market Loading Banner (Suitable for Light & Dark Mode) */}
+            <AnimatePresence>
+              {isMarketLoading && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                  transition={{ duration: 0.25 }}
+                  className="ns-market-loading-banner"
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div className="ns-market-flag-avatar">
+                        <span>{COUNTRY_OPTIONS.find((c) => c.id === targetCountry)?.flag || '🇸🇦'}</span>
+                        <div
+                          style={{
+                            position: 'absolute',
+                            inset: '-4px',
+                            borderRadius: '16px',
+                            border: '2px solid #6366F1',
+                            animation: 'nsPulseGlow 1.5s infinite',
+                            pointerEvents: 'none',
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <div className="ns-market-loading-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Loader2 size={16} color="#6366F1" className="spin" />
+                          <span>
+                            {lang === 'en'
+                              ? `Recalibrating Market Intelligence for ${COUNTRY_OPTIONS.find((c) => c.id === targetCountry)?.name_en || 'Target Market'}...`
+                              : `جاري إعادة معايرة واستدعاء بيانات السوق لـ ${COUNTRY_OPTIONS.find((c) => c.id === targetCountry)?.name_ar || 'السوق المستهدف'}...`}
+                          </span>
+                        </div>
+                        <div className="ns-market-loading-subtext" style={{ marginTop: '4px' }}>
+                          {lang === 'en'
+                            ? 'Updating local CAGR growth rates, market saturation radar, and purchasing power benchmarks.'
+                            : 'جاري تحديث معدلات النمو المحلي (CAGR)، مؤشر التشبع، والقوة الشرائية المنافسة.'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(99, 102, 241, 0.12)', padding: '6px 12px', borderRadius: '10px', border: '1px solid rgba(99, 102, 241, 0.25)' }}>
+                      <Compass size={14} color="#6366F1" className="spin" />
+                      <span style={{ fontSize: '11px', fontWeight: '800', color: '#6366F1' }}>
+                        {lang === 'en' ? 'Market Switch Active' : 'تحديث السوق مفعّل'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="ns-progress-track">
+                    <div className="ns-progress-bar-fill" />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Global Benchmark Comparative Summary Box */}
             {isGlobalBenchmark && (
               <div
@@ -1552,7 +1853,7 @@ export default function AnalysisIdentity() {
                 {aiData.loading.benchmark ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#818CF8', fontSize: '12px', padding: '12px' }}>
                     <Loader2 size={16} className="spin" />
-                    <span>{lang === 'en' ? 'Fetching live OpenAI benchmark comparison...' : 'جاري تحليل المقارنة المرجعية عبر OpenAI...'}</span>
+                    <span>{lang === 'en' ? 'Fetching live AI benchmark comparison...' : 'جاري تحليل المقارنة المرجعية عبر الذكاء الاصطناعي...'}</span>
                   </div>
                 ) : aiData.benchmark ? (
                   <>
@@ -1631,15 +1932,27 @@ export default function AnalysisIdentity() {
             </div>
           )}
 
-          {/* ═══════════════ 2. MAIN NICHE STATS CARDS ═══════════════ */}
-          {selectedNiche && (
-            <div
-              className="ns-panel-card"
-              style={{
-                padding: '18px 20px',
-                marginBottom: '20px',
-              }}
-            >
+          {/* ═══════════════ 2. MAIN NICHE STATS & DEEP DIVE SECTION ═══════════════ */}
+          {!selectedNiche ? (
+            <CategorySelectPrompt lang={lang} />
+          ) : isCategoryLoading ? (
+            <FullPageCategoryLoader selectedNiche={selectedNiche} lang={lang} />
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={selectedNiche.id}
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -14 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div
+                  className="ns-panel-card"
+                  style={{
+                    padding: '18px 20px',
+                    marginBottom: '20px',
+                  }}
+                >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
                 <BarChart3 size={20} color="#6366F1" />
                 <h4 className="ns-heading-title" style={{ margin: 0, fontSize: '14px', fontWeight: '900' }}>
@@ -1692,7 +2005,6 @@ export default function AnalysisIdentity() {
                 </div>
               </div>
             </div>
-          )}
 
           {/* Error Banner */}
           {aiData.error && (
@@ -1712,14 +2024,13 @@ export default function AnalysisIdentity() {
           )}
 
           {/* Sub-niches Advanced List */}
-          {selectedNiche && (
-            <div
-              className="ns-panel-card"
-              style={{
-                padding: "18px",
-                marginBottom: "20px",
-              }}
-            >
+          <div
+            className="ns-panel-card"
+            style={{
+              padding: "18px",
+              marginBottom: "20px",
+            }}
+          >
               <div
                 style={{
                   display: "flex",
@@ -1770,7 +2081,7 @@ export default function AnalysisIdentity() {
                       }}
                     >
                       <Zap size={12} />
-                      <span>{lang === 'en' ? 'Fast Mode (Preset)' : 'النمط السريع (مسبق)'}</span>
+                      <span>{lang === 'en' ? 'Fast Mode (Instant Radar)' : 'النمط السريع (مسبق)'}</span>
                     </button>
                     <button
                       type="button"
@@ -1790,6 +2101,20 @@ export default function AnalysisIdentity() {
                     >
                       <Bot size={12} />
                       <span>{lang === 'en' ? 'Live AI (Generate)' : 'ذكاء اصطناعي مباشر (توليد)'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMicroNicheMode('custom')}
+                      style={{
+                        padding: '6px 14px', borderRadius: '8px', fontSize: '11px', fontWeight: '800',
+                        border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+                        background: microNicheMode === 'custom' ? '#6366F1' : 'transparent',
+                        color: microNicheMode === 'custom' ? '#fff' : '#94A3B8',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <Edit3 size={12} />
+                      <span>{lang === 'en' ? 'Custom Idea' : 'فكرة مخصصة'}</span>
                     </button>
                   </div>
 
@@ -1813,75 +2138,226 @@ export default function AnalysisIdentity() {
                       }}
                     >
                       <RefreshCw size={12} className={aiData.loading.microNiches ? 'spin' : ''} />
-                      <span>{lang === 'en' ? 'Regenerate via OpenAI' : 'توليد أفكار جديدة عبر OpenAI'}</span>
+                      <span>{lang === 'en' ? 'Regenerate via Live AI' : 'توليد أفكار جديدة عبر الذكاء الاصطناعي'}</span>
                     </button>
                   )}
                 </div>
               </div>
 
-              {aiData.loading.microNiches ? (
+              {/* Professional Filter Bar */}
+              {microNicheMode !== 'custom' && !aiData.loading.microNiches && (
+                <div style={{ marginBottom: '14px', background: 'rgba(15, 23, 42, 0.4)', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '10px 14px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                    {/* Search Input Filter */}
+                    <div style={{ position: 'relative', flex: '1 1 200px', minWidth: '180px' }}>
+                      <Search size={13} color="#818CF8" style={{ position: 'absolute', top: '9px', [isRtl ? 'right' : 'left']: '10px' }} />
+                      <input
+                        type="text"
+                        value={microSearchQuery}
+                        onChange={(e) => setMicroSearchQuery(e.target.value)}
+                        placeholder={lang === 'en' ? 'Search or filter micro-niches...' : 'تصفية وبحث في التخصصات...'}
+                        style={{
+                          width: '100%',
+                          background: 'rgba(0, 0, 0, 0.3)',
+                          border: '1px solid rgba(99, 102, 241, 0.25)',
+                          borderRadius: '8px',
+                          padding: isRtl ? '6px 28px 6px 28px' : '6px 28px 6px 28px',
+                          color: '#fff',
+                          fontSize: '11px',
+                          outline: 'none',
+                        }}
+                      />
+                      {microSearchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setMicroSearchQuery('')}
+                          style={{ position: 'absolute', top: '7px', [isRtl ? 'left' : 'right']: '8px', background: 'transparent', border: 'none', color: '#94A3B8', cursor: 'pointer' }}
+                        >
+                          <X size={12} />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Filter Tag Pills */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                      {[
+                        { id: 'all', label: lang === 'en' ? 'All' : 'الكل', IconComp: Filter },
+                        { id: 'trend', label: lang === 'en' ? 'Fast Trend' : 'تريند سريع', IconComp: Flame },
+                        { id: 'profit', label: lang === 'en' ? 'High Profit' : 'ربحية عالية', IconComp: Coins },
+                        { id: 'stable', label: lang === 'en' ? 'Stable Demand' : 'طلب مستقر', IconComp: TrendingUp },
+                        { id: 'freelance', label: lang === 'en' ? 'Freelance Ready' : 'مناسب للعمل الحر', IconComp: Briefcase },
+                      ].map((tag) => {
+                        const Icon = tag.IconComp;
+                        return (
+                          <button
+                            key={tag.id}
+                            type="button"
+                            onClick={() => setMicroFilterBadge(tag.id)}
+                            style={{
+                              padding: '5px 12px',
+                              borderRadius: '8px',
+                              fontSize: '11px',
+                              fontWeight: '700',
+                              border: microFilterBadge === tag.id ? '1px solid #6366F1' : '1px solid rgba(255, 255, 255, 0.1)',
+                              background: microFilterBadge === tag.id ? 'rgba(99, 102, 241, 0.25)' : 'transparent',
+                              color: microFilterBadge === tag.id ? '#818CF8' : '#94A3B8',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              transition: 'all 0.2s ease',
+                            }}
+                          >
+                            <Icon size={12} color={microFilterBadge === tag.id ? '#818CF8' : '#94A3B8'} />
+                            <span>{tag.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {microNicheMode === 'custom' ? (
+                <div style={{ background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.25)', padding: '16px', borderRadius: '14px', marginBottom: '16px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '800', color: '#818CF8', marginBottom: '10px' }}>
+                    <Lightbulb size={16} color="#6366F1" />
+                    <span>{lang === 'en' ? 'Have a custom idea? Type your micro-niche here:' : 'لديك فكرة مختلفة؟ اكتب تخصصك الدقيق يدوياً هنا:'}</span>
+                  </label>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    <input
+                      type="text"
+                      className="field-input"
+                      style={{ flex: '1 1 240px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(99, 102, 241, 0.3)', borderRadius: '10px', padding: '10px 14px', color: '#fff', fontSize: '13px' }}
+                      value={customNicheInput}
+                      onChange={(e) => handleCustomNicheChange(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && customNicheInput.trim()) {
+                          handleSubNicheSelect(customNicheInput.trim());
+                        }
+                      }}
+                      placeholder={lang === 'en' ? 'e.g., Marketing for local real estate brokers' : 'مثال: تسويق وتصوير فلل عقارية مستقلة'}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (customNicheInput.trim()) {
+                          handleSubNicheSelect(customNicheInput.trim());
+                        }
+                      }}
+                      className="btn btn-primary"
+                      style={{ padding: '10px 20px', borderRadius: '10px', background: '#6366F1', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '800', border: 'none', cursor: 'pointer' }}
+                    >
+                      <Sparkles size={14} />
+                      <span>{lang === 'en' ? 'Analyze Custom Idea' : 'تحليل الفكرة المخصصة'}</span>
+                      {isRtl ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
+                    </button>
+                  </div>
+                </div>
+              ) : aiData.loading.microNiches && microNicheMode === 'live' ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#818CF8', fontSize: '12px', padding: '16px' }}>
                   <Loader2 size={16} className="spin" />
-                  <span>{lang === 'en' ? 'Generating live micro-niches via OpenAI...' : 'جاري توليد أفكار التخصصات الدقيقة عبر OpenAI...'}</span>
+                  <span>{lang === 'en' ? 'Generating live micro-niches via Live AI...' : 'جاري توليد أفكار التخصصات الدقيقة عبر الذكاء الاصطناعي...'}</span>
+                </div>
+              ) : (microNicheMode === 'live' && aiData.microNiches.length === 0) ? (
+                <div style={{ padding: '20px', textAlign: 'center', background: 'rgba(99, 102, 241, 0.08)', borderRadius: '14px', border: '1px solid rgba(99, 102, 241, 0.2)', marginBottom: '16px' }}>
+                  <div className="ns-subtext" style={{ fontSize: '13px', marginBottom: '12px' }}>
+                    {lang === 'en' ? 'No live micro-niche ideas generated yet.' : 'لم يتم توليد أفكار حية بالذكاء الاصطناعي بعد.'}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => fetchAIData('microNiches')}
+                    className="btn btn-primary"
+                    style={{ padding: '8px 18px', borderRadius: '8px', fontSize: '12px', fontWeight: '800' }}
+                  >
+                    <Bot size={14} style={{ marginRight: '6px' }} />
+                    <span>{lang === 'en' ? 'Generate Live Micro-Niches via OpenAI' : 'توليد تخصصات دقيقة بالذكاء الاصطناعي المباشر'}</span>
+                  </button>
                 </div>
               ) : (
-                <div className="micro-niche-grid-2030">
-                  {((microNicheMode === 'live' && aiData.microNiches.length > 0)
+                (() => {
+                  const rawList = microNicheMode === 'live'
                     ? aiData.microNiches
                     : ((selectedNiche && ((lang === 'en' ? selectedNiche.ideas_en : selectedNiche.ideas_ar) || []).length > 0)
                         ? (lang === 'en' ? selectedNiche.ideas_en : selectedNiche.ideas_ar)
-                        : (lang === 'en' ? [
-                            `AI-Powered ${selectedNiche?.label_en || selectedNiche?.id || 'Business'} Agency`,
-                            `Automated ${selectedNiche?.label_en || selectedNiche?.id || 'Business'} Workflows`,
-                            `High-Ticket ${selectedNiche?.label_en || selectedNiche?.id || 'Business'} Consulting`
-                          ] : [
-                            `وكالة أتمتة خدمات ${selectedNiche?.label_ar || selectedNiche?.id || 'الأعمال'} بالذكاء الاصطناعي`,
-                            `حلول أنظمة وسير عمل ${selectedNiche?.label_ar || selectedNiche?.id || 'الأعمال'}`,
-                            `استشارات عالية القيمة High-Ticket في ${selectedNiche?.label_ar || selectedNiche?.id || 'الأعمال'}`
-                          ])
-                      )
-                  ).map((ideaText, i) => {
-                    const isActive = state.subNiche === ideaText;
-                    const badge = getMarketBadges(i);
-                    const BadgeIcon = badge.IconComp;
+                        : []);
+                  
+                  const filteredList = rawList.map((text, originalIndex) => ({ text, originalIndex }))
+                    .filter(({ text, originalIndex }) => {
+                      const matchesSearch = !microSearchQuery || text.toLowerCase().includes(microSearchQuery.toLowerCase());
+                      if (!matchesSearch) return false;
+                      if (microFilterBadge === 'all') return true;
+                      const badge = getMarketBadges(originalIndex);
+                      return badge.class === microFilterBadge;
+                    });
 
+                  if (filteredList.length === 0) {
                     return (
-                      <motion.div
-                        key={i}
-                        onClick={() => handleSubNicheSelect(ideaText)}
-                        className={`micro-niche-card-2030 ${isActive ? "active" : ""}`}
-                        whileHover={{ y: -3, scale: 1.015 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <div className="micro-niche-card-header">
-                          <span className={`market-badge ${badge.class}`}>
-                            <BadgeIcon size={10} strokeWidth={1.5} />
-                            <span>{badge.text}</span>
-                          </span>
-                          {isActive ? (
-                            <CheckCircle2 size={15} color="#6366F1" strokeWidth={2} />
-                          ) : (
-                            <span style={{ fontSize: "10px", color: "#64748B", fontWeight: "700" }}>
-                              #{i + 1}
-                            </span>
-                          )}
+                      <div style={{ padding: '24px', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '12px', border: '1px dashed rgba(99, 102, 241, 0.3)', marginBottom: '16px' }}>
+                        <Filter size={24} color="#818CF8" style={{ marginBottom: '8px' }} />
+                        <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff', marginBottom: '4px' }}>
+                          {lang === 'en' ? 'No micro-niches match your filter.' : 'لا توجد تخصصات دقيقة تطابق الفلتر المحدد.'}
                         </div>
-
-                        <div className="micro-niche-card-title">
-                          <span className="micro-niche-hashtag">#</span>
-                          <span>{ideaText}</span>
+                        <div style={{ fontSize: '11px', color: '#94A3B8', marginBottom: '12px' }}>
+                          {lang === 'en' ? 'Try adjusting your search term or filter category tag.' : 'جرب تغيير كلمة البحث أو إعادة ضبط تصفية الشارات.'}
                         </div>
-
-                        <div className="micro-niche-card-footer">
-                          <span className="micro-niche-score-tag">
-                            <Sparkles size={10} strokeWidth={1.5} />
-                            <span>{lang === "en" ? "Live AI Idea" : "فكرة AI مباشرة"}</span>
-                          </span>
-                        </div>
-                      </motion.div>
+                        <button
+                          type="button"
+                          onClick={() => { setMicroSearchQuery(''); setMicroFilterBadge('all'); }}
+                          style={{ padding: '6px 14px', borderRadius: '8px', background: 'rgba(99, 102, 241, 0.2)', border: '1px solid rgba(99, 102, 241, 0.4)', color: '#818CF8', fontSize: '11px', fontWeight: '800', cursor: 'pointer' }}
+                        >
+                          {lang === 'en' ? 'Reset Filter' : 'إعادة ضبط الفلتر'}
+                        </button>
+                      </div>
                     );
-                  })}
-                </div>
+                  }
+
+                  return (
+                    <div className="micro-niche-grid-2030">
+                      {filteredList.map(({ text: ideaText, originalIndex: i }) => {
+                        const isActive = state.subNiche === ideaText;
+                        const badge = getMarketBadges(i);
+                        const BadgeIcon = badge.IconComp;
+
+                        return (
+                          <motion.div
+                            key={i}
+                            onClick={() => handleSubNicheSelect(ideaText)}
+                            className={`micro-niche-card-2030 ${isActive ? "active" : ""}`}
+                            whileHover={{ y: -3, scale: 1.015 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <div className="micro-niche-card-header">
+                              <span className={`market-badge ${badge.class}`}>
+                                <BadgeIcon size={10} strokeWidth={1.5} />
+                                <span>{badge.text}</span>
+                              </span>
+                              {isActive ? (
+                                <CheckCircle2 size={15} color="#6366F1" strokeWidth={2} />
+                              ) : (
+                                <span style={{ fontSize: "10px", color: "#64748B", fontWeight: "700" }}>
+                                  #{i + 1}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="micro-niche-card-title">
+                              <span className="micro-niche-hashtag">#</span>
+                              <span>{ideaText}</span>
+                            </div>
+
+                            <div className="micro-niche-card-footer">
+                              <span className="micro-niche-score-tag">
+                                <Sparkles size={10} strokeWidth={1.5} />
+                                <span>{lang === "en" ? "Live AI Idea" : "فكرة AI مباشرة"}</span>
+                              </span>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()
               )}
 
               {/* ═══════════════ 3. MICRO-NICHE DEEP DIVE VIEWS (2-TAB COMPONENT) ═══════════════ */}
@@ -1950,7 +2426,7 @@ export default function AnalysisIdentity() {
                     aiData.loading.opportunities ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#818CF8', fontSize: '13px', padding: '20px 0' }}>
                         <Loader2 size={18} className="spin" />
-                        <span>{lang === 'en' ? 'Analyzing market opportunities via OpenAI...' : 'جاري تحليل فرص السوق عبر OpenAI...'}</span>
+                        <span>{lang === 'en' ? 'Analyzing market opportunities via Live AI...' : 'جاري تحليل فرص السوق عبر الذكاء الاصطناعي...'}</span>
                       </div>
                     ) : aiData.marketOpportunities ? (
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
@@ -1995,7 +2471,7 @@ export default function AnalysisIdentity() {
                     aiData.loading.leaders ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#818CF8', fontSize: '13px', padding: '20px 0' }}>
                         <Loader2 size={18} className="spin" />
-                        <span>{lang === 'en' ? 'Fetching top 10 market leaders via OpenAI...' : 'جاري تجميع رواد السوق عبر OpenAI...'}</span>
+                        <span>{lang === 'en' ? 'Fetching top 10 market leaders via Live AI...' : 'جاري تجميع رواد السوق عبر الذكاء الاصطناعي...'}</span>
                       </div>
                     ) : aiData.topLeaders.length > 0 ? (
                       <div style={{ overflowX: 'auto' }}>
@@ -2089,50 +2565,7 @@ export default function AnalysisIdentity() {
                 </div>
               )}
 
-              {/* Custom Niche Input */}
-              <div
-                style={{
-                  borderTop: "1px solid rgba(255, 255, 255, 0.08)",
-                  paddingTop: "16px",
-                }}
-              >
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    fontSize: "12px",
-                    color: "#94A3B8",
-                    marginBottom: "6px",
-                    fontWeight: "600",
-                  }}
-                >
-                  <Lightbulb size={14} color="#6366F1" strokeWidth={1.5} />
-                  <span>
-                    {lang === "en"
-                      ? "Have a custom idea? Type your micro-niche here:"
-                      : "لديك فكرة مختلفة؟ اكتب تخصصك الدقيق يدوياً هنا:"}
-                  </span>
-                </label>
-                <input
-                  type="text"
-                  className="field-input"
-                  value={
-                    customNicheInput ||
-                    (customNicheInput === "" &&
-                      state.subNiche &&
-                      !rawMicroIdeas.includes(state.subNiche)
-                      ? state.subNiche
-                      : "")
-                  }
-                  onChange={(e) => handleCustomNicheChange(e.target.value)}
-                  placeholder={
-                    lang === "en"
-                      ? "e.g., Marketing for local real estate brokers"
-                      : "مثال: تسويق وتصوير فلل عقارية مستقلة"
-                  }
-                />
-              </div>
+
 
               {/* Current Selected Field & Analyze Section Header */}
               <div
@@ -2222,6 +2655,30 @@ export default function AnalysisIdentity() {
                       <Bot size={12} />
                       <span>{lang === "en" ? "Live AI (Deep Strategic Analysis)" : "ذكاء اصطناعي مباشر (تحليل استراتيجي عميق)"}</span>
                     </button>
+
+                    <button
+                      type="button"
+                      onClick={handleAnalyzeNiche}
+                      disabled={isAnalyzingNiche || !state.subNiche}
+                      style={{
+                        padding: "6px 14px",
+                        borderRadius: "8px",
+                        fontSize: "11px",
+                        fontWeight: "800",
+                        border: "1px solid rgba(99, 102, 241, 0.4)",
+                        background: "rgba(99, 102, 241, 0.2)",
+                        color: "#818CF8",
+                        cursor: isAnalyzingNiche || !state.subNiche ? "not-allowed" : "pointer",
+                        transition: "all 0.2s ease",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        marginLeft: "4px",
+                      }}
+                    >
+                      <RefreshCw size={12} className={isAnalyzingNiche ? "spin" : ""} />
+                      <span>{lang === "en" ? "Regenerate" : "إعادة التحليل والتوليد"}</span>
+                    </button>
                   </div>
                 </div>
 
@@ -2246,7 +2703,7 @@ export default function AnalysisIdentity() {
                   ) : (
                     <>
                       <Bot size={15} color="#818CF8" />
-                      <span>{lang === "en" ? "Live AI Deep Strategic Analysis Active: Real-time OpenAI deep-dive into market opportunities & positioning strategy." : "التحليل الاستراتيجي العميق مفعّل: تحليل دراسة جدوى وتنافسية كاملة بالذكاء الاصطناعي عبر OpenAI."}</span>
+                      <span>{lang === "en" ? "Live AI Deep Strategic Analysis Active: Real-time AI deep-dive into market opportunities & positioning strategy." : "التحليل الاستراتيجي العميق مفعّل: تحليل دراسة جدوى وتنافسية كاملة بالذكاء الاصطناعي المباشر."}</span>
                     </>
                   )}
                 </div>
@@ -2296,7 +2753,6 @@ export default function AnalysisIdentity() {
                 </button>
               </div>
             </div>
-          )}
 
           {/* Verdict and ICP result block with Quick Action Bar */}
           {nicheAnalysis && !isAnalyzingNiche && (
@@ -2626,7 +3082,10 @@ export default function AnalysisIdentity() {
             </motion.div>
           )}
         </motion.div>
-      )}
+      </AnimatePresence>
+    )}
+  </motion.div>
+)}
 
       {/* ──────────────── TAB 2: BRAND NAMING STUDIO ──────────────── */}
       {activeTab === "name" && (
@@ -2955,7 +3414,7 @@ export default function AnalysisIdentity() {
             {/* Generate CTA Button */}
             <motion.button
               onClick={handleGenerateNames}
-              disabled={isGeneratingNames || (selectedCatalogs.length === 0 && analysisMode !== 'live')}
+              disabled={isGeneratingNames}
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               className="btn btn-primary btn-full"

@@ -1,6 +1,6 @@
 import React from "react";
 import { Zap, Cpu, Sparkles, Key } from "lucide-react";
-import { getCurrentUserEmail, getOpenAiApiKey } from "../../services/liveAiService";
+import { getCurrentUserEmail } from "../../services/liveAiService";
 import "./AnalysisModeSelector.css";
 
 /**
@@ -19,7 +19,7 @@ export default function AnalysisModeSelector({
   const isArabic = lang === "ar";
   const activeEmail = getCurrentUserEmail();
   const isAllowedUser = activeEmail.toLowerCase() === 'admin@brand.com';
-  const hasKey = Boolean(getOpenAiApiKey());
+  const hasKey = true; // Always allow attempting Live AI; backend handles credit verification
 
   return (
     <div

@@ -2,6 +2,7 @@ import React from 'react';
 import { useApp } from '../../../context/AppContext';
 
 export default function StandardTool({ id, title, subtitle, icon, steps = [], video, accentColor = 'emerald', stepNumber }) {
+  const toast = useToast();
   const { state, dispatch } = useApp();
 
   const isCompleted = state.completedSteps.includes(id);

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { useApp } from "../../../context/AppContext";
+import { useApp } from '../../../context/AppContext';
+import { useAuth } from '../../../context/AuthContext';
 import { useToast } from "../../../context/ToastContext";
 import { getSocialPresenceMatrix } from "../../../services/contentDbService";
 import {
@@ -302,6 +303,7 @@ function CustomSelect({
 
 export default function SocialMedia({ stepNumber }) {
   const { state, dispatch } = useApp();
+  const { userData } = useAuth();
   const toast = useToast();
   const location = useLocation();
   const navigate = useNavigate();
@@ -735,6 +737,7 @@ export default function SocialMedia({ stepNumber }) {
         systemPrompt,
         userPrompt,
         userEmail: state.user?.email,
+        uid: userData?.uid || state?.user?.uid
       });
 
       setModalAiResult(res);
@@ -745,21 +748,12 @@ export default function SocialMedia({ stepNumber }) {
         "success",
       );
     } catch (err) {
-      console.warn("OpenAI Live API Error, using fallback strategy text:", err);
-      const fallbackRes =
-        modalType === "challenges"
-          ? lang === "en"
-            ? `### Actionable Strategy Plan:\n1. **Objection Handling Content:** Publish short videos explaining how your offer solves the main risk.\n2. **Social Proof & Risk Reversal:** Provide a 100% money-back guarantee or trial to remove hesitation.\n3. **Direct Value Offer:** Focus on time and effort saved rather than price alone.`
-            : `### خطة مقاومة التحديات التجاريّة:\n1. **صياغة محتوى معالجة الاعتراضات:** انشر 3 فيديوهات قصيرة توضح بالأرقام كيف تحل أزمتك مع العملاء.\n2. **بناء الثقة والضمان:** قدم ضماناً واضحاً لاسترجاع الأموال أو تجربة مجانية لتبديد التخوف.\n3. **عروض القيمة المباشرة:** ركز على توفير الوقت والجهد أكثر من التركيز على السعر.`
-          : lang === "en"
-            ? `### Product Feature Strategy Plan:\n1. **Visual Carousel:** Design 5 slides highlighting each feature as a direct problem solver.\n2. **Viral Commercial Hook:** Start video scripts with: "Why waste 10 hours when this feature solves it in 2 mins?".\n3. **High-Converting CTA:** Direct customers straight to your key benefit link.`
-            : `### خطة استغلال مميزات المنتج استراتيجياً:\n1. **تصميم كاورسيل بصري:** صمم 5 صور تسلط الضوء على كل ميزة كحل مباشر لمشكلة في السوق.\n2. **صياغة هوك تسويقي جذّاب:** ابدأ الفيديو بالعبارة: "ليه تضيع 10 ساعات لما تقبل الميزة دي في دقيقتين؟".\n3. **دعوة صريحة لاتخاذ الإجراء:** أضف رابطاً مباشراً للحصول على الميزة فوراً.`;
-
-      setModalAiResult(fallbackRes);
-      toast(
-        lang === "en" ? "Strategy ready!" : "الخطة الاستراتيجية جاهزة!",
-        "info",
-      );
+      console.error(err);
+      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
     } finally {
       setIsGeneratingModal(false);
     }
@@ -773,16 +767,16 @@ export default function SocialMedia({ stepNumber }) {
     try {
       let text = "";
       if (analysisMode === "live") {
-        text = await dispatchLiveAiAnalysis({
-          toolId: "social-presence",
+        text = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
+      toolId: "social-presence",
           inputs: { platform: platformArchitect, goal: goalArchitect },
           context: {
             niche: nicheField || state.niche,
             brandName: state.brandName,
             user: state.user,
           },
-          lang,
-        });
+          lang
+    });
       } else {
         await new Promise((r) => setTimeout(r, 400));
         const niche =
@@ -818,10 +812,11 @@ export default function SocialMedia({ stepNumber }) {
       );
     } catch (error) {
       console.error(error);
-      toast(
-        lang === "en" ? "Error generating strategy." : "حدث خطأ أثناء التوليد.",
-        "error",
-      );
+      if (error?.message === 'OUT_OF_CREDITS' || error?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
     } finally {
       setIsGeneratingArchitect(false);
     }
@@ -848,8 +843,8 @@ export default function SocialMedia({ stepNumber }) {
         : "";
 
       if (analysisMode === "live") {
-        res = await dispatchLiveAiAnalysis({
-          toolId: "script-writer",
+        res = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
+      toolId: "script-writer",
           inputs: {
             scriptTopic: scriptTopic + audioInfo,
             scriptPlatform,
@@ -859,8 +854,8 @@ export default function SocialMedia({ stepNumber }) {
             activeAudio: activeAudioRecommendation ? activeAudioRecommendation.title : null,
           },
           context: { niche: nicheField, user: state.user },
-          lang,
-        });
+          lang
+    });
       } else {
         await new Promise((r) => setTimeout(r, 400));
         res =
@@ -888,10 +883,11 @@ export default function SocialMedia({ stepNumber }) {
       );
     } catch (err) {
       console.error(err);
-      toast(
-        lang === "en" ? "Error generating script." : "حدث خطأ أثناء التوليد.",
-        "error",
-      );
+      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
     } finally {
       setIsGeneratingScript(false);
     }
@@ -915,12 +911,12 @@ export default function SocialMedia({ stepNumber }) {
       let res = "";
       const attachedHashtag = activeTrendingTopic ? ` ${activeTrendingTopic}` : "";
       if (analysisMode === "live") {
-        res = await dispatchLiveAiAnalysis({
-          toolId: "caption-generator",
+        res = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
+      toolId: "caption-generator",
           inputs: { captionTopic: captionTopic + attachedHashtag, captionTone, captionHook, nicheField },
           context: { niche: nicheField, user: state.user },
-          lang,
-        });
+          lang
+    });
       } else {
         await new Promise((r) => setTimeout(r, 400));
         res =
@@ -946,6 +942,11 @@ export default function SocialMedia({ stepNumber }) {
       );
     } catch (err) {
       console.error(err);
+      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
     } finally {
       setIsGeneratingCaption(false);
     }
@@ -968,12 +969,12 @@ export default function SocialMedia({ stepNumber }) {
     try {
       let res = "";
       if (analysisMode === "live") {
-        res = await dispatchLiveAiAnalysis({
-          toolId: "content-repurposer",
+        res = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
+      toolId: "content-repurposer",
           inputs: { originalContent, repurposeFormat, nicheField },
           context: { niche: nicheField, user: state.user },
-          lang,
-        });
+          lang
+    });
       } else {
         await new Promise((r) => setTimeout(r, 400));
         res =
@@ -998,6 +999,11 @@ export default function SocialMedia({ stepNumber }) {
       );
     } catch (err) {
       console.error(err);
+      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
     } finally {
       setIsGeneratingRepurpose(false);
     }
@@ -1020,12 +1026,12 @@ export default function SocialMedia({ stepNumber }) {
     try {
       let res = "";
       if (analysisMode === "live") {
-        res = await dispatchLiveAiAnalysis({
-          toolId: "qa-generator",
+        res = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
+      toolId: "qa-generator",
           inputs: { qaQuestion, qaTone, qaFormat, nicheField },
           context: { niche: nicheField, user: state.user },
-          lang,
-        });
+          lang
+    });
       } else {
         await new Promise((r) => setTimeout(r, 400));
         res =
@@ -1050,6 +1056,11 @@ export default function SocialMedia({ stepNumber }) {
       );
     } catch (err) {
       console.error(err);
+      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
     } finally {
       setIsGeneratingQa(false);
     }
@@ -1069,12 +1080,12 @@ export default function SocialMedia({ stepNumber }) {
     try {
       let newIdeas = [];
       if (analysisMode === "live") {
-        const liveRes = await dispatchLiveAiAnalysis({
-          toolId: "idea-lab",
+        const liveRes = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
+      toolId: "idea-lab",
           inputs: { nicheField },
           context: { niche: nicheField, user: state.user },
-          lang,
-        });
+          lang
+    });
 
         if (liveRes) {
           const lines = liveRes
@@ -1164,6 +1175,11 @@ export default function SocialMedia({ stepNumber }) {
       );
     } catch (err) {
       console.error(err);
+      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
     } finally {
       setIsGeneratingIdeas(false);
     }
@@ -1199,12 +1215,12 @@ export default function SocialMedia({ stepNumber }) {
       let hashtags = [];
       let audios = [];
       if (analysisMode === "live") {
-        const liveRes = await dispatchLiveAiAnalysis({
-          toolId: "trends",
+        const liveRes = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
+      toolId: "trends",
           inputs: { nicheField },
           context: { niche: nicheField, user: state.user },
-          lang,
-        });
+          lang
+    });
         hashtags = [
           {
             tag: `#${nicheField.replace(/\s+/g, "_")}_2026`,
@@ -1286,6 +1302,11 @@ export default function SocialMedia({ stepNumber }) {
       );
     } catch (err) {
       console.error(err);
+      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
     } finally {
       setIsGeneratingTrends(false);
     }
@@ -1298,12 +1319,12 @@ export default function SocialMedia({ stepNumber }) {
     try {
       let res = "";
       if (analysisMode === "live") {
-        res = await dispatchLiveAiAnalysis({
-          toolId: "viral-vids",
+        res = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
+      toolId: "viral-vids",
           inputs: { videoTitle, nicheField },
           context: { niche: nicheField, user: state.user },
-          lang,
-        });
+          lang
+    });
       } else {
         await new Promise((r) => setTimeout(r, 450));
         res =
@@ -1333,10 +1354,11 @@ export default function SocialMedia({ stepNumber }) {
       );
     } catch (err) {
       console.error(err);
-      toast(
-        lang === "en" ? "Error generating adaptation." : "حدث خطأ أثناء التوليد.",
-        "error",
-      );
+      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
     } finally {
       setIsGeneratingAdaptation(false);
     }

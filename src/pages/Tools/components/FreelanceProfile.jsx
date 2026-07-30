@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../../context/AppContext';
+import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../context/ToastContext';
 import { getBioTemplate } from '../../../services/contentDbService';
 import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
@@ -31,6 +32,7 @@ import './FreelanceProfileStudio.css';
 
 export default function FreelanceProfile({ stepNumber }) {
   const { state, dispatch } = useApp();
+  const { userData } = useAuth();
   const toast = useToast();
   const lang = state.language || 'ar';
   const isRtl = lang === 'ar';
@@ -58,12 +60,13 @@ export default function FreelanceProfile({ stepNumber }) {
     
     try {
       if (analysisMode === 'live') {
-        const liveResult = await dispatchLiveAiAnalysis({
-          toolId: 'freelance-profile',
+        const liveResult = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
+      toolId: 'freelance-profile',
           inputs: { experience, title: state.exactTitle },
           context: { niche: state.niche, user: state.user },
-          lang
-        });
+          lang,
+      uid: userData?.uid || state?.user?.uid
+    });
         setBio(liveResult);
         dispatch({
           type: 'SAVE_TOOL_RESULT',
@@ -106,7 +109,11 @@ export default function FreelanceProfile({ stepNumber }) {
       setActiveStep(4);
     } catch (error) {
       console.error(error);
-      toast(lang === 'en' ? 'Failed to generate bio' : 'فشل توليد النبذة', 'error');
+      if (error?.message === 'OUT_OF_CREDITS' || error?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
     } finally {
       setIsGenerating(false);
     }

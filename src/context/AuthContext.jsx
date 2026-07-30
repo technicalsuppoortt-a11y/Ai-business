@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth';
-import { doc, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { auth, adminAuth, superAdminAuth, db } from '../firebase';
 import { sendEmailViaResend } from '../services/emailCrmService';
 
@@ -40,9 +40,31 @@ export function AuthProvider({ children }) {
       if (firebaseUser) {
         setUser(firebaseUser);
         setLoadingUser(true);
-        unsubscribeDoc = onSnapshot(doc(db, 'users', firebaseUser.uid), (docSnap) => {
+        unsubscribeDoc = onSnapshot(doc(db, 'users', firebaseUser.uid), async (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data();
+            
+            // --- Monthly Reset Cycle ---
+            const now = new Date();
+            const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            const lastReset = data.lastCreditResetDate || '';
+            
+            if (!lastReset.startsWith(currentMonthStr)) {
+               const maxCredits = data.totalCredits !== undefined ? data.totalCredits : (data.creditsPerMonth !== undefined ? data.creditsPerMonth : 20);
+               try {
+                 const userRef = doc(db, 'users', firebaseUser.uid);
+                 await updateDoc(userRef, { 
+                   credits: maxCredits, 
+                   lastCreditResetDate: `${currentMonthStr}-01` 
+                 });
+                 // The onSnapshot will fire again with the updated data, so we can return here
+                 return; 
+               } catch (err) {
+                 console.error("Error resetting monthly credits:", err);
+               }
+            }
+            // ---------------------------
+
             setUserData({ uid: firebaseUser.uid, ...data });
             if (data.brandName) {
               if (unsubscribeBrand) unsubscribeBrand();

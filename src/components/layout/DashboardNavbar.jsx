@@ -31,7 +31,7 @@ export default function DashboardNavbar({
   onOpenMobileMenu 
 }) {
   const { state, dispatch } = useApp();
-  const { userData, logout } = useAuth();
+  const { userData, brandData, logout } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -87,7 +87,7 @@ export default function DashboardNavbar({
   const displayEmail = userData?.email || '';
 
   const isTrial = userData?.subscription?.type === 'trial';
-  const allowedTools = userData?.freeTrialSettings?.allowedTools || brandData?.freeTrialSettings?.allowedTools || [];
+  const allowedTools = userData?.freeTrialSettings?.allowedTools || [];
   const isNotebookLocked = isTrial && !allowedTools.includes('smart-notebook');
 
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -141,7 +141,58 @@ export default function DashboardNavbar({
 
       {/* RIGHT / END: CONTROLS & DROPDOWNS */}
       <div className="db-navbar-end">
-        {/* Smart Notebook Quick Access */}
+        
+        {/* Key Status Indicator */}
+        <div 
+          className="db-nav-chip-btn desktop-only"
+          title={lang === 'en' ? 'API Key Status' : 'حالة مفتاح API'}
+          style={{ cursor: 'default' }}
+        >
+          {(() => {
+            const rawCredits = typeof userData?.credits === 'object' ? (userData?.credits?.credits ?? 0) : (userData?.credits ?? 0);
+            const currentCredits = typeof rawCredits === 'number' ? rawCredits : (Number(rawCredits) || 0);
+            const hasPersonalKey = !!userData?.personalOpenAiKey;
+            if (currentCredits > 0) {
+              return <span className="btn-label">🟢 {lang === 'en' ? 'Admin Key' : 'مفتاح المسؤول'}</span>;
+            } else if (hasPersonalKey) {
+              return <span className="btn-label">🟡 {lang === 'en' ? 'Personal Key' : 'مفتاح شخصي'}</span>;
+            } else {
+              return <span className="btn-label">🔴 {lang === 'en' ? 'No Credits' : 'نفد الرصيد'}</span>;
+            }
+          })()}
+        </div>
+
+        {/* Credits Badge */}
+        <div 
+          className="db-nav-chip-btn desktop-only"
+          title={lang === 'en' ? 'Remaining AI Credits / Total' : 'رصيد الذكاء الاصطناعي المتبقي / الإجمالي'}
+          style={{ cursor: 'default', border: '1px solid var(--accent)', background: 'rgba(59, 130, 246, 0.1)' }}
+        >
+          <Sparkles size={14} color="#3B82F6" />
+          <span className="btn-label" style={{ color: 'var(--accent)' }}>
+            {(() => {
+              const rawCredits = typeof userData?.credits === 'object' ? (userData?.credits?.credits ?? 0) : (userData?.credits ?? 0);
+              const currentCredits = typeof rawCredits === 'number' ? rawCredits : (Number(rawCredits) || 0);
+              const plans = brandData?.plans || [];
+              const currentPlan = plans.find(p => String(p.id) === String(userData?.planId));
+              const totalCredits = userData?.totalCredits ?? (currentPlan ? Number(currentPlan.creditsPerMonth || 0) : currentCredits);
+              return `${currentCredits} / ${totalCredits}`;
+            })()} {lang === 'en' ? 'Credits' : 'رصيد'}
+          </span>
+        </div>
+
+        {/* Plan Badge */}
+        <div 
+          className="db-nav-chip-btn desktop-only"
+          title={lang === 'en' ? 'Current Plan' : 'الخطة الحالية'}
+          style={{ cursor: 'default' }}
+        >
+          <span className="btn-label" style={{ textTransform: 'capitalize' }}>
+            {userData?.planName || (lang === 'en' ? 'Free Plan' : 'خطة مجانية')}
+          </span>
+        </div>
+
+{/* Smart Notebook Quick Access */}
         <button
           className={`db-nav-chip-btn notebook-btn ${isNotebookLocked ? 'locked' : ''}`}
           onClick={() => {

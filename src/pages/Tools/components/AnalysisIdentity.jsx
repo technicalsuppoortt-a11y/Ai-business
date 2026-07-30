@@ -11,6 +11,7 @@ import {
 import AnalysisModeSelector from "../../../components/common/AnalysisModeSelector";
 import { dispatchLiveAiAnalysis, callOpenAiApi } from "../../../services/liveAiService";
 import ToolDashboardLayout from "./ToolDashboardLayout";
+import { useAuth } from "../../../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Target,
@@ -564,6 +565,7 @@ function CustomDropdown({ value, onChange, options, placeholder }) {
 
 export default function AnalysisIdentity() {
   const { state, dispatch } = useApp();
+  const { userData } = useAuth();
   const toast = useToast();
 
   const lang = state.language || "ar";
@@ -661,7 +663,7 @@ export default function AnalysisIdentity() {
         userPrompt = `List 10 top market leaders in "${subNicheName}" in "${countryObj.name_en}". Language: ${language}.`;
       }
 
-      const resText = await callOpenAiApi({ systemPrompt, userPrompt, jsonMode: true });
+      const resText = await callOpenAiApi({ uid: userData?.uid || state?.user?.uid, systemPrompt, userPrompt, jsonMode: true });
       const parsed = JSON.parse(resText);
 
       setAiData(prev => {
@@ -711,8 +713,7 @@ export default function AnalysisIdentity() {
       const countryObj = COUNTRY_OPTIONS.find((c) => c.id === targetCountry) || COUNTRY_OPTIONS[0];
       const systemPrompt = `You are a top business strategist AI. Generate 6 high-demand micro-niche agency/freelance business ideas tailored specifically for target market: ${countryObj.name_en}. Return JSON object with array "ideas".`;
       const userPrompt = `Main Category: ${targetNiche.label_en || targetNiche.id}. Target Country: ${countryObj.name_en}. Return 6 innovative micro-niche titles in ${lang === "en" ? "English" : "Arabic"}.`;
-
-      const resText = await callOpenAiApi({ systemPrompt, userPrompt, jsonMode: true });
+      const resText = await callOpenAiApi({ uid: userData?.uid || state?.user?.uid, systemPrompt, userPrompt, jsonMode: true });
       const parsed = JSON.parse(resText);
       let rawList = [];
       if (Array.isArray(parsed)) {
@@ -811,15 +812,14 @@ export default function AnalysisIdentity() {
   // ═══════════════ INITIAL LOADS ═══════════════
   useEffect(() => {
     // 1. Fetch niches for Tab 1
+    dispatch({ type: 'SET_FIELD', field: 'niche', value: '' });
+    dispatch({ type: 'SET_FIELD', field: 'subNiche', value: '' });
+
     const fetchNichesData = async () => {
       try {
         await seedNiches();
         let data = await getNiches();
         setNiches(data);
-        if (state.niche) {
-          const found = data.find((n) => n.id === state.niche);
-          if (found) setSelectedNiche(found);
-        }
       } catch (err) {
         console.error("Error loading niches", err);
       } finally {
@@ -1289,7 +1289,7 @@ export default function AnalysisIdentity() {
 
     try {
       if (analysisMode === "live") {
-        const liveData = await dispatchLiveAiAnalysis({
+        const liveData = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
           toolId: "brand-naming",
           inputs: {
             category: namingCategory,
@@ -1436,7 +1436,7 @@ export default function AnalysisIdentity() {
     setColorAnalysis(null);
     try {
       if (analysisMode === "live") {
-        const liveData = await dispatchLiveAiAnalysis({
+        const liveData = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
           toolId: "visual-identity",
           inputs: { primaryColor, secondaryColor, accentColor },
           context: { niche: state.niche, brandName: state.brandName },
@@ -1910,7 +1910,7 @@ export default function AnalysisIdentity() {
           ) : (
             <div className="niche-grid" style={{ marginBottom: "20px" }}>
               {niches.map((n) => {
-                const isSelected = state.niche === n.id;
+                const isSelected = selectedNiche?.id === n.id;
                 const NicheIconComp = NICHE_ICON_MAP[n.id] || Sparkles;
                 return (
                   <motion.div

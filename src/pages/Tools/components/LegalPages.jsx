@@ -184,9 +184,9 @@ function SearchableCountryDropdown({ value, onChange, options, label, icon: Icon
 }
 
 export default function LegalPages({ stepNumber }) {
-  const { state } = useApp();
+    const { state } = useApp();
   const toastContext = useToast();
-  const toast = typeof toastContext === 'function' ? toastContext : (toastContext?.toast || ((msg) => console.log(msg)));
+  const toast = useToast();
 
   const lang = state.language || 'ar';
   const isRtl = lang === 'ar';

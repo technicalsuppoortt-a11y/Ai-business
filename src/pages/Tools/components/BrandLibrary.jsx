@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useToast } from '../../../context/ToastContext';
 import { createPortal } from 'react-dom';
 import { collection, getDocs } from 'firebase/firestore';
 import { libraryDb } from '../../../firebaseLibrary';
@@ -24,6 +25,7 @@ import {
 import './BrandLibrary.css';
 
 export default function BrandLibrary({ isMobile }) {
+  const toast = useToast();
   const { state } = useApp();
   const { userData } = useAuth();
   const lang = state.language || 'ar';
@@ -54,9 +56,13 @@ export default function BrandLibrary({ isMobile }) {
         visibleList.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
         setBrands(visibleList);
       } catch (err) {
-        console.error("Error fetching brand library:", err);
-        setError(lang === 'en' ? 'Failed to load product library' : 'تعذر تحميل مكتبة المنتجات');
-      } finally {
+      console.error(err);
+      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
+    } finally {
         setLoading(false);
       }
     };

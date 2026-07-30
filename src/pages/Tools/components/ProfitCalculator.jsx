@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useApp } from "../../../context/AppContext";
+import { useApp } from '../../../context/AppContext';
+import { useAuth } from '../../../context/AuthContext';
 import { useToast } from "../../../context/ToastContext";
 import { getProfitScenarioTemplate } from "../../../services/contentDbService";
 import { parseTemplate } from "../../../utils/templateParser";
@@ -82,6 +83,7 @@ function TypewriterText({ text, speed = 12 }) {
 
 export default function ProfitCalculator({ stepNumber }) {
   const { state, dispatch } = useApp();
+  const { userData } = useAuth();
   const toast = useToast();
   const lang = state.language || "ar";
   const isRtl = lang === "ar";
@@ -171,7 +173,7 @@ export default function ProfitCalculator({ stepNumber }) {
 
     try {
       if (analysisMode === "live") {
-        const liveResult = await dispatchLiveAiAnalysis({
+        const liveResult = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
           toolId: "profit-calculator",
           inputs: {
             salePrice,
@@ -304,7 +306,7 @@ export default function ProfitCalculator({ stepNumber }) {
 
     try {
       if (analysisMode === "live") {
-        const liveResult = await dispatchLiveAiAnalysis({
+        const liveResult = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
           toolId: "profit-calculator-monthly",
           inputs: {
             monthlyBudget,

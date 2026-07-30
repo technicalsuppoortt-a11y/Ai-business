@@ -76,7 +76,7 @@ function CustomDropdown({ options, value, onChange, placeholder }) {
 
 export default function SettingsPage() {
   const { state, dispatch } = useApp();
-  const { userData } = useAuth();
+  const { userData, brandData } = useAuth();
   const toast = useToast();
 
   const lang = state.language || 'ar';
@@ -109,20 +109,38 @@ export default function SettingsPage() {
       setDefaultLanguage(userData.defaultLanguage || 'ar');
       setLogoDisplayMode(userData.logoDisplayMode || 'both');
       setShowWhatsappLoginBtn(userData.showWhatsappLoginBtn !== false);
+      setApiKeyInput(userData.personalOpenAiKey || '');
     }
   }, [userData]);
 
-  // Sync state.apiKey to input if changed
-  useEffect(() => {
-    if (state.apiKey) setApiKeyInput(state.apiKey);
-  }, [state.apiKey]);
-
   // Save API Key Handler
-  const handleSaveApiKey = () => {
+  const handleSaveApiKey = async () => {
     const key = apiKeyInput.trim();
-    if (!key) return toast(lang === 'en' ? 'Please enter the API key first' : 'أدخل المفتاح أولاً', 'error');
-    dispatch({ type: 'SET_FIELD', field: 'apiKey', value: key });
-    toast(lang === 'en' ? 'API Key saved successfully ✓' : 'تم حفظ مفتاح الـ API بنجاح ✓', 'success');
+    if (!key) return toast(lang === 'en' ? 'Please enter the API key first' : 'يرجى إدخال المفتاح أولاً', 'error');
+    if (!userData?.uid) return;
+    try {
+      const userRef = doc(db, 'users', userData.uid);
+      await updateDoc(userRef, { personalOpenAiKey: key });
+      localStorage.setItem('user_openai_api_key', key);
+      toast(lang === 'en' ? 'API Key saved successfully ✅' : 'تم حفظ المفتاح الخاص بنجاح ✅', 'success');
+    } catch (err) {
+      toast(lang === 'en' ? 'Error saving API key' : 'حدث خطأ أثناء حفظ المفتاح', 'error');
+    }
+  };
+
+  // Remove API Key Handler
+  const handleRemoveApiKey = async () => {
+    if (!userData?.uid) return;
+    try {
+      const userRef = doc(db, 'users', userData.uid);
+      await updateDoc(userRef, { personalOpenAiKey: '' });
+      localStorage.removeItem('app_api_key');
+      localStorage.removeItem('user_openai_api_key');
+      setApiKeyInput('');
+      toast(lang === 'en' ? 'API Key removed successfully 🗑️' : 'تم إزالة المفتاح الخاص بنجاح 🗑️', 'info');
+    } catch (err) {
+      toast(lang === 'en' ? 'Error removing API key' : 'حدث خطأ أثناء إزالة المفتاح', 'error');
+    }
   };
 
   // Copy API Key
@@ -163,7 +181,7 @@ export default function SettingsPage() {
     if (ownerName) score += 25;
     if (brandName) score += 25;
     if (email) score += 25;
-    if (state.apiKey) score += 25;
+    if (apiKeyInput) score += 25;
     return score;
   };
 
@@ -412,24 +430,82 @@ export default function SettingsPage() {
               exit={{ opacity: 0, y: -10 }}
               className="settings-card-panel"
             >
+              {/* Plan & Credits Status Bar */}
+              <div style={{ marginBottom: "24px", background: "rgba(255,255,255,0.02)", padding: "20px", borderRadius: "12px", border: "1px solid var(--line)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                  <div>
+                    <h4 style={{ fontSize: "15px", fontWeight: "600", marginBottom: "4px" }}>
+                      {(() => {
+                        const plans = brandData?.plans || [];
+                        const currentPlan = plans.find(p => String(p.id) === String(userData?.planId));
+                        const displayName = currentPlan ? (lang === 'en' ? currentPlan.name_en || currentPlan.name : currentPlan.name_ar || currentPlan.name) : (userData?.planName || 'Free');
+                        return (
+                          <>{lang === 'en' ? 'Current Plan' : 'الباقة الحالية'}: <span style={{ color: "var(--accent)", textTransform: "capitalize" }}>{displayName}</span></>
+                        );
+                      })()}
+                    </h4>
+                    <p style={{ fontSize: "12px", color: "var(--text3)" }}>
+                      {lang === 'en' ? 'Monthly credits reset automatically.' : 'يتم تجديد الرصيد شهرياً بشكل تلقائي.'}
+                    </p>
+                  </div>
+                  <div style={{ textAlign: lang === 'en' ? 'right' : 'left' }}>
+                    <div style={{ fontSize: "18px", fontWeight: "700", color: ((typeof userData?.credits === 'object' ? userData.credits.credits : userData?.credits) || 0) === 0 ? "var(--red)" : "#10B981" }}>
+                      {(() => {
+                        const current = (typeof userData?.credits === 'object' ? userData.credits.credits : userData?.credits) || 0;
+                        const plans = brandData?.plans || [];
+                        const currentPlan = plans.find(p => String(p.id) === String(userData?.planId));
+                        const total = userData?.totalCredits ?? (currentPlan ? Number(currentPlan.creditsPerMonth || 0) : current);
+                        return `${current} / ${total}`;
+                      })()}
+                    </div>
+                    <div style={{ fontSize: "11px", color: "var(--text3)" }}>
+                      {lang === 'en' ? 'Credits Remaining' : 'الرصيد المتبقي'}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Progress Bar */}
+                <div style={{ width: "100%", height: "8px", background: "rgba(255,255,255,0.1)", borderRadius: "10px", overflow: "hidden", marginBottom: "12px" }}>
+                  <div style={{
+                    width: `${(() => {
+                      const current = (typeof userData?.credits === 'object' ? userData.credits.credits : userData?.credits) || 0;
+                      const plans = brandData?.plans || [];
+                      const currentPlan = plans.find(p => String(p.id) === String(userData?.planId));
+                      const total = userData?.totalCredits ?? (currentPlan ? Number(currentPlan.creditsPerMonth || 1) : 1);
+                      return Math.min(100, (current / total) * 100);
+                    })()}%`,
+                    height: "100%",
+                    background: (((typeof userData?.credits === 'object' ? userData.credits.credits : userData?.credits) || 0) === 0) ? "var(--red)" : "linear-gradient(90deg, #10B981, #059669)",
+                    borderRadius: "10px",
+                    transition: "width 0.5s ease"
+                  }}></div>
+                </div>
+
+                {((typeof userData?.credits === 'object' ? userData.credits.credits : userData?.credits) || 0) === 0 && (
+                  <div style={{ color: "var(--red)", fontSize: "12px", fontWeight: "600", background: "rgba(239, 68, 68, 0.1)", padding: "10px", borderRadius: "8px" }}>
+                    {lang === 'en' ? '⚠️ Monthly Credits Exhausted. Add your Personal OpenAI API Key below to continue using tools.' : '⚠️ لقد استنفدت رصيدك الشهري. يرجى إضافة مفتاح OpenAI API الخاص بك بالأسفل للاستمرار.'}
+                  </div>
+                )}
+              </div>
+
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h3 className="panel-header-title">
                   <Cpu size={22} color="#10B981" />
-                  <span>{lang === 'en' ? 'AI Engine & Gemini API Keys' : 'مفتاح الذكاء الاصطناعي (Google Gemini)'}</span>
+                  <span>{lang === 'en' ? 'AI Engine & OpenAI API Keys' : 'مفتاح الذكاء الاصطناعي (OpenAI)'}</span>
                 </h3>
-                <span className={`status-tag ${state.apiKey ? 'done' : 'pending'}`}>
-                  {state.apiKey ? (lang === 'en' ? '🟢 Key Configured' : '🟢 المفتاح مُفعّل') : (lang === 'en' ? '🔴 Missing Key' : '🔴 المفتاح غير مضاف')}
+                <span className={`status-tag ${apiKeyInput ? 'done' : 'pending'}`}>
+                  {apiKeyInput ? (lang === 'en' ? '🟢 Key Configured' : '🟢 المفتاح مُفعّل') : (lang === 'en' ? '🔴 Missing Key' : '🔴 المفتاح غير مضاف')}
                 </span>
               </div>
               <p className="panel-header-sub">
-                {lang === 'en' ? 'Configure your Google Gemini API Key to enable real-time dynamic AI analysis across all 15+ business tools.' : 'أضف مفتاح Google Gemini API لتشغيل التحليل المباشر والتوليد الذكي في كافة أدوات المنصة.'}
+                {lang === 'en' ? 'Configure your Personal OpenAI API Key to enable real-time dynamic AI analysis once your monthly credits are exhausted.' : 'أضف مفتاح OpenAI API الخاص بك لتشغيل التحليل المباشر بعد نفاد رصيدك الشهري.'}
               </p>
 
               <div className="api-box-container">
                 <label className="setting-field-label" style={{ color: 'var(--text)' }}>
                   <div className="setting-field-label-left">
                     <KeyRound size={16} color="#6366F1" />
-                    <span>{lang === 'en' ? 'Google Gemini API Key' : 'مفتاح Google Gemini API الخاص بك'}</span>
+                    <span>{lang === 'en' ? 'Personal OpenAI API Key' : 'مفتاح OpenAI API الخاص بك'}</span>
                   </div>
                 </label>
 
@@ -447,9 +523,15 @@ export default function SettingsPage() {
                     </button>
                   </div>
 
-                  <button className="btn btn-secondary" style={{ padding: '10px 14px' }} onClick={handleCopyKey} title={lang === 'en' ? 'Copy Key' : 'نسخ المفتاح'}>
+                  <button className="btn-icon" onClick={handleCopyKey} title={lang === 'en' ? 'Copy Key' : 'نسخ المفتاح'}>
                     <Copy size={14} />
                   </button>
+
+                  {userData?.personalOpenAiKey && (
+                    <button className="btn btn-red" onClick={handleRemoveApiKey} style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
+                      {lang === 'en' ? 'Stop / Remove Key' : 'إيقاف / إزالة المفتاح'}
+                    </button>
+                  )}
 
                   <button className="btn btn-green" onClick={handleSaveApiKey}>
                     {lang === 'en' ? 'Save Key' : 'حفظ المفتاح'}
@@ -461,7 +543,7 @@ export default function SettingsPage() {
                   <div className="guide-accordion-header" onClick={() => setIsGuideOpen(!isGuideOpen)}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <HelpCircle size={16} />
-                      <span>{lang === 'en' ? 'How to get a free Google Gemini API key?' : 'كيف تحصل على مفتاح Google Gemini مجاني؟'}</span>
+                      <span>{lang === 'en' ? 'How to get an OpenAI API key?' : 'كيف تحصل على مفتاح OpenAI الخاص بك؟'}</span>
                     </div>
                     {isGuideOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                   </div>
@@ -469,10 +551,10 @@ export default function SettingsPage() {
                   {isGuideOpen && (
                     <div className="guide-accordion-body">
                       <ol style={{ paddingInlineStart: 20, margin: 0 }}>
-                        <li>1. Go to <strong><a href="https://aistudio.google.com/api-keys" target="_blank" rel="noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>Google AI Studio</a></strong> and sign in with your Google account.</li>
-                        <li>2. Click the <strong>"Get API key"</strong> button from the left menu.</li>
-                        <li>3. Select <strong>"Create API key in new project"</strong>.</li>
-                        <li>4. Copy your key, paste it into the input above, and click <strong>"Save Key"</strong>.</li>
+                        <li>1. Go to <strong><a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>OpenAI Platform</a></strong> and sign in with your account.</li>
+                        <li>2. Click the <strong>"Create new secret key"</strong> button.</li>
+                        <li>3. Name your key and generate it.</li>
+                        <li>4. Copy your key (starts with sk-...), paste it into the input above, and click <strong>"Save Key"</strong>.</li>
                       </ol>
                     </div>
                   )}

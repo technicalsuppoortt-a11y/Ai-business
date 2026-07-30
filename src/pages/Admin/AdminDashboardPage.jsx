@@ -23,6 +23,7 @@ import { JOURNEY_STEPS } from "../../data/database";
 import { TOOLS_24H } from "../../data/toolsData";
 import { useApp } from "../../context/AppContext";
 import { useConfirm } from "../../context/ConfirmContext";
+import { saveAdminOpenAiKey, getAdminOpenAiKey } from "../../services/creditsService";
 import AdminSales from "./AdminSales";
 import AdminLibrary from "./AdminLibrary";
 import Pagination from "../../components/common/Pagination";
@@ -371,6 +372,7 @@ export default function AdminDashboardPage() {
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [subFilter, setSubFilter] = useState("all");
+  const [planFilter, setPlanFilter] = useState("all");
   const [isFilterCollapsed, setIsFilterCollapsed] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
@@ -394,6 +396,7 @@ export default function AdminDashboardPage() {
   const [ownerNameForm, setOwnerNameForm] = useState("");
   const [brandNameForm, setBrandNameForm] = useState("");
   const [brandUrlForm, setBrandUrlForm] = useState("");
+  const [masterApiKey, setMasterApiKey] = useState("");
   const [accentColor, setAccentColor] = useState("#3B82F6");
   const [successColor, setSuccessColor] = useState("#10B981");
   const [bgColor, setBgColor] = useState("#080C14");
@@ -515,6 +518,7 @@ export default function AdminDashboardPage() {
   const [planName, setPlanName] = useState("");
   const [planNameEn, setPlanNameEn] = useState("");
   const [planPrice, setPlanPrice] = useState("");
+  const [planCredits, setPlanCredits] = useState("20");
   const [planCurrency, setPlanCurrency] = useState("EGP");
   const [planFeatures, setPlanFeatures] = useState("");
   const [planFeaturesEn, setPlanFeaturesEn] = useState("");
@@ -536,9 +540,18 @@ export default function AdminDashboardPage() {
   // Prevent multiple state initializations
   const [isInitialized, setIsInitialized] = useState(false);
 
+  useEffect(() => {
+    const fetchAdminKey = async () => {
+      const key = await getAdminOpenAiKey();
+      if (key) setMasterApiKey(key);
+    };
+    fetchAdminKey();
+  }, []);
+
   // Subscription management for sub-users
   const [subType, setSubType] = useState("monthly");
   const [subDays, setSubDays] = useState(30);
+  const [userPlanId, setUserPlanId] = useState("free");
 
   // Free Trial Settings
   const [freeTrialDays, setFreeTrialDays] = useState(7);
@@ -1359,7 +1372,7 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleUpdateAdminProfile = async () => {
+  const handleUpdateAdminProfile = async (overridePlans = null) => {
     if (!userData?.uid) return;
     if (!brandNameForm.trim()) {
       return toast("يرجى تحديد اسم البراند أولاً في الإعدادات", "error");
@@ -1393,7 +1406,7 @@ export default function AdminDashboardPage() {
           line: lineColor,
         },
         socialLinks: socialLinks,
-        plans: plans,
+        plans: overridePlans || plans,
         freeTrialSettings: {
           days: Number(freeTrialDays) || 7,
           allowedTools: allowedTrialTools || [],
@@ -1650,12 +1663,21 @@ export default function AdminDashboardPage() {
         expiryDate.setDate(expiryDate.getDate() + Number(freeTrialDays));
       }
 
+      // Determine plan info
+      const selectedPlan = plans.find(p => String(p.id) === String(userPlanId));
+      const planNameVal = selectedPlan ? (selectedPlan.name_ar || selectedPlan.name) : "Free";
+      const planCreditsVal = selectedPlan ? Number(selectedPlan.creditsPerMonth || 20) : 20;
+
       await setDoc(doc(db, "users", uid), {
         email: userEmail.trim().toLowerCase(),
         role: userRole,
         ownerName: userName.trim(),
         photoURL: photoURL || "",
         brandName: userData?.brandName || "",
+        planId: userPlanId,
+        planName: planNameVal,
+        credits: planCreditsVal,
+        totalCredits: planCreditsVal,
         createdAt: serverTimestamp(),
         createdBy: userData?.uid || "",
         subscription: {
@@ -1705,6 +1727,7 @@ export default function AdminDashboardPage() {
     setUserRole(u.role || "user");
     setSubType(u.subscription?.type || "monthly");
     setSubDays(30);
+    setUserPlanId(u.planId || "free");
     setUserPassword(""); // Hide password for edit
     setIsUserModalOpen(true);
   };
@@ -1714,6 +1737,7 @@ export default function AdminDashboardPage() {
     setUserName("");
     setUserEmail("");
     setUserRole("user");
+    setUserPlanId("free");
     setUserPassword("");
     setIsUserModalOpen(false);
   };
@@ -1746,19 +1770,34 @@ export default function AdminDashboardPage() {
         expiryDate = null;
       }
 
+      // Determine plan info
+      const selectedPlan = plans.find(p => String(p.id) === String(userPlanId));
+      const planNameVal = selectedPlan ? (selectedPlan.name_ar || selectedPlan.name) : "Free";
+      const planCreditsVal = selectedPlan ? Number(selectedPlan.creditsPerMonth || 20) : 20;
+
+      // Only reset current credits if the plan changed
+      const updateData = {
+        ownerName: userName.trim(),
+        role: userRole,
+        photoURL: photoURL || "",
+        planId: userPlanId,
+        planName: planNameVal,
+        totalCredits: planCreditsVal,
+        subscription: {
+          type: subType,
+          expiryDate: expiryDate ? expiryDate : null,
+          status: subType === "stopped" ? "stopped" : "active",
+          updatedAt: serverTimestamp(),
+        },
+      };
+
+      if (editingUser.planId !== userPlanId) {
+        updateData.credits = planCreditsVal;
+      }
+
       await setDoc(
         doc(db, "users", editingUser.id),
-        {
-          ownerName: userName.trim(),
-          role: userRole,
-          photoURL: photoURL || "",
-          subscription: {
-            type: subType,
-            expiryDate: expiryDate ? expiryDate : null,
-            status: subType === "stopped" ? "stopped" : "active",
-            updatedAt: serverTimestamp(),
-          },
-        },
+        updateData,
         { merge: true },
       );
       toast("تم التحديث بنجاح ✅", "success");
@@ -1892,12 +1931,16 @@ export default function AdminDashboardPage() {
       )
         return false;
     }
+    if (planFilter !== "all") {
+      const userPlan = u.planId || "free";
+      if (userPlan !== planFilter) return false;
+    }
     return true;
   });
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [userSearchQuery, roleFilter, subFilter]);
+  }, [userSearchQuery, roleFilter, subFilter, planFilter]);
 
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage) || 1;
   const paginatedUsers = filteredUsers.slice(
@@ -2943,11 +2986,51 @@ export default function AdminDashboardPage() {
                               </div>
 
                               <div className="ad-filter-item">
+                                <CustomSelect
+                                  label={
+                                    state.language === "en"
+                                      ? "Plan Type"
+                                      : "نوع الخطة"
+                                  }
+                                  value={planFilter}
+                                  onChange={(val) => setPlanFilter(val)}
+                                  icon={Layers}
+                                  options={[
+                                    {
+                                      value: "all",
+                                      label:
+                                        state.language === "en"
+                                          ? "All Plans"
+                                          : "جميع الخطط",
+                                      icon: Layers,
+                                    },
+                                    {
+                                      value: "free",
+                                      label:
+                                        state.language === "en"
+                                          ? "Free Plan"
+                                          : "خطة مجانية",
+                                      icon: Gift,
+                                    },
+                                    ...plans.map((p) => ({
+                                      value: p.id.toString(),
+                                      label:
+                                        state.language === "en"
+                                          ? p.name_en || p.name
+                                          : p.name_ar || p.name,
+                                      icon: Sparkles,
+                                    })),
+                                  ]}
+                                />
+                              </div>
+
+                              <div className="ad-filter-item">
                                 <button
                                   className="btn btn-sm"
                                   onClick={() => {
                                     setRoleFilter("all");
                                     setSubFilter("all");
+                                    setPlanFilter("all");
                                     setUserSearchQuery("");
                                   }}
                                   style={{
@@ -3081,6 +3164,22 @@ export default function AdminDashboardPage() {
                                         gap: "6px",
                                       }}
                                     >
+                                      <Layers size={14} />
+                                      <span>
+                                        {state.language === "en"
+                                          ? "Plan"
+                                          : "الخطة"}
+                                      </span>
+                                    </div>
+                                  </th>
+                                  <th>
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "6px",
+                                      }}
+                                    >
                                       <Sparkles size={14} />
                                       <span>
                                         {state.language === "en"
@@ -3184,6 +3283,23 @@ export default function AdminDashboardPage() {
                                     <td>
                                       <span className="ad-user-email">
                                         {u.email}
+                                      </span>
+                                    </td>
+                                    <td>
+                                      <span
+                                        style={{
+                                          fontSize: 12,
+                                          fontWeight: 600,
+                                          color: "var(--text1)",
+                                          textTransform: "capitalize",
+                                          display: "inline-block",
+                                          padding: "4px 8px",
+                                          background: "rgba(255,255,255,0.05)",
+                                          borderRadius: 6,
+                                          border: "1px solid var(--line)"
+                                        }}
+                                      >
+                                        {u.planName || (state.language === "en" ? "Free Plan" : "خطة مجانية")}
                                       </span>
                                     </td>
                                     <td>
@@ -3563,6 +3679,7 @@ export default function AdminDashboardPage() {
                           setPlanName("");
                           setPlanNameEn("");
                           setPlanPrice("");
+                          setPlanCredits("20");
                           setPlanCurrency("EGP");
                           setPlanPaddlePriceId("");
                           setDynamicFeaturesAr([""]);
@@ -3795,6 +3912,11 @@ export default function AdminDashboardPage() {
                             : "السعر والعملة"}
                         </th>
                         <th style={{ textAlign: "center" }}>
+                          {state.language === "en"
+                            ? "Credits"
+                            : "الرصيد"}
+                        </th>
+                        <th style={{ textAlign: "center" }}>
                           {state.language === "en" ? "Features" : "المميزات"}
                         </th>
                         <th style={{ textAlign: "center" }}>
@@ -3929,6 +4051,17 @@ export default function AdminDashboardPage() {
                               </span>
                             </td>
                             <td style={{ textAlign: "center" }}>
+                              <span
+                                style={{
+                                  color: "var(--accent)",
+                                  fontWeight: 800,
+                                  fontSize: 14,
+                                }}
+                              >
+                                {p.creditsPerMonth || 0}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: "center" }}>
                               <button
                                 type="button"
                                 className="sa-media-badge sa-media-badge-auto"
@@ -3986,6 +4119,7 @@ export default function AdminDashboardPage() {
                                     setPlanName(p.name_ar || p.name || "");
                                     setPlanNameEn(p.name_en || "");
                                     setPlanPrice(p.price || "");
+                                    setPlanCredits(p.creditsPerMonth || "20");
                                     setPlanCurrency(p.currency || "EGP");
                                     setPlanPaddlePriceId(p.paddlePriceId || "");
                                     setDynamicFeaturesAr(
@@ -10220,6 +10354,79 @@ export default function AdminDashboardPage() {
                         ]}
                       />
                     </div>
+
+                    {/* Master OpenAI API Key */}
+                    <div className="field" style={{ gridColumn: "1 / -1", marginTop: "12px" }}>
+                      <label
+                        className="field-label"
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <Key size={15} style={{ color: "var(--accent)" }} />
+                          {state.language === "en" ? "Master OpenAI API Key" : "مفتاح OpenAI الرئيسي"}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: "10px",
+                            fontWeight: "800",
+                            color: masterApiKey.trim() ? "#10B981" : "#EF4444",
+                          }}
+                        >
+                          {masterApiKey.trim() ? "✔️ Configured" : "❌ Not Set"}
+                        </span>
+                      </label>
+                      
+                      <span style={{ fontSize: "11px", color: "var(--text3)", display: "block", marginBottom: "8px" }}>
+                        {state.language === "en" 
+                          ? "This key is used as a fallback for users who have run out of credits or are on the Free plan." 
+                          : "يتم استخدام هذا المفتاح كبديل للمستخدمين الذين نفد رصيدهم أو المشتركين في الخطة المجانية."}
+                      </span>
+                      
+                      <div style={{ display: "flex", gap: "10px" }}>
+                        <input
+                          type="password"
+                          dir="ltr"
+                          className="field-input"
+                          value={masterApiKey}
+                          onChange={(e) => setMasterApiKey(e.target.value)}
+                          placeholder="sk-..."
+                          style={{ height: "46px", borderRadius: "12px", fontWeight: "700", flex: 1 }}
+                        />
+                        <button
+                          type="button"
+                          className="btn"
+                          onClick={async () => {
+                            const success = await saveAdminOpenAiKey(masterApiKey);
+                            toast(
+                              success 
+                                ? (state.language === "en" ? "Master API Key saved successfully!" : "تم حفظ المفتاح الرئيسي بنجاح!")
+                                : (state.language === "en" ? "Failed to save API Key" : "فشل في حفظ المفتاح"), 
+                              success ? "success" : "error"
+                            );
+                          }}
+                          style={{ 
+                            height: "46px", 
+                            borderRadius: "12px", 
+                            padding: "0 24px",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            fontWeight: "600",
+                            background: "var(--accent)",
+                            color: "#fff",
+                            border: "none"
+                          }}
+                        >
+                          <Save size={16} />
+                          {state.language === "en" ? "Save Key" : "حفظ المفتاح"}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -11568,7 +11775,7 @@ export default function AdminDashboardPage() {
       {/* User Create / Edit Modal */}
       <AnimatePresence>
         {isUserModalOpen && (
-          <div className="sa-modal-overlay" onClick={() => cancelEdit()}>
+          <div className="sa-modal-overlay">
             <motion.div
               className="sa-modal-content"
               onClick={(e) => e.stopPropagation()}
@@ -11895,76 +12102,63 @@ export default function AdminDashboardPage() {
                             : "إدارة الاشتراك"}
                         </span>
                       </div>
-                      <div
-                        className="ad-role-selector"
-                        style={{
-                          gridTemplateColumns:
-                            "repeat(auto-fit, minmax(95px, 1fr))",
-                          gap: 8,
-                        }}
-                      >
-                        <div
-                          className={`ad-role-option ${subType === "monthly" ? "active" : ""}`}
-                          onClick={() => setSubType("monthly")}
-                        >
-                          <Calendar
-                            size={14}
-                            style={{ display: "inline", marginLeft: 4 }}
-                          />
-                          <span>
-                            {state.language === "en" ? "Monthly" : "شهر"}
-                          </span>
-                        </div>
-                        <div
-                          className={`ad-role-option ${subType === "lifetime" ? "active" : ""}`}
-                          onClick={() => setSubType("lifetime")}
-                        >
-                          <Gem
-                            size={14}
-                            style={{ display: "inline", marginLeft: 4 }}
-                          />
-                          <span>
-                            {state.language === "en" ? "Lifetime" : "دائم"}
-                          </span>
-                        </div>
-                        <div
-                          className={`ad-role-option ${subType === "custom" ? "active" : ""}`}
-                          onClick={() => setSubType("custom")}
-                        >
-                          <SlidersHorizontal
-                            size={14}
-                            style={{ display: "inline", marginLeft: 4 }}
-                          />
-                          <span>
-                            {state.language === "en" ? "Custom" : "محدد"}
-                          </span>
-                        </div>
-                        <div
-                          className={`ad-role-option ${subType === "trial" ? "active" : ""}`}
-                          onClick={() => setSubType("trial")}
-                        >
-                          <Gift
-                            size={14}
-                            style={{ display: "inline", marginLeft: 4 }}
-                          />
-                          <span>
-                            {state.language === "en" ? "Trial" : "فترة مجانية"}
-                          </span>
-                        </div>
-                        <div
-                          className={`ad-role-option ${subType === "stopped" ? "active" : ""}`}
-                          onClick={() => setSubType("stopped")}
-                          style={{ color: "var(--red)" }}
-                        >
-                          <Ban
-                            size={14}
-                            style={{ display: "inline", marginLeft: 4 }}
-                          />
-                          <span>
-                            {state.language === "en" ? "Stop" : "إيقاف"}
-                          </span>
-                        </div>
+                      <div style={{ marginTop: 16 }}>
+                        <CustomSelect
+                          label={state.language === "en" ? "Subscription Type" : "نوع الاشتراك"}
+                          value={subType}
+                          onChange={(val) => setSubType(val)}
+                          icon={Sparkles}
+                          options={[
+                            {
+                              value: "monthly",
+                              label: state.language === "en" ? "Monthly" : "شهر",
+                              icon: Calendar,
+                            },
+                            {
+                              value: "lifetime",
+                              label: state.language === "en" ? "Lifetime" : "دائم",
+                              icon: Gem,
+                            },
+                            {
+                              value: "custom",
+                              label: state.language === "en" ? "Custom" : "محدد",
+                              icon: SlidersHorizontal,
+                            },
+                            {
+                              value: "trial",
+                              label: state.language === "en" ? "Trial" : "فترة مجانية",
+                              icon: Gift,
+                            },
+                            {
+                              value: "stopped",
+                              label: state.language === "en" ? "Stop" : "إيقاف",
+                              icon: Ban,
+                            }
+                          ]}
+                        />
                       </div>
+                    </div>
+
+                    {/* Plan Assignment Field */}
+                    <div className="field">
+                      <CustomSelect
+                        label={state.language === "en" ? "Assigned Plan" : "الباقة المخصصة"}
+                        value={userPlanId}
+                        onChange={(val) => setUserPlanId(val)}
+                        icon={Layers}
+                        options={[
+                          {
+                            value: "free",
+                            label: state.language === "en" ? "Free Plan" : "خطة مجانية",
+                            icon: Gift,
+                          },
+                          ...plans.map((p) => ({
+                            value: p.id.toString(),
+                            label: state.language === "en" ? (p.name_en || p.name) : (p.name_ar || p.name),
+                            icon: Sparkles,
+                          })),
+                        ]}
+                      />
                     </div>
 
                     {subType === "custom" && (
@@ -12062,7 +12256,6 @@ export default function AdminDashboardPage() {
         {isPlanModalOpen && (
           <div
             className="sa-modal-overlay"
-            onClick={() => setIsPlanModalOpen(false)}
             style={{ zIndex: 2000 }}
           >
             <motion.div
@@ -12202,6 +12395,28 @@ export default function AdminDashboardPage() {
                       value={planPrice}
                       onChange={(e) => setPlanPrice(e.target.value)}
                       placeholder="500"
+                      dir="ltr"
+                      style={{ textAlign: "left" }}
+                    />
+                  </div>
+                  <div className="field">
+                    <label
+                      className="field-label"
+                      style={{ display: "flex", alignItems: "center", gap: 6 }}
+                    >
+                      <Sparkles size={14} style={{ color: "var(--accent)" }} />
+                      <span>
+                        {state.language === "en"
+                          ? "Credits/month"
+                          : "الرصيد الشهري"}
+                      </span>
+                    </label>
+                    <input
+                      type="number"
+                      className="field-input"
+                      value={planCredits}
+                      onChange={(e) => setPlanCredits(e.target.value)}
+                      placeholder="20"
                       dir="ltr"
                       style={{ textAlign: "left" }}
                     />
@@ -12545,31 +12760,32 @@ export default function AdminDashboardPage() {
                         .filter((f) => f.trim() !== "")
                         .join("\n");
 
+                      let newPlans = [];
                       if (editingPlan) {
-                        setPlans(
-                          plans.map((p) =>
-                            p.id === editingPlan.id
-                              ? {
-                                  ...p,
-                                  name: planName,
-                                  name_ar: planName,
-                                  name_en: planNameEn,
-                                  price: Number(planPrice),
-                                  currency: planCurrency,
-                                  features: featArString,
-                                  features_ar: featArString,
-                                  features_en: featEnString,
-                                  paddlePriceId: planPaddlePriceId,
-                                  stripe_product_id:
-                                    editingPlan.stripe_product_id || null,
-                                  stripe_monthly_price_id:
-                                    editingPlan.stripe_monthly_price_id || null,
-                                  stripe_yearly_price_id:
-                                    editingPlan.stripe_yearly_price_id || null,
-                                }
-                              : p,
-                          ),
+                        newPlans = plans.map((p) =>
+                          p.id === editingPlan.id
+                            ? {
+                                ...p,
+                                name: planName,
+                                name_ar: planName,
+                                name_en: planNameEn,
+                                price: Number(planPrice),
+                                creditsPerMonth: Number(planCredits),
+                                currency: planCurrency,
+                                features: featArString,
+                                features_ar: featArString,
+                                features_en: featEnString,
+                                paddlePriceId: planPaddlePriceId,
+                                stripe_product_id:
+                                  editingPlan.stripe_product_id || null,
+                                stripe_monthly_price_id:
+                                  editingPlan.stripe_monthly_price_id || null,
+                                stripe_yearly_price_id:
+                                  editingPlan.stripe_yearly_price_id || null,
+                              }
+                            : p,
                         );
+                        setPlans(newPlans);
                         toast(
                           state.language === "en"
                             ? "Plan updated successfully ✅"
@@ -12577,7 +12793,7 @@ export default function AdminDashboardPage() {
                           "success",
                         );
                       } else {
-                        setPlans([
+                        newPlans = [
                           ...plans,
                           {
                             id: Date.now(),
@@ -12585,13 +12801,15 @@ export default function AdminDashboardPage() {
                             name_ar: planName,
                             name_en: planNameEn,
                             price: Number(planPrice),
+                            creditsPerMonth: Number(planCredits),
                             currency: planCurrency,
                             features: featArString,
                             features_ar: featArString,
                             features_en: featEnString,
                             paddlePriceId: planPaddlePriceId,
                           },
-                        ]);
+                        ];
+                        setPlans(newPlans);
                         toast(
                           state.language === "en"
                             ? "Plan added successfully ✅"
@@ -12599,6 +12817,7 @@ export default function AdminDashboardPage() {
                           "success",
                         );
                       }
+                      handleUpdateAdminProfile(newPlans);
                       setIsPlanModalOpen(false);
                     }}
                   >

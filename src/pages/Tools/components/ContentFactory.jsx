@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../../context/AppContext';
+import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../context/ToastContext';
 import { getContentPlan, getCanonicalNiche } from '../../../services/contentDbService';
 import { generatePostContent } from '../../../services/seedPart9_contentPlans';
@@ -36,6 +37,7 @@ import './ContentFactory.css';
 
 export default function ContentFactory({ stepNumber }) {
   const { state, dispatch } = useApp();
+  const { userData } = useAuth();
   const toast = useToast();
   const lang = state.language || 'ar';
   const isRtl = lang === 'ar';
@@ -91,7 +93,7 @@ export default function ContentFactory({ stepNumber }) {
       let dbResult = null;
 
       if (analysisMode === 'live') {
-        dbResult = await dispatchLiveAiAnalysis({
+        dbResult = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
           toolId: 'content-factory',
           inputs: { targetAudience, platform, contentFormat, selectedDialect },
           context: { niche: state.niche, user: state.user },

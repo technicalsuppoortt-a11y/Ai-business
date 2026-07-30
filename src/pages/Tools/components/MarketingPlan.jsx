@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../../context/AppContext';
+import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../context/ToastContext';
 import { getMarketingPlan } from '../../../services/contentDbService';
 import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
@@ -43,6 +44,7 @@ import './MarketingPlan.css';
 
 export default function MarketingPlan({ stepNumber }) {
   const { state, dispatch } = useApp();
+  const { userData } = useAuth();
   const toast = useToast();
   const lang = state.language || 'ar';
   const isRtl = lang === 'ar';
@@ -104,7 +106,7 @@ export default function MarketingPlan({ stepNumber }) {
 
     try {
       if (analysisMode === 'live') {
-        const liveResult = await dispatchLiveAiAnalysis({
+        const liveResult = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
           toolId: 'marketing-plan',
           inputs: { budget, duration, goal, clientLevel },
           context: { niche: state.niche, user: state.user },

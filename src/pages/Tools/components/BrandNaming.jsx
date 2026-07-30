@@ -10,6 +10,7 @@ const BRAND_CATEGORIES = [
 ];
 
 export default function BrandNaming({ stepNumber }) {
+  const toast = useToast();
   const { state, dispatch } = useApp();
   const lang = state.language || 'ar';
 
@@ -35,8 +36,13 @@ export default function BrandNaming({ stepNumber }) {
           }
         }
       } catch (error) {
-        console.error('Error fetching brand niches:', error);
+      console.error(error);
+      if (error?.message === 'OUT_OF_CREDITS' || error?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
       }
+    }
     }
     fetchNiches();
   }, []);
@@ -113,7 +119,11 @@ export default function BrandNaming({ stepNumber }) {
       }
     } catch (error) {
       console.error(error);
-      alert(lang === 'en' ? 'Error generating names.' : 'حدث خطأ أثناء ابتكار الأسماء. الرجاء عمل رفع للبيانات (Seed) أولاً.');
+      if (error?.message === 'OUT_OF_CREDITS' || error?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
     } finally {
       setIsGenerating(false);
     }

@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import InteractiveToolLayout from './InteractiveToolLayout';
 import { useApp } from '../../../context/AppContext';
+import { useAuth } from '../../../context/AuthContext';
 import { getPricingAnalysisTemplate } from '../../../services/contentDbService';
 import { parseTemplate } from '../../../utils/templateParser';
 import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
 import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
 
 export default function FreelancePricing({ stepNumber }) {
+  const toast = useToast();
   const { state, dispatch } = useApp();
+  const { userData } = useAuth();
   const lang = state.language || 'ar';
   const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
   
@@ -45,12 +48,13 @@ export default function FreelancePricing({ stepNumber }) {
 
     try {
       if (analysisMode === 'live') {
-        const liveResult = await dispatchLiveAiAnalysis({
-          toolId: 'freelance-pricing',
+        const liveResult = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
+      toolId: 'freelance-pricing',
           inputs: { goal, currency, hoursPerWeek, expenses, hourlyRate, projectRate },
           context: { niche: state.niche, user: state.user },
-          lang
-        });
+          lang,
+      uid: userData?.uid || state?.user?.uid
+    });
         setAiAnalysis(liveResult);
         dispatch({
           type: 'SAVE_TOOL_RESULT',
@@ -93,7 +97,11 @@ export default function FreelancePricing({ stepNumber }) {
       }
     } catch (error) {
       console.error(error);
-      alert(lang === 'en' ? 'Error analyzing price' : 'حدث خطأ أثناء تحليل السعر');
+      if (error?.message === 'OUT_OF_CREDITS' || error?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
     } finally {
       setIsGenerating(false);
     }

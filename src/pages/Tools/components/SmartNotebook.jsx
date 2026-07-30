@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useToast } from '../../../context/ToastContext';
 import { useApp } from '../../../context/AppContext';
 import { useAuth } from '../../../context/AuthContext';
 import { db } from '../../../firebase';
@@ -189,6 +190,7 @@ function PlannerFilterCategoryDropdown({ value, onChange, options, lang }) {
 }
 
 export default function SmartNotebook() {
+  const toast = useToast();
   const { state } = useApp();
   const { userData } = useAuth();
   const lang = state.language || 'ar';
@@ -286,8 +288,13 @@ export default function SmartNotebook() {
           }
         }
       } catch (err) {
-        console.error("Error loading planner items/settings:", err);
-      } finally {
+      console.error(err);
+      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
+    } finally {
         setIsLoading(false);
       }
     };
@@ -338,9 +345,13 @@ export default function SmartNotebook() {
         setItems(prev => prev.map(n => n.id === activeNoteId ? { ...n, title, content, priority: notePriority, tags, colorAccent: selectedColor } : n));
         setSaveStatus('saved');
       } catch (err) {
-        console.error("Auto-save failed:", err);
-        setSaveStatus('saved');
+      console.error(err);
+      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
       }
+    }
     };
 
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
@@ -368,8 +379,12 @@ export default function SmartNotebook() {
       setSaveStatus('saved');
       showToast(lang === 'en' ? 'Saved successfully!' : 'تم الحفظ بنجاح!');
     } catch (err) {
-      console.error("Manual save failed:", err);
-      showToast(lang === 'en' ? 'Save failed' : 'فشل الحفظ');
+      console.error(err);
+      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
     }
   };
 
@@ -413,7 +428,12 @@ export default function SmartNotebook() {
     try {
       await setDoc(doc(db, 'users', userData.uid, 'notebooks', newId), newItem);
     } catch (err) {
-      console.error("Error creating item:", err);
+      console.error(err);
+      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
     }
   };
 
@@ -426,7 +446,14 @@ export default function SmartNotebook() {
 
     try {
       await setDoc(doc(db, 'users', userData.uid, 'notebooks', item.id), { isFavorite: newStatus }, { merge: true });
-    } catch (err) {}
+    } catch (err) {
+      console.error(err);
+      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
+    }
   };
 
   // Toggle Task Completion Handler (With Success Toast)
@@ -443,7 +470,14 @@ export default function SmartNotebook() {
 
     try {
       await setDoc(doc(db, 'users', userData.uid, 'notebooks', item.id), { isCompleted: newStatus, updatedAt: serverTimestamp() }, { merge: true });
-    } catch (err) {}
+    } catch (err) {
+      console.error(err);
+      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
+    }
   };
 
   // Confirm Delete Handler
@@ -457,7 +491,14 @@ export default function SmartNotebook() {
 
     try {
       await deleteDoc(doc(db, 'users', userData.uid, 'notebooks', id));
-    } catch (err) {}
+    } catch (err) {
+      console.error(err);
+      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
+    }
   };
 
   // Add Custom Category Handler (WITH FIREBASE PERSISTENCE)
@@ -496,8 +537,13 @@ export default function SmartNotebook() {
           updatedAt: serverTimestamp()
         }, { merge: true });
       } catch (err) {
-        console.error("Error persisting custom categories:", err);
+      console.error(err);
+      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
       }
+    }
     }
   };
 

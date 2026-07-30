@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useApp } from '../../../context/AppContext';
+import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../context/ToastContext';
 import { callGemini } from '../../../services/geminiService';
 import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
@@ -144,6 +145,7 @@ const extractJSON = (text) => {
 
 export default function SmartAIAssistant({ stepNumber }) {
   const { state, dispatch } = useApp();
+  const { userData } = useAuth();
   const toastContext = useToast();
   const toast = toastContext?.toast || ((msg) => console.log(msg));
 
@@ -224,7 +226,7 @@ export default function SmartAIAssistant({ stepNumber }) {
       setActiveStage('loading');
       setResult(null);
       try {
-        const liveResult = await dispatchLiveAiAnalysis({
+        const liveResult = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
           toolId: 'smart-ai-assistant',
           inputs: { selectedGoal, selectedChannel, selectedClient, selectedPricing },
           context: { niche: state.niche, subNiche: state.subNiche, user: state.user },

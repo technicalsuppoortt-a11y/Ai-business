@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useApp } from "../../../context/AppContext";
+import { useAuth } from "../../../context/AuthContext";
 import { useToast } from "../../../context/ToastContext";
 import ToolDashboardLayout from "./ToolDashboardLayout";
 import { getLandingMatrixSection } from "../../../services/contentDbService";
@@ -125,6 +126,7 @@ function CustomDropdown({
 
 export default function LandingPageContent({ stepNumber }) {
   const { state, dispatch } = useApp();
+  const { userData } = useAuth();
   const toastContext = useToast();
   const toast =
     typeof toastContext === "function"
@@ -400,7 +402,7 @@ export default function LandingPageContent({ stepNumber }) {
 
     try {
       if (analysisMode === "live") {
-        const liveResult = await dispatchLiveAiAnalysis({
+        const liveResult = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
           toolId: "landing-page-content",
           inputs: {
             productName,

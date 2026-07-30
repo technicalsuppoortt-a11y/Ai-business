@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import InteractiveToolLayout from './InteractiveToolLayout';
 import { useApp } from '../../../context/AppContext';
+import { useAuth } from '../../../context/AuthContext';
 import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
 import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
 
 export default function PortfolioBuilder({ stepNumber }) {
+  const toast = useToast();
   const { state, dispatch } = useApp();
+  const { userData } = useAuth();
   const lang = state.language || 'ar';
   const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
   const [projectData, setProjectData] = useState({
@@ -25,12 +28,13 @@ export default function PortfolioBuilder({ stepNumber }) {
 
     try {
       if (analysisMode === 'live') {
-        const liveResult = await dispatchLiveAiAnalysis({
-          toolId: 'portfolio-builder',
+        const liveResult = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
+      toolId: 'portfolio-builder',
           inputs: projectData,
           context: { niche: state.niche, user: state.user },
-          lang
-        });
+          lang,
+      uid: userData?.uid || state?.user?.uid
+    });
         setGeneratedCaseStudy(liveResult);
         dispatch({
           type: 'SAVE_TOOL_RESULT',
@@ -63,7 +67,11 @@ export default function PortfolioBuilder({ stepNumber }) {
       }
     } catch (error) {
       console.error(error);
-      alert(lang === 'en' ? 'Error during generation. Please try again.' : 'حدث خطأ أثناء التوليد. الرجاء المحاولة مجدداً.');
+      if (error?.message === 'OUT_OF_CREDITS' || error?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
     } finally {
       setIsGenerating(false);
     }

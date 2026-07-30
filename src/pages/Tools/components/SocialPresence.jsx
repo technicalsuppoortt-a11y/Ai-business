@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../../context/AppContext';
+import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../context/ToastContext';
 import { getSocialPresenceMatrix } from '../../../services/contentDbService';
 import { SOCIAL_PLATFORMS, SOCIAL_GOALS, generateSocialStrategyText } from '../../../data/socialPresenceMatrix';
@@ -33,6 +34,7 @@ import './SocialPresence.css';
 
 export default function SocialPresence({ stepNumber }) {
   const { state, dispatch } = useApp();
+  const { userData } = useAuth();
   const toast = useToast();
   const lang = state.language || 'ar';
   const isRtl = lang === 'ar';
@@ -81,7 +83,7 @@ export default function SocialPresence({ stepNumber }) {
 
     try {
       if (analysisMode === 'live') {
-        const liveResult = await dispatchLiveAiAnalysis({
+        const liveResult = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
           toolId: 'social-presence',
           inputs: { platform, goal },
           context: { niche: state.niche, brandName: state.brandName, user: state.user },

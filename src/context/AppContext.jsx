@@ -37,6 +37,7 @@ const initialState = {
   language: 'ar',
   isLoadedFromCloud: false,
   toolResults: {},
+  credits: 20,
 };
 
 /* =============================================
@@ -75,6 +76,10 @@ function appReducer(state, action) {
       return { ...state, toolResults: { ...state.toolResults, [action.toolId]: action.data } };
     case 'LOAD_SAVED':
       return { ...state, ...action.payload, isLoadedFromCloud: true };
+    case 'SET_CREDITS':
+      return { ...state, credits: action.payload };
+    case 'DEDUCT_CREDIT':
+      return { ...state, credits: Math.max(0, state.credits - 1) };
     default:
       return state;
   }

@@ -4,6 +4,7 @@ import { getColorAnalysis } from '../../../services/contentDbService';
 import ToolDashboardLayout from './ToolDashboardLayout';
 
 export default function VisualIdentity({ stepNumber }) {
+  const toast = useToast();
   const { state, dispatch } = useApp();
   const lang = state.language || 'ar';
   
@@ -62,7 +63,11 @@ export default function VisualIdentity({ stepNumber }) {
       }
     } catch (error) {
       console.error(error);
-      alert(lang === 'en' ? 'Error analyzing colors.' : 'حدث خطأ أثناء التحليل.');
+      if (error?.message === 'OUT_OF_CREDITS' || error?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
     } finally {
       setIsGenerating(false);
     }

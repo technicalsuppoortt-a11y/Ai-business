@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useToast } from '../../../context/ToastContext';
 import { useApp } from '../../../context/AppContext';
 import { createPortal } from 'react-dom';
 import { Search, ExternalLink, Sparkles, X, ArrowUpRight, Zap, Info, RefreshCw } from 'lucide-react';
@@ -362,6 +363,7 @@ const EXTERNAL_TOOLS_DATA = [
 ];
 
 export default function ExternalTools() {
+  const toast = useToast();
   const { state } = useApp();
   const lang = state.language || 'ar';
   

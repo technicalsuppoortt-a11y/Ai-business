@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useApp } from '../../../context/AppContext';
+import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../context/ToastContext';
 import { getProductIdeasStructure, getProductIdeasV2 } from '../../../services/contentDbService';
 import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
@@ -135,6 +136,7 @@ const CustomStudioSelectPill = ({ icon: IconComp, label, value, options, onChang
 
 export default function ProductSource({ stepNumber }) {
   const { state, dispatch } = useApp();
+  const { userData } = useAuth();
   const toast = useToast();
   const lang = state.language || 'ar';
   const isRtl = lang === 'ar';
@@ -228,6 +230,7 @@ Target Pricing: "${product.price_ar || product.price || ''}"
 Generate step-by-step creation tools in ${isArabic ? 'Arabic' : 'English'}.`;
 
       const responseContent = await callOpenAiApi({
+        uid: userData?.uid || state?.user?.uid,
         systemPrompt,
         userPrompt,
         jsonMode: true,
@@ -416,6 +419,7 @@ Generate step-by-step creation tools in ${isArabic ? 'Arabic' : 'English'}.`;
     try {
       if (analysisMode === 'live') {
         const liveResult = await dispatchLiveAiAnalysis({
+          uid: userData?.uid || state?.user?.uid,
           toolId: 'product-source',
           inputs: { selectedType, selectedNiche, selectedEffort },
           context: { niche: state.niche, user: state.user },
@@ -678,8 +682,8 @@ Generate step-by-step creation tools in ${isArabic ? 'Arabic' : 'English'}.`;
                   </>
                 ) : (
                   <>
-                    <Sparkles size={16} /> 
-                    <span>{lang === 'en' ? 'Scan Etsy Top 10' : 'فحص أفضل 10 منتجات مبيعاً'}</span>
+                    <RefreshCw size={16} /> 
+                    <span>{ideas ? (lang === 'en' ? 'Regenerate Ideas' : 'إعادة الفحص والتوليد') : (lang === 'en' ? 'Scan Etsy Top 10' : 'فحص أفضل 10 منتجات مبيعاً')}</span>
                   </>
                 )}
               </button>
@@ -1039,16 +1043,39 @@ Generate step-by-step creation tools in ${isArabic ? 'Arabic' : 'English'}.`;
               </div>
 
               {/* Status Header */}
-              <div style={{ background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.3)', borderRadius: '16px', padding: '16px' }}>
-                <h4 style={{ color: '#818CF8', fontSize: '13px', fontWeight: 800, margin: '0 0 6px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Sparkles size={16} />
-                  <span>{lang === 'en' ? 'Live AI Creation Workflow' : 'خطوات وأدوات التنفيذ بالذكاء الاصطناعي'}</span>
-                </h4>
-                <p style={{ color: 'var(--text2, #CBD5E1)', fontSize: '12.5px', lineHeight: 1.6, margin: 0 }}>
-                  {lang === 'en' 
-                    ? 'Tools, prompt templates, and step-by-step instructions generated live for this exact product.' 
-                    : 'يتم توليد أدوات وخطوات وصيغ التصدير حياً بالذكاء الاصطناعي خصيصاً لهذا المنتج.'}
-                </p>
+              <div style={{ background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.3)', borderRadius: '16px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                <div>
+                  <h4 style={{ color: '#818CF8', fontSize: '13px', fontWeight: 800, margin: '0 0 6px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Sparkles size={16} />
+                    <span>{lang === 'en' ? 'Live AI Creation Workflow' : 'خطوات وأدوات التنفيذ بالذكاء الاصطناعي'}</span>
+                  </h4>
+                  <p style={{ color: 'var(--text2, #CBD5E1)', fontSize: '12.5px', lineHeight: 1.6, margin: 0 }}>
+                    {lang === 'en' 
+                      ? 'Tools, prompt templates, and step-by-step instructions generated live for this exact product.' 
+                      : 'يتم توليد أدوات وخطوات وصيغ التصدير حياً بالذكاء الاصطناعي خصيصاً لهذا المنتج.'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => fetchDynamicAiToolsFromOpenAI(selectedToolingProduct)}
+                  disabled={isLoadingAiTools}
+                  style={{
+                    background: 'rgba(99, 102, 241, 0.2)',
+                    border: '1px solid rgba(99, 102, 241, 0.4)',
+                    color: '#818CF8',
+                    padding: '8px 14px',
+                    borderRadius: '10px',
+                    fontSize: '12px',
+                    fontWeight: '800',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <RefreshCw size={14} className={isLoadingAiTools ? "spin" : ""} />
+                  <span>{lang === 'en' ? 'Regenerate' : 'إعادة التوليد'}</span>
+                </button>
               </div>
 
               {/* DYNAMIC AI API LOADING STATE */}
@@ -1158,8 +1185,19 @@ Generate step-by-step creation tools in ${isArabic ? 'Arabic' : 'English'}.`;
                 </div>
               )}
 
-              {/* ACTION BUTTONS: ADD TO MY PRODUCTS + CLOSE */}
-              <div style={{ display: 'flex', gap: '10px', marginTop: '12px', flexWrap: 'wrap' }}>
+              {/* ACTION BUTTONS: REGENERATE + ADD TO MY PRODUCTS + CLOSE */}
+              <div style={{ display: 'flex', gap: '10px', marginTop: '16px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => fetchDynamicAiToolsFromOpenAI(selectedToolingProduct)}
+                  disabled={isLoadingAiTools}
+                  className="ps-pink-glow-btn"
+                  style={{ flex: 1, borderRadius: '12px', marginTop: 0, background: 'linear-gradient(135deg, #7C3AED 0%, #6366F1 100%)', boxShadow: '0 4px 16px rgba(124, 58, 237, 0.35)' }}
+                >
+                  <RefreshCw size={16} className={isLoadingAiTools ? "spin" : ""} />
+                  <span>{lang === 'en' ? 'Regenerate Steps' : 'إعادة توليد الخطوات'}</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={() => handleAddProductToWorkspace(selectedToolingProduct)}
@@ -1174,7 +1212,7 @@ Generate step-by-step creation tools in ${isArabic ? 'Arabic' : 'English'}.`;
                   type="button"
                   onClick={() => setSelectedToolingProduct(null)}
                   className="ps-pink-glow-btn"
-                  style={{ flex: 1, borderRadius: '12px', marginTop: 0, background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)' }}
+                  style={{ flex: 1, borderRadius: '12px', marginTop: 0, background: 'linear-gradient(135deg, #475569 0%, #334155 100%)' }}
                 >
                   <CheckCircle2 size={16} />
                   <span>{lang === 'en' ? 'Done / Close Guide' : 'تم / إغلاق الدليل'}</span>

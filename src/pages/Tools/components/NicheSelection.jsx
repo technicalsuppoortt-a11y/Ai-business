@@ -1,5 +1,5 @@
 /**
- * NicheSelection.jsx — 100% Dynamic & Reactive AI-Driven Niche Intelligence Pipeline
+ * NicheSelection.jsx â€” 100% Dynamic & Reactive AI-Driven Niche Intelligence Pipeline
  *
  * Direct OpenAI Chat Completions Integration (JSON Mode)
  * Multi-Stage Pipeline:
@@ -17,6 +17,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../../context/AppContext';
+import { useAuth } from '../../../context/AuthContext';
 import { getNiches, seedNiches } from '../../../services/nicheService';
 import { getNicheAnalysis } from '../../../services/contentDbService';
 import { callOpenAiApi } from '../../../services/liveAiService';
@@ -60,9 +61,9 @@ import {
   Globe2
 } from 'lucide-react';
 
-// ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 1. CONSTANTS & MARKET OPTIONS
-// ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const NICHE_THEMES = {
   ai:         { color: '#10B981', bg: 'rgba(16, 185, 129, 0.1)' },
   business:   { color: '#6366F1', bg: 'rgba(99, 102, 241, 0.1)' },
@@ -75,23 +76,23 @@ export const NICHE_THEMES = {
 const DEFAULT_THEME = { color: '#10B981', bg: 'rgba(16, 185, 129, 0.1)' };
 
 export const COUNTRY_OPTIONS = [
-  { id: 'sa',     name_ar: 'المملكة العربية السعودية',    name_en: 'Saudi Arabia',          flag: '🇸🇦', region: 'GCC'    },
-  { id: 'uae',    name_ar: 'الإمارات العربية المتحدة',    name_en: 'UAE',                   flag: '🇦🇪', region: 'GCC'    },
-  { id: 'eg',     name_ar: 'جمهورية مصر العربية',         name_en: 'Egypt',                 flag: '🇪🇬', region: 'MENA'   },
-  { id: 'kw',     name_ar: 'دولة الكويت',                 name_en: 'Kuwait',                flag: '🇰🇼', region: 'GCC'    },
-  { id: 'qa',     name_ar: 'دولة قطر',                    name_en: 'Qatar',                 flag: '🇶🇦', region: 'GCC'    },
-  { id: 'bh',     name_ar: 'مملكة البحرين',               name_en: 'Bahrain',               flag: '🇧🇭', region: 'GCC'    },
-  { id: 'om',     name_ar: 'سلطنة عمان',                  name_en: 'Oman',                  flag: '🇴🇲', region: 'GCC'    },
-  { id: 'jo',     name_ar: 'المملكة الأردنية الهاشمية',  name_en: 'Jordan',                flag: '🇯🇴', region: 'MENA'   },
-  { id: 'ma',     name_ar: 'المملكة المغربية',             name_en: 'Morocco',               flag: '🇲🇦', region: 'MENA'   },
-  { id: 'dz',     name_ar: 'الجمهورية الجزائرية',         name_en: 'Algeria',               flag: '🇩🇿', region: 'MENA'   },
-  { id: 'iq',     name_ar: 'جمهورية العراق',              name_en: 'Iraq',                  flag: '🇮🇶', region: 'MENA'   },
-  { id: 'us',     name_ar: 'الولايات المتحدة الأمريكية', name_en: 'United States',          flag: '🇺🇸', region: 'Global' },
-  { id: 'uk',     name_ar: 'المملكة المتحدة',             name_en: 'United Kingdom',         flag: '🇬🇧', region: 'Global' },
-  { id: 'de',     name_ar: 'جمهورية ألمانيا الاتحادية',  name_en: 'Germany',               flag: '🇩🇪', region: 'Global' },
-  { id: 'ca',     name_ar: 'كندا',                        name_en: 'Canada',                flag: '🇨🇦', region: 'Global' },
-  { id: 'au',     name_ar: 'أستراليا',                    name_en: 'Australia',             flag: '🇦🇺', region: 'Global' },
-  { id: 'global', name_ar: 'السوق العالمي الشامل',         name_en: 'Worldwide Global Market',flag: '🌐', region: 'Global' },
+  { id: 'sa',     name_ar: 'ط§ظ„ظ…ظ…ظ„ظƒط© ط§ظ„ط¹ط±ط¨ظٹط© ط§ظ„ط³ط¹ظˆط¯ظٹط©',    name_en: 'Saudi Arabia',          flag: 'ًں‡¸ًں‡¦', region: 'GCC'    },
+  { id: 'uae',    name_ar: 'ط§ظ„ط¥ظ…ط§ط±ط§طھ ط§ظ„ط¹ط±ط¨ظٹط© ط§ظ„ظ…طھط­ط¯ط©',    name_en: 'UAE',                   flag: 'ًں‡¦ًں‡ھ', region: 'GCC'    },
+  { id: 'eg',     name_ar: 'ط¬ظ…ظ‡ظˆط±ظٹط© ظ…طµط± ط§ظ„ط¹ط±ط¨ظٹط©',         name_en: 'Egypt',                 flag: 'ًں‡ھًں‡¬', region: 'MENA'   },
+  { id: 'kw',     name_ar: 'ط¯ظˆظ„ط© ط§ظ„ظƒظˆظٹطھ',                 name_en: 'Kuwait',                flag: 'ًں‡°ًں‡¼', region: 'GCC'    },
+  { id: 'qa',     name_ar: 'ط¯ظˆظ„ط© ظ‚ط·ط±',                    name_en: 'Qatar',                 flag: 'ًں‡¶ًں‡¦', region: 'GCC'    },
+  { id: 'bh',     name_ar: 'ظ…ظ…ظ„ظƒط© ط§ظ„ط¨ط­ط±ظٹظ†',               name_en: 'Bahrain',               flag: 'ًں‡§ًں‡­', region: 'GCC'    },
+  { id: 'om',     name_ar: 'ط³ظ„ط·ظ†ط© ط¹ظ…ط§ظ†',                  name_en: 'Oman',                  flag: 'ًں‡´ًں‡²', region: 'GCC'    },
+  { id: 'jo',     name_ar: 'ط§ظ„ظ…ظ…ظ„ظƒط© ط§ظ„ط£ط±ط¯ظ†ظٹط© ط§ظ„ظ‡ط§ط´ظ…ظٹط©',  name_en: 'Jordan',                flag: 'ًں‡¯ًں‡´', region: 'MENA'   },
+  { id: 'ma',     name_ar: 'ط§ظ„ظ…ظ…ظ„ظƒط© ط§ظ„ظ…ط؛ط±ط¨ظٹط©',             name_en: 'Morocco',               flag: 'ًں‡²ًں‡¦', region: 'MENA'   },
+  { id: 'dz',     name_ar: 'ط§ظ„ط¬ظ…ظ‡ظˆط±ظٹط© ط§ظ„ط¬ط²ط§ط¦ط±ظٹط©',         name_en: 'Algeria',               flag: 'ًں‡©ًں‡؟', region: 'MENA'   },
+  { id: 'iq',     name_ar: 'ط¬ظ…ظ‡ظˆط±ظٹط© ط§ظ„ط¹ط±ط§ظ‚',              name_en: 'Iraq',                  flag: 'ًں‡®ًں‡¶', region: 'MENA'   },
+  { id: 'us',     name_ar: 'ط§ظ„ظˆظ„ط§ظٹط§طھ ط§ظ„ظ…طھط­ط¯ط© ط§ظ„ط£ظ…ط±ظٹظƒظٹط©', name_en: 'United States',          flag: 'ًں‡؛ًں‡¸', region: 'Global' },
+  { id: 'uk',     name_ar: 'ط§ظ„ظ…ظ…ظ„ظƒط© ط§ظ„ظ…طھط­ط¯ط©',             name_en: 'United Kingdom',         flag: 'ًں‡¬ًں‡§', region: 'Global' },
+  { id: 'de',     name_ar: 'ط¬ظ…ظ‡ظˆط±ظٹط© ط£ظ„ظ…ط§ظ†ظٹط§ ط§ظ„ط§طھط­ط§ط¯ظٹط©',  name_en: 'Germany',               flag: 'ًں‡©ًں‡ھ', region: 'Global' },
+  { id: 'ca',     name_ar: 'ظƒظ†ط¯ط§',                        name_en: 'Canada',                flag: 'ًں‡¨ًں‡¦', region: 'Global' },
+  { id: 'au',     name_ar: 'ط£ط³طھط±ط§ظ„ظٹط§',                    name_en: 'Australia',             flag: 'ًں‡¦ًں‡؛', region: 'Global' },
+  { id: 'global', name_ar: 'ط§ظ„ط³ظˆظ‚ ط§ظ„ط¹ط§ظ„ظ…ظٹ ط§ظ„ط´ط§ظ…ظ„',         name_en: 'Worldwide Global Market',flag: 'ًںŒگ', region: 'Global' },
 ];
 
 export function getNicheVectorIcon(id, size = 20, color = 'currentColor') {
@@ -107,9 +108,9 @@ export function getNicheVectorIcon(id, size = 20, color = 'currentColor') {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 2. STRICT OPENAI SYSTEM & USER PROMPT BUILDERS
-// ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function buildSystemPrompt() {
   return `You are a world-class AI market intelligence strategist and business analyst.
 
@@ -150,7 +151,7 @@ interface NicheSelectionApiResponse {
 
 Rules:
 1. Provide realistic, high-value data specifically for the requested micro-niche card and target market.
-2. topLeaders must contain 4–6 actual or representative business leaders/competitors in this field.
+2. topLeaders must contain 4â€“6 actual or representative business leaders/competitors in this field.
 3. All text MUST be generated in the language specified by the user prompt.
 4. Do NOT output markdown code blocks or plain text around the JSON object. Return ONLY raw valid JSON.`;
 }
@@ -165,16 +166,16 @@ function buildUserPrompt({ selectedNiche, subNiche, targetCountry, isGlobalBench
     `Primary Niche Category: "${mainNicheLabel}"`,
     `Micro-Niche / Speciality Card Selected: "${microNicheLabel}"`,
     `Include Global Benchmark Evaluation: ${isGlobalBenchmark ? 'YES' : 'NO'}`,
-    `Language for ALL generated text fields: ${lang === 'en' ? 'English' : 'Arabic (العربية)'}`,
+    `Language for ALL generated text fields: ${lang === 'en' ? 'English' : 'Arabic (ط§ظ„ط¹ط±ط¨ظٹط©)'}`,
     '',
     'Generate the complete NicheSelectionApiResponse JSON object for this micro-niche card now.',
   ].join('\n');
 }
 
-// ─────────────────────────────────────────────────────────────────
-// 3. REACTIVE PIPELINE HOOK — useNicheAnalysis
-// ─────────────────────────────────────────────────────────────────
-function useNicheAnalysis({ selectedNiche, subNiche, targetCountry, isGlobalBenchmark, lang }) {
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// 3. REACTIVE PIPELINE HOOK â€” useNicheAnalysis
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function useNicheAnalysis({ selectedNiche, subNiche, targetCountry, isGlobalBenchmark, lang, uid }) {
   const [data, setData]         = useState(null);
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState(null);
@@ -208,21 +209,21 @@ function useNicheAnalysis({ selectedNiche, subNiche, targetCountry, isGlobalBenc
         const fastData = {
           cagr: selectedNiche.cagr || '+24.5% CAGR',
           saturation: selectedNiche.saturation || 'blue',
-          saturationText: lang === 'en' ? 'Blue Ocean Opportunity' : 'فرصة محيط أزرق منخفضة التنافسية',
+          saturationText: lang === 'en' ? 'Blue Ocean Opportunity' : 'ظپط±طµط© ظ…ط­ظٹط· ط£ط²ط±ظ‚ ظ…ظ†ط®ظپط¶ط© ط§ظ„طھظ†ط§ظپط³ظٹط©',
           roi: selectedNiche.roi || '350% - 500%',
           opportunities: dbResult?.opportunities || {
             strengths: [
-              lang === 'en' ? 'High market demand & scalability' : 'طلب سوقي مرتفع وقابلية توسّع ممتازة',
-              lang === 'en' ? 'Low initial capital requirements' : 'متطلبات رأس مال أولي منخفضة',
-              lang === 'en' ? 'High client retainer potential' : 'فرصة عقد اشتراكات شهرية متكررة High-Retainer'
+              lang === 'en' ? 'High market demand & scalability' : 'ط·ظ„ط¨ ط³ظˆظ‚ظٹ ظ…ط±طھظپط¹ ظˆظ‚ط§ط¨ظ„ظٹط© طھظˆط³ظ‘ط¹ ظ…ظ…طھط§ط²ط©',
+              lang === 'en' ? 'Low initial capital requirements' : 'ظ…طھط·ظ„ط¨ط§طھ ط±ط£ط³ ظ…ط§ظ„ ط£ظˆظ„ظٹ ظ…ظ†ط®ظپط¶ط©',
+              lang === 'en' ? 'High client retainer potential' : 'ظپط±طµط© ط¹ظ‚ط¯ ط§ط´طھط±ط§ظƒط§طھ ط´ظ‡ط±ظٹط© ظ…طھظƒط±ط±ط© High-Retainer'
             ],
             gaps: [
-              lang === 'en' ? 'Shortage of specialized service providers' : 'نقص الشركات والخبراء المتخصصين بالمنطقة',
-              lang === 'en' ? 'Lack of standardized service packages' : 'عدم وضوح وتوحيد عروض وتسعير الخدمات'
+              lang === 'en' ? 'Shortage of specialized service providers' : 'ظ†ظ‚طµ ط§ظ„ط´ط±ظƒط§طھ ظˆط§ظ„ط®ط¨ط±ط§ط، ط§ظ„ظ…طھط®طµطµظٹظ† ط¨ط§ظ„ظ…ظ†ط·ظ‚ط©',
+              lang === 'en' ? 'Lack of standardized service packages' : 'ط¹ط¯ظ… ظˆط¶ظˆط­ ظˆطھظˆط­ظٹط¯ ط¹ط±ظˆط¶ ظˆطھط³ط¹ظٹط± ط§ظ„ط®ط¯ظ…ط§طھ'
             ],
             recommendations: [
-              lang === 'en' ? 'Focus on high-ticket specialized offers' : 'التركيز على تقديم عروض High-Ticket متخصصة',
-              lang === 'en' ? 'Leverage AI for rapid service delivery' : 'استغلال الذكاء الاصطناعي لتسريع وتسليم الخدمات'
+              lang === 'en' ? 'Focus on high-ticket specialized offers' : 'ط§ظ„طھط±ظƒظٹط² ط¹ظ„ظ‰ طھظ‚ط¯ظٹظ… ط¹ط±ظˆط¶ High-Ticket ظ…طھط®طµطµط©',
+              lang === 'en' ? 'Leverage AI for rapid service delivery' : 'ط§ط³طھط؛ظ„ط§ظ„ ط§ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹ ظ„طھط³ط±ظٹط¹ ظˆطھط³ظ„ظٹظ… ط§ظ„ط®ط¯ظ…ط§طھ'
             ]
           },
           topLeaders: dbResult?.topLeaders || dbResult?.leaders || [
@@ -232,7 +233,7 @@ function useNicheAnalysis({ selectedNiche, subNiche, targetCountry, isGlobalBenc
           icp: dbResult?.icp || {
             age: '25 - 45',
             job: activeSubNiche || 'Business Owner',
-            pain: lang === 'en' ? 'Need for automated, high-converting workflows' : 'الاحتياج لنظام عمل مؤتمت وعالي التحويل'
+            pain: lang === 'en' ? 'Need for automated, high-converting workflows' : 'ط§ظ„ط§ط­طھظٹط§ط¬ ظ„ظ†ط¸ط§ظ… ط¹ظ…ظ„ ظ…ط¤طھظ…طھ ظˆط¹ط§ظ„ظٹ ط§ظ„طھط­ظˆظٹظ„'
           }
         };
 
@@ -249,7 +250,7 @@ function useNicheAnalysis({ selectedNiche, subNiche, targetCountry, isGlobalBenc
           lang
         });
 
-        const responseRaw = await callOpenAiApi({ systemPrompt, userPrompt, jsonMode: true });
+        const responseRaw = await callOpenAiApi({ uid, systemPrompt, userPrompt, jsonMode: true });
 
         if (currentRequestId !== requestIdRef.current) return;
 
@@ -268,7 +269,7 @@ function useNicheAnalysis({ selectedNiche, subNiche, targetCountry, isGlobalBenc
       setError(
         isApiKeyErr
           ? 'Please provide a valid VITE_OPENAI_API_KEY in your .env file to enable Live AI generation.'
-          : (err.message || (lang === 'en' ? 'Analysis failed. Please try again.' : 'تعذّر إجراء التحليل. الرجاء إعادة المحاولة.'))
+          : (err.message || (lang === 'en' ? 'Analysis failed. Please try again.' : 'طھط¹ط°ظ‘ط± ط¥ط¬ط±ط§ط، ط§ظ„طھط­ظ„ظٹظ„. ط§ظ„ط±ط¬ط§ط، ط¥ط¹ط§ط¯ط© ط§ظ„ظ…ط­ط§ظˆظ„ط©.'))
       );
     } finally {
       if (currentRequestId === requestIdRef.current) {
@@ -287,15 +288,15 @@ function useNicheAnalysis({ selectedNiche, subNiche, targetCountry, isGlobalBenc
   return { data, loading, error, analysisMode, setAnalysisMode, run, reset };
 }
 
-// ─────────────────────────────────────────────────────────────────
-// 4. MICRO-NICHE GENERATION HOOK — useLiveMicroIdeas
-// ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// 4. MICRO-NICHE GENERATION HOOK â€” useLiveMicroIdeas
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function useLiveMicroIdeas() {
   const [ideas, setIdeas]     = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState(null);
 
-  const fetch = useCallback(async ({ selectedNiche, targetCountry, lang }) => {
+  const fetch = useCallback(async ({ selectedNiche, targetCountry, lang, uid }) => {
     if (!selectedNiche) return;
     setLoading(true);
     setError(null);
@@ -305,7 +306,7 @@ function useLiveMicroIdeas() {
     try {
       const sysPrompt = `You are a business strategist. Return a JSON object with key "ideas" containing an array of 8 lucrative micro-niche service ideas.`;
       const usrPrompt = `Primary Niche: "${selectedNiche.label_en || selectedNiche.id}". Market: "${countryObj.name_en}". Language: ${lang === 'en' ? 'English' : 'Arabic'}.`;
-      const raw    = await callOpenAiApi({ systemPrompt: sysPrompt, userPrompt: usrPrompt, jsonMode: true });
+      const raw    = await callOpenAiApi({ uid, systemPrompt: sysPrompt, userPrompt: usrPrompt, jsonMode: true });
       const parsed = JSON.parse(raw);
 
       const list = Array.isArray(parsed) ? parsed :
@@ -322,7 +323,7 @@ function useLiveMicroIdeas() {
       setError(
         isApiKeyErr
           ? 'Please provide a valid VITE_OPENAI_API_KEY in your .env file to enable Live AI generation.'
-          : (err.message || (lang === 'en' ? 'Failed to fetch AI micro-niches.' : 'تعذّر توليد الأفكار.'))
+          : (err.message || (lang === 'en' ? 'Failed to fetch AI micro-niches.' : 'طھط¹ط°ظ‘ط± طھظˆظ„ظٹط¯ ط§ظ„ط£ظپظƒط§ط±.'))
       );
     } finally {
       setLoading(false);
@@ -334,9 +335,9 @@ function useLiveMicroIdeas() {
   return { ideas, loading, error, fetch, reset };
 }
 
-// ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 5. DROPDOWN COMPONENT (With High Z-Index to Prevent Overlapping)
-// ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function TargetMarketDropdown({ value, onChange, options, lang, isLoading }) {
   const [isOpen, setIsOpen]     = useState(false);
   const [searchQuery, setSearch] = useState('');
@@ -407,7 +408,7 @@ function TargetMarketDropdown({ value, onChange, options, lang, isLoading }) {
                     fontWeight: '700'
                   }}
                 >
-                  {lang === 'en' ? 'Updating...' : 'جاري التحديث...'}
+                  {lang === 'en' ? 'Updating...' : 'ط¬ط§ط±ظٹ ط§ظ„طھط­ط¯ظٹط«...'}
                 </span>
               )}
             </div>
@@ -420,7 +421,7 @@ function TargetMarketDropdown({ value, onChange, options, lang, isLoading }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '11px', background: 'rgba(99,102,241,0.15)', color: '#818CF8', padding: '2px 8px', borderRadius: '6px', fontWeight: '700' }}>
-            {options.length} {lang === 'en' ? 'Markets' : 'أسواق'}
+            {options.length} {lang === 'en' ? 'Markets' : 'ط£ط³ظˆط§ظ‚'}
           </span>
           {isLoading ? (
             <Loader2 size={16} color="#6366F1" className="spin" />
@@ -445,7 +446,7 @@ function TargetMarketDropdown({ value, onChange, options, lang, isLoading }) {
             <div style={{ position: 'relative', marginBottom: '8px' }}>
               <Search size={14} color="#64748B" style={{ position: 'absolute', top: '10px', left: '10px' }} />
               <input
-                type="text" placeholder={lang === 'en' ? 'Search country…' : 'ابحث عن دولة…'}
+                type="text" placeholder={lang === 'en' ? 'Search countryâ€¦' : 'ط§ط¨ط­ط« ط¹ظ† ط¯ظˆظ„ط©â€¦'}
                 value={searchQuery} onChange={e => setSearch(e.target.value)}
                 onClick={e => e.stopPropagation()}
                 className="ns-dropdown-search-input"
@@ -458,7 +459,7 @@ function TargetMarketDropdown({ value, onChange, options, lang, isLoading }) {
             <div style={{ maxHeight: '220px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '3px' }}>
               {filtered.length === 0 ? (
                 <div className="ns-subtext" style={{ fontSize: '11px', textAlign: 'center', padding: '12px' }}>
-                  {lang === 'en' ? 'No market found' : 'لم يتم العثور على سوق'}
+                  {lang === 'en' ? 'No market found' : 'ظ„ظ… ظٹطھظ… ط§ظ„ط¹ط«ظˆط± ط¹ظ„ظ‰ ط³ظˆظ‚'}
                 </div>
               ) : filtered.map(opt => {
                 const sel = opt.id === value;
@@ -497,9 +498,9 @@ function TargetMarketDropdown({ value, onChange, options, lang, isLoading }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 6. UI FEEDBACK COMPONENTS
-// ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function ErrorBanner({ message, onRetry, lang }) {
   return (
     <div style={{
@@ -518,7 +519,7 @@ function ErrorBanner({ message, onRetry, lang }) {
         }}
       >
         <RefreshCw size={14} />
-        <span>{lang === 'en' ? 'Retry AI Analysis' : 'إعادة المحاولة'}</span>
+        <span>{lang === 'en' ? 'Retry AI Analysis' : 'ط¥ط¹ط§ط¯ط© ط§ظ„ظ…ط­ط§ظˆظ„ط©'}</span>
       </button>
     </div>
   );
@@ -542,7 +543,7 @@ function MetricCard({ icon, label, value, accent, badgeType, loading }) {
       {loading ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#818CF8', fontSize: '12px' }}>
           <Loader2 size={14} className="spin" />
-          <span>Analysing…</span>
+          <span>Analysingâ€¦</span>
         </div>
       ) : bStyle ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -564,15 +565,15 @@ function MetricCard({ icon, label, value, accent, badgeType, loading }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 7. TAB CONTENT COMPONENTS
-// ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function OpportunitiesTab({ data, loading, error, onRetry, lang }) {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#818CF8', fontSize: '13px', padding: '24px 0' }}>
         <Loader2 size={18} className="spin" />
-        <span>{lang === 'en' ? 'Fetching live micro-niche opportunities via Live AI…' : 'جاري تحليل الفرص المباشرة من الذكاء الاصطناعي…'}</span>
+        <span>{lang === 'en' ? 'Fetching live micro-niche opportunities via Live AIâ€¦' : 'ط¬ط§ط±ظٹ طھط­ظ„ظٹظ„ ط§ظ„ظپط±طµ ط§ظ„ظ…ط¨ط§ط´ط±ط© ظ…ظ† ط§ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹâ€¦'}</span>
       </div>
     );
   }
@@ -584,7 +585,7 @@ function OpportunitiesTab({ data, loading, error, onRetry, lang }) {
         <div style={{ fontSize: '13px', fontWeight: '700' }}>
           {lang === 'en'
             ? 'Select any micro-niche card above to automatically generate live AI opportunities.'
-            : 'اختر أي كارت للتخصص الدقيق أعلاه لتوليد الفرص المباشرة فوراً.'}
+            : 'ط§ط®طھط± ط£ظٹ ظƒط§ط±طھ ظ„ظ„طھط®طµطµ ط§ظ„ط¯ظ‚ظٹظ‚ ط£ط¹ظ„ط§ظ‡ ظ„طھظˆظ„ظٹط¯ ط§ظ„ظپط±طµ ط§ظ„ظ…ط¨ط§ط´ط±ط© ظپظˆط±ط§ظ‹.'}
         </div>
       </div>
     );
@@ -599,7 +600,7 @@ function OpportunitiesTab({ data, loading, error, onRetry, lang }) {
         <div className="ns-opp-card-green" style={{ borderRadius: '12px', padding: '16px' }}>
           <div style={{ fontSize: '13px', fontWeight: '800', color: '#10B981', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <CheckCircle2 size={15} />
-            <span>{lang === 'en' ? 'Strengths & Market Drivers' : 'نقاط القوة والمزايا التنافسية'}</span>
+            <span>{lang === 'en' ? 'Strengths & Market Drivers' : 'ظ†ظ‚ط§ط· ط§ظ„ظ‚ظˆط© ظˆط§ظ„ظ…ط²ط§ظٹط§ ط§ظ„طھظ†ط§ظپط³ظٹط©'}</span>
           </div>
           <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {strengths.map((item, i) => (
@@ -616,7 +617,7 @@ function OpportunitiesTab({ data, loading, error, onRetry, lang }) {
         <div className="ns-opp-card-indigo" style={{ borderRadius: '12px', padding: '16px' }}>
           <div style={{ fontSize: '13px', fontWeight: '800', color: '#818CF8', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <Target size={15} />
-            <span>{lang === 'en' ? 'Market Gaps & Unserved Needs' : 'الفجوات والفرص غير المُستغَلة'}</span>
+            <span>{lang === 'en' ? 'Market Gaps & Unserved Needs' : 'ط§ظ„ظپط¬ظˆط§طھ ظˆط§ظ„ظپط±طµ ط؛ظٹط± ط§ظ„ظ…ظڈط³طھط؛ظژظ„ط©'}</span>
           </div>
           <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {gaps.map((item, i) => (
@@ -637,7 +638,7 @@ function TopLeadersTab({ data, loading, error, onRetry, lang }) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#818CF8', fontSize: '13px', padding: '24px 0' }}>
         <Loader2 size={18} className="spin" />
-        <span>{lang === 'en' ? 'Fetching real-time top market leaders via Live AI…' : 'جاري البحث عن أبرز المنافسين والرواد…'}</span>
+        <span>{lang === 'en' ? 'Fetching real-time top market leaders via Live AIâ€¦' : 'ط¬ط§ط±ظٹ ط§ظ„ط¨ط­ط« ط¹ظ† ط£ط¨ط±ط² ط§ظ„ظ…ظ†ط§ظپط³ظٹظ† ظˆط§ظ„ط±ظˆط§ط¯â€¦'}</span>
       </div>
     );
   }
@@ -649,7 +650,7 @@ function TopLeadersTab({ data, loading, error, onRetry, lang }) {
         <div style={{ fontSize: '13px', fontWeight: '700' }}>
           {lang === 'en'
             ? 'Select a micro-niche card above to reveal real market leaders and competitors.'
-            : 'اختر تخصصاً دقيقاً لعرض أبرز الشركات والمنافسين في هذا المجال.'}
+            : 'ط§ط®طھط± طھط®طµطµط§ظ‹ ط¯ظ‚ظٹظ‚ط§ظ‹ ظ„ط¹ط±ط¶ ط£ط¨ط±ط² ط§ظ„ط´ط±ظƒط§طھ ظˆط§ظ„ظ…ظ†ط§ظپط³ظٹظ† ظپظٹ ظ‡ط°ط§ ط§ظ„ظ…ط¬ط§ظ„.'}
         </div>
       </div>
     );
@@ -663,9 +664,9 @@ function TopLeadersTab({ data, loading, error, onRetry, lang }) {
         <thead>
           <tr className="ns-table-head-row" style={{ textAlign: lang === 'ar' ? 'right' : 'left' }}>
             <th style={{ padding: '10px', width: '32px' }}>#</th>
-            <th style={{ padding: '10px' }}>{lang === 'en' ? 'Company / Brand' : 'الشركة / العلامة التجارية'}</th>
-            <th style={{ padding: '10px' }}>{lang === 'en' ? 'Core Differentiator & Strategy' : 'استراتيجية التميز'}</th>
-            <th style={{ padding: '10px', textAlign: 'center' }}>{lang === 'en' ? 'Link' : 'رابط'}</th>
+            <th style={{ padding: '10px' }}>{lang === 'en' ? 'Company / Brand' : 'ط§ظ„ط´ط±ظƒط© / ط§ظ„ط¹ظ„ط§ظ…ط© ط§ظ„طھط¬ط§ط±ظٹط©'}</th>
+            <th style={{ padding: '10px' }}>{lang === 'en' ? 'Core Differentiator & Strategy' : 'ط§ط³طھط±ط§طھظٹط¬ظٹط© ط§ظ„طھظ…ظٹط²'}</th>
+            <th style={{ padding: '10px', textAlign: 'center' }}>{lang === 'en' ? 'Link' : 'ط±ط§ط¨ط·'}</th>
           </tr>
         </thead>
         <tbody>
@@ -684,10 +685,10 @@ function TopLeadersTab({ data, loading, error, onRetry, lang }) {
                       borderRadius: '6px', border: '1px solid rgba(99,102,241,0.25)',
                     }}
                   >
-                    <span>{lang === 'en' ? 'Visit' : 'زيارة'}</span>
+                    <span>{lang === 'en' ? 'Visit' : 'ط²ظٹط§ط±ط©'}</span>
                     <ExternalLink size={11} />
                   </a>
-                ) : '—'}
+                ) : 'â€”'}
               </td>
             </tr>
           ))}
@@ -702,7 +703,7 @@ function IcpCard({ icp, loading, lang, themeColor }) {
     return (
       <div style={{ background: `${themeColor}08`, border: `1px solid ${themeColor}30`, borderRadius: '14px', padding: '18px', marginTop: '18px', display: 'flex', alignItems: 'center', gap: '10px', color: '#818CF8', fontSize: '12px' }}>
         <Loader2 size={16} className="spin" />
-        <span>{lang === 'en' ? 'Calculating Ideal Customer Persona (ICP)…' : 'جاري تحليل بروفايل العميل المثالي (ICP)…'}</span>
+        <span>{lang === 'en' ? 'Calculating Ideal Customer Persona (ICP)â€¦' : 'ط¬ط§ط±ظٹ طھط­ظ„ظٹظ„ ط¨ط±ظˆظپط§ظٹظ„ ط§ظ„ط¹ظ…ظٹظ„ ط§ظ„ظ…ط«ط§ظ„ظٹ (ICP)â€¦'}</span>
       </div>
     );
   }
@@ -713,28 +714,28 @@ function IcpCard({ icp, loading, lang, themeColor }) {
     <div className="ns-icp-card" style={{ borderRadius: '14px', padding: '18px', marginTop: '18px' }}>
       <div style={{ fontSize: '13px', fontWeight: '800', color: themeColor, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
         <Users size={16} />
-        <span>{lang === 'en' ? 'Ideal Customer Persona (ICP)' : 'ملف العميل المثالي (ICP)'}</span>
+        <span>{lang === 'en' ? 'Ideal Customer Persona (ICP)' : 'ظ…ظ„ظپ ط§ظ„ط¹ظ…ظٹظ„ ط§ظ„ظ…ط«ط§ظ„ظٹ (ICP)'}</span>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '12px' }}>
         <div className="ns-subcard" style={{ padding: '10px 12px', borderRadius: '8px' }}>
           <span className="ns-subtext" style={{ fontSize: '10px', display: 'block', fontWeight: '700' }}>
-            {lang === 'en' ? 'Target Group:' : 'الفئة المستهدفة:'}
+            {lang === 'en' ? 'Target Group:' : 'ط§ظ„ظپط¦ط© ط§ظ„ظ…ط³طھظ‡ط¯ظپط©:'}
           </span>
-          <span className="ns-heading-title" style={{ fontSize: '12px', fontWeight: '800' }}>{icp.targetGroup || '—'}</span>
+          <span className="ns-heading-title" style={{ fontSize: '12px', fontWeight: '800' }}>{icp.targetGroup || 'â€”'}</span>
         </div>
         <div className="ns-subcard" style={{ padding: '10px 12px', borderRadius: '8px' }}>
           <span className="ns-subtext" style={{ fontSize: '10px', display: 'block', fontWeight: '700' }}>
-            {lang === 'en' ? 'Demographic Age Range:' : 'الفئة العمرية:'}
+            {lang === 'en' ? 'Demographic Age Range:' : 'ط§ظ„ظپط¦ط© ط§ظ„ط¹ظ…ط±ظٹط©:'}
           </span>
-          <span className="ns-heading-title" style={{ fontSize: '12px', fontWeight: '800' }}>{icp.ageRange || '—'}</span>
+          <span className="ns-heading-title" style={{ fontSize: '12px', fontWeight: '800' }}>{icp.ageRange || 'â€”'}</span>
         </div>
       </div>
 
       {painPoints.length > 0 && (
         <>
           <div className="ns-subtext" style={{ fontSize: '11px', fontWeight: '700', marginBottom: '8px' }}>
-            {lang === 'en' ? 'Core Client Pain Points:' : 'نقاط الألم الرئيسية للعميل:'}
+            {lang === 'en' ? 'Core Client Pain Points:' : 'ظ†ظ‚ط§ط· ط§ظ„ط£ظ„ظ… ط§ظ„ط±ط¦ظٹط³ظٹط© ظ„ظ„ط¹ظ…ظٹظ„:'}
           </div>
           <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {painPoints.map((p, i) => (
@@ -755,7 +756,7 @@ function GlobalComparisonCard({ globalComparison, loading, activeCountryObj, lan
     return (
       <div style={{ marginTop: '16px', padding: '16px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '10px', color: '#818CF8', fontSize: '12px' }}>
         <Loader2 size={16} className="spin" />
-        <span>{lang === 'en' ? 'Calculating Level 3 Global Benchmark…' : 'جاري تحليل المقارنة العالمية…'}</span>
+        <span>{lang === 'en' ? 'Calculating Level 3 Global Benchmarkâ€¦' : 'ط¬ط§ط±ظٹ طھط­ظ„ظٹظ„ ط§ظ„ظ…ظ‚ط§ط±ظ†ط© ط§ظ„ط¹ط§ظ„ظ…ظٹط©â€¦'}</span>
       </div>
     );
   }
@@ -770,14 +771,14 @@ function GlobalComparisonCard({ globalComparison, loading, activeCountryObj, lan
         <span>
           {lang === 'en'
             ? 'Level 3 Global Benchmark: Primary Market vs. Top Opportunity Market'
-            : 'مقارنة عالمية: سوقك المحلي مقابل أفضل سوق بديل'}
+            : 'ظ…ظ‚ط§ط±ظ†ط© ط¹ط§ظ„ظ…ظٹط©: ط³ظˆظ‚ظƒ ط§ظ„ظ…ط­ظ„ظٹ ظ…ظ‚ط§ط¨ظ„ ط£ظپط¶ظ„ ط³ظˆظ‚ ط¨ط¯ظٹظ„'}
         </span>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', marginBottom: '12px' }}>
         <div className="ns-subcard" style={{ padding: '14px', borderRadius: '12px' }}>
           <div className="ns-subtext" style={{ fontSize: '11px', fontWeight: '700' }}>
-            {lang === 'en' ? 'Primary Target Country:' : 'سوقك المستهدف الأساسي:'}
+            {lang === 'en' ? 'Primary Target Country:' : 'ط³ظˆظ‚ظƒ ط§ظ„ظ…ط³طھظ‡ط¯ظپ ط§ظ„ط£ط³ط§ط³ظٹ:'}
           </div>
           <div className="ns-heading-title" style={{ fontSize: '14px', fontWeight: '900', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span>{activeCountryObj.flag}</span>
@@ -787,7 +788,7 @@ function GlobalComparisonCard({ globalComparison, loading, activeCountryObj, lan
 
         <div className="ns-opp-card-green" style={{ padding: '14px', borderRadius: '12px' }}>
           <div style={{ fontSize: '11px', color: '#10B981', fontWeight: '700' }}>
-            {lang === 'en' ? 'Recommended Benchmark Market:' : 'السوق المرجعي الموصى به:'}
+            {lang === 'en' ? 'Recommended Benchmark Market:' : 'ط§ظ„ط³ظˆظ‚ ط§ظ„ظ…ط±ط¬ط¹ظٹ ط§ظ„ظ…ظˆطµظ‰ ط¨ظ‡:'}
           </div>
           <div className="ns-heading-title" style={{ fontSize: '14px', fontWeight: '900', marginTop: '4px' }}>
             {globalComparison.recommendedCountry}
@@ -851,18 +852,18 @@ function CategorySelectPrompt({ lang }) {
 
       <div>
         <h3 className="ns-heading-title" style={{ fontSize: '18px', fontWeight: '900', margin: 0 }}>
-          {lang === 'en' ? 'Select a Business Category Above' : 'اختر تخصص البزنس من الأعلى للبدء'}
+          {lang === 'en' ? 'Select a Business Category Above' : 'ط§ط®طھط± طھط®طµطµ ط§ظ„ط¨ط²ظ†ط³ ظ…ظ† ط§ظ„ط£ط¹ظ„ظ‰ ظ„ظ„ط¨ط¯ط،'}
         </h3>
         <p className="ns-subtext" style={{ fontSize: '13px', maxWidth: '520px', margin: '8px auto 0', lineHeight: '1.6' }}>
           {lang === 'en'
             ? 'Choose any business category (e.g., Real Estate & Finance, AI & Automation, E-Commerce) to activate real-time market intelligence, CAGR metrics, and micro-niche opportunities.'
-            : 'اختر أي مجال وتخصص من البطاقات أعلاه (مثل العقارات والخدمات المالية، الذكاء الاصطناعي، التجارة الإلكترونية) لتفعيل التحليل الاستراتيجي المباشر واستكشاف الفرص الفريدة.'}
+            : 'ط§ط®طھط± ط£ظٹ ظ…ط¬ط§ظ„ ظˆطھط®طµطµ ظ…ظ† ط§ظ„ط¨ط·ط§ظ‚ط§طھ ط£ط¹ظ„ط§ظ‡ (ظ…ط«ظ„ ط§ظ„ط¹ظ‚ط§ط±ط§طھ ظˆط§ظ„ط®ط¯ظ…ط§طھ ط§ظ„ظ…ط§ظ„ظٹط©طŒ ط§ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹطŒ ط§ظ„طھط¬ط§ط±ط© ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹط©) ظ„طھظپط¹ظٹظ„ ط§ظ„طھط­ظ„ظٹظ„ ط§ظ„ط§ط³طھط±ط§طھظٹط¬ظٹ ط§ظ„ظ…ط¨ط§ط´ط± ظˆط§ط³طھظƒط´ط§ظپ ط§ظ„ظپط±طµ ط§ظ„ظپط±ظٹط¯ط©.'}
         </p>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#818CF8', fontSize: '12px', fontWeight: '800', background: 'rgba(99, 102, 241, 0.12)', padding: '8px 16px', borderRadius: '20px', border: '1px solid rgba(99, 102, 241, 0.25)' }}>
         <Sparkles size={16} color="#818CF8" />
-        <span>{lang === 'en' ? 'Click any category card above to begin' : 'انقر على أي تخصص في الأعلى للبدء بالتحليل'}</span>
+        <span>{lang === 'en' ? 'Click any category card above to begin' : 'ط§ظ†ظ‚ط± ط¹ظ„ظ‰ ط£ظٹ طھط®طµطµ ظپظٹ ط§ظ„ط£ط¹ظ„ظ‰ ظ„ظ„ط¨ط¯ط، ط¨ط§ظ„طھط­ظ„ظٹظ„'}</span>
       </div>
     </motion.div>
   );
@@ -907,19 +908,19 @@ function FullPageCategoryLoader({ selectedNiche, lang }) {
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(99, 102, 241, 0.15)', border: '1px solid rgba(99, 102, 241, 0.3)', padding: '6px 14px', borderRadius: '20px', marginBottom: '12px' }}>
             <Sparkles size={14} color="#6366F1" />
             <span style={{ fontSize: '12px', fontWeight: '800', color: '#818CF8' }}>
-              {lang === 'en' ? `Analyzing Category: ${label}` : `جاري تحليل قطاع: ${label}`}
+              {lang === 'en' ? `Analyzing Category: ${label}` : `ط¬ط§ط±ظٹ طھط­ظ„ظٹظ„ ظ‚ط·ط§ط¹: ${label}`}
             </span>
           </div>
 
           <h3 className="ns-heading-title" style={{ fontSize: '16px', fontWeight: '900', margin: 0 }}>
             {lang === 'en'
               ? `Generating Deep Market Intelligence for ${label}...`
-              : `جاري تجميع دراسة الجدوى والفرص الاستراتيجية لـ ${label}...`}
+              : `ط¬ط§ط±ظٹ طھط¬ظ…ظٹط¹ ط¯ط±ط§ط³ط© ط§ظ„ط¬ط¯ظˆظ‰ ظˆط§ظ„ظپط±طµ ط§ظ„ط§ط³طھط±ط§طھظٹط¬ظٹط© ظ„ظ€ ${label}...`}
           </h3>
           <p className="ns-subtext" style={{ fontSize: '12px', maxWidth: '480px', margin: '8px auto 0', lineHeight: '1.6' }}>
             {lang === 'en'
               ? 'Fetching CAGR benchmarks, saturation levels, top market leaders, and high-demand micro-niche opportunities.'
-              : 'جاري استدعاء معدلات النمو، درجة تشبع السوق، أبرز المنافسين وأفكار الخدمات الدقيقة عالية الربحية.'}
+              : 'ط¬ط§ط±ظٹ ط§ط³طھط¯ط¹ط§ط، ظ…ط¹ط¯ظ„ط§طھ ط§ظ„ظ†ظ…ظˆطŒ ط¯ط±ط¬ط© طھط´ط¨ط¹ ط§ظ„ط³ظˆظ‚طŒ ط£ط¨ط±ط² ط§ظ„ظ…ظ†ط§ظپط³ظٹظ† ظˆط£ظپظƒط§ط± ط§ظ„ط®ط¯ظ…ط§طھ ط§ظ„ط¯ظ‚ظٹظ‚ط© ط¹ط§ظ„ظٹط© ط§ظ„ط±ط¨ط­ظٹط©.'}
           </p>
         </div>
 
@@ -937,11 +938,12 @@ function FullPageCategoryLoader({ selectedNiche, lang }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 8. MAIN COMPONENT
-// ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function NicheSelection({ stepNumber }) {
   const { state, dispatch } = useApp();
+  const { userData } = useAuth();
   const lang = state.language || 'ar';
 
   const [niches, setNiches]                 = useState([]);
@@ -965,6 +967,7 @@ export default function NicheSelection({ stepNumber }) {
     targetCountry,
     isGlobalBenchmark,
     lang,
+    uid: userData?.uid || state?.user?.uid
   });
 
   const microIdeas = useLiveMicroIdeas();
@@ -975,16 +978,16 @@ export default function NicheSelection({ stepNumber }) {
 
   // Load Niches
   useEffect(() => {
+    // Clear any previously saved niche so no category appears pre-selected
+    dispatch({ type: 'SET_FIELD', field: 'niche', value: '' });
+    dispatch({ type: 'SET_FIELD', field: 'subNiche', value: '' });
+
     (async () => {
       setNichesLoading(true);
       try {
         let data = await getNiches();
         if (!data || data.length === 0) { await seedNiches(); data = await getNiches(); }
         setNiches(data);
-        if (state.niche) {
-          const found = data.find(n => n.id === state.niche);
-          if (found) setSelectedNiche(found);
-        }
       } catch (e) { console.error('Niche load error:', e); }
       finally { setNichesLoading(false); }
     })();
@@ -1066,10 +1069,10 @@ export default function NicheSelection({ stepNumber }) {
   return (
     <ToolDashboardLayout
       id="niche-selection"
-      title={lang === 'en' ? 'Strategic Niche Selection' : 'اختيار التخصص الاستراتيجي'}
+      title={lang === 'en' ? 'Strategic Niche Selection' : 'ط§ط®طھظٹط§ط± ط§ظ„طھط®طµطµ ط§ظ„ط§ط³طھط±ط§طھظٹط¬ظٹ'}
       subtitle={lang === 'en'
         ? "Don't just be 'another freelancer'. Choose your niche carefully with live AI market intelligence."
-        : "لا تكن مجرد 'مستقل آخر'. اختر تخصصك بدقة بدعم مباشر من تحليل الذكاء الاصطناعي."}
+        : "ظ„ط§ طھظƒظ† ظ…ط¬ط±ط¯ 'ظ…ط³طھظ‚ظ„ ط¢ط®ط±'. ط§ط®طھط± طھط®طµطµظƒ ط¨ط¯ظ‚ط© ط¨ط¯ط¹ظ… ظ…ط¨ط§ط´ط± ظ…ظ† طھط­ظ„ظٹظ„ ط§ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹ."}
       stepNumber={stepNumber}
     >
       {nichesLoading ? (
@@ -1089,7 +1092,7 @@ export default function NicheSelection({ stepNumber }) {
               <div style={{ flex: '1 1 280px', position: 'relative', zIndex: 200 }}>
                 <label className="ns-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '800', marginBottom: '8px' }}>
                   <Globe size={16} color="#6366F1" />
-                  <span>{lang === 'en' ? 'Level 1: Select Target Market Country' : 'المستوى 1: اختر الدولة والسوق المستهدف'}</span>
+                  <span>{lang === 'en' ? 'Level 1: Select Target Market Country' : 'ط§ظ„ظ…ط³طھظˆظ‰ 1: ط§ط®طھط± ط§ظ„ط¯ظˆظ„ط© ظˆط§ظ„ط³ظˆظ‚ ط§ظ„ظ…ط³طھظ‡ط¯ظپ'}</span>
                 </label>
                 <TargetMarketDropdown
                   value={targetCountry}
@@ -1116,10 +1119,10 @@ export default function NicheSelection({ stepNumber }) {
                 <Globe size={18} color={isGlobalBenchmark ? '#10B981' : '#94A3B8'} />
                 <div>
                   <div className="ns-heading-title" style={{ fontSize: '13px', fontWeight: '800' }}>
-                    {lang === 'en' ? 'Level 3 Global Benchmark' : 'مقارنة السوق العالمي (المستوى 3)'}
+                    {lang === 'en' ? 'Level 3 Global Benchmark' : 'ظ…ظ‚ط§ط±ظ†ط© ط§ظ„ط³ظˆظ‚ ط§ظ„ط¹ط§ظ„ظ…ظٹ (ط§ظ„ظ…ط³طھظˆظ‰ 3)'}
                   </div>
                   <div className="ns-subtext" style={{ fontSize: '10px' }}>
-                    {lang === 'en' ? 'Compare local vs. global alternative' : 'مقارنة أداء السوق المحلي بالسوق العالمي'}
+                    {lang === 'en' ? 'Compare local vs. global alternative' : 'ظ…ظ‚ط§ط±ظ†ط© ط£ط¯ط§ط، ط§ظ„ط³ظˆظ‚ ط§ظ„ظ…ط­ظ„ظٹ ط¨ط§ظ„ط³ظˆظ‚ ط§ظ„ط¹ط§ظ„ظ…ظٹ'}
                   </div>
                 </div>
                 <div style={{ width: '40px', height: '22px', borderRadius: '11px', background: isGlobalBenchmark ? '#10B981' : '#334155', position: 'relative', marginLeft: '6px' }}>
@@ -1141,7 +1144,7 @@ export default function NicheSelection({ stepNumber }) {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                       <div className="ns-market-flag-avatar">
-                        <span>{activeCountryObj?.flag || '🇸🇦'}</span>
+                        <span>{activeCountryObj?.flag || 'ًں‡¸ًں‡¦'}</span>
                         <div
                           style={{
                             position: 'absolute',
@@ -1159,13 +1162,13 @@ export default function NicheSelection({ stepNumber }) {
                           <span>
                             {lang === 'en'
                               ? `Recalibrating Market Intelligence for ${activeCountryObj?.name_en || 'Target Market'}...`
-                              : `جاري إعادة معايرة واستدعاء بيانات السوق لـ ${activeCountryObj?.name_ar || 'السوق المستهدف'}...`}
+                              : `ط¬ط§ط±ظٹ ط¥ط¹ط§ط¯ط© ظ…ط¹ط§ظٹط±ط© ظˆط§ط³طھط¯ط¹ط§ط، ط¨ظٹط§ظ†ط§طھ ط§ظ„ط³ظˆظ‚ ظ„ظ€ ${activeCountryObj?.name_ar || 'ط§ظ„ط³ظˆظ‚ ط§ظ„ظ…ط³طھظ‡ط¯ظپ'}...`}
                           </span>
                         </div>
                         <div className="ns-market-loading-subtext" style={{ marginTop: '4px' }}>
                           {lang === 'en'
                             ? 'Updating local CAGR growth rates, market saturation radar, and purchasing power benchmarks.'
-                            : 'جاري تحديث معدلات النمو المحلي (CAGR)، مؤشر التشبع، والقوة الشرائية المنافسة.'}
+                            : 'ط¬ط§ط±ظٹ طھط­ط¯ظٹط« ظ…ط¹ط¯ظ„ط§طھ ط§ظ„ظ†ظ…ظˆ ط§ظ„ظ…ط­ظ„ظٹ (CAGR)طŒ ظ…ط¤ط´ط± ط§ظ„طھط´ط¨ط¹طŒ ظˆط§ظ„ظ‚ظˆط© ط§ظ„ط´ط±ط§ط¦ظٹط© ط§ظ„ظ…ظ†ط§ظپط³ط©.'}
                         </div>
                       </div>
                     </div>
@@ -1173,7 +1176,7 @@ export default function NicheSelection({ stepNumber }) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(99, 102, 241, 0.12)', padding: '6px 12px', borderRadius: '10px', border: '1px solid rgba(99, 102, 241, 0.25)' }}>
                       <Compass size={14} color="#6366F1" className="spin" />
                       <span style={{ fontSize: '11px', fontWeight: '800', color: "#6366F1" }}>
-                        {lang === 'en' ? 'Market Switch Active' : 'تحديث السوق مفعّل'}
+                        {lang === 'en' ? 'Market Switch Active' : 'طھط­ط¯ظٹط« ط§ظ„ط³ظˆظ‚ ظ…ظپط¹ظ‘ظ„'}
                       </span>
                     </div>
                   </div>
@@ -1200,7 +1203,7 @@ export default function NicheSelection({ stepNumber }) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '24px', position: 'relative', zIndex: 1 }}>
             {niches.map(n => {
               const theme = NICHE_THEMES[n.id] || DEFAULT_THEME;
-              const isSelected = state.niche === n.id;
+              const isSelected = selectedNiche?.id === n.id;
               return (
                 <div key={n.id}
                   className={`td-card ${isSelected ? 'active' : ''}`}
@@ -1246,10 +1249,10 @@ export default function NicheSelection({ stepNumber }) {
                 </div>
                 <div>
                   <h4 className="ns-heading-title" style={{ margin: 0, fontSize: '15px', fontWeight: '900' }}>
-                    {lang === 'en' ? `Level 1 Macro Metrics: ${getLabel(selectedNiche)}` : `المؤشرات الكلية: ${getLabel(selectedNiche)}`}
+                    {lang === 'en' ? `Level 1 Macro Metrics: ${getLabel(selectedNiche)}` : `ط§ظ„ظ…ط¤ط´ط±ط§طھ ط§ظ„ظƒظ„ظٹط©: ${getLabel(selectedNiche)}`}
                   </h4>
                   <div className="ns-subtext" style={{ fontSize: '11px' }}>
-                    {lang === 'en' ? `Market intelligence for ${activeCountryObj.name_en}` : `تحليل بيانات السوق لـ ${activeCountryObj.name_ar}`}
+                    {lang === 'en' ? `Market intelligence for ${activeCountryObj.name_en}` : `طھط­ظ„ظٹظ„ ط¨ظٹط§ظ†ط§طھ ط§ظ„ط³ظˆظ‚ ظ„ظ€ ${activeCountryObj.name_ar}`}
                   </div>
                 </div>
               </div>
@@ -1257,23 +1260,23 @@ export default function NicheSelection({ stepNumber }) {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
                 <MetricCard
                   icon={<TrendingUp size={14} color="#10B981" />}
-                  label={lang === 'en' ? 'Market Growth (CAGR)' : 'نمو السوق (CAGR)'}
-                  value={analysis.data?.cagr || '—'}
+                  label={lang === 'en' ? 'Market Growth (CAGR)' : 'ظ†ظ…ظˆ ط§ظ„ط³ظˆظ‚ (CAGR)'}
+                  value={analysis.data?.cagr || 'â€”'}
                   accent="#10B981"
                   loading={analysis.loading}
                 />
                 <MetricCard
                   icon={<Compass size={14} color="#3B82F6" />}
-                  label={lang === 'en' ? 'Market Saturation' : 'حالة تشبع السوق'}
-                  value={analysis.data?.saturationText || '—'}
+                  label={lang === 'en' ? 'Market Saturation' : 'ط­ط§ظ„ط© طھط´ط¨ط¹ ط§ظ„ط³ظˆظ‚'}
+                  value={analysis.data?.saturationText || 'â€”'}
                   badgeType={analysis.data?.saturation}
                   accent="#3B82F6"
                   loading={analysis.loading}
                 />
                 <MetricCard
                   icon={<Coins size={14} color="#F59E0B" />}
-                  label={lang === 'en' ? 'Expected ROI Margin' : 'العائد المتوقع ROI'}
-                  value={analysis.data?.roi || '—'}
+                  label={lang === 'en' ? 'Expected ROI Margin' : 'ط§ظ„ط¹ط§ط¦ط¯ ط§ظ„ظ…طھظˆظ‚ط¹ ROI'}
+                  value={analysis.data?.roi || 'â€”'}
                   accent="#F59E0B"
                   loading={analysis.loading}
                 />
@@ -1288,7 +1291,7 @@ export default function NicheSelection({ stepNumber }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px', marginBottom: '16px' }}>
                 <h3 className="ns-heading-title" style={{ fontSize: '15px', fontWeight: '900', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Target size={18} color={themeColor} />
-                  <span>{lang === 'en' ? 'Select Micro-Niche Idea:' : 'اختر التخصص الدقيق (Micro-Niche):'}</span>
+                  <span>{lang === 'en' ? 'Select Micro-Niche Idea:' : 'ط§ط®طھط± ط§ظ„طھط®طµطµ ط§ظ„ط¯ظ‚ظٹظ‚ (Micro-Niche):'}</span>
                 </h3>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
@@ -1306,7 +1309,7 @@ export default function NicheSelection({ stepNumber }) {
                       }}
                     >
                       <Zap size={12} />
-                      <span>{lang === 'en' ? 'Fast Mode (Instant Radar)' : 'النمط السريع (مسبق)'}</span>
+                      <span>{lang === 'en' ? 'Fast Mode (Instant Radar)' : 'ط§ظ„ظ†ظ…ط· ط§ظ„ط³ط±ظٹط¹ (ظ…ط³ط¨ظ‚)'}</span>
                     </button>
                     <button
                       type="button"
@@ -1325,7 +1328,7 @@ export default function NicheSelection({ stepNumber }) {
                       }}
                     >
                       <Bot size={12} />
-                      <span>{lang === 'en' ? 'Live AI (Generate)' : 'ذكاء اصطناعي مباشر (توليد)'}</span>
+                      <span>{lang === 'en' ? 'Live AI (Generate)' : 'ط°ظƒط§ط، ط§طµط·ظ†ط§ط¹ظٹ ظ…ط¨ط§ط´ط± (طھظˆظ„ظٹط¯)'}</span>
                     </button>
                     <button
                       type="button"
@@ -1339,7 +1342,7 @@ export default function NicheSelection({ stepNumber }) {
                       }}
                     >
                       <Edit3 size={12} />
-                      <span>{lang === 'en' ? 'Custom Idea' : 'فكرة مخصصة'}</span>
+                      <span>{lang === 'en' ? 'Custom Idea' : 'ظپظƒط±ط© ظ…ط®طµطµط©'}</span>
                     </button>
                   </div>
 
@@ -1350,7 +1353,7 @@ export default function NicheSelection({ stepNumber }) {
                       type="text"
                       value={microSearchQuery}
                       onChange={e => setMicroSearchQuery(e.target.value)}
-                      placeholder={lang === 'en' ? 'Filter micro-niches…' : 'تصفية التخصصات…'}
+                      placeholder={lang === 'en' ? 'Filter micro-nichesâ€¦' : 'طھطµظپظٹط© ط§ظ„طھط®طµطµط§طھâ€¦'}
                       className="ns-dropdown-search-input"
                       style={{
                         width: '100%', borderRadius: '8px',
@@ -1372,12 +1375,12 @@ export default function NicheSelection({ stepNumber }) {
                     <Bot size={18} color="#818CF8" />
                     <div>
                       <div className="ns-heading-title" style={{ fontSize: '12px', fontWeight: '800' }}>
-                        {lang === 'en' ? 'Live AI Micro-Niche Generator Active' : 'مولّد التخصصات المباشر بالذكاء الاصطناعي مفعّل'}
+                        {lang === 'en' ? 'Live AI Micro-Niche Generator Active' : 'ظ…ظˆظ„ظ‘ط¯ ط§ظ„طھط®طµطµط§طھ ط§ظ„ظ…ط¨ط§ط´ط± ط¨ط§ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹ ظ…ظپط¹ظ‘ظ„'}
                       </div>
                       <div className="ns-subtext" style={{ fontSize: '10px' }}>
                         {microIdeas.loading
-                          ? (lang === 'en' ? 'Generating custom real-time micro-niches from Live AI…' : 'جاري استدعاء الذكاء الاصطناعي لتوليد أفكار حية…')
-                          : (lang === 'en' ? 'Displaying custom real-time micro-niches for target market' : 'عرض أفكار تخصصات مخصصة ومولّدة لحظياً حسب السوق المستهدف')}
+                          ? (lang === 'en' ? 'Generating custom real-time micro-niches from Live AIâ€¦' : 'ط¬ط§ط±ظٹ ط§ط³طھط¯ط¹ط§ط، ط§ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹ ظ„طھظˆظ„ظٹط¯ ط£ظپظƒط§ط± ط­ظٹط©â€¦')
+                          : (lang === 'en' ? 'Displaying custom real-time micro-niches for target market' : 'ط¹ط±ط¶ ط£ظپظƒط§ط± طھط®طµطµط§طھ ظ…ط®طµطµط© ظˆظ…ظˆظ„ظ‘ط¯ط© ظ„ط­ط¸ظٹط§ظ‹ ط­ط³ط¨ ط§ظ„ط³ظˆظ‚ ط§ظ„ظ…ط³طھظ‡ط¯ظپ')}
                       </div>
                     </div>
                   </div>
@@ -1392,7 +1395,7 @@ export default function NicheSelection({ stepNumber }) {
                     }}
                   >
                     <RefreshCw size={12} className={microIdeas.loading ? 'spin' : ''} />
-                    <span>{lang === 'en' ? 'Regenerate via Live AI' : 'إعادة التوليد بالذكاء الاصطناعي'}</span>
+                    <span>{lang === 'en' ? 'Regenerate via Live AI' : 'ط¥ط¹ط§ط¯ط© ط§ظ„طھظˆظ„ظٹط¯ ط¨ط§ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹ'}</span>
                   </button>
                 </div>
               )}
@@ -1408,7 +1411,7 @@ export default function NicheSelection({ stepNumber }) {
                         type="text"
                         value={microSearchQuery}
                         onChange={(e) => setMicroSearchQuery(e.target.value)}
-                        placeholder={lang === 'en' ? 'Search or filter micro-niches...' : 'تصفية وبحث في التخصصات...'}
+                        placeholder={lang === 'en' ? 'Search or filter micro-niches...' : 'طھطµظپظٹط© ظˆط¨ط­ط« ظپظٹ ط§ظ„طھط®طµطµط§طھ...'}
                         style={{
                           width: '100%',
                           background: 'rgba(0, 0, 0, 0.3)',
@@ -1434,11 +1437,11 @@ export default function NicheSelection({ stepNumber }) {
                     {/* Filter Tag Pills */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                       {[
-                        { id: 'all', label: lang === 'en' ? 'All' : 'الكل', IconComp: Filter },
-                        { id: 'trend', label: lang === 'en' ? 'Fast Trend' : 'تريند سريع', IconComp: Flame },
-                        { id: 'profit', label: lang === 'en' ? 'High Profit' : 'ربحية عالية', IconComp: Coins },
-                        { id: 'stable', label: lang === 'en' ? 'Stable Demand' : 'طلب مستقر', IconComp: TrendingUp },
-                        { id: 'freelance', label: lang === 'en' ? 'Freelance Ready' : 'مناسب للعمل الحر', IconComp: Briefcase },
+                        { id: 'all', label: lang === 'en' ? 'All' : 'ط§ظ„ظƒظ„', IconComp: Filter },
+                        { id: 'trend', label: lang === 'en' ? 'Fast Trend' : 'طھط±ظٹظ†ط¯ ط³ط±ظٹط¹', IconComp: Flame },
+                        { id: 'profit', label: lang === 'en' ? 'High Profit' : 'ط±ط¨ط­ظٹط© ط¹ط§ظ„ظٹط©', IconComp: Coins },
+                        { id: 'stable', label: lang === 'en' ? 'Stable Demand' : 'ط·ظ„ط¨ ظ…ط³طھظ‚ط±', IconComp: TrendingUp },
+                        { id: 'freelance', label: lang === 'en' ? 'Freelance Ready' : 'ظ…ظ†ط§ط³ط¨ ظ„ظ„ط¹ظ…ظ„ ط§ظ„ط­ط±', IconComp: Briefcase },
                       ].map((tag) => {
                         const Icon = tag.IconComp;
                         return (
@@ -1476,7 +1479,7 @@ export default function NicheSelection({ stepNumber }) {
                 <div style={{ background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.25)', padding: '16px', borderRadius: '14px', marginBottom: '20px' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '800', color: '#818CF8', marginBottom: '10px' }}>
                     <Lightbulb size={16} color="#6366F1" />
-                    <span>{lang === 'en' ? 'Have a custom idea? Type your micro-niche here:' : 'لديك فكرة مختلفة؟ اكتب تخصصك الدقيق يدوياً هنا:'}</span>
+                    <span>{lang === 'en' ? 'Have a custom idea? Type your micro-niche here:' : 'ظ„ط¯ظٹظƒ ظپظƒط±ط© ظ…ط®طھظ„ظپط©طں ط§ظƒطھط¨ طھط®طµطµظƒ ط§ظ„ط¯ظ‚ظٹظ‚ ظٹط¯ظˆظٹط§ظ‹ ظ‡ظ†ط§:'}</span>
                   </label>
                   <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                     <input
@@ -1490,7 +1493,7 @@ export default function NicheSelection({ stepNumber }) {
                           handleSubNicheSelect(customNicheInput.trim());
                         }
                       }}
-                      placeholder={lang === 'en' ? 'e.g., Marketing for local real estate brokers' : 'مثال: تسويق وتصوير فلل عقارية مستقلة'}
+                      placeholder={lang === 'en' ? 'e.g., Marketing for local real estate brokers' : 'ظ…ط«ط§ظ„: طھط³ظˆظٹظ‚ ظˆطھطµظˆظٹط± ظپظ„ظ„ ط¹ظ‚ط§ط±ظٹط© ظ…ط³طھظ‚ظ„ط©'}
                     />
                     <button
                       type="button"
@@ -1503,7 +1506,7 @@ export default function NicheSelection({ stepNumber }) {
                       style={{ padding: '10px 20px', borderRadius: '10px', background: themeColor, display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '800', border: 'none', cursor: 'pointer' }}
                     >
                       <Sparkles size={14} />
-                      <span>{lang === 'en' ? 'Analyze Custom Idea' : 'تحليل الفكرة المخصصة'}</span>
+                      <span>{lang === 'en' ? 'Analyze Custom Idea' : 'طھط­ظ„ظٹظ„ ط§ظ„ظپظƒط±ط© ط§ظ„ظ…ط®طµطµط©'}</span>
                       {lang === 'ar' ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
                     </button>
                   </div>
@@ -1511,12 +1514,12 @@ export default function NicheSelection({ stepNumber }) {
               ) : microIdeas.loading && microNicheMode === 'live' ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#818CF8', fontSize: '12px', marginBottom: '18px' }}>
                   <Loader2 size={16} className="spin" />
-                  <span>{lang === 'en' ? 'Live AI is generating 8 micro-niches…' : 'جاري توليد 8 تخصصات دقيقة بالذكاء الاصطناعي…'}</span>
+                  <span>{lang === 'en' ? 'Live AI is generating 8 micro-nichesâ€¦' : 'ط¬ط§ط±ظٹ طھظˆظ„ظٹط¯ 8 طھط®طµطµط§طھ ط¯ظ‚ظٹظ‚ط© ط¨ط§ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹâ€¦'}</span>
                 </div>
               ) : (microNicheMode === 'live' && microIdeas.ideas.length === 0) ? (
                 <div style={{ padding: '20px', textAlign: 'center', background: 'rgba(99, 102, 241, 0.08)', borderRadius: '14px', border: '1px solid rgba(99, 102, 241, 0.2)', marginBottom: '20px' }}>
                   <div className="ns-subtext" style={{ fontSize: '13px', marginBottom: '12px' }}>
-                    {lang === 'en' ? 'No live micro-niche ideas generated yet.' : 'لم يتم توليد أفكار حية بالذكاء الاصطناعي بعد.'}
+                    {lang === 'en' ? 'No live micro-niche ideas generated yet.' : 'ظ„ظ… ظٹطھظ… طھظˆظ„ظٹط¯ ط£ظپظƒط§ط± ط­ظٹط© ط¨ط§ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹ ط¨ط¹ط¯.'}
                   </div>
                   <button
                     type="button"
@@ -1525,24 +1528,24 @@ export default function NicheSelection({ stepNumber }) {
                     style={{ padding: '8px 18px', borderRadius: '8px', fontSize: '12px', fontWeight: '800', background: themeColor }}
                   >
                     <Bot size={14} style={{ marginRight: '6px' }} />
-                    <span>{lang === 'en' ? 'Generate Live Micro-Niches via OpenAI' : 'توليد تخصصات دقيقة بالذكاء الاصطناعي المباشر'}</span>
+                    <span>{lang === 'en' ? 'Generate Live Micro-Niches via OpenAI' : 'طھظˆظ„ظٹط¯ طھط®طµطµط§طھ ط¯ظ‚ظٹظ‚ط© ط¨ط§ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹ ط§ظ„ظ…ط¨ط§ط´ط±'}</span>
                   </button>
                 </div>
               ) : filteredIdeas.length === 0 ? (
                 <div style={{ padding: '24px', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '12px', border: '1px dashed rgba(99, 102, 241, 0.3)', marginBottom: '20px' }}>
                   <Filter size={24} color={themeColor} style={{ marginBottom: '8px' }} />
                   <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff', marginBottom: '4px' }}>
-                    {lang === 'en' ? 'No micro-niches match your filter.' : 'لا توجد تخصصات دقيقة تطابق الفلتر المحدد.'}
+                    {lang === 'en' ? 'No micro-niches match your filter.' : 'ظ„ط§ طھظˆط¬ط¯ طھط®طµطµط§طھ ط¯ظ‚ظٹظ‚ط© طھط·ط§ط¨ظ‚ ط§ظ„ظپظ„طھط± ط§ظ„ظ…ط­ط¯ط¯.'}
                   </div>
                   <div style={{ fontSize: '11px', color: '#94A3B8', marginBottom: '12px' }}>
-                    {lang === 'en' ? 'Try adjusting your search term or filter category tag.' : 'جرب تغيير كلمة البحث أو إعادة ضبط تصفية الشارات.'}
+                    {lang === 'en' ? 'Try adjusting your search term or filter category tag.' : 'ط¬ط±ط¨ طھط؛ظٹظٹط± ظƒظ„ظ…ط© ط§ظ„ط¨ط­ط« ط£ظˆ ط¥ط¹ط§ط¯ط© ط¶ط¨ط· طھطµظپظٹط© ط§ظ„ط´ط§ط±ط§طھ.'}
                   </div>
                   <button
                     type="button"
                     onClick={() => { setMicroSearchQuery(''); setMicroFilterBadge('all'); }}
                     style={{ padding: '6px 14px', borderRadius: '8px', background: `${themeColor}25`, border: `1px solid ${themeColor}60`, color: '#fff', fontSize: '11px', fontWeight: '800', cursor: 'pointer' }}
                   >
-                    {lang === 'en' ? 'Reset Filter' : 'إعادة ضبط الفلتر'}
+                    {lang === 'en' ? 'Reset Filter' : 'ط¥ط¹ط§ط¯ط© ط¶ط¨ط· ط§ظ„ظپظ„طھط±'}
                   </button>
                 </div>
               ) : (
@@ -1572,13 +1575,13 @@ export default function NicheSelection({ stepNumber }) {
               {/* Micro-Niche Input */}
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ display: 'block', fontSize: '12px', color: '#94A3B8', marginBottom: '8px', fontWeight: '700' }}>
-                  {lang === 'en' ? 'Selected Micro-Niche Card Title:' : 'التخصص الدقيق المختار:'}
+                  {lang === 'en' ? 'Selected Micro-Niche Card Title:' : 'ط§ظ„طھط®طµطµ ط§ظ„ط¯ظ‚ظٹظ‚ ط§ظ„ظ…ط®طھط§ط±:'}
                 </label>
                 <input
                   type="text"
                   onChange={e => handleSubNicheSelect(e.target.value)}
                   value={state.subNiche || ''}
-                  placeholder={lang === 'en' ? 'Type or select a micro-niche card above…' : 'اختر كارت التخصص الدقيق أو اكتب تخصصك…'}
+                  placeholder={lang === 'en' ? 'Type or select a micro-niche card aboveâ€¦' : 'ط§ط®طھط± ظƒط§ط±طھ ط§ظ„طھط®طµطµ ط§ظ„ط¯ظ‚ظٹظ‚ ط£ظˆ ط§ظƒطھط¨ طھط®طµطµظƒâ€¦'}
                   className="td-input"
                   style={{ borderColor: state.subNiche ? themeColor : 'rgba(255,255,255,0.08)', color: '#fff', fontWeight: 'bold' }}
                 />
@@ -1589,8 +1592,8 @@ export default function NicheSelection({ stepNumber }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px', marginBottom: '16px' }}>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     {[
-                      { key: 'opportunities', label_en: 'Tab 1: Market Opportunities', label_ar: 'التبويب 1: فرص السوق والتحليل (Market Opportunities)', icon: <Sparkles size={13} /> },
-                      { key: 'leaders',        label_en: 'Tab 2: Top 10 Leaders',        label_ar: 'التبويب 2: أبرز الرواد (Top 10 Leaders)',          icon: <Award size={13} /> },
+                      { key: 'opportunities', label_en: 'Tab 1: Market Opportunities', label_ar: 'ط§ظ„طھط¨ظˆظٹط¨ 1: ظپط±طµ ط§ظ„ط³ظˆظ‚ ظˆط§ظ„طھط­ظ„ظٹظ„ (Market Opportunities)', icon: <Sparkles size={13} /> },
+                      { key: 'leaders',        label_en: 'Tab 2: Top 10 Leaders',        label_ar: 'ط§ظ„طھط¨ظˆظٹط¨ 2: ط£ط¨ط±ط² ط§ظ„ط±ظˆط§ط¯ (Top 10 Leaders)',          icon: <Award size={13} /> },
                     ].map(tab => (
                       <button key={tab.key} type="button"
                         onClick={() => setDeepDiveTab(tab.key)}
@@ -1627,7 +1630,7 @@ export default function NicheSelection({ stepNumber }) {
                     }}
                   >
                     <RefreshCw size={13} className={analysis.loading ? 'spin' : ''} />
-                    <span>{lang === 'en' ? 'Regenerate Analysis' : 'إعادة التوليد والتحليل'}</span>
+                    <span>{lang === 'en' ? 'Regenerate Analysis' : 'ط¥ط¹ط§ط¯ط© ط§ظ„طھظˆظ„ظٹط¯ ظˆط§ظ„طھط­ظ„ظٹظ„'}</span>
                   </button>
                 </div>
 
@@ -1659,3 +1662,4 @@ export default function NicheSelection({ stepNumber }) {
     </ToolDashboardLayout>
   );
 }
+

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useToast } from '../../../context/ToastContext';
 import { useApp } from '../../../context/AppContext';
 import { useAuth } from '../../../context/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
@@ -36,6 +37,7 @@ export default function ToolDashboardLayout({
   children,
   bottomSections: defaultBottomSections = [],
 }) {
+  const toast = useToast();
   const { state, dispatch } = useApp();
   const { brandData, adminUserData, superAdminUserData, userData } = useAuth();
   
@@ -61,8 +63,13 @@ export default function ToolDashboardLayout({
           setDbData(docSnap.data());
         }
       } catch (err) {
-        console.error("Error fetching tool data:", err);
-      } finally {
+      console.error(err);
+      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
+    } finally {
         setLoadingDb(false);
       }
     };

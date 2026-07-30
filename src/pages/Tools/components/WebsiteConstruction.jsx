@@ -1,10 +1,12 @@
 // WebsiteConstruction.tsx
 import React, { useState, useEffect, useRef } from "react";
 import { useApp } from "../../../context/AppContext";
+import { useAuth } from "../../../context/AuthContext";
 import { useToast } from "../../../context/ToastContext";
 import {
   getAllWebsiteGalleryTemplates,
   getDomainIdeasTemplate,
+  getWebsiteTemplate,
 } from "../../../services/contentDbService";
 import { parseTemplate } from "../../../utils/templateParser";
 import {
@@ -162,6 +164,7 @@ function CustomGlassSelect({ options, value, onChange }) {
 
 export default function WebsiteConstruction({ stepNumber }) {
   const { state, dispatch } = useApp();
+  const { userData } = useAuth();
   const toastContext = useToast();
   const toast =
     typeof toastContext === "function"
@@ -441,7 +444,7 @@ export default function WebsiteConstruction({ stepNumber }) {
           state.niche ||
           (lang === "en" ? "Business" : "أعمال");
 
-        const liveHtml = await dispatchLiveAiAnalysis({
+        const liveHtml = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
           toolId: "website-construction",
           inputs: { brandName, colorHex, secondaryColor, nicheName },
           context: { niche: state.niche, brandName: state.brandName },
@@ -468,18 +471,7 @@ export default function WebsiteConstruction({ stepNumber }) {
           "success",
         );
       } else {
-        const key = state.apiKey || tempApiKey;
-        if (!key) {
-          setApiKeyError(true);
-          toast(
-            lang === "en"
-              ? "Gemini API Key is missing! Please enter your API key below or switch to Live mode."
-              : "مفتاح الـ API لـ Gemini غير متوفر! يرجى أدناه إدخال المفتاح أو التبديل للوضع المباشر.",
-            "warning",
-          );
-          return;
-        }
-
+        // Fast Radar Mode -> Load template directly from Firebase / Firestore DB without needing a Gemini Key
         const brandName =
           state.brandName || (lang === "en" ? "My Brand" : "براندي");
         const colorHex = state.primaryColor || "#6366F1";
@@ -490,40 +482,76 @@ export default function WebsiteConstruction({ stepNumber }) {
           (lang === "en" ? "Business" : "أعمال");
         const logoUrl = state.logoUrl || state.logo || state.photoURL || "";
 
-        const prompt = `
-          You are a world-class landing page designer and developer. 
-          Generate a single-file HTML landing page using Tailwind CSS for a brand called "${brandName}" in the "${nicheName}" niche.
-          Primary Color: ${colorHex}, Secondary Color: ${secondaryColor}.
-          Brand Logo URL: ${logoUrl ? logoUrl : "None provided, use text logo"}. Please use this logo image URL in the navigation bar.
-          The design should be modern, mobile-responsive, and high-converting.
-          Include:
-          - A Hero section with a strong headline and CTA.
-          - A Features/Services section with 3 items.
-          - A Testimonials section.
-          - A Contact/Footer section.
-          Use placeholder images from Unsplash or similar.
-          Return ONLY the raw HTML code without markdown code blocks.
-        `;
-
-        const aiResponse = await callGemini(prompt, key);
-
-        if (!aiResponse || !aiResponse.trim()) {
-          toast(
-            lang === "en"
-              ? "No website code returned from API. Please verify your API key or prompt."
-              : "لم يتم إرجاع كود من المفتاح. يرجى التحقق من مفتاح الـ API.",
-            "warning",
-          );
-          return;
+        let templateHtml = "";
+        try {
+          const dbTemplate = await getWebsiteTemplate(state.subNiche || state.niche || "general");
+          if (dbTemplate && (dbTemplate.html || dbTemplate.code || dbTemplate.template)) {
+            templateHtml = dbTemplate.html || dbTemplate.code || dbTemplate.template;
+          }
+        } catch (e) {
+          console.log("Firebase getWebsiteTemplate fetch error:", e);
         }
 
-        const cleanedHtml = aiResponse.replace(/```html|```/g, "").trim();
+        if (!templateHtml) {
+          templateHtml = `<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{brandName}} - {{nicheName}}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-white font-sans antialiased">
+  <!-- Navigation -->
+  <nav class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3 space-x-reverse">
+        ${logoUrl ? `<img src="${logoUrl}" alt="{{brandName}}" class="h-8 w-auto">` : `<span class="text-xl font-bold text-indigo-400">{{brandName}}</span>`}
+      </div>
+      <a href="#contact" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl transition shadow-lg shadow-indigo-500/20">
+        ${lang === "en" ? "Get Started" : "ابدأ الآن"}
+      </a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="py-24 px-6 text-center relative overflow-hidden">
+    <div class="max-w-4xl mx-auto">
+      <span class="px-4 py-1.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 inline-block mb-6">
+        {{nicheName}}
+      </span>
+      <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 leading-tight">
+        ${lang === "en" ? `Empowering Your {{nicheName}} Growth` : `حلول مبتكرة لتطوير مجال {{nicheName}}`}
+      </h1>
+      <p class="text-lg md:text-xl text-slate-400 mb-8 max-w-2xl mx-auto">
+        ${lang === "en" ? `Premium solutions engineered specifically for {{brandName}} clients.` : `خدمات احترافية مصممة خصيصاً لعملاء {{brandName}} لتحقيق أفضل النتائج.`}
+      </p>
+      <div class="flex justify-center gap-4">
+        <a href="#services" class="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 font-bold rounded-xl transition shadow-xl shadow-indigo-600/30">
+          ${lang === "en" ? "Explore Services" : "استكشف الخدمات"}
+        </a>
+      </div>
+    </div>
+  </section>
+</body>
+</html>`;
+        }
+
+        const parsedHtml = parseTemplate(templateHtml, {
+          brandName,
+          colorHex,
+          secondaryColor,
+          nicheName,
+          logoUrl
+        });
+
+        const cleanedHtml = parsedHtml.replace(/```html|```/g, "").trim();
         setGeneratedCode(`\`\`\`html\n${cleanedHtml}\n\`\`\``);
         setApiKeyError(false);
         toast(
           lang === "en"
-            ? "Website code generated dynamically! ✅"
-            : "تم توليد كود الموقع بالذكاء الاصطناعي بنجاح! ✅",
+            ? "Fast Radar website template loaded from database! ✅"
+            : "تم تحميل قالب الموقع السريع من قاعدة البيانات بنجاح! ✅",
           "success",
         );
       }
@@ -632,7 +660,7 @@ export default function WebsiteConstruction({ stepNumber }) {
     setDomainMatrix(null);
     try {
       if (analysisMode === "live") {
-        const liveResult = await dispatchLiveAiAnalysis({
+        const liveResult = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
           toolId: "domain-matrix",
           inputs: { brandName: state.brandName },
           context: { niche: state.niche, brandName: state.brandName },

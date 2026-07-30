@@ -3,6 +3,7 @@ import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'fire
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db } from '../../../firebase';
 import { libraryStorage } from '../../../firebaseLibrary';
+import { useToast } from '../../../context/ToastContext';
 
 export default function PaymentModal({ 
   isOpen, 
@@ -14,6 +15,7 @@ export default function PaymentModal({
   adminBrandName, 
   lang 
 }) {
+  const toast = useToast();
   const [screenshot, setScreenshot] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -41,8 +43,13 @@ export default function PaymentModal({
         const snap = await getDocs(q);
         setHasPendingRequest(!snap.empty);
       } catch (err) {
-        console.error('Error checking pending payment:', err);
-      } finally {
+      console.error(err);
+      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
+    } finally {
         setCheckingPending(false);
       }
     };
@@ -128,8 +135,12 @@ export default function PaymentModal({
       setSuccess(true);
       setHasPendingRequest(true);
     } catch (err) {
-      console.error('Error submitting payment:', err);
-      setError(lang === 'ar' ? 'حدث خطأ أثناء إرسال الطلب، يرجى المحاولة مرة أخرى' : 'An error occurred while submitting, please try again');
+      console.error(err);
+      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -170,8 +181,12 @@ export default function PaymentModal({
         throw new Error(data.error || 'Failed to create checkout session');
       }
     } catch (err) {
-      console.error('Stripe error:', err);
-      setError(lang === 'ar' ? 'فشل الاتصال بـ Stripe' : 'Failed to connect to Stripe');
+      console.error(err);
+      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
     } finally {
       setIsStripeLoading(false);
     }
@@ -217,8 +232,12 @@ export default function PaymentModal({
         }
       });
     } catch (err) {
-      console.error('Paddle Checkout error:', err);
-      setError(lang === 'ar' ? 'فشل بدء عملية الدفع عبر Paddle' : 'Failed to start Paddle checkout');
+      console.error(err);
+      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
+        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
+      } else {
+        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
     } finally {
       setIsPaddleLoading(false);
     }

@@ -115,6 +115,7 @@ import {
   Tablet,
   Palette,
   Layout,
+  Database,
 } from "lucide-react";
 import "./Admin.css";
 
@@ -397,6 +398,10 @@ export default function AdminDashboardPage() {
   const [brandNameForm, setBrandNameForm] = useState("");
   const [brandUrlForm, setBrandUrlForm] = useState("");
   const [masterApiKey, setMasterApiKey] = useState("");
+  const [showMasterKey, setShowMasterKey] = useState(false);
+  const [renewPlanUser, setRenewPlanUser] = useState(null);
+  const [renewPlanId, setRenewPlanId] = useState("free");
+  const [isRenewing, setIsRenewing] = useState(false);
   const [accentColor, setAccentColor] = useState("#3B82F6");
   const [successColor, setSuccessColor] = useState("#10B981");
   const [bgColor, setBgColor] = useState("#080C14");
@@ -1699,9 +1704,10 @@ export default function AdminDashboardPage() {
       setSubType("monthly");
       setSubDays(30);
       setProfileImage(null);
-      if (document.getElementById("userProfileImg"))
-        document.getElementById("userProfileImg").value = "";
-      await loadUsers();
+        if (document.getElementById("userProfileImg"))
+          document.getElementById("userProfileImg").value = "";
+        setIsUserModalOpen(false);
+        await loadUsers();
     } catch (err) {
       console.error("Create error:", err);
       const msgs = {
@@ -1740,6 +1746,45 @@ export default function AdminDashboardPage() {
     setUserPlanId("free");
     setUserPassword("");
     setIsUserModalOpen(false);
+  };
+
+  // Renew / Change Plan (isolated from edit)
+  const handleRenewPlan = async () => {
+    if (!renewPlanUser) return;
+    setIsRenewing(true);
+    try {
+      const selectedPlan = plans.find(p => String(p.id) === String(renewPlanId));
+      const planNameVal = selectedPlan ? (selectedPlan.name_ar || selectedPlan.name) : "Free";
+      const planCreditsVal = selectedPlan ? Number(selectedPlan.creditsPerMonth || 20) : 20;
+
+      await setDoc(
+        doc(db, "users", renewPlanUser.id),
+        {
+          planId: renewPlanId,
+          planName: planNameVal,
+          credits: planCreditsVal,
+          totalCredits: planCreditsVal,
+        },
+        { merge: true },
+      );
+
+      toast(
+        state.language === "en"
+          ? "Plan renewed successfully! \u2705"
+          : "\u062a\u0645 \u062a\u062c\u062f\u064a\u062f \u0627\u0644\u062e\u0637\u0629 \u0628\u0646\u062c\u0627\u062d! \u2705",
+        "success",
+      );
+      setRenewPlanUser(null);
+      await loadUsers();
+    } catch (err) {
+      console.error("Renew plan error:", err);
+      toast(
+        state.language === "en" ? "Failed to renew plan" : "\u0641\u0634\u0644 \u0641\u064a \u062a\u062c\u062f\u064a\u062f \u0627\u0644\u062e\u0637\u0629",
+        "error",
+      );
+    } finally {
+      setIsRenewing(false);
+    }
   };
 
   const handleUpdate = async () => {
@@ -1791,6 +1836,7 @@ export default function AdminDashboardPage() {
         },
       };
 
+      // Only reset credits if the plan actually changed
       if (editingUser.planId !== userPlanId) {
         updateData.credits = planCreditsVal;
       }
@@ -3286,21 +3332,35 @@ export default function AdminDashboardPage() {
                                       </span>
                                     </td>
                                     <td>
-                                      <span
-                                        style={{
-                                          fontSize: 12,
-                                          fontWeight: 600,
-                                          color: "var(--text1)",
-                                          textTransform: "capitalize",
-                                          display: "inline-block",
-                                          padding: "4px 8px",
-                                          background: "rgba(255,255,255,0.05)",
-                                          borderRadius: 6,
-                                          border: "1px solid var(--line)"
-                                        }}
-                                      >
-                                        {u.planName || (state.language === "en" ? "Free Plan" : "خطة مجانية")}
-                                      </span>
+                                      {(() => {
+                                        const pName = u.planName || "Free";
+                                        const foundPlan = plans.find(p => p.name === pName || p.name_ar === pName || p.name_en === pName);
+                                        const displayName = state.language === "en" 
+                                          ? (foundPlan?.name_en || foundPlan?.name || pName)
+                                          : (foundPlan?.name_ar || foundPlan?.name || pName);
+                                        const isFree = pName.toLowerCase().includes("free") || pName === "مجانية";
+                                        
+                                        return (
+                                          <div
+                                            style={{
+                                              display: "inline-flex",
+                                              alignItems: "center",
+                                              gap: "6px",
+                                              padding: "4px 10px",
+                                              borderRadius: "20px",
+                                              background: isFree ? "rgba(255, 255, 255, 0.05)" : "rgba(16, 185, 129, 0.1)",
+                                              border: isFree ? "1px solid var(--line)" : "1px solid rgba(16, 185, 129, 0.3)",
+                                              color: isFree ? "var(--text1)" : "#10B981",
+                                              fontSize: "12px",
+                                              fontWeight: "600",
+                                              boxShadow: isFree ? "none" : "0 0 10px rgba(16, 185, 129, 0.1)",
+                                            }}
+                                          >
+                                            <Database size={12} />
+                                            <span>{displayName}</span>
+                                          </div>
+                                        );
+                                      })()}
                                     </td>
                                     <td>
                                       {u.subscription?.status === "stopped" ? (
@@ -3549,6 +3609,23 @@ export default function AdminDashboardPage() {
                                           }
                                         >
                                           <Edit size={15} />
+                                        </motion.button>
+                                        <motion.button
+                                          className="sa-action-btn view"
+                                          onClick={() => {
+                                            setRenewPlanUser(u);
+                                            setRenewPlanId(u.planId || "free");
+                                          }}
+                                          whileHover={{ scale: 1.1 }}
+                                          whileTap={{ scale: 0.9 }}
+                                          title={
+                                            state.language === "en"
+                                              ? "Renew Plan"
+                                              : "\u062a\u062c\u062f\u064a\u062f \u0627\u0644\u062e\u0637\u0629"
+                                          }
+                                          style={{ color: "#10B981" }}
+                                        >
+                                          <RefreshCw size={15} />
                                         </motion.button>
                                         <motion.button
                                           className="sa-action-btn delete"
@@ -10387,16 +10464,41 @@ export default function AdminDashboardPage() {
                           : "يتم استخدام هذا المفتاح كبديل للمستخدمين الذين نفد رصيدهم أو المشتركين في الخطة المجانية."}
                       </span>
                       
-                      <div style={{ display: "flex", gap: "10px" }}>
-                        <input
-                          type="password"
-                          dir="ltr"
-                          className="field-input"
-                          value={masterApiKey}
-                          onChange={(e) => setMasterApiKey(e.target.value)}
-                          placeholder="sk-..."
-                          style={{ height: "46px", borderRadius: "12px", fontWeight: "700", flex: 1 }}
-                        />
+                      <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                        <div style={{ position: "relative", flex: 1 }}>
+                          <input
+                            type={showMasterKey ? "text" : "password"}
+                            dir="ltr"
+                            className="field-input"
+                            value={masterApiKey}
+                            onChange={(e) => setMasterApiKey(e.target.value)}
+                            placeholder="sk-..."
+                            style={{ height: "46px", borderRadius: "12px", fontWeight: "700", width: "100%", paddingRight: "80px" }}
+                          />
+                          <div style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", display: "flex", gap: "6px" }}>
+                            <button
+                              type="button"
+                              onClick={() => setShowMasterKey(!showMasterKey)}
+                              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text3)", padding: "4px", display: "flex", alignItems: "center" }}
+                              title={showMasterKey ? "Hide" : "Show"}
+                            >
+                              {showMasterKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (masterApiKey) {
+                                  navigator.clipboard.writeText(masterApiKey);
+                                  toast(state.language === "en" ? "Copied!" : "تم النسخ!", "success");
+                                }
+                              }}
+                              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text3)", padding: "4px", display: "flex", alignItems: "center" }}
+                              title={state.language === "en" ? "Copy" : "نسخ"}
+                            >
+                              <Copy size={16} />
+                            </button>
+                          </div>
+                        </div>
                         <button
                           type="button"
                           className="btn"
@@ -12139,28 +12241,6 @@ export default function AdminDashboardPage() {
                       </div>
                     </div>
 
-                    {/* Plan Assignment Field */}
-                    <div className="field">
-                      <CustomSelect
-                        label={state.language === "en" ? "Assigned Plan" : "الباقة المخصصة"}
-                        value={userPlanId}
-                        onChange={(val) => setUserPlanId(val)}
-                        icon={Layers}
-                        options={[
-                          {
-                            value: "free",
-                            label: state.language === "en" ? "Free Plan" : "خطة مجانية",
-                            icon: Gift,
-                          },
-                          ...plans.map((p) => ({
-                            value: p.id.toString(),
-                            label: state.language === "en" ? (p.name_en || p.name) : (p.name_ar || p.name),
-                            icon: Sparkles,
-                          })),
-                        ]}
-                      />
-                    </div>
-
                     {subType === "custom" && (
                       <div className="field">
                         <label className="field-label">
@@ -13032,7 +13112,257 @@ export default function AdminDashboardPage() {
           </div>
         )}
       </AnimatePresence>
-      {/* Professional Custom Delete Confirmation Modal */}
+      {/* Renew / Change Plan Modal */}
+      <AnimatePresence>
+        {renewPlanUser && (
+          <div className="sa-modal-overlay" onClick={() => setRenewPlanUser(null)}>
+            <motion.div
+              className="sa-modal-content"
+              onClick={(e) => e.stopPropagation()}
+              dir={state.language === "en" ? "ltr" : "rtl"}
+              style={{
+                maxWidth: 500,
+                textAlign: state.language === "en" ? "left" : "right",
+              }}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 25 }}
+            >
+              <div className="sa-modal-header">
+                <h2
+                  style={{
+                    fontSize: 18,
+                    color: "#fff",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <RefreshCw size={20} style={{ color: "#10B981" }} />
+                  <span>
+                    {state.language === "en"
+                      ? "Renew / Change Plan"
+                      : "تجديد / تغيير الخطة"}
+                  </span>
+                </h2>
+                <button className="btn btn-sm" onClick={() => setRenewPlanUser(null)}>
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div
+                className="sa-modal-body"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "18px",
+                  padding: "24px",
+                }}
+              >
+                {/* User Info Card */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    padding: "14px 16px",
+                    background: "rgba(255,255,255,0.03)",
+                    borderRadius: "14px",
+                    border: "1px solid var(--line)",
+                  }}
+                >
+                  <div
+                    className="ad-user-avatar"
+                    style={
+                      renewPlanUser.photoURL
+                        ? {
+                            background: `url("${renewPlanUser.photoURL}") center/cover no-repeat`,
+                            border: "1px solid rgba(255,255,255,0.1)",
+                          }
+                        : {}
+                    }
+                  >
+                    {!renewPlanUser.photoURL &&
+                      (renewPlanUser.ownerName || renewPlanUser.email || "?")
+                        .charAt(0)
+                        .toUpperCase()}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: "700", fontSize: "15px", color: "var(--text1)" }}>
+                      {renewPlanUser.ownerName || "\u2014"}
+                    </div>
+                    <div style={{ fontSize: "12px", color: "var(--text3)", marginTop: "2px" }}>
+                      {renewPlanUser.email}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Current Plan Stats */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "10px",
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: "12px 14px",
+                      background: "rgba(255,255,255,0.03)",
+                      borderRadius: "12px",
+                      border: "1px solid var(--line)",
+                    }}
+                  >
+                    <div style={{ fontSize: "11px", color: "var(--text3)", marginBottom: "4px" }}>
+                      {state.language === "en" ? "Current Plan" : "الخطة الحالية"}
+                    </div>
+                    <div style={{ fontWeight: "700", fontSize: "14px", color: "#10B981" }}>
+                      {(() => {
+                        const pName = renewPlanUser.planName || "Free";
+                        const foundPlan = plans.find(p => p.name === pName || p.name_ar === pName || p.name_en === pName);
+                        return state.language === "en"
+                          ? (foundPlan?.name_en || foundPlan?.name || pName)
+                          : (foundPlan?.name_ar || foundPlan?.name || pName);
+                      })()}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      padding: "12px 14px",
+                      background: "rgba(255,255,255,0.03)",
+                      borderRadius: "12px",
+                      border: "1px solid var(--line)",
+                    }}
+                  >
+                    <div style={{ fontSize: "11px", color: "var(--text3)", marginBottom: "4px" }}>
+                      {state.language === "en" ? "Remaining Credits" : "الرصيد المتبقي"}
+                    </div>
+                    <div style={{ fontWeight: "700", fontSize: "14px", color: "var(--text1)" }}>
+                      {renewPlanUser.credits ?? 0}
+                      <span style={{ color: "var(--text3)", fontWeight: "400", fontSize: "12px" }}>
+                        {" / "}{renewPlanUser.totalCredits ?? 20}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Plan Selector */}
+                <div className="field">
+                  <label
+                    className="field-label"
+                    style={{
+                      marginBottom: "8px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      fontSize: "13px",
+                      fontWeight: "600",
+                    }}
+                  >
+                    <Layers size={14} style={{ color: "var(--accent)" }} />
+                    {state.language === "en" ? "Select New Plan" : "اختر الخطة الجديدة"}
+                  </label>
+                  <CustomSelect
+                    label=""
+                    value={renewPlanId}
+                    onChange={(val) => setRenewPlanId(val)}
+                    icon={Layers}
+                    options={[
+                      {
+                        value: "free",
+                        label: state.language === "en" ? "Free Plan (20 credits)" : "خطة مجانية (20 رصيد)",
+                        icon: Gift,
+                      },
+                      ...plans.map((p) => ({
+                        value: p.id.toString(),
+                        label: (state.language === "en" ? (p.name_en || p.name) : (p.name_ar || p.name)) + " (" + (p.creditsPerMonth || 0) + " " + (state.language === "en" ? "credits" : "رصيد") + ")",
+                        icon: Sparkles,
+                      })),
+                    ]}
+                  />
+                </div>
+
+                {/* Warning Note */}
+                <div
+                  style={{
+                    fontSize: "12px",
+                    color: "var(--text3)",
+                    padding: "10px 14px",
+                    background: "rgba(245, 158, 11, 0.06)",
+                    borderRadius: "10px",
+                    border: "1px solid rgba(245, 158, 11, 0.15)",
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "8px",
+                    lineHeight: "1.6",
+                  }}
+                >
+                  <AlertTriangle size={16} style={{ color: "#F59E0B", flexShrink: 0, marginTop: "2px" }} />
+                  <span>
+                    {state.language === "en"
+                      ? "This action will immediately reset the user\u2019s credits to the selected plan\u2019s monthly allocation. The user can start using the new credits right away."
+                      : "سيتم إعادة تعيين رصيد المستخدم فوراً إلى الحد الشهري للخطة المختارة. يمكن للمستخدم استخدام الرصيد الجديد على الفور."}
+                  </span>
+                </div>
+
+                {/* Action Buttons */}
+                <div style={{ display: "flex", gap: "10px", marginTop: "4px" }}>
+                  <button
+                    className="btn"
+                    onClick={() => setRenewPlanUser(null)}
+                    style={{
+                      flex: 1,
+                      height: "46px",
+                      borderRadius: "12px",
+                      fontWeight: "600",
+                      fontSize: "13px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                      background: "rgba(255,255,255,0.05)",
+                      color: "var(--text2)",
+                      border: "1px solid var(--line)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <X size={15} />
+                    {state.language === "en" ? "Cancel" : "إلغاء"}
+                  </button>
+                  <button
+                    className="btn"
+                    onClick={handleRenewPlan}
+                    disabled={isRenewing}
+                    style={{
+                      flex: 2,
+                      height: "46px",
+                      borderRadius: "12px",
+                      fontWeight: "700",
+                      fontSize: "13px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      background: "linear-gradient(135deg, #10B981, #059669)",
+                      color: "#fff",
+                      border: "none",
+                      cursor: isRenewing ? "not-allowed" : "pointer",
+                      opacity: isRenewing ? 0.6 : 1,
+                      boxShadow: "0 4px 15px rgba(16, 185, 129, 0.25)",
+                    }}
+                  >
+                    {isRenewing ? <Loader2 size={16} className="spin" /> : <RefreshCw size={16} />}
+                    {state.language === "en" ? "Confirm Renewal" : "تأكيد التجديد"}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+            {/* Professional Custom Delete Confirmation Modal */}
       <AnimatePresence>
         {userToDelete && (
           <div

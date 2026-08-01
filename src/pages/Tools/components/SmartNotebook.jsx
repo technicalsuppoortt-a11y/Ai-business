@@ -68,37 +68,6 @@ function PlannerCustomDropdown({ value, onChange, options, label, icon: Icon, pl
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  
-  
-
-  
-  const hydratedRef = useRef(false);
-
-  // 1. Hydrate state asynchronously when cache loads
-  useEffect(() => {
-    if (isLoadedFromCloud && !hydratedRef.current) {
-      hydratedRef.current = true;
-      if (cached) {
-        if (cached.activeTab !== undefined) setActiveTab(cached.activeTab);
-        if (cached.taskSubTab !== undefined) setTaskSubTab(cached.taskSubTab);
-        if (cached.items !== undefined) setItems(cached.items);
-        if (cached.customTaskCategories !== undefined) setCustomTaskCategories(cached.customTaskCategories);
-        if (cached.customIdeaCategories !== undefined) setCustomIdeaCategories(cached.customIdeaCategories);
-        if (cached.customNoteCategories !== undefined) setCustomNoteCategories(cached.customNoteCategories);
-      }
-    }
-  }, [isLoadedFromCloud, cached]);
-
-  // 2. Safe Auto-save (only runs after hydration)
-  useEffect(() => {
-    if (!isLoadedFromCloud || !hydratedRef.current) return;
-    
-    const timeout = setTimeout(() => {
-      saveResult({ activeTab, taskSubTab, items, customTaskCategories, customIdeaCategories, customNoteCategories });
-    }, 1000);
-    return () => clearTimeout(timeout);
-  }, [isLoadedFromCloud, activeTab, taskSubTab, items, customTaskCategories, customIdeaCategories, customNoteCategories]);
-
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -287,6 +256,32 @@ export default function SmartNotebook() {
   const editorRef = useRef(null);
   const saveTimeoutRef = useRef(null);
   const searchInputRef = useRef(null);
+  const hydratedRef = useRef(false);
+
+  // 1. Hydrate state asynchronously when cache loads
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        if (cached.activeTab !== undefined) setActiveTab(cached.activeTab);
+        if (cached.taskSubTab !== undefined) setTaskSubTab(cached.taskSubTab);
+        if (cached.items !== undefined) setItems(cached.items);
+        if (cached.customTaskCategories !== undefined) setCustomTaskCategories(cached.customTaskCategories);
+        if (cached.customIdeaCategories !== undefined) setCustomIdeaCategories(cached.customIdeaCategories);
+        if (cached.customNoteCategories !== undefined) setCustomNoteCategories(cached.customNoteCategories);
+      }
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  // 2. Safe Auto-save (only runs after hydration)
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    
+    const timeout = setTimeout(() => {
+      saveResult({ activeTab, taskSubTab, items, customTaskCategories, customIdeaCategories, customNoteCategories });
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [isLoadedFromCloud, activeTab, taskSubTab, items, customTaskCategories, customIdeaCategories, customNoteCategories]);
 
   const showToast = (msg) => {
     setToastMessage(msg);

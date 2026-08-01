@@ -45,9 +45,9 @@ export default function CampaignLaunch({ stepNumber }) {
   
   // Inputs & Hooks
   const [url, setUrl] = useState(state.websiteUrl || '');
-  const [source, setSource] = useState('facebook');
-  const [medium, setMedium] = useState('cpc');
-  const [campaignName, setCampaignName] = useState('launch_offer');
+  const [source, setSource] = useState('');
+  const [medium, setMedium] = useState('');
+  const [campaignName, setCampaignName] = useState('');
 
   // --- STATE PERSISTENCE & HYDRATION ---
   const { cachedData, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'campaign-launch');
@@ -96,9 +96,20 @@ export default function CampaignLaunch({ stepNumber }) {
   ];
 
   // Dynamic Real-time Output URL
-  const generatedUrl = url 
-    ? `${url}${url.includes('?') ? '&' : '?'}utm_source=${source}&utm_medium=${medium}&utm_campaign=${campaignName}` 
-    : '';
+  const buildUrl = () => {
+    if (!url) return '';
+    const params = new URLSearchParams();
+    if (source) params.append('utm_source', source);
+    if (medium) params.append('utm_medium', medium);
+    if (campaignName) params.append('utm_campaign', campaignName);
+    
+    const queryString = params.toString();
+    if (!queryString) return url;
+    
+    return `${url.split('?')[0]}?${queryString}`;
+  };
+
+  const generatedUrl = buildUrl();
 
   const rawBase = url ? url.split('?')[0] : '';
   const sep = url && url.includes('?') ? '&' : '?';

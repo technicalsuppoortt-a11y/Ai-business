@@ -122,7 +122,8 @@ export default function BrandLibrary({ isMobile }) {
 
 
   // --- STATE PERSISTENCE & HYDRATION ---
-  const { cached, isLoadedFromCloud, saveResult } = useToolCache('brand-library');
+  const { cachedData: cached, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'brand-library');
+  const isLoadedFromCloud = !isLoadingCache;
   const hydratedRef = useRef(false);
 
   useEffect(() => {

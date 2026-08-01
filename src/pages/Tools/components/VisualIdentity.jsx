@@ -1,16 +1,46 @@
 import React, { useState } from 'react';
 import { useApp } from '../../../context/AppContext';
+import { useAuth } from '../../../context/AuthContext';
+import useToolCache from '../../../hooks/useToolCache';
+import { useRef, useEffect } from 'react';
 import { getColorAnalysis } from '../../../services/contentDbService';
 import ToolDashboardLayout from './ToolDashboardLayout';
 
 export default function VisualIdentity({ stepNumber }) {
   const toast = useToast();
   const { state, dispatch } = useApp();
+  const { userData } = useAuth();
   const lang = state.language || 'ar';
-  
-  const [logoPreview, setLogoPreview] = useState(state?.logo || null);
+
+  const { cachedData: cached, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'visual-identity');
+  const hydratedRef = useRef(false);
+
+  // State starts empty — set from Firestore once load completes
+  const [logoPreview, setLogoPreview] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [colorAnalysis, setColorAnalysis] = useState(null);
+
+  // === SINGLE INIT: fires once when Firestore read is done ===
+  useEffect(() => {
+    if (isLoadingCache || hydratedRef.current) return;
+    hydratedRef.current = true;
+
+    const ts = cached?.updatedAt ? new Date(cached.updatedAt?.seconds * 1000).toLocaleString() : 'NO DATA';
+    console.log(`[Firestore Status]: Connected | User: ${userData?.uid} | Tool: visual-identity | Last Loaded: ${ts}`);
+
+    if (cached?.inputs) {
+      if (cached.inputs.primaryColor)   dispatch({ type: 'SET_FIELD', field: 'primaryColor', value: cached.inputs.primaryColor });
+      if (cached.inputs.secondaryColor) dispatch({ type: 'SET_FIELD', field: 'secondaryColor', value: cached.inputs.secondaryColor });
+      if (cached.inputs.logo) {
+        dispatch({ type: 'SET_FIELD', field: 'logo', value: cached.inputs.logo });
+        setLogoPreview(cached.inputs.logo);
+      }
+    }
+    if (cached?.result) {
+      setColorAnalysis(cached.result);
+    }
+  }, [isLoadingCache]); // eslint-disable-line react-hooks/exhaustive-deps
+  // NOTE: No auto-save effect. saveResult is called ONLY inside analyzeColors.
 
   const allPalettes = [
     { name: "Neon", primary: "#06b6d4", secondary: "#0f172a" }, 
@@ -58,8 +88,17 @@ export default function VisualIdentity({ stepNumber }) {
       
       if (dbResult && (dbResult.psychology_ar || dbResult.psychology_en)) {
         setColorAnalysis(dbResult);
+        saveResult({
+          inputs: { primaryColor: state.primaryColor, secondaryColor: state.secondaryColor, logo: state.logo },
+          result: dbResult
+        });
       } else {
-         setColorAnalysis({ error: true });
+         const errorResult = { error: true };
+         setColorAnalysis(errorResult);
+         saveResult({
+          inputs: { primaryColor: state.primaryColor, secondaryColor: state.secondaryColor, logo: state.logo },
+          result: errorResult
+         });
       }
     } catch (error) {
       console.error(error);
@@ -72,6 +111,24 @@ export default function VisualIdentity({ stepNumber }) {
       setIsGenerating(false);
     }
   };
+
+  
+  // === BLOCKING SKELETON: hold render until Firestore read is complete ===
+  if (isLoadingCache) {
+    return (
+      <ToolDashboardLayout
+        id="visual-identity"
+        title={lang === 'en' ? 'Visual Identity' : 'الهوية البصرية (Visual Identity)'}
+        subtitle={lang === 'en' ? 'Loading saved workspace...' : 'جاري تحميل مساحة العمل...'}
+        stepNumber={stepNumber}
+        accentColor="#10B981"
+      >
+        <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
+          <div style={{ height: "400px", background: "rgba(255,255,255,0.02)", borderRadius: "20px", animation: "pulse 1.5s infinite" }}></div>
+        </div>
+      </ToolDashboardLayout>
+    );
+  }
 
   return (
     <ToolDashboardLayout

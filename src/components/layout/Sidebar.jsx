@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useApp } from "../../context/AppContext";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
@@ -469,6 +469,27 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
             <LogOut size={16} color="#EF4444" />
           </button>
         </div>
+
+        {/* TERMS LINK */}
+        {!isCollapsed && (
+          <div style={{ padding: '0 24px', marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+            <Link 
+              to="/terms" 
+              target="_blank" 
+              style={{ 
+                fontSize: '11px', 
+                color: 'var(--text3)', 
+                textDecoration: 'none',
+                opacity: 0.6,
+                transition: 'opacity 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.opacity = 1}
+              onMouseLeave={(e) => e.target.style.opacity = 0.6}
+            >
+              {lang === "ar" ? "الشروط والأحكام وسياسة الخصوصية" : "Terms & Privacy Policy"}
+            </Link>
+          </div>
+        )}
 
         {/* Desktop Collapse Button */}
         <button

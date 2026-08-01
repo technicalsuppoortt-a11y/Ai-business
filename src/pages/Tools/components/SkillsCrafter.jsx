@@ -232,7 +232,8 @@ export default function SkillsCrafter({ stepNumber }) {
 
 
   // --- STATE PERSISTENCE & HYDRATION ---
-  const { cached, isLoadedFromCloud, saveResult } = useToolCache('skills-crafting');
+  const { cachedData: cached, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'skills-crafting');
+  const isLoadedFromCloud = !isLoadingCache;
   const hydratedRef = useRef(false);
 
   useEffect(() => {

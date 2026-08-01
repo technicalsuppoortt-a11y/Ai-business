@@ -264,7 +264,8 @@ export default function PortfolioBuilder({ stepNumber }) {
 
 
   // --- STATE PERSISTENCE & HYDRATION ---
-  const { cached, isLoadedFromCloud, saveResult } = useToolCache('portfolio-builder');
+  const { cachedData: cached, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'portfolio-builder');
+  const isLoadedFromCloud = !isLoadingCache;
   const hydratedRef = useRef(false);
 
   useEffect(() => {

@@ -302,7 +302,8 @@ export default function FreelancePricing({ stepNumber }) {
 
 
   // --- STATE PERSISTENCE & HYDRATION ---
-  const { cached, isLoadedFromCloud, saveResult } = useToolCache('freelance-pricing');
+  const { cachedData: cached, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'freelance-pricing');
+  const isLoadedFromCloud = !isLoadingCache;
   const hydratedRef = useRef(false);
 
   useEffect(() => {

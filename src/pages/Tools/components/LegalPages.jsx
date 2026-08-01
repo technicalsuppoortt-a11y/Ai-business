@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../../context/AppContext';
+import { useAuth } from '../../../context/AuthContext';
 import useToolCache from '../../../hooks/useToolCache';
 import { useToast } from '../../../context/ToastContext';
 import ToolDashboardLayout from './ToolDashboardLayout';
@@ -186,7 +187,8 @@ function SearchableCountryDropdown({ value, onChange, options, label, icon: Icon
 }
 
 export default function LegalPages({ stepNumber }) {
-    const { state } = useApp();
+  const { state } = useApp();
+  const { userData } = useAuth();
   const toastContext = useToast();
   const toast = useToast();
 
@@ -205,7 +207,8 @@ export default function LegalPages({ stepNumber }) {
   
   const [activeTab, setActiveTab] = useState('privacy'); // privacy | terms | refund | cookie
 
-  const { cached, isLoadedFromCloud, saveResult } = useToolCache('legal-pages');
+  const { cachedData: cached, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'legal-pages');
+  const isLoadedFromCloud = !isLoadingCache;
   const hydratedRef = useRef(false);
 
   // Hydrate from Cache
@@ -592,6 +595,24 @@ Contact: ${contactEmail || '[Email Address]'}
 
   const wordCount = currentContent.trim().split(/\s+/).filter(Boolean).length;
   const charCount = currentContent.length;
+
+  
+  if (isLoadingCache || !hydratedRef.current) {
+    return (
+      <ToolDashboardLayout
+        id="legal-pages"
+        title={lang === 'en' ? 'Full-Screen Legal Canvas Workspace' : 'منصة الشاشة الكاملة للوثائق القانونية'}
+        subtitle={lang === 'en' ? 'Loading saved workspace...' : 'جاري تحميل مساحة العمل...'}
+        stepNumber={stepNumber}
+        accentColor="#6366F1"
+      >
+        <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
+          {/* Sleek Skeleton Loader */}
+          <div style={{ height: "400px", background: "rgba(255,255,255,0.02)", borderRadius: "20px", animation: "pulse 1.5s infinite" }}></div>
+        </div>
+      </ToolDashboardLayout>
+    );
+  }
 
   return (
     <ToolDashboardLayout

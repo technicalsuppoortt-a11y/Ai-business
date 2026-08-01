@@ -237,7 +237,8 @@ export default function InterviewPrep({ stepNumber }) {
 
 
   // --- STATE PERSISTENCE & HYDRATION ---
-  const { cached, isLoadedFromCloud, saveResult } = useToolCache('interview-prep');
+  const { cachedData: cached, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'interview-prep');
+  const isLoadedFromCloud = !isLoadingCache;
   const hydratedRef = useRef(false);
 
   useEffect(() => {

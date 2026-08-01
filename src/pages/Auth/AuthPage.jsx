@@ -9,6 +9,8 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import PhoneInput from "../../components/PhoneInput";
 import Logo from "../../components/common/Logo";
 import BrandedLoader from "../../components/common/BrandedLoader";
+import TermsContent from "../../components/common/TermsContent";
+import { useSystemBranding } from "../../context/SystemBrandingContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Mail,
@@ -30,6 +32,7 @@ import {
   Key,
   X,
   Send,
+  ShieldCheck,
 } from "lucide-react";
 
 const authTranslations = {
@@ -195,10 +198,14 @@ export default function AuthPage({
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+  const { brandName: globalBrandName } = useSystemBranding();
 
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
   const [isSendingReset, setIsSendingReset] = useState(false);
+  
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   const activeTrans =
     authTranslations[state.language || "ar"] || authTranslations.ar;
@@ -411,7 +418,7 @@ export default function AuthPage({
 
   const portalConfig = {
     user: {
-      title: adminBrandName || activeTrans.portals.user.title,
+      title: adminBrandName || globalBrandName || activeTrans.portals.user.title,
       subtitle: activeTrans.portals.user.subtitle,
       badgeText: activeTrans.portals.user.badgeText,
       gradient: "linear-gradient(135deg, var(--accent), #7C3AED)",
@@ -566,6 +573,9 @@ export default function AuthPage({
     if (!registerPhone.trim()) return toast(activeTrans.enterPhone, "error");
     if (!registerPassword.trim() || registerPassword.length < 6) {
       return toast(activeTrans.weakPassword, "error");
+    }
+    if (!acceptedTerms) {
+      return toast(lang === "ar" ? "يجب الموافقة على الشروط والأحكام وسياسة الخصوصية للمتابعة" : "You must accept the Terms & Conditions and Privacy Policy to continue", "error");
     }
     if (!resolvedBrand) {
       return toast(activeTrans.cannotResolveBrand, "error");
@@ -1900,6 +1910,37 @@ export default function AuthPage({
                   </motion.div>
                 </div>
 
+                {/* TERMS CHECKBOX */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', marginTop: '10px' }}>
+                  <div
+                    onClick={() => setAcceptedTerms(!acceptedTerms)}
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '6px',
+                      border: `1.5px solid ${acceptedTerms ? 'var(--accent, #3B82F6)' : 'rgba(255,255,255,0.3)'}`,
+                      background: acceptedTerms ? 'var(--accent, #3B82F6)' : 'rgba(255,255,255,0.05)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      flexShrink: 0
+                    }}
+                  >
+                    {acceptedTerms && <Check size={14} color="#fff" />}
+                  </div>
+                  <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: '1.5' }}>
+                    {lang === 'ar' ? 'أوافق على ' : 'I agree to the '}
+                    <span 
+                      onClick={() => setShowTermsModal(true)}
+                      style={{ color: 'var(--accent, #3B82F6)', cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      {lang === 'ar' ? 'الشروط والأحكام وسياسة الخصوصية' : 'Terms & Conditions and Privacy Policy'}
+                    </span>
+                  </span>
+                </div>
+
                 <motion.button
                   whileHover={{
                     scale: 1.02,
@@ -2271,6 +2312,123 @@ export default function AuthPage({
           </div>
         </div>
       )}
+      {/* TERMS MODAL */}
+      <AnimatePresence>
+        {showTermsModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              background: 'rgba(0,0,0,0.6)',
+              backdropFilter: 'blur(12px)',
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px'
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              style={{
+                background: 'var(--bg2, #0D1220)',
+                width: '100%',
+                maxWidth: '700px',
+                borderRadius: '24px',
+                border: '1px solid var(--line, rgba(255,255,255,0.08))',
+                overflow: 'hidden',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              {/* Modal Header */}
+              <div style={{
+                padding: '24px',
+                borderBottom: '1px solid var(--line, rgba(255,255,255,0.08))',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'rgba(255,255,255,0.02)'
+              }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: 'var(--text, #fff)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ShieldCheck size={20} color="var(--accent, #3B82F6)" />
+                  {lang === 'ar' ? 'الشروط والأحكام وسياسة الخصوصية' : 'Terms & Conditions'}
+                </h3>
+                <button
+                  onClick={() => setShowTermsModal(false)}
+                  style={{
+                    background: 'rgba(255,255,255,0.05)',
+                    border: 'none',
+                    color: 'var(--text2, #94A3B8)',
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; e.currentTarget.style.color = '#EF4444'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--text2, #94A3B8)'; }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="custom-scrollbar" style={{
+                padding: '24px',
+                maxHeight: '75vh',
+                overflowY: 'auto'
+              }}>
+                <TermsContent isRtl={lang === 'ar'} />
+              </div>
+              
+              {/* Modal Footer */}
+              <div style={{
+                padding: '20px 24px',
+                borderTop: '1px solid var(--line, rgba(255,255,255,0.08))',
+                background: 'rgba(255,255,255,0.02)',
+                display: 'flex',
+                justifyContent: 'flex-end'
+              }}>
+                <button
+                  onClick={() => {
+                    setAcceptedTerms(true);
+                    setShowTermsModal(false);
+                  }}
+                  style={{
+                    background: 'var(--accent, #3B82F6)',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '10px 24px',
+                    borderRadius: '12px',
+                    fontWeight: 'bold',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <Check size={16} />
+                  {lang === 'ar' ? 'موافق' : 'I Agree'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

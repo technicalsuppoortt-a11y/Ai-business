@@ -392,7 +392,8 @@ export default function MarketingPlan({ stepNumber }) {
 
 
   // --- STATE PERSISTENCE & HYDRATION ---
-  const { cached, isLoadedFromCloud, saveResult } = useToolCache('marketing-plan');
+  const { cachedData: cached, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'marketing-plan');
+  const isLoadedFromCloud = !isLoadingCache;
   const hydratedRef = useRef(false);
 
   useEffect(() => {
@@ -433,6 +434,24 @@ export default function MarketingPlan({ stepNumber }) {
     saveResult(null);
   };
   // -------------------------------------
+
+  
+  if (isLoadingCache || !hydratedRef.current) {
+    return (
+      <ToolDashboardLayout
+        id="marketing-plan"
+        title={lang === 'en' ? 'Campaign planner' : 'مخطط الحملات'}
+        subtitle={lang === 'en' ? 'Loading saved workspace...' : 'جاري تحميل مساحة العمل...'}
+        stepNumber={stepNumber}
+        accentColor="#3B82F6"
+      >
+        <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
+          {/* Sleek Skeleton Loader */}
+          <div style={{ height: "400px", background: "rgba(255,255,255,0.02)", borderRadius: "20px", animation: "pulse 1.5s infinite" }}></div>
+        </div>
+      </ToolDashboardLayout>
+    );
+  }
 
   return (
     <ToolDashboardLayout

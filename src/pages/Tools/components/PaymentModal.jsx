@@ -4,6 +4,9 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db } from '../../../firebase';
 import { libraryStorage } from '../../../firebaseLibrary';
 import { useToast } from '../../../context/ToastContext';
+import TermsContent from '../../../components/common/TermsContent';
+import { X, ShieldCheck, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function PaymentModal({ 
   isOpen, 
@@ -23,6 +26,9 @@ export default function PaymentModal({
   const [phoneInput, setPhoneInput] = useState(userData?.phoneNumber || '');
   const [hasPendingRequest, setHasPendingRequest] = useState(false);
   const [checkingPending, setCheckingPending] = useState(false);
+  
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   
   const [selectedPlanId, setSelectedPlanId] = useState('');
   const [isStripeLoading, setIsStripeLoading] = useState(false);
@@ -107,6 +113,10 @@ export default function PaymentModal({
       setError(lang === 'ar' ? 'يرجى إرفاق صورة التحويل' : 'Please upload transfer screenshot');
       return;
     }
+    if (!acceptedTerms) {
+      setError(lang === 'ar' ? 'يجب الموافقة على الشروط والأحكام وسياسة الخصوصية للمتابعة' : 'You must accept the Terms & Conditions and Privacy Policy to continue');
+      return;
+    }
     if (!phoneInput) {
       setError(lang === 'ar' ? 'يرجى إدخال رقم الهاتف' : 'Please enter your phone number');
       return;
@@ -149,6 +159,10 @@ export default function PaymentModal({
   const handleStripeCheckout = async () => {
     if (!selectedPlanId) {
       setError(lang === 'ar' ? 'يرجى اختيار الباقة أولاً' : 'Please select a plan first');
+      return;
+    }
+    if (!acceptedTerms) {
+      setError(lang === 'ar' ? 'يجب الموافقة على الشروط والأحكام وسياسة الخصوصية للمتابعة' : 'You must accept the Terms & Conditions and Privacy Policy to continue');
       return;
     }
 
@@ -195,6 +209,10 @@ export default function PaymentModal({
   const handlePaddleCheckout = async () => {
     if (!selectedPlanId) {
       setError(lang === 'ar' ? 'يرجى اختيار الباقة أولاً' : 'Please select a plan first');
+      return;
+    }
+    if (!acceptedTerms) {
+      setError(lang === 'ar' ? 'يجب الموافقة على الشروط والأحكام وسياسة الخصوصية للمتابعة' : 'You must accept the Terms & Conditions and Privacy Policy to continue');
       return;
     }
 
@@ -373,6 +391,42 @@ export default function PaymentModal({
 
             {(paymentMethods?.stripeKeys?.publishableKey || (paymentMethods?.paddleKeys?.enabled && paymentMethods?.paddleKeys?.clientKey)) && (
               <div style={{ background: 'var(--bg2)', padding: '16px', borderRadius: '12px', marginBottom: '24px', textAlign: 'center' }}>
+                
+                {/* TERMS CHECKBOX FOR ELECTRONIC PAYMENT */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '16px' }}>
+                  <div
+                    onClick={() => setAcceptedTerms(!acceptedTerms)}
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '6px',
+                      border: `1.5px solid ${acceptedTerms ? 'var(--accent, #3B82F6)' : 'rgba(255,255,255,0.3)'}`,
+                      background: acceptedTerms ? 'var(--accent, #3B82F6)' : 'rgba(255,255,255,0.05)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      flexShrink: 0
+                    }}
+                  >
+                    {acceptedTerms && <Check size={14} color="#fff" />}
+                  </div>
+                  <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: '1.5' }}>
+                    {lang === 'ar' ? 'أوافق على ' : 'I agree to the '}
+                    <span 
+                      onClick={() => setShowTermsModal(true)}
+                      style={{ color: 'var(--accent, #3B82F6)', cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      {lang === 'ar' ? 'الشروط والأحكام وسياسة الخصوصية' : 'Terms & Conditions and Privacy Policy'}
+                    </span>
+                  </span>
+                </div>
+
+                <p style={{ fontSize: '11px', color: 'var(--text3)', marginBottom: '12px', marginTop: '-8px' }}>
+                  {lang === 'ar' ? 'بإتمام عملية الشراء، فإنك توافق على الشروط والأحكام وسياسة الاسترجاع.' : 'By completing the purchase, you agree to the Terms and Conditions and Refund Policy.'}
+                </p>
+
                 <h4 style={{ marginBottom: '12px', color: '#fff' }}>
                   {lang === 'ar' ? 'أو الدفع الإلكتروني السريع:' : 'Or Fast Electronic Payment:'}
                 </h4>
@@ -450,6 +504,37 @@ export default function PaymentModal({
                 />
               </div>
 
+              {/* TERMS CHECKBOX FOR MANUAL PAYMENT */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+                <div
+                  onClick={() => setAcceptedTerms(!acceptedTerms)}
+                  style={{
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '6px',
+                    border: `1.5px solid ${acceptedTerms ? 'var(--accent, #3B82F6)' : 'rgba(255,255,255,0.3)'}`,
+                    background: acceptedTerms ? 'var(--accent, #3B82F6)' : 'rgba(255,255,255,0.05)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    flexShrink: 0
+                  }}
+                >
+                  {acceptedTerms && <Check size={14} color="#fff" />}
+                </div>
+                <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: '1.5' }}>
+                  {lang === 'ar' ? 'أوافق على ' : 'I agree to the '}
+                  <span 
+                    onClick={() => setShowTermsModal(true)}
+                    style={{ color: 'var(--accent, #3B82F6)', cursor: 'pointer', textDecoration: 'underline' }}
+                  >
+                    {lang === 'ar' ? 'الشروط والأحكام وسياسة الخصوصية' : 'Terms & Conditions and Privacy Policy'}
+                  </span>
+                </span>
+              </div>
+
               {error && <div style={{ color: 'var(--red)', marginBottom: '16px', fontSize: '14px' }}>{error}</div>}
 
               <button 
@@ -464,6 +549,124 @@ export default function PaymentModal({
           </>
         )}
       </div>
+
+      {/* TERMS MODAL */}
+      <AnimatePresence>
+        {showTermsModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              background: 'rgba(0,0,0,0.6)',
+              backdropFilter: 'blur(12px)',
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px'
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              style={{
+                background: 'var(--bg2, #0D1220)',
+                width: '100%',
+                maxWidth: '700px',
+                borderRadius: '24px',
+                border: '1px solid var(--line, rgba(255,255,255,0.08))',
+                overflow: 'hidden',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              {/* Modal Header */}
+              <div style={{
+                padding: '24px',
+                borderBottom: '1px solid var(--line, rgba(255,255,255,0.08))',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'rgba(255,255,255,0.02)'
+              }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: 'var(--text, #fff)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ShieldCheck size={20} color="var(--accent, #3B82F6)" />
+                  {lang === 'ar' ? 'الشروط والأحكام وسياسة الخصوصية' : 'Terms & Conditions'}
+                </h3>
+                <button
+                  onClick={() => setShowTermsModal(false)}
+                  style={{
+                    background: 'rgba(255,255,255,0.05)',
+                    border: 'none',
+                    color: 'var(--text2, #94A3B8)',
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; e.currentTarget.style.color = '#EF4444'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--text2, #94A3B8)'; }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="custom-scrollbar" style={{
+                padding: '24px',
+                maxHeight: '75vh',
+                overflowY: 'auto'
+              }}>
+                <TermsContent isRtl={lang === 'ar'} />
+              </div>
+              
+              {/* Modal Footer */}
+              <div style={{
+                padding: '20px 24px',
+                borderTop: '1px solid var(--line, rgba(255,255,255,0.08))',
+                background: 'rgba(255,255,255,0.02)',
+                display: 'flex',
+                justifyContent: 'flex-end'
+              }}>
+                <button
+                  onClick={() => {
+                    setAcceptedTerms(true);
+                    setShowTermsModal(false);
+                  }}
+                  style={{
+                    background: 'var(--accent, #3B82F6)',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '10px 24px',
+                    borderRadius: '12px',
+                    fontWeight: 'bold',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <Check size={16} />
+                  {lang === 'ar' ? 'موافق' : 'I Agree'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

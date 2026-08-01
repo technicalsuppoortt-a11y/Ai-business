@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { useSystemBranding } from '../../context/SystemBrandingContext';
 import { CURRENCY_SYMBOLS } from '../../data/database';
 import { TOOLS_24H } from '../../data/toolsData';
 import { 
@@ -35,6 +36,7 @@ export default function DashboardNavbar({
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+  const { brandName: globalBrandName } = useSystemBranding();
 
   const lang = state.language || 'ar';
   const isRtl = lang === 'ar';
@@ -133,7 +135,7 @@ export default function DashboardNavbar({
         <div className="db-navbar-title-wrap">
           <span className="db-navbar-badge">
             <Sparkles size={13} className="sparkle-icon" />
-            <span>AI Business</span>
+            <span>{brandData?.brandName || globalBrandName}</span>
           </span>
           <h1 className="db-navbar-page-title">{pageTitle}</h1>
         </div>

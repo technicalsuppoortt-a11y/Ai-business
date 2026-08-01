@@ -175,7 +175,7 @@ function buildUserPrompt({ selectedNiche, subNiche, targetCountry, isGlobalBench
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 3. REACTIVE PIPELINE HOOK â€” useNicheAnalysis
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function useNicheAnalysis({ selectedNiche, subNiche, targetCountry, isGlobalBenchmark, lang, uid }) {
+function useNicheAnalysis({ selectedNiche, subNiche, targetCountry, isGlobalBenchmark, lang, uid, onSuccess }) {
   const [data, setData]         = useState(null);
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState(null);
@@ -187,35 +187,7 @@ function useNicheAnalysis({ selectedNiche, subNiche, targetCountry, isGlobalBenc
   
 
   
-  const hydratedRef = useRef(false);
-
-  // 1. Hydrate state asynchronously when cache loads
-  useEffect(() => {
-    if (isLoadedFromCloud && !hydratedRef.current) {
-      hydratedRef.current = true;
-      if (cached) {
-        if (cached.deepDiveTab !== undefined) setDeepDiveTab(cached.deepDiveTab);
-        if (cached.microNicheMode !== undefined) setMicroNicheMode(cached.microNicheMode);
-        if (cached.selectedNiche !== undefined) setSelectedNiche(cached.selectedNiche);
-        if (cached.targetCountry !== undefined) setTargetCountry(cached.targetCountry);
-      }
-    }
-  }, [isLoadedFromCloud, cached]);
-
-  // 2. Safe Auto-save (only runs after hydration)
-  useEffect(() => {
-    if (!isLoadedFromCloud || !hydratedRef.current) return;
-    
-    const timeout = setTimeout(() => {
-      saveResult({ deepDiveTab, microNicheMode, selectedNiche, targetCountry });
-    }, 1000);
-    return () => clearTimeout(timeout);
-  }, [isLoadedFromCloud, deepDiveTab, microNicheMode, selectedNiche, targetCountry]);
-
-  useEffect(() => {
-    setData(null);
-    setError(null);
-  }, [selectedNiche?.id, targetCountry, isGlobalBenchmark]);
+  
 
   const run = useCallback(async (overrideSubNiche) => {
     if (!selectedNiche) return;
@@ -268,6 +240,9 @@ function useNicheAnalysis({ selectedNiche, subNiche, targetCountry, isGlobalBenc
 
         if (currentRequestId !== requestIdRef.current) return;
         setData(fastData);
+        if (onSuccess) onSuccess(fastData, {
+          selectedNiche, subNiche: activeSubNiche, targetCountry, isGlobalBenchmark
+        });
       } else {
         // Live AI Mode -> Call OpenAI chat/completions API
         const systemPrompt = buildSystemPrompt();
@@ -289,7 +264,10 @@ function useNicheAnalysis({ selectedNiche, subNiche, targetCountry, isGlobalBenc
           throw new Error('Invalid schema format returned by AI engine.');
         }
 
-        setData(parsed);
+                setData(parsed);
+        if (onSuccess) onSuccess(parsed, {
+          selectedNiche, subNiche: activeSubNiche, targetCountry, isGlobalBenchmark
+        });
       }
     } catch (err) {
       if (currentRequestId !== requestIdRef.current) return;
@@ -314,7 +292,7 @@ function useNicheAnalysis({ selectedNiche, subNiche, targetCountry, isGlobalBenc
     setLoading(false);
   }, []);
 
-  return { data, loading, error, analysisMode, setAnalysisMode, run, reset };
+  return { data, setData, loading, error, analysisMode, setAnalysisMode, run, reset };
 }
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -364,9 +342,9 @@ function useLiveMicroIdeas() {
   return { ideas, loading, error, fetch, reset };
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ——————————————————————————————————————————————————————————————————————————————————————————————————
 // 5. DROPDOWN COMPONENT (With High Z-Index to Prevent Overlapping)
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ——————————————————————————————————————————————————————————————————————————————————————————————————
 function TargetMarketDropdown({ value, onChange, options, lang, isLoading }) {
   const [isOpen, setIsOpen]     = useState(false);
   const [searchQuery, setSearch] = useState('');
@@ -973,47 +951,118 @@ function FullPageCategoryLoader({ selectedNiche, lang }) {
 import useToolCache from "../../../hooks/useToolCache";
 
 export default function NicheSelection({ stepNumber }) {
-  const { cached, isCached, isLoadedFromCloud, saveResult } = useToolCache('niche-selection');
   const { state, dispatch } = useApp();
   const { userData } = useAuth();
+  const { cachedData: cached, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'niche-selection');
+  const hydratedRef = useRef(false);
   const lang = state.language || 'ar';
 
+  // State starts empty — set from Firestore once load completes
   const [niches, setNiches]                 = useState([]);
   const [nichesLoading, setNichesLoading]   = useState(true);
-  const [selectedNiche, setSelectedNiche]   = useState(cached?.selectedNiche ?? null);
-
-  const [targetCountry, setTargetCountry]         = useState(cached?.targetCountry ?? (state.targetCountry || 'sa'));
+  const [selectedNiche, setSelectedNiche]   = useState(null);
+  const [targetCountry, setTargetCountry]         = useState('sa');
   const [isGlobalBenchmark, setIsGlobalBenchmark] = useState(false);
-  const [deepDiveTab, setDeepDiveTab]             = useState(cached?.deepDiveTab ?? 'opportunities');
-  const [microNicheMode, setMicroNicheMode]       = useState(cached?.microNicheMode ?? 'fast'); // 'fast' | 'live' | 'custom'
+  const [deepDiveTab, setDeepDiveTab]             = useState('opportunities');
+  const [microNicheMode, setMicroNicheMode]       = useState('fast');
   const [microSearchQuery, setMicroSearchQuery]   = useState('');
   const [microFilterBadge, setMicroFilterBadge]   = useState('all');
   const [customNicheInput, setCustomNicheInput]   = useState('');
 
   const deepDiveRef = useRef(null);
 
-  // Multi-stage Analysis Pipeline
+  // Multi-stage Analysis Pipeline (onSuccess fires saveResult directly — no auto-save needed)
   const analysis = useNicheAnalysis({
     selectedNiche,
     subNiche: state.subNiche,
     targetCountry,
     isGlobalBenchmark,
     lang,
-    uid: userData?.uid || state?.user?.uid
+    uid: userData?.uid || state?.user?.uid,
+    onSuccess: (resultData, inputsUsed) => {
+      const payload = {
+        inputs: { 
+          deepDiveTab, 
+          microNicheMode, 
+          selectedNiche: inputsUsed?.selectedNiche || selectedNiche, 
+          targetCountry: inputsUsed?.targetCountry || targetCountry, 
+          subNiche: inputsUsed?.subNiche || state.subNiche,
+          isGlobalBenchmark: inputsUsed?.isGlobalBenchmark || isGlobalBenchmark
+        },
+        result: resultData
+      };
+      console.log('🔴 [NICHE SAVING]:', payload);
+      saveResult(payload);
+    }
   });
 
   const microIdeas = useLiveMicroIdeas();
+  
+  // Guard ref to prevent hydration from triggering the reset effect
+  // === SINGLE INIT: fires once when Firestore read is done ===
+  useEffect(() => {
+    if (isLoadingCache || hydratedRef.current) return;
+    hydratedRef.current = true;
 
+    console.log('🟢 [NICHE HYDRATED]:', cached);
+
+    if (cached?.inputs) {
+
+      if (cached.inputs.deepDiveTab)   setDeepDiveTab(cached.inputs.deepDiveTab);
+      if (cached.inputs.microNicheMode) setMicroNicheMode(cached.inputs.microNicheMode);
+      if (cached.inputs.selectedNiche) {
+        setSelectedNiche(cached.inputs.selectedNiche);
+        dispatch({ type: 'SET_FIELD', field: 'niche', value: cached.inputs.selectedNiche.id });
+      }
+      if (cached.inputs.targetCountry) setTargetCountry(cached.inputs.targetCountry);
+      if (cached.inputs.subNiche) dispatch({ type: 'SET_FIELD', field: 'subNiche', value: cached.inputs.subNiche });
+    }
+    if (cached?.result) {
+      analysis.setData(cached.result);
+    }
+  }, [isLoadingCache]); // eslint-disable-line react-hooks/exhaustive-deps
+  // NOTE: Explicit save still fires via onSuccess, but this auto-save captures UI interactions.
+  useEffect(() => {
+    // Safeguard: Do not auto-save during initial load or before hydration is complete
+    if (isLoadingCache || !hydratedRef.current) return;
+    
+    // Only auto-save if user has at least started interacting (selected a primary niche)
+    if (!selectedNiche) return;
+
+    const timer = setTimeout(() => {
+      const payload = {
+        inputs: { 
+          deepDiveTab, 
+          microNicheMode, 
+          selectedNiche, 
+          targetCountry, 
+          subNiche: state.subNiche,
+          isGlobalBenchmark
+        },
+        result: analysis.data
+      };
+      console.log('🔴 [NICHE AUTO-SAVING]:', payload);
+      saveResult(payload);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [
+    deepDiveTab, 
+    microNicheMode, 
+    selectedNiche, 
+    targetCountry, 
+    state.subNiche, 
+    isGlobalBenchmark, 
+    analysis.data, 
+    isLoadingCache, 
+    saveResult
+  ]);
   const activeCountryObj = COUNTRY_OPTIONS.find(c => c.id === targetCountry) || COUNTRY_OPTIONS[0];
   const themeColor       = NICHE_THEMES[selectedNiche?.id]?.color || '#6366F1';
   const getLabel         = n => lang === 'en' ? n.label_en : n.label_ar;
 
-  // Load Niches
+  // Load Niches (No arbitrary clears on mount!)
   useEffect(() => {
-    // Clear any previously saved niche so no category appears pre-selected
-    dispatch({ type: 'SET_FIELD', field: 'niche', value: '' });
-    dispatch({ type: 'SET_FIELD', field: 'subNiche', value: '' });
-
     (async () => {
       setNichesLoading(true);
       try {
@@ -1023,7 +1072,8 @@ export default function NicheSelection({ stepNumber }) {
       } catch (e) { console.error('Niche load error:', e); }
       finally { setNichesLoading(false); }
     })();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   // Sync with AppContext
   useEffect(() => {
@@ -1070,10 +1120,11 @@ export default function NicheSelection({ stepNumber }) {
     if (val === targetCountry) return;
     setIsChangingMarket(true);
     setTargetCountry(val);
+    analysis.reset();
     setTimeout(() => {
       setIsChangingMarket(false);
     }, 1600);
-  }, [targetCountry]);
+  }, [targetCountry, analysis]);
 
   const isMarketLoading = isChangingMarket || analysis.loading || microIdeas.loading;
 
@@ -1097,6 +1148,23 @@ export default function NicheSelection({ stepNumber }) {
       return badgeClass === microFilterBadge;
     })
     .map(item => item.ideaText);
+
+  // === BLOCKING SKELETON: hold render until Firestore read is complete ===
+  if (isLoadingCache) {
+    return (
+      <ToolDashboardLayout
+        id="niche-selection"
+        title={lang === 'en' ? 'Strategic Niche Selection' : 'اختيار التخصص الاستراتيجي'}
+        subtitle={lang === 'en' ? 'Loading saved workspace...' : 'جاري تحميل مساحة العمل...'}
+        stepNumber={stepNumber}
+        accentColor="#6366F1"
+      >
+        <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
+          <div style={{ height: "400px", background: "rgba(255,255,255,0.02)", borderRadius: "20px", animation: "pulse 1.5s infinite" }}></div>
+        </div>
+      </ToolDashboardLayout>
+    );
+  }
 
   return (
     <ToolDashboardLayout
@@ -1137,7 +1205,10 @@ export default function NicheSelection({ stepNumber }) {
 
               {/* Global Benchmark Toggle Switch */}
               <div
-                onClick={() => setIsGlobalBenchmark(g => !g)}
+                onClick={() => {
+                  setIsGlobalBenchmark(g => !g);
+                  analysis.reset();
+                }}
                 className="ns-benchmark-btn"
                 style={{
                   display: 'flex', alignItems: 'center', gap: '10px',

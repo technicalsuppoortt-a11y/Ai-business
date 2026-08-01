@@ -521,7 +521,8 @@ export default function SocialMedia({ stepNumber }) {
 
 
   // --- STATE PERSISTENCE & HYDRATION ---
-  const { cached, isLoadedFromCloud, saveResult } = useToolCache('social-media-studio');
+  const { cachedData: cached, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'social-media-studio');
+  const isLoadedFromCloud = !isLoadingCache;
   const hydratedRef = useRef(false);
 
   useEffect(() => {
@@ -1522,6 +1523,28 @@ export default function SocialMedia({ stepNumber }) {
     setEnergyScore(score);
     toast(`تم تسجيل مستوى طاقتك الإبداعية: ${score}%`, "info");
   };
+
+  
+  if (isLoadingCache || !hydratedRef.current) {
+    return (
+      <ToolDashboardLayout
+        id="social-media"
+        title={
+        lang === "en"
+          ? "Social Media Studio Deck"
+          : "منصة السوشيال ميديا الشاملة (Studio Deck)"
+      }
+        subtitle={lang === 'en' ? 'Loading saved workspace...' : 'جاري تحميل مساحة العمل...'}
+        stepNumber={stepNumber}
+        accentColor="#3B82F6"
+      >
+        <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
+          {/* Sleek Skeleton Loader */}
+          <div style={{ height: "400px", background: "rgba(255,255,255,0.02)", borderRadius: "20px", animation: "pulse 1.5s infinite" }}></div>
+        </div>
+      </ToolDashboardLayout>
+    );
+  }
 
   return (
     <ToolDashboardLayout

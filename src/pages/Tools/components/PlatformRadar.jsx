@@ -262,7 +262,8 @@ export default function PlatformRadar({ stepNumber }) {
 
 
   // --- STATE PERSISTENCE & HYDRATION ---
-  const { cached, isLoadedFromCloud, saveResult } = useToolCache('platform-radar');
+  const { cachedData: cached, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'platform-radar');
+  const isLoadedFromCloud = !isLoadingCache;
   const hydratedRef = useRef(false);
 
   useEffect(() => {

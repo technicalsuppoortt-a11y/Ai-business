@@ -244,7 +244,8 @@ export default function ProposalSniper({ stepNumber }) {
 
 
   // --- STATE PERSISTENCE & HYDRATION ---
-  const { cached, isLoadedFromCloud, saveResult } = useToolCache('proposal-sniper');
+  const { cachedData: cached, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'proposal-sniper');
+  const isLoadedFromCloud = !isLoadingCache;
   const hydratedRef = useRef(false);
 
   useEffect(() => {

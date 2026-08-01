@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import useToolCache from '../../../hooks/useToolCache';
 import { useApp } from '../../../context/AppContext';
+import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../context/ToastContext';
 import ToolDashboardLayout from './ToolDashboardLayout';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -37,6 +38,7 @@ import './CampaignLaunch.css';
 
 export default function CampaignLaunch({ stepNumber }) {
   const { state, dispatch } = useApp();
+  const { userData } = useAuth();
   const toast = useToast();
   const lang = state.language || 'ar';
   const isRtl = lang === 'ar';
@@ -48,26 +50,32 @@ export default function CampaignLaunch({ stepNumber }) {
   const [campaignName, setCampaignName] = useState('launch_offer');
 
   // --- STATE PERSISTENCE & HYDRATION ---
-  const { cached, isLoadedFromCloud, saveResult } = useToolCache('campaign-launch');
+  const { cachedData, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'campaign-launch');
   const hydratedRef = useRef(false);
 
   useEffect(() => {
-    if (isLoadedFromCloud && !hydratedRef.current) {
+    if (!isLoadingCache && !hydratedRef.current) {
       hydratedRef.current = true;
-      if (cached) {
-        if (cached.url !== undefined) setUrl(cached.url);
-        if (cached.source !== undefined) setSource(cached.source);
-        if (cached.medium !== undefined) setMedium(cached.medium);
-        if (cached.campaignName !== undefined) setCampaignName(cached.campaignName);
+      if (cachedData?.inputs) {
+        if (cachedData.inputs.url !== undefined) setUrl(cachedData.inputs.url);
+        if (cachedData.inputs.source !== undefined) setSource(cachedData.inputs.source);
+        if (cachedData.inputs.medium !== undefined) setMedium(cachedData.inputs.medium);
+        if (cachedData.inputs.campaignName !== undefined) setCampaignName(cachedData.inputs.campaignName);
+      } else if (cachedData) {
+        // Fallback for old cache structure
+        if (cachedData.url !== undefined) setUrl(cachedData.url);
+        if (cachedData.source !== undefined) setSource(cachedData.source);
+        if (cachedData.medium !== undefined) setMedium(cachedData.medium);
+        if (cachedData.campaignName !== undefined) setCampaignName(cachedData.campaignName);
       }
     }
-  }, [isLoadedFromCloud, cached]);
+  }, [isLoadingCache, cachedData]);
 
   useEffect(() => {
-    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    if (isLoadingCache || !hydratedRef.current) return;
     // Immediate save, no debounce
-    saveResult({ url, source, medium, campaignName });
-  }, [isLoadedFromCloud, url, source, medium, campaignName]);
+    saveResult({ inputs: { url, source, medium, campaignName } });
+  }, [isLoadingCache, url, source, medium, campaignName]);
   // -------------------------------------
 
   const sources = [
@@ -125,6 +133,28 @@ export default function CampaignLaunch({ stepNumber }) {
       ]
     }
   ];
+
+  if (isLoadingCache || !hydratedRef.current) {
+    return (
+      <ToolDashboardLayout
+        id="campaign-launch"
+        title={lang === 'en' ? 'UTM Live Pipeline Builder' : 'منشئ ومجمّع مسار التتبع الحي (UTM Live Pipeline)'}
+        subtitle={lang === 'en' ? 'Loading saved workspace...' : 'جاري تحميل مساحة العمل...'}
+        stepNumber={stepNumber}
+        accentColor="#6366F1"
+      >
+        <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
+          {/* Sleek Skeleton Loader */}
+          <div style={{ display: "flex", gap: "10px" }}>
+            <div style={{ height: "150px", flex: 1, background: "rgba(255,255,255,0.02)", borderRadius: "12px", animation: "pulse 1.5s infinite" }}></div>
+            <div style={{ height: "150px", flex: 1, background: "rgba(255,255,255,0.02)", borderRadius: "12px", animation: "pulse 1.5s infinite" }}></div>
+            <div style={{ height: "150px", flex: 1, background: "rgba(255,255,255,0.02)", borderRadius: "12px", animation: "pulse 1.5s infinite" }}></div>
+          </div>
+          <div style={{ height: "80px", background: "rgba(255,255,255,0.02)", borderRadius: "12px", animation: "pulse 1.5s infinite" }}></div>
+        </div>
+      </ToolDashboardLayout>
+    );
+  }
 
   return (
     <ToolDashboardLayout

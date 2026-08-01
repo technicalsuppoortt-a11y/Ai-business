@@ -22,6 +22,7 @@ import { JOURNEY_STEPS } from "../../data/database";
 import { TOOLS_24H } from "../../data/toolsData";
 import SuperAdminLibrary from "./SuperAdminLibrary";
 import SuperAdminSettings from "./SuperAdminSettings";
+import SuperAdminBranding from "./SuperAdminBranding";
 import SuperAdminLandingPages from "./SuperAdminLandingPages";
 import SuperAdminEmployees from "./SuperAdminEmployees";
 import SuperAdminSales from "./SuperAdminSales";
@@ -116,6 +117,7 @@ export default function SuperAdminPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("admin");
+  const [dialect, setDialect] = useState("msa");
   const [brandUrl, setBrandUrl] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneKey, setPhoneKey] = useState("+20");
@@ -267,6 +269,7 @@ export default function SuperAdminPage() {
       await setDoc(doc(db, "users", uid), {
         email: email.trim().toLowerCase(),
         role,
+        dialect: dialect,
         brandName: role === "admin" ? brandName.trim() : "",
         ownerName: ownerName.trim(),
         brandUrl: role === "admin" ? brandUrl.trim() : "",
@@ -305,6 +308,7 @@ export default function SuperAdminPage() {
       setPassword("");
       setBrandUrl("");
       setPhoneNumber("");
+      setDialect("msa");
       setIsAddModalOpen(false);
       await loadBrands();
       setProfileImage(null);
@@ -327,6 +331,7 @@ export default function SuperAdminPage() {
     setOwnerName(u.ownerName || "");
     setEmail(u.email || "");
     setRole(u.role || "admin");
+    setDialect(u.dialect || "msa");
     setBrandUrl(u.brandUrl || "");
     // Refined logic to split key and number
     const fullPhone = u.phoneNumber || "";
@@ -782,6 +787,7 @@ export default function SuperAdminPage() {
             ...(isMainAdmin
               ? [{ id: "employees", label: "الموظفين", icon: Users }]
               : []),
+            { id: "brand", label: "العلامة التجارية", icon: Sparkles },
             { id: "settings", label: "الإعدادات", icon: Settings },
           ].map((item) => {
             const Icon = item.icon;
@@ -917,7 +923,9 @@ export default function SuperAdminPage() {
                       ? "إدارة المبيعات والإيرادات"
                       : activeTab === "employees"
                         ? "إدارة فريق العمل"
-                        : "إعدادات النظام"}
+                        : activeTab === "brand"
+                          ? "إعدادات العلامة التجارية"
+                          : "إعدادات النظام"}
             </div>
           </div>
           <div className="sa-topbar-right">
@@ -991,6 +999,8 @@ export default function SuperAdminPage() {
                   formatDate={formatDate}
                   totalSteps={TOTAL_STEPS_COUNT}
                 />
+              ) : activeTab === "brand" ? (
+                <SuperAdminBranding />
               ) : activeTab === "settings" ? (
                 <SuperAdminSettings />
               ) : (

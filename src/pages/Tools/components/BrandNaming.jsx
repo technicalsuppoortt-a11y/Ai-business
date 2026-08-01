@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../../context/AppContext';
+import { useAuth } from '../../../context/AuthContext';
+import useToolCache from '../../../hooks/useToolCache';
+import { useRef } from 'react';
 import { getBrandNames, getBrandNichesDef } from '../../../services/contentDbService';
 import ToolDashboardLayout from './ToolDashboardLayout';
 
@@ -12,57 +15,78 @@ const BRAND_CATEGORIES = [
 export default function BrandNaming({ stepNumber }) {
   const toast = useToast();
   const { state, dispatch } = useApp();
+  const { userData } = useAuth();
   const lang = state.language || 'ar';
 
+  const { cachedData: cached, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'brand-naming');
+  const hydratedRef = useRef(false);
+
+  // All state starts empty — set from Firestore after load completes
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedCatalogs, setGeneratedCatalogs] = useState(null);
-  
   const [selectedCategory, setSelectedCategory] = useState('ecom');
   const [selectedStyle, setSelectedStyle] = useState(null);
   const [selectedCatalogs, setSelectedCatalogs] = useState([]);
-  const [nameLanguage, setNameLanguage] = useState('all'); // 'all', 'ar', 'en'
-  
+  const [nameLanguage, setNameLanguage] = useState('all');
   const [dynamicStyles, setDynamicStyles] = useState({});
 
+  // === SINGLE INIT: runs once when Firestore finishes loading ===
+  // Fetches style definitions AND restores saved state in one atomic step
   useEffect(() => {
-    async function fetchNiches() {
+    if (isLoadingCache || hydratedRef.current) return;
+    hydratedRef.current = true;
+
+    const ts = cached?.updatedAt ? new Date(cached.updatedAt?.seconds * 1000).toLocaleString() : 'NO DATA';
+    console.log(`[Firestore Status]: Connected | User: ${userData?.uid} | Tool: brand-naming | Last Loaded: ${ts}`);
+
+    (async () => {
       try {
         const defs = await getBrandNichesDef();
-        if (defs) {
-          setDynamicStyles(defs);
-          // Set initial style
-          if (defs.ecom && defs.ecom.length > 0) {
-            setSelectedStyle(defs.ecom[0].id);
-          }
-        }
-      } catch (error) {
-      console.error(error);
-      if (error?.message === 'OUT_OF_CREDITS' || error?.message?.includes('OUT_OF_CREDITS')) {
-        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
-      } else {
-        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
-      }
-    }
-    }
-    fetchNiches();
-  }, []);
+        setDynamicStyles(defs || {});
 
-  // Get current styles based on category
+        if (cached?.inputs) {
+          // Pre-seed prevStyleRef BEFORE calling setSelectedStyle so the reset
+          // effect does NOT treat this hydration set as a user-triggered style change
+          prevStyleRef.current = cached.inputs.selectedStyle ?? null;
+
+          if (cached.inputs.selectedCategory) setSelectedCategory(cached.inputs.selectedCategory);
+          if (cached.inputs.selectedStyle)    setSelectedStyle(cached.inputs.selectedStyle);
+          if (cached.inputs.selectedCatalogs) setSelectedCatalogs(cached.inputs.selectedCatalogs);
+          if (cached.inputs.nameLanguage)     setNameLanguage(cached.inputs.nameLanguage);
+        } else if (defs?.ecom?.length > 0) {
+          // Fresh user — set default style (pre-seed ref so reset effect skips)
+          prevStyleRef.current = defs.ecom[0].id;
+          setSelectedStyle(defs.ecom[0].id);
+        }
+
+        if (cached?.result) {
+          setGeneratedCatalogs(cached.result);
+        }
+      } catch (err) {
+        console.error('[BrandNaming] init error:', err);
+      }
+    })();
+  }, [isLoadingCache]); // eslint-disable-line react-hooks/exhaustive-deps
+  // NOTE: No auto-save effect. saveResult is called ONLY inside generateBrandNames.
+
   const currentStyles = dynamicStyles[selectedCategory] || [];
-  
-  // Get catalogs for the currently selected style (subNiche)
   const currentCatalogs = currentStyles.find(s => s.id === selectedStyle)?.catalogs || [];
 
-  // Reset selections when category or style changes
+  // Reset style when category changes — only after hydration
+  const prevStyleRef = useRef(undefined);
   useEffect(() => {
+    if (!hydratedRef.current) return;
     if (currentStyles.length > 0 && !currentStyles.find(s => s.id === selectedStyle)) {
       setSelectedStyle(currentStyles[0].id);
     }
-  }, [selectedCategory, currentStyles]);
+  }, [selectedCategory]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Reset catalogs + results when style changes — only after hydration, only on real user change
   useEffect(() => {
-    setSelectedCatalogs([]);
-    setGeneratedCatalogs(null);
+    if (prevStyleRef.current === undefined) { prevStyleRef.current = selectedStyle; return; }
+    if (prevStyleRef.current === selectedStyle) return;
+    prevStyleRef.current = selectedStyle;
+    if (hydratedRef.current) { setSelectedCatalogs([]); setGeneratedCatalogs(null); }
   }, [selectedStyle]);
 
   const toggleCatalog = (catId) => {
@@ -114,8 +138,17 @@ export default function BrandNaming({ stepNumber }) {
         }
 
         setGeneratedCatalogs(results);
+        saveResult({
+          inputs: { selectedCategory, selectedStyle, selectedCatalogs, nameLanguage },
+          result: results
+        });
       } else {
-        setGeneratedCatalogs({ raw: lang === 'en' ? 'Could not find brand names for this selection.' : 'لم يتم العثور على أسماء مقترحة لهذا التخصص.' });
+        const errorResult = { raw: lang === 'en' ? 'Could not find brand names for this selection.' : 'لم يتم العثور على أسماء مقترحة لهذا التخصص.' };
+        setGeneratedCatalogs(errorResult);
+        saveResult({
+          inputs: { selectedCategory, selectedStyle, selectedCatalogs, nameLanguage },
+          result: errorResult
+        });
       }
     } catch (error) {
       console.error(error);
@@ -154,6 +187,23 @@ export default function BrandNaming({ stepNumber }) {
       </div>
     );
   };
+
+  // === BLOCKING SKELETON: render nothing until Firestore read is complete ===
+  if (isLoadingCache) {
+    return (
+      <ToolDashboardLayout
+        id="brand-naming"
+        title={lang === 'en' ? 'Brand Naming' : 'تسمية العلامة التجارية (Brand Naming)'}
+        subtitle={lang === 'en' ? 'Loading saved workspace...' : 'جاري تحميل مساحة العمل...'}
+        stepNumber={stepNumber}
+        accentColor="#8B5CF6"
+      >
+        <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
+          <div style={{ height: "400px", background: "rgba(255,255,255,0.02)", borderRadius: "20px", animation: "pulse 1.5s infinite" }}></div>
+        </div>
+      </ToolDashboardLayout>
+    );
+  }
 
   return (
     <ToolDashboardLayout

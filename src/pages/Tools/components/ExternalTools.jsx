@@ -2,6 +2,7 @@ import React, { useState , useRef , useEffect} from 'react';
 import useToolCache from "../../../hooks/useToolCache";
 import { useToast } from '../../../context/ToastContext';
 import { useApp } from '../../../context/AppContext';
+import { useAuth } from '../../../context/AuthContext';
 import { createPortal } from 'react-dom';
 import { Search, ExternalLink, Sparkles, X, ArrowUpRight, Zap, Info, RefreshCw } from 'lucide-react';
 import ToolDashboardLayout from './ToolDashboardLayout';
@@ -400,7 +401,8 @@ export default function ExternalTools() {
 
 
   // --- STATE PERSISTENCE & HYDRATION ---
-  const { cached, isLoadedFromCloud, saveResult } = useToolCache('external-tools');
+  const { cachedData: cached, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'external-tools');
+  const isLoadedFromCloud = !isLoadingCache;
   const hydratedRef = useRef(false);
 
   useEffect(() => {
@@ -429,6 +431,24 @@ export default function ExternalTools() {
     saveResult(null);
   };
   // -------------------------------------
+
+  
+  if (isLoadingCache || !hydratedRef.current) {
+    return (
+      <ToolDashboardLayout
+        id="external-tools"
+        title={lang === 'en' ? 'Top 31 AI Tools & Platforms' : 'أفضل 31 أداة ومنصة للذكاء الاصطناعي'}
+        subtitle={lang === 'en' ? 'Loading saved workspace...' : 'جاري تحميل مساحة العمل...'}
+        stepNumber={stepNumber}
+        accentColor="#6366F1"
+      >
+        <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
+          {/* Sleek Skeleton Loader */}
+          <div style={{ height: "400px", background: "rgba(255,255,255,0.02)", borderRadius: "20px", animation: "pulse 1.5s infinite" }}></div>
+        </div>
+      </ToolDashboardLayout>
+    );
+  }
 
   return (
     <ToolDashboardLayout

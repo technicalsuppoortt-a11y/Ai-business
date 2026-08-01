@@ -4,9 +4,9 @@ import { createPortal } from 'react-dom';
 import { useApp } from '../../../context/AppContext';
 import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../context/ToastContext';
-import { callGemini } from '../../../services/geminiService';
 import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
 import { dispatchLiveAiAnalysis } from '../../../services/liveAiService';
+import { getFreelanceAITemplate } from '../../../services/contentDbService';
 import ToolDashboardLayout from './ToolDashboardLayout';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -161,9 +161,7 @@ export default function SmartAIAssistant({ stepNumber }) {
   const [selectedPricing, setSelectedPricing] = useState('mid');
 
   // Gemini API Key Modal
-  const [tempApiKey, setTempApiKey] = useState(state.apiKey || '');
-  const [isSavingKey, setIsSavingKey] = useState(false);
-  const [showKeyModal, setShowKeyModal] = useState(false);
+  // (Removed to match rest of tools)
 
   // AI loading and output state
   const [isGenerating, setIsGenerating] = useState(false);
@@ -177,27 +175,27 @@ export default function SmartAIAssistant({ stepNumber }) {
   const [activeStage, setActiveStage] = useState('input');
 
   // --- STATE PERSISTENCE & HYDRATION ---
-  const { cached, isLoadedFromCloud, saveResult } = useToolCache('smart-ai-assistant');
+  const { cachedData, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'smart-ai-assistant');
   const hydratedRef = useRef(false);
 
   useEffect(() => {
-    if (isLoadedFromCloud && !hydratedRef.current) {
+    if (!isLoadingCache && !hydratedRef.current) {
       hydratedRef.current = true;
-      if (cached) {
-        if (cached.analysisMode) setAnalysisMode(cached.analysisMode);
-        if (cached.selectedGoal) setSelectedGoal(cached.selectedGoal);
-        if (cached.selectedChannel) setSelectedChannel(cached.selectedChannel);
-        if (cached.selectedClient) setSelectedClient(cached.selectedClient);
-        if (cached.selectedPricing) setSelectedPricing(cached.selectedPricing);
-        if (cached.activeStage) setActiveStage(cached.activeStage);
-        if (cached.result) setResult(cached.result);
+      if (cachedData) {
+        if (cachedData.analysisMode) setAnalysisMode(cachedData.analysisMode);
+        if (cachedData.selectedGoal) setSelectedGoal(cachedData.selectedGoal);
+        if (cachedData.selectedChannel) setSelectedChannel(cachedData.selectedChannel);
+        if (cachedData.selectedClient) setSelectedClient(cachedData.selectedClient);
+        if (cachedData.selectedPricing) setSelectedPricing(cachedData.selectedPricing);
+        if (cachedData.activeStage) setActiveStage(cachedData.activeStage);
+        if (cachedData.result) setResult(cachedData.result);
       }
     }
-  }, [isLoadedFromCloud, cached]);
+  }, [isLoadingCache, cachedData]);
 
   // Synchronize state changes to Firebase
   useEffect(() => {
-    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    if (isLoadingCache || !hydratedRef.current) return;
     const timeout = setTimeout(() => {
       saveResult({
         analysisMode,
@@ -210,13 +208,9 @@ export default function SmartAIAssistant({ stepNumber }) {
       });
     }, 1500);
     return () => clearTimeout(timeout);
-  }, [isLoadedFromCloud, analysisMode, selectedGoal, selectedChannel, selectedClient, selectedPricing, activeStage, result]);
+  }, [isLoadingCache, analysisMode, selectedGoal, selectedChannel, selectedClient, selectedPricing, activeStage, result]);
 
-  useEffect(() => {
-    if (state.apiKey) {
-      setTempApiKey(state.apiKey);
-    }
-  }, [state.apiKey]);
+
 
   // Loading badge status interval
   useEffect(() => {
@@ -242,20 +236,6 @@ export default function SmartAIAssistant({ stepNumber }) {
     );
   };
 
-  const handleSaveApiKey = async () => {
-    if (!tempApiKey.trim()) return;
-    setIsSavingKey(true);
-    try {
-      if (tempApiKey.length < 20) throw new Error('Invalid API Key');
-      dispatch({ type: 'UPDATE_USER_DATA', payload: { apiKey: tempApiKey.trim() } });
-      setShowKeyModal(false);
-      toast(lang === 'en' ? 'Gemini API Key saved successfully!' : 'تم حفظ مفتاح Gemini بنجاح!', 'success');
-    } catch (err) {
-      toast(lang === 'en' ? 'Invalid API key format.' : 'صيغة مفتاح API غير صحيحة.', 'error');
-    } finally {
-      setIsSavingKey(false);
-    }
-  };
 
   const handleGenerate = async () => {
     if (analysisMode === 'live') {
@@ -338,13 +318,6 @@ export default function SmartAIAssistant({ stepNumber }) {
       return;
     }
 
-    const activeKey = state.apiKey || tempApiKey;
-    if (!activeKey) {
-      setShowKeyModal(true);
-      toast(lang === 'en' ? 'Please enter a Gemini API Key first.' : 'يرجى إدخال مفتاح API الخاص بـ Gemini أولاً.', 'warning');
-      return;
-    }
-
     setIsGenerating(true);
     setActiveStage('loading');
     setResult(null);
@@ -354,60 +327,39 @@ export default function SmartAIAssistant({ stepNumber }) {
     const clientTypeName = CLIENT_OPTIONS.find(o => o.id === selectedClient)?.[lang === 'en' ? 'name_en' : 'name_ar'];
     const pricingTierName = PRICING_OPTIONS.find(o => o.id === selectedPricing)?.[lang === 'en' ? 'name_en' : 'name_ar'];
 
-    const prompt = `
-      You are a world-class Freelance AI Strategist and business consultant.
-      Your task is to analyze the freelancer's profile and target settings, correct any strategic mismatches, and outline a complete winning strategy.
-      
-      Freelancer Profile:
-      - Niche: ${state.niche || 'General'}
-      - Sub-Niche: ${state.subNiche || 'General Services'}
-      
-      Freelancer's Selected Target Settings:
-      - Target Client Type: ${clientTypeName}
-      - Outreach Channel: ${channelName}
-      - Pricing Tier: ${pricingTierName}
-      - Strategic Goal: ${goalName}
-      
-      CRITICAL EVALUATION RULE (Path Correction):
-      Evaluate if this combination is ideal. 
-      Provide the response in JSON format.
-      The JSON object MUST contain exactly these keys:
-      {
-        "is_combination_ideal": boolean,
-        "verdict_badge_ar": string,
-        "verdict_badge_en": string,
-        "expert_verdict_ar": string,
-        "expert_verdict_en": string,
-        "recommended_action_ar": string,
-        "recommended_action_en": string,
-        "strategy_title_ar": string,
-        "strategy_title_en": string,
-        "strategy_desc_ar": string,
-        "strategy_desc_en": string,
-        "outreach_subject_ar": string,
-        "outreach_subject_en": string,
-        "outreach_script_ar": string,
-        "outreach_script_en": string,
-        "objections": Array of 3 objects with keys: "objection_ar", "objection_en", "response_ar", "response_en",
-        "followups": Array of 3 objects with keys: "day_ar", "day_en", "message_ar", "message_en"
-      }
-      
-      Return ONLY the raw JSON string.
-    `;
-
     try {
       setLoadingPhase(lang === 'en' ? 'Synthesizing Neural Logic...' : 'جاري معالجة المنطق العصبي واختبار المعايير...');
       await new Promise(r => setTimeout(r, 600));
       
-      setLoadingPhase(lang === 'en' ? 'Simulating strategic pathways...' : 'جاري محاكاة مسارات الاستراتيجية للمجال...');
-      const responseText = await callGemini(prompt, activeKey);
+      const dbResult = await getFreelanceAITemplate(selectedGoal, selectedChannel, selectedClient, selectedPricing);
       
-      setLoadingPhase(lang === 'en' ? 'Formatting precision matrix...' : 'جاري تنسيق مصفوفة المخرجات والرسائل...');
-      const cleanedJson = extractJSON(responseText).trim();
-      const parsedData = JSON.parse(cleanedJson);
-      
-      setResult(parsedData);
-      setIsFallbackActive(false);
+      if (dbResult && dbResult.content) {
+        setResult(dbResult.content);
+        setIsFallbackActive(false);
+        setActiveStage('output');
+        saveResult({
+          analysisMode,
+          selectedGoal,
+          selectedChannel,
+          selectedClient,
+          selectedPricing,
+          activeStage: 'output',
+          result: dbResult.content
+        });
+        dispatch({
+          type: 'SAVE_TOOL_RESULT',
+          toolId: 'smart-ai-assistant',
+          data: { selectedGoal, selectedChannel, selectedClient, selectedPricing, result: dbResult.content, mode: 'fast' }
+        });
+        toast(lang === 'en' ? 'AI Core Fusion strategy loaded!' : 'تم استدعاء المدار الاستراتيجي بنجاح!', 'success');
+      } else {
+        throw new Error("No predefined strategy found");
+      }
+    } catch (error) {
+      console.warn('AI Core Loading Fallback:', error);
+      setIsFallbackActive(true);
+      const fallback = getFallbackStrategy(state.niche, state.subNiche, clientTypeName, channelName, pricingTierName, goalName);
+      setResult(fallback);
       setActiveStage('output');
       saveResult({
         analysisMode,
@@ -416,20 +368,13 @@ export default function SmartAIAssistant({ stepNumber }) {
         selectedClient,
         selectedPricing,
         activeStage: 'output',
-        result: parsedData
+        result: fallback
       });
       dispatch({
         type: 'SAVE_TOOL_RESULT',
         toolId: 'smart-ai-assistant',
-        data: { selectedGoal, selectedChannel, selectedClient, selectedPricing, result: parsedData, mode: 'fast' }
+        data: { selectedGoal, selectedChannel, selectedClient, selectedPricing, result: fallback, mode: 'fast' }
       });
-      toast(lang === 'en' ? 'AI Core Fusion strategy synthesized!' : 'تم التوليد المداري للاستراتيجية بنجاح!', 'success');
-    } catch (error) {
-      console.error('AI Generation Error:', error);
-      setIsFallbackActive(true);
-      const fallback = getFallbackStrategy(state.niche, state.subNiche, clientTypeName, channelName, pricingTierName, goalName);
-      setResult(fallback);
-      setActiveStage('output');
     } finally {
       setIsGenerating(false);
       setLoadingPhase('');
@@ -501,9 +446,7 @@ const handleResetSession = () => {
     setSelectedChannel('cold_email');
     setSelectedClient('creators');
     setSelectedPricing('mid');
-    setTempApiKey(state.apiKey || '');
-    setIsSavingKey(false);
-    setShowKeyModal(false);
+
     setIsGenerating(false);
     setLoadingPhase('');
     setLoadingStatusIndex(0);
@@ -511,8 +454,25 @@ const handleResetSession = () => {
     setCopiedSection(null);
     setIsFallbackActive(false);
     setActiveStage('input');
-    saveResult(null); // Clear Firestore cache
+    saveResult({ analysisMode: 'fast', selectedGoal: 'close_deal', selectedChannel: 'cold_email', selectedClient: 'creators', selectedPricing: 'mid', activeStage: 'input', result: null });
   };
+
+  if (isLoadingCache || !hydratedRef.current) {
+    return (
+      <ToolDashboardLayout
+        id="smart-ai-assistant"
+        title={lang === 'en' ? 'The Radial AI Core & Orbital Studio' : 'المحرك المداري التفاعلي بالذكاء الاصطناعي'}
+        subtitle={lang === 'en' ? 'Loading saved workspace...' : 'جاري تحميل مساحة العمل...'}
+        stepNumber={stepNumber}
+        accentColor="#3B82F6"
+      >
+        <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
+          {/* Sleek Skeleton Loader */}
+          <div style={{ height: "400px", background: "rgba(255,255,255,0.02)", borderRadius: "20px", animation: "pulse 1.5s infinite" }}></div>
+        </div>
+      </ToolDashboardLayout>
+    );
+  }
 
   return (
     <ToolDashboardLayout
@@ -550,88 +510,6 @@ const handleResetSession = () => {
         </div>
       <div className="radial-ecosystem-root" dir={isRtl ? 'rtl' : 'ltr'}>
         
-        {/* GEMINI KEY INTERACTIVE MODAL */}
-        {showKeyModal && createPortal(
-          <AnimatePresence key="gemini-key-portal">
-            <motion.div 
-              className="gemini-modal-overlay"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowKeyModal(false)}
-            >
-              <motion.div 
-                className="gemini-modal-card"
-                initial={{ scale: 0.92, y: 16 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.92, y: 16 }}
-                onClick={e => e.stopPropagation()}
-              >
-                <div className="gemini-modal-accent-line" />
-                
-                <div className="gemini-modal-header">
-                  <div className="gemini-modal-title-group">
-                    <div className="gemini-modal-icon-wrap">
-                      <Key size={20} color="#F59E0B" />
-                    </div>
-                    <div>
-                      <h3 className="gemini-modal-title">
-                        {lang === 'en' ? 'Configure Gemini API Key' : 'إعداد مفتاح الـ API لـ Gemini'}
-                      </h3>
-                      <span className="gemini-modal-subtitle">
-                        {lang === 'en' ? 'Direct AI Calculation Engine' : 'محرك التوليد المباشر'}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <button 
-                    onClick={() => setShowKeyModal(false)}
-                    className="gemini-modal-close-btn"
-                    aria-label="Close modal"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
-
-                <p className="gemini-modal-desc">
-                  {lang === 'en' 
-                    ? 'Enter your Google Gemini API key to power direct client-side strategic AI calculations.' 
-                    : 'أدخل مفتاح الـ API الخاص بـ Google Gemini لتشغيل خبير الاستراتيجيات الذكي مباشرة عبر المتصفح.'}
-                </p>
-
-                <div className="gemini-modal-body">
-                  <div className="gemini-input-wrapper">
-                    <input 
-                      type="password"
-                      className="gemini-modal-input"
-                      placeholder="AIzaSy..."
-                      value={tempApiKey}
-                      onChange={e => setTempApiKey(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="gemini-modal-actions">
-                    <button 
-                      onClick={() => setShowKeyModal(false)}
-                      className="gemini-modal-btn cancel"
-                    >
-                      {lang === 'en' ? 'Cancel' : 'إلغاء'}
-                    </button>
-
-                    <button 
-                      onClick={handleSaveApiKey}
-                      disabled={isSavingKey || !tempApiKey.trim()}
-                      className="gemini-modal-btn save"
-                    >
-                      {isSavingKey ? '...' : (lang === 'en' ? 'Save Key' : 'حفظ المفتاح')}
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-          </AnimatePresence>,
-          document.body
-        )}
 
         <AnimatePresence mode="wait">
           
@@ -712,13 +590,7 @@ const handleResetSession = () => {
                       </button>
                     </div>
 
-                    <button
-                      onClick={() => setShowKeyModal(true)}
-                      className="core-key-btn"
-                    >
-                      <Key size={13} color="#F59E0B" />
-                      <span>{state.apiKey ? (lang === 'en' ? 'Key Set' : 'المفتاح') : (lang === 'en' ? 'Add Key' : 'إضافة المفتاح')}</span>
-                    </button>
+
                   </div>
                 </div>
 
@@ -827,7 +699,7 @@ const handleResetSession = () => {
                 <div className="core-fusion-trigger-row">
                   <motion.button
                     onClick={handleGenerate}
-                    disabled={isGenerating || !state.niche}
+                    disabled={isGenerating}
                     className="core-fusion-launch-btn"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}

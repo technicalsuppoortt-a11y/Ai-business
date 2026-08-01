@@ -1,9 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useSystemBranding } from '../../context/SystemBrandingContext';
 
-export default function Logo({ className = '', size = 32, showText = true, lang = 'ar', text }) {
-  return (
-    <div className={`flex-center gap-8 ${className}`} style={{ display: 'inline-flex', alignItems: 'center' }}>
-      <svg
+export default function Logo({ className = '', size = 32, showText = true, lang = 'ar', text, forceDefault = false }) {
+  const { brandName, logoUrl, DEFAULT_BRAND_NAME } = useSystemBranding();
+  const [imgError, setImgError] = useState(false);
+
+  const isSuperAdmin = window.location.pathname.startsWith('/superadmin') || forceDefault;
+  const activeLogoUrl = isSuperAdmin ? null : logoUrl;
+  const activeBrandName = isSuperAdmin ? DEFAULT_BRAND_NAME : (text || brandName || DEFAULT_BRAND_NAME);
+
+  const renderDefaultSvg = () => (
+    <svg
         width={size}
         height={size}
         viewBox="0 0 40 40"
@@ -49,14 +56,24 @@ export default function Logo({ className = '', size = 32, showText = true, lang 
         />
         <circle cx="20" cy="20.5" r="2" fill="#FFF" />
       </svg>
+  );
+
+  return (
+    <div className={`flex-center gap-8 ${className}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+      {activeLogoUrl && !imgError ? (
+        <img 
+          src={activeLogoUrl} 
+          alt={activeBrandName} 
+          style={{ width: size, height: size, objectFit: 'contain', flexShrink: 0 }} 
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        renderDefaultSvg()
+      )}
+      
       {showText && (
-        <span style={{ fontSize: size * 0.5, fontWeight: 800, color: 'var(--text, #FFF)', letterSpacing: '-0.4px' }}>
-          {text || (
-            <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-              <span>{lang === 'en' ? 'AI' : 'ذكاء'}</span>
-              <span style={{ color: 'var(--accent, #3B82F6)' }}>{lang === 'en' ? 'Biz' : 'الأعمال'}</span>
-            </span>
-          )}
+        <span style={{ fontSize: size * 0.5, fontWeight: 800, color: 'var(--text, #FFF)', letterSpacing: '-0.4px', whiteSpace: 'nowrap' }}>
+          {activeBrandName}
         </span>
       )}
     </div>

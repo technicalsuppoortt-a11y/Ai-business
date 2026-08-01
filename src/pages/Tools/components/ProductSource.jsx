@@ -173,7 +173,8 @@ export default function ProductSource({ stepNumber }) {
   const [searchQuery, setSearchQuery] = useState('');
 
   // --- STATE PERSISTENCE & HYDRATION ---
-  const { cached, isLoadedFromCloud, saveResult } = useToolCache('product-source');
+  const { cachedData: cached, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'product-source');
+  const isLoadedFromCloud = !isLoadingCache;
   const hydratedRef = useRef(false);
 
   useEffect(() => {

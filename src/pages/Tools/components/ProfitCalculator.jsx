@@ -124,7 +124,8 @@ export default function ProfitCalculator({ stepNumber }) {
   const [isNewlyGenerated, setIsNewlyGenerated] = useState(false);
 
   // --- STATE PERSISTENCE & HYDRATION ---
-  const { cached, isLoadedFromCloud, saveResult } = useToolCache('profit-calculator');
+  const { cachedData: cached, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'profit-calculator');
+  const isLoadedFromCloud = !isLoadingCache;
   const hydratedRef = useRef(false);
 
   useEffect(() => {
@@ -478,6 +479,28 @@ export default function ProfitCalculator({ stepNumber }) {
       ],
     },
   ];
+
+  
+  if (isLoadingCache || !hydratedRef.current) {
+    return (
+      <ToolDashboardLayout
+        id="profit-calculator"
+        title={
+        lang === "en"
+          ? "3D Financial Control Studio"
+          : "منصة التحكم والاستوديو المالي الرقمي"
+      }
+        subtitle={lang === 'en' ? 'Loading saved workspace...' : 'جاري تحميل مساحة العمل...'}
+        stepNumber={stepNumber}
+        accentColor="#3B82F6"
+      >
+        <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
+          {/* Sleek Skeleton Loader */}
+          <div style={{ height: "400px", background: "rgba(255,255,255,0.02)", borderRadius: "20px", animation: "pulse 1.5s infinite" }}></div>
+        </div>
+      </ToolDashboardLayout>
+    );
+  }
 
   return (
     <ToolDashboardLayout

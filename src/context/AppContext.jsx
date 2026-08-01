@@ -52,7 +52,8 @@ function appReducer(state, action) {
     case 'LOGIN':
       return { ...state, user: { ...state.user, ...action.payload, loggedIn: true } };
     case 'LOGOUT':
-      return { ...initialState };
+      ['app_user', 'app_steps', 'app_projects', 'app_tool_results', 'app_api_key'].forEach(k => localStorage.removeItem(k));
+      return { ...initialState, isLoadedFromCloud: true };
     case 'COMPLETE_STEP': {
       const stepId = action.step || action.payload;
       const steps = state.completedSteps.includes(stepId)
@@ -89,7 +90,7 @@ function appReducer(state, action) {
    PROVIDER
    ============================================= */
 export function AppProvider({ children }) {
-  const { userData } = useAuth();
+  const { userData, loadingUser } = useAuth();
 
   const [state, dispatch] = useReducer(appReducer, initialState, (init) => {
     // Initial load from localStorage (fallback)
@@ -118,7 +119,15 @@ export function AppProvider({ children }) {
 
   // Load from Firestore when user logs in
   useEffect(() => {
-    if (!userData?.uid) return;
+    // Wait for auth to fully initialize before deciding to LOGOUT.
+    // If loadingUser is still true, userData is null only because Firebase
+    // hasn't resolved the session yet — NOT because the user is logged out.
+    if (loadingUser) return;
+
+    if (!userData?.uid) {
+      dispatch({ type: 'LOGOUT' });
+      return;
+    }
 
     const loadFromFirestore = async () => {
       try {
@@ -142,7 +151,7 @@ export function AppProvider({ children }) {
     };
 
     loadFromFirestore();
-  }, [userData?.uid]);
+  }, [userData?.uid, loadingUser]);
 
   // Save to Firestore on every state change
   useEffect(() => {

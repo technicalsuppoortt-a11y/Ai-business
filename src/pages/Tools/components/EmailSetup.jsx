@@ -85,10 +85,13 @@ import {
 import "./EmailSetup.css";
 
 import useToolCache from "../../../hooks/useToolCache";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function EmailSetup({ stepNumber }) {
-  const { cached, isCached, isLoadedFromCloud, saveResult } = useToolCache('email-setup');
   const { state } = useApp();
+  const { userData } = useAuth();
+  const { cachedData: cached, isCached, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'email-setup');
+  const isLoadedFromCloud = !isLoadingCache;
   const toast = useToast();
   const lang = state.language || "ar";
   const isRtl = lang === "ar";
@@ -897,6 +900,28 @@ export default function EmailSetup({ stepNumber }) {
       value: `v=DMARC1; p=none; rua=mailto:${supportEmail || "admin@" + (domainName || "yourdomain.com")}`,
     },
   ];
+
+  
+  // eslint-disable-next-line react-hooks/refs
+  if (isLoadingCache || !hydratedRef.current) {
+    return (
+      <ToolDashboardLayout
+        id="email-setup"
+        title={
+        lang === "en"
+          ? "Email Marketing & CRM Automation "
+          : "الإيميلات والتسويق عبر البريد "
+      }
+        subtitle={lang === 'en' ? 'Loading saved workspace...' : 'جاري تحميل مساحة العمل...'}
+        stepNumber={stepNumber}
+        accentColor="#6366F1"
+      >
+        <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
+          <div style={{ height: "400px", background: "rgba(255,255,255,0.02)", borderRadius: "20px", animation: "pulse 1.5s infinite" }}></div>
+        </div>
+      </ToolDashboardLayout>
+    );
+  }
 
   return (
     <ToolDashboardLayout

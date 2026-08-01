@@ -10,6 +10,7 @@ import SettingsPage from './pages/Settings/SettingsPage';
 import ToolPage from './pages/Tools/ToolPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 import TutorialPage from './pages/Tutorial/TutorialPage';
+import TermsPage from './pages/Terms/TermsPage';
 
 import ResetPasswordPage from './pages/Auth/ResetPasswordPage';
 
@@ -90,6 +91,7 @@ export default function App() {
     <Routes>
       {/* Public */}
       <Route path="/" element={<LandingPage />} />
+      <Route path="/terms" element={<TermsPage />} />
 
       {/* === LOGIN PAGES (independent) === */}
       <Route path="/auth" element={<AuthPage portal="user" redirectTo="/dashboard/onboarding" />} />

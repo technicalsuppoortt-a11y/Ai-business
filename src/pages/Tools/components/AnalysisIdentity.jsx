@@ -566,9 +566,9 @@ function CustomDropdown({ value, onChange, options, placeholder }) {
 }
 
 export default function AnalysisIdentity() {
-  const { cached, isCached, isLoadedFromCloud, saveResult } = useToolCache("analysis-identity");
   const { state, dispatch } = useApp();
   const { userData } = useAuth();
+  const { cachedData: cached, isCached, isLoadingCache, saveResult } = useToolCache(userData?.uid, "analysis-identity");
   const toast = useToast();
 
   const lang = state.language || "ar";
@@ -826,7 +826,7 @@ export default function AnalysisIdentity() {
 
   // 1. Hydrate state asynchronously when cache loads
   useEffect(() => {
-    if (isLoadedFromCloud && !hydratedRef.current) {
+    if (!isLoadingCache && !hydratedRef.current) {
       hydratedRef.current = true;
       if (cached) {
         if (cached.microNicheMode !== undefined) setMicroNicheMode(cached.microNicheMode);
@@ -894,11 +894,11 @@ export default function AnalysisIdentity() {
       }
       console.log("🔥 CACHE LOADED:", cached);
     }
-  }, [isLoadedFromCloud, cached]);
+  }, [isLoadingCache, cached]);
 
   // 2. Safe Auto-save (only runs after hydration)
   useEffect(() => {
-    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    if (isLoadingCache || !hydratedRef.current) return;
     
     const timeout = setTimeout(() => {
       const payloadToSave = { 
@@ -909,7 +909,7 @@ export default function AnalysisIdentity() {
       saveResult(payloadToSave);
     }, 1000);
     return () => clearTimeout(timeout);
-  }, [isLoadedFromCloud, microNicheMode, analysisMode, activeTab, niches, loadingNiches, selectedNiche, selectedMicroNiche, customNicheInput, microSearchQuery, microFilterBadge, showAllMicroNiches, isAnalyzingNiche, targetCountry, isChangingMarket, isChangingCategory, isGlobalBenchmark, microNicheActiveTab, liveAiMicroIdeas, isFetchingLiveNiches, nicheAnalysis, nicheAnalysisOption, aiData, namingCategory, dynamicStyles, selectedStyle, selectedCatalogs, pinnedNames, nameLanguage, isGeneratingNames, generatedNames, customNameInput, primaryColor, secondaryColor, accentColor, logoPreview, isAnalyzingColors, colorAnalysis, mockupView, brandArchetype, headingFont, headingColor, bodyTextColor, buttonBgColor, buttonTextColor, buttonBorderColor, buttonRadius, buttonHoverBg, heroBgColor, cardBgColor, cardBorderColor, customCssCode, appliedCssCode]);
+  }, [isLoadingCache, microNicheMode, analysisMode, activeTab, niches, loadingNiches, selectedNiche, selectedMicroNiche, customNicheInput, microSearchQuery, microFilterBadge, showAllMicroNiches, isAnalyzingNiche, targetCountry, isChangingMarket, isChangingCategory, isGlobalBenchmark, microNicheActiveTab, liveAiMicroIdeas, isFetchingLiveNiches, nicheAnalysis, nicheAnalysisOption, aiData, namingCategory, dynamicStyles, selectedStyle, selectedCatalogs, pinnedNames, nameLanguage, isGeneratingNames, generatedNames, customNameInput, primaryColor, secondaryColor, accentColor, logoPreview, isAnalyzingColors, colorAnalysis, mockupView, brandArchetype, headingFont, headingColor, bodyTextColor, buttonBgColor, buttonTextColor, buttonBorderColor, buttonRadius, buttonHoverBg, heroBgColor, cardBgColor, cardBorderColor, customCssCode, appliedCssCode]);
 ;
 
   useEffect(() => {
@@ -1557,6 +1557,7 @@ export default function AnalysisIdentity() {
   const handleAnalyzeColors = async () => {
     setIsAnalyzingColors(true);
     setColorAnalysis(null);
+    let finalAnalysis = null;
     try {
       if (analysisMode === "live") {
         const liveData = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
@@ -1567,7 +1568,7 @@ export default function AnalysisIdentity() {
         });
         if (liveData) {
           setIsNewlyGeneratedColors(true);
-            setColorAnalysis({
+          finalAnalysis = {
             psychology_ar:
               liveData.psychology ||
               "تحليل مباشر بالذكاء الاصطناعي للهوية البصرية.",
@@ -1587,7 +1588,8 @@ export default function AnalysisIdentity() {
             dos_and_donts_en: Array.isArray(liveData.usage_tips)
               ? liveData.usage_tips.join("\n")
               : liveData.usage_tips || "",
-          });
+          };
+          setColorAnalysis(finalAnalysis);
         }
       } else {
         await new Promise((r) => setTimeout(r, 600));
@@ -1598,10 +1600,11 @@ export default function AnalysisIdentity() {
           activePreset.name.replace(" ", "").toLowerCase(),
         );
         if (dbResult) {
-          setColorAnalysis(dbResult);
-            setIsNewlyGeneratedColors(true);
+          finalAnalysis = dbResult;
+          setColorAnalysis(finalAnalysis);
+          setIsNewlyGeneratedColors(true);
         } else {
-          setColorAnalysis({
+          finalAnalysis = {
             psychology_ar:
               "هذا التناسق اللوني يعطي طابعاً احترافياً وموثوقاً لمشروعك، ويزيد من إحساس الالتزام والجودة العالية.",
             psychology_en:
@@ -1624,7 +1627,8 @@ export default function AnalysisIdentity() {
               "افعل: استخدم اللون الأساسي في أزرار الدعوة للإجراء (CTA).\nلا تفعل: تجنب دمج نصوص باهتة فوق اللون الأساسي للحفاظ على التباين.",
             dos_and_donts_en:
               "Do: Use the primary color for Call-to-Action buttons.\nDon't: Avoid low-contrast text on primary background.",
-          });
+          };
+          setColorAnalysis(finalAnalysis);
         }
       }
       dispatch({ type: "COMPLETE_STEP", step: "visual-identity" });
@@ -1641,7 +1645,7 @@ export default function AnalysisIdentity() {
       setIsAnalyzingColors(false);
       // EXPLICIT SAVE FOR VISUAL IDENTITY
       setTimeout(() => {
-        saveResult({ ...cached, colorAnalysis: apiResponse, primaryColor: newPrimary, secondaryColor: newSecondary, accentColor: newAccent, headingFont: newFont, bodyTextColor: newBodyColor, heroBgColor: newHeroBg, buttonBgColor: newPrimary, cardBgColor: newCardBg, cardBorderColor: newAccent });
+        saveResult({ ...cached, colorAnalysis: finalAnalysis, primaryColor: newPrimary, secondaryColor: newSecondary, accentColor: newAccent, headingFont: newFont, bodyTextColor: newBodyColor, heroBgColor: newHeroBg, buttonBgColor: newPrimary, cardBgColor: newCardBg, cardBorderColor: newAccent });
       }, 100);
     }
   };

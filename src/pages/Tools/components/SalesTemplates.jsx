@@ -237,7 +237,8 @@ export default function SalesTemplates({ stepNumber }) {
 
 
   // --- STATE PERSISTENCE & HYDRATION ---
-  const { cached, isLoadedFromCloud, saveResult } = useToolCache('sales-templates');
+  const { cachedData: cached, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'sales-templates');
+  const isLoadedFromCloud = !isLoadingCache;
   const hydratedRef = useRef(false);
 
   useEffect(() => {

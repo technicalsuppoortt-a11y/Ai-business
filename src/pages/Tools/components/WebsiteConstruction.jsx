@@ -63,37 +63,6 @@ function CustomGlassSelect({ options, value, onChange }) {
 
   const selectedOpt = options.find((o) => o.value === value) || options[0];
 
-  
-  
-
-  
-  const hydratedRef = useRef(false);
-
-  // 1. Hydrate state asynchronously when cache loads
-  useEffect(() => {
-    if (isLoadedFromCloud && !hydratedRef.current) {
-      hydratedRef.current = true;
-      if (cached) {
-        if (cached.currentStep !== undefined) setCurrentStep(cached.currentStep);
-        if (cached.analysisMode !== undefined) setAnalysisMode(cached.analysisMode);
-        if (cached.method !== undefined) setMethod(cached.method);
-        if (cached.storeConfig !== undefined) setStoreConfig(cached.storeConfig);
-        if (cached.generatedCode !== undefined) setGeneratedCode(cached.generatedCode);
-        if (cached.domainMatrix !== undefined) setDomainMatrix(cached.domainMatrix);
-      }
-    }
-  }, [isLoadedFromCloud, cached]);
-
-  // 2. Safe Auto-save (only runs after hydration)
-  useEffect(() => {
-    if (!isLoadedFromCloud || !hydratedRef.current) return;
-    
-    const timeout = setTimeout(() => {
-      saveResult({ currentStep, analysisMode, method, storeConfig, generatedCode, domainMatrix });
-    }, 1000);
-    return () => clearTimeout(timeout);
-  }, [isLoadedFromCloud, currentStep, analysisMode, method, storeConfig, generatedCode, domainMatrix]);
-
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -196,9 +165,17 @@ function CustomGlassSelect({ options, value, onChange }) {
 import useToolCache from "../../../hooks/useToolCache";
 
 export default function WebsiteConstruction({ stepNumber }) {
-  const { cached, isCached, isLoadedFromCloud, saveResult } = useToolCache('website-construction');
   const { state, dispatch } = useApp();
   const { userData } = useAuth();
+  const { cachedData: cached, isCached, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'website-construction');
+  const isLoadedFromCloud = !isLoadingCache;
+
+
+  
+  
+
+  
+
   const toastContext = useToast();
   const toast =
     typeof toastContext === "function"
@@ -390,6 +367,37 @@ export default function WebsiteConstruction({ stepNumber }) {
   // -- Step 3: Infrastructure State --
   const [isGeneratingDomain, setIsGeneratingDomain] = useState(false);
   const [domainMatrix, setDomainMatrix] = useState(cached?.domainMatrix ?? null);
+
+  const hydratedRef = useRef(false);
+
+  // 1. Hydrate state asynchronously when cache loads
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        const data = cached.inputs ? { ...cached.inputs, ...cached.result } : cached;
+        if (data.currentStep !== undefined) setCurrentStep(data.currentStep);
+        if (data.analysisMode !== undefined) setAnalysisMode(data.analysisMode);
+        if (data.method !== undefined) setMethod(data.method);
+        if (data.storeConfig !== undefined) setStoreConfig(data.storeConfig);
+        if (data.generatedCode !== undefined) setGeneratedCode(data.generatedCode);
+        if (data.domainMatrix !== undefined) setDomainMatrix(data.domainMatrix);
+      }
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  // 2. Safe Auto-save (only runs after hydration)
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    
+    const timeout = setTimeout(() => {
+      saveResult({ 
+        inputs: { currentStep, analysisMode, method, storeConfig }, 
+        result: { generatedCode, domainMatrix } 
+      });
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [isLoadedFromCloud, currentStep, analysisMode, method, storeConfig, generatedCode, domainMatrix]);
 
   useEffect(() => {
     const loadGallery = async () => {
@@ -702,7 +710,10 @@ export default function WebsiteConstruction({ stepNumber }) {
         });
         if (typeof liveResult === "object" && liveResult.classic) {
           setDomainMatrix(liveResult);
-          saveResult({ currentStep, analysisMode, method, storeConfig, generatedCode, domainMatrix: liveResult });
+          saveResult({
+              inputs: { currentStep, analysisMode, method, storeConfig },
+              result: { generatedCode, domainMatrix: liveResult  }
+            });
         } else {
           setDomainMatrix({
             error:
@@ -716,6 +727,10 @@ export default function WebsiteConstruction({ stepNumber }) {
         const dbResult = await getDomainIdeasTemplate(state.niche || "general");
         if (dbResult && dbResult.matrix) {
           setDomainMatrix(dbResult.matrix);
+          saveResult({
+            inputs: { currentStep, analysisMode, method, storeConfig },
+            result: { generatedCode, domainMatrix: dbResult.matrix }
+          });
         } else {
           setDomainMatrix({
             error:
@@ -2504,6 +2519,28 @@ export default function WebsiteConstruction({ stepNumber }) {
       </AnimatePresence>
     </motion.div>
   );
+
+  
+  // eslint-disable-next-line react-hooks/refs
+  if (isLoadingCache || !hydratedRef.current) {
+    return (
+      <ToolDashboardLayout
+        id="website-construction"
+        title={
+        lang === "en"
+          ? "Website Construction & Setup Studio"
+          : "منصة بناء وتجهيز الموقع المتكاملة"
+      }
+        subtitle={lang === 'en' ? 'Loading saved workspace...' : 'جاري تحميل مساحة العمل...'}
+        stepNumber={stepNumber}
+        accentColor="#6366F1"
+      >
+        <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
+          <div style={{ height: "400px", background: "rgba(255,255,255,0.02)", borderRadius: "20px", animation: "pulse 1.5s infinite" }}></div>
+        </div>
+      </ToolDashboardLayout>
+    );
+  }
 
   return (
     <ToolDashboardLayout

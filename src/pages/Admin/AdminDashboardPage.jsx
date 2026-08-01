@@ -1305,8 +1305,8 @@ export default function AdminDashboardPage() {
         setIsPaddleValidated(true);
         toast(
           state.language === "en"
-            ? "Paddle keys validated successfully! ✓"
-            : "تم التحقق من مفاتيح Paddle بنجاح! ✓",
+            ?"Paddle keys validated successfully!"
+            :"تم التحقق من مفاتيح Paddle بنجاح!",
           "success",
         );
       } else {
@@ -1357,8 +1357,8 @@ export default function AdminDashboardPage() {
         setPlans(data.plans);
         toast(
           state.language === "en"
-            ? "Successfully synchronized plans with Stripe! ✓"
-            : "تمت مزامنة الباقات مع Stripe بنجاح! ✓",
+            ?"Successfully synchronized plans with Stripe!"
+            :"تمت مزامنة الباقات مع Stripe بنجاح!",
           "success",
         );
       } else {
@@ -1499,7 +1499,7 @@ export default function AdminDashboardPage() {
       toast(
         state.language === "en"
           ? "Brand Settings updated successfully!"
-          : "تم تحديث إعدادات البراند بنجاح! ✓",
+          :"تم تحديث إعدادات البراند بنجاح!",
         "success"
       );
     } catch (err) {
@@ -1608,7 +1608,7 @@ export default function AdminDashboardPage() {
       );
 
       toast(
-        "تم الموافقة على الدفع وتحديث اشتراك المستخدم بنجاح! ✅",
+"تم الموافقة على الدفع وتحديث اشتراك المستخدم بنجاح!",
         "success",
       );
       setPaymentToApprove(null);
@@ -1694,7 +1694,7 @@ export default function AdminDashboardPage() {
       });
 
       toast(
-        `تم إنشاء ${userRole === "admin" ? "الأدمن" : "المستخدم"} بنجاح! ✅`,
+`تم إنشاء ${userRole ==="admin" ?"الأدمن" :"المستخدم"} بنجاح!`,
         "success",
       );
       setUserName("");
@@ -1846,7 +1846,7 @@ export default function AdminDashboardPage() {
         updateData,
         { merge: true },
       );
-      toast("تم التحديث بنجاح ✅", "success");
+      toast("تم التحديث بنجاح","success");
       cancelEdit();
       await loadUsers();
     } catch (err) {
@@ -1869,8 +1869,8 @@ export default function AdminDashboardPage() {
       await deleteDoc(doc(db, "users", userToDelete.id));
       toast(
         state.language === "en"
-          ? "User deleted successfully ✅"
-          : "تم حذف المستخدم بنجاح ✅",
+          ?"User deleted successfully"
+          :"تم حذف المستخدم بنجاح",
         "success",
       );
       setUserToDelete(null);
@@ -1931,8 +1931,8 @@ export default function AdminDashboardPage() {
     document.body.removeChild(link);
     toast(
       state.language === "en"
-        ? "CSV exported successfully 📥"
-        : "تم تصدير ملف CSV بنجاح 📥",
+        ?"CSV exported successfully"
+        :"تم تصدير ملف CSV بنجاح",
       "success",
     );
   };
@@ -1942,8 +1942,8 @@ export default function AdminDashboardPage() {
       await logout("admin");
       toast(
         state.language === "en"
-          ? "Logged out successfully 👋"
-          : "تم تسجيل الخروج بنجاح 👋",
+          ?"Logged out successfully"
+          :"تم تسجيل الخروج بنجاح",
         "success",
       );
       navigate("/admin/login");
@@ -9741,7 +9741,7 @@ export default function AdminDashboardPage() {
                               toast(
                                 state.language === "en"
                                   ? "Paddle keys successfully validated!"
-                                  : "تم التحقق من صحة مفاتيح Paddle بنجاح! ✅",
+                                  :"تم التحقق من صحة مفاتيح Paddle بنجاح!",
                                 "success",
                               );
                             }, 1200);
@@ -12061,6 +12061,29 @@ export default function AdminDashboardPage() {
                       </div>
                     )}
 
+                    {!editingUser && (
+                      <div className="field">
+                        <label className="field-label">
+                          {state.language === "en" ? "Assign Plan" : "تخصيص باقة"}
+                        </label>
+                        <CustomSelect
+                          options={[
+                            {
+                              value: "free",
+                              label: state.language === "en" ? "Free Plan (20 credits)" : "باقة مجانية (20 رصيد)",
+                            },
+                            ...plans.map((p) => ({
+                              value: p.id.toString(),
+                              label: (state.language === "en" ? (p.name_en || p.name) : (p.name_ar || p.name)) + " (" + (p.creditsPerMonth || 0) + " " + (state.language === "en" ? "credits" : "رصيد") + ")",
+                            }))
+                          ]}
+                          value={userPlanId}
+                          onChange={setUserPlanId}
+                          disabled={creating}
+                        />
+                      </div>
+                    )}
+
                     <div className="field">
                       <label className="field-label">
                         {state.language === "en"
@@ -12868,8 +12891,8 @@ export default function AdminDashboardPage() {
                         setPlans(newPlans);
                         toast(
                           state.language === "en"
-                            ? "Plan updated successfully ✅"
-                            : "تم تحديث الباقة بنجاح ✅",
+                            ?"Plan updated successfully"
+                            :"تم تحديث الباقة بنجاح",
                           "success",
                         );
                       } else {
@@ -12892,8 +12915,8 @@ export default function AdminDashboardPage() {
                         setPlans(newPlans);
                         toast(
                           state.language === "en"
-                            ? "Plan added successfully ✅"
-                            : "تم إضافة الباقة بنجاح ✅",
+                            ?"Plan added successfully"
+                            :"تم إضافة الباقة بنجاح",
                           "success",
                         );
                       }

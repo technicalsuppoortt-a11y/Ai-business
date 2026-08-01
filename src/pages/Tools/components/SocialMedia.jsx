@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import useToolCache from "../../../hooks/useToolCache";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useApp } from '../../../context/AppContext';
@@ -122,7 +123,7 @@ import {
 import "./SocialMedia.css";
 
 // Typewriter Streaming Component for Live AI Outputs
-function TypewriterText({ text, speed = 12 }) {
+function TypewriterText({ text, speed = 12, bypass = false }) {
   const [displayedText, setDisplayedText] = useState("");
   const hasStreamedRef = useRef(false);
   const previousTextRef = useRef("");
@@ -140,8 +141,9 @@ function TypewriterText({ text, speed = 12 }) {
       previousTextRef.current = text;
     }
 
-    if (hasStreamedRef.current) {
+    if (hasStreamedRef.current || bypass) {
       setDisplayedText(text);
+      hasStreamedRef.current = true;
       return;
     }
 
@@ -158,7 +160,7 @@ function TypewriterText({ text, speed = 12 }) {
     }, speed);
 
     return () => clearInterval(timer);
-  }, [text, speed]);
+  }, [text, speed, bypass]);
 
   return <span>{displayedText}</span>;
 }
@@ -349,6 +351,7 @@ export default function SocialMedia({ stepNumber }) {
   // ═══════════════ TAB 1: SOCIAL MEDIA ARCHITECT STATE ═══════════════
   const [platformArchitect, setPlatformArchitect] = useState("instagram");
   const [goalArchitect, setGoalArchitect] = useState("awareness");
+  const [isNewlyGenerated, setIsNewlyGenerated] = useState(false);
   const [isGeneratingArchitect, setIsGeneratingArchitect] = useState(false);
   const [resultArchitect, setResultArchitect] = useState("");
   const [matrixData, setMatrixData] = useState(null);
@@ -515,6 +518,147 @@ export default function SocialMedia({ stepNumber }) {
   const [energyScore, setEnergyScore] = useState(85);
   const [selectedMood, setSelectedMood] = useState("good");
   const [weeklyPostsCount, setWeeklyPostsCount] = useState(8);
+
+
+  // --- STATE PERSISTENCE & HYDRATION ---
+  const { cached, isLoadedFromCloud, saveResult } = useToolCache('social-media-studio');
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        setIsNewlyGenerated(false); // Force bypass typing on load
+        
+        // Force all loading states to false
+        setIsGeneratingArchitect(false);
+        setIsGeneratingModal(false);
+        setIsGeneratingScript(false);
+        setIsGeneratingCaption(false);
+        setIsGeneratingRepurpose(false);
+        setIsGeneratingQa(false);
+        setIsGeneratingIdeas(false);
+        setIsGeneratingTrends(false);
+        setIsGeneratingAdaptation(false);
+
+        // Hydrate all other states
+        if (cached.activeTab !== undefined) setActiveTab(cached.activeTab);
+        if (cached.analysisMode !== undefined) setAnalysisMode(cached.analysisMode);
+        if (cached.platformArchitect !== undefined) setPlatformArchitect(cached.platformArchitect);
+        if (cached.goalArchitect !== undefined) setGoalArchitect(cached.goalArchitect);
+        if (cached.resultArchitect !== undefined) setResultArchitect(cached.resultArchitect);
+        
+        if (cached.activeSubTool !== undefined) setActiveSubTool(cached.activeSubTool);
+        if (cached.scriptTopic !== undefined) setScriptTopic(cached.scriptTopic);
+        if (cached.scriptPlatform !== undefined) setScriptPlatform(cached.scriptPlatform);
+        if (cached.scriptTone !== undefined) setScriptTone(cached.scriptTone);
+        if (cached.scriptHookStyle !== undefined) setScriptHookStyle(cached.scriptHookStyle);
+        if (cached.scriptResult !== undefined) setScriptResult(cached.scriptResult);
+        
+        if (cached.captionTopic !== undefined) setCaptionTopic(cached.captionTopic);
+        if (cached.captionTone !== undefined) setCaptionTone(cached.captionTone);
+        if (cached.captionHook !== undefined) setCaptionHook(cached.captionHook);
+        if (cached.captionResult !== undefined) setCaptionResult(cached.captionResult);
+        
+        if (cached.originalContent !== undefined) setOriginalContent(cached.originalContent);
+        if (cached.repurposeFormat !== undefined) setRepurposeFormat(cached.repurposeFormat);
+        if (cached.repurposeResult !== undefined) setRepurposeResult(cached.repurposeResult);
+        
+        if (cached.qaQuestion !== undefined) setQaQuestion(cached.qaQuestion);
+        if (cached.qaTone !== undefined) setQaTone(cached.qaTone);
+        if (cached.qaFormat !== undefined) setQaFormat(cached.qaFormat);
+        if (cached.qaResult !== undefined) setQaResult(cached.qaResult);
+        
+        if (cached.ideasResult !== undefined) setIdeasResult(cached.ideasResult);
+        if (cached.viralAdaptation !== undefined) setViralAdaptation(cached.viralAdaptation);
+        
+        if (cached.energyScore !== undefined) setEnergyScore(cached.energyScore);
+        if (cached.selectedMood !== undefined) setSelectedMood(cached.selectedMood);
+        if (cached.weeklyPostsCount !== undefined) setWeeklyPostsCount(cached.weeklyPostsCount);
+          
+          if (cached.nicheField !== undefined) setNicheField(cached.nicheField);
+          if (cached.savedIdeas !== undefined) setSavedIdeas(cached.savedIdeas);
+          if (cached.trendingHashtags !== undefined) setTrendingHashtags(cached.trendingHashtags);
+          if (cached.trendingAudios !== undefined) setTrendingAudios(cached.trendingAudios);
+          if (cached.selectedViralVideo !== undefined) setSelectedViralVideo(cached.selectedViralVideo);
+        }
+      }
+    }, [isLoadedFromCloud, cached]);
+
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    saveResult({
+      activeTab, analysisMode, platformArchitect, goalArchitect, resultArchitect,
+      activeSubTool, scriptTopic, scriptPlatform, scriptTone, scriptHookStyle, scriptResult,
+      captionTopic, captionTone, captionHook, captionResult,
+      originalContent, repurposeFormat, repurposeResult,
+      qaQuestion, qaTone, qaFormat, qaResult,
+      nicheField, ideasResult, viralAdaptation,
+      energyScore, selectedMood, weeklyPostsCount,
+      savedIdeas, trendingHashtags, trendingAudios, selectedViralVideo
+    });
+  }, [
+    isLoadedFromCloud, activeTab, analysisMode, platformArchitect, goalArchitect, resultArchitect,
+    activeSubTool, scriptTopic, scriptPlatform, scriptTone, scriptHookStyle, scriptResult,
+    captionTopic, captionTone, captionHook, captionResult,
+    originalContent, repurposeFormat, repurposeResult,
+    qaQuestion, qaTone, qaFormat, qaResult,
+    nicheField, ideasResult, viralAdaptation,
+    energyScore, selectedMood, weeklyPostsCount,
+    savedIdeas, trendingHashtags, trendingAudios, selectedViralVideo
+  ]);
+
+  const handleResetSession = () => {
+    setActiveTab("architect");
+    setAnalysisMode("fast");
+    setPlatformArchitect("instagram");
+    setGoalArchitect("awareness");
+    setResultArchitect("");
+    
+    setScriptTopic("");
+    setScriptResult("");
+    setCaptionTopic("");
+    setCaptionResult("");
+    setOriginalContent("");
+    setRepurposeResult("");
+    setQaQuestion("");
+    setQaResult("");
+    
+    setEnergyScore(85);
+    setSelectedMood("good");
+    setWeeklyPostsCount(8);
+    
+    setIsGeneratingArchitect(false);
+    setIsGeneratingScript(false);
+    setIsGeneratingCaption(false);
+    setIsGeneratingRepurpose(false);
+    setIsGeneratingQa(false);
+    
+    setTrendingHashtags([
+      {
+        tag: "#ترند_توضيحي",
+        category: "hot",
+        label: "نار نار",
+        growth: "+340%",
+      },
+      {
+        tag: "#ترند_صاعد",
+        category: "rising",
+        label: "صاعد بقوة",
+        growth: "+180%",
+      },
+    ]);
+    setTrendingAudios([
+      {
+        title: "Cyber Pulse Ambient Beat",
+        creator: "Trend Beats",
+        uses: "45.2K",
+      },
+    ]);
+    
+    saveResult(null);
+  };
+  // -------------------------------------
 
   const subTools = [
     {
@@ -707,6 +851,7 @@ export default function SocialMedia({ stepNumber }) {
     }
 
     setIsGeneratingModal(true);
+    setIsNewlyGenerated(true);
     setModalAiResult("");
 
     try {
@@ -762,6 +907,7 @@ export default function SocialMedia({ stepNumber }) {
   // Tab 1 Architect Handler with Firebase persistence
   const handleGenerateArchitect = async () => {
     setIsGeneratingArchitect(true);
+    setIsNewlyGenerated(true);
     setResultArchitect("");
 
     try {
@@ -834,6 +980,7 @@ export default function SocialMedia({ stepNumber }) {
       return;
     }
     setIsGeneratingScript(true);
+    setIsNewlyGenerated(true);
     setScriptResult("");
 
     try {
@@ -905,6 +1052,7 @@ export default function SocialMedia({ stepNumber }) {
       return;
     }
     setIsGeneratingCaption(true);
+    setIsNewlyGenerated(true);
     setCaptionResult("");
 
     try {
@@ -964,6 +1112,7 @@ export default function SocialMedia({ stepNumber }) {
       return;
     }
     setIsGeneratingRepurpose(true);
+    setIsNewlyGenerated(true);
     setRepurposeResult("");
 
     try {
@@ -1021,6 +1170,7 @@ export default function SocialMedia({ stepNumber }) {
       return;
     }
     setIsGeneratingQa(true);
+    setIsNewlyGenerated(true);
     setQaResult("");
 
     try {
@@ -1077,6 +1227,7 @@ export default function SocialMedia({ stepNumber }) {
   // 5. Idea Lab Handler (Strictly Bilingual EN/AR & Clean Structured Card Parsing)
   const handleGenerateIdeas = async () => {
     setIsGeneratingIdeas(true);
+    setIsNewlyGenerated(true);
     try {
       let newIdeas = [];
       if (analysisMode === "live") {
@@ -1211,6 +1362,7 @@ export default function SocialMedia({ stepNumber }) {
   // 6. Trends Generator Handler (With Dual Mode Live AI / Fast & Firebase Save)
   const handleGenerateTrends = async () => {
     setIsGeneratingTrends(true);
+    setIsNewlyGenerated(true);
     try {
       let hashtags = [];
       let audios = [];
@@ -1315,6 +1467,7 @@ export default function SocialMedia({ stepNumber }) {
   // 7. Viral Video Adaptation Handler (With Live AI & Firebase Persistence)
   const handleAdaptViralVideo = async (videoTitle) => {
     setIsGeneratingAdaptation(true);
+    setIsNewlyGenerated(true);
     setViralAdaptation("");
     try {
       let res = "";
@@ -1496,9 +1649,9 @@ export default function SocialMedia({ stepNumber }) {
                   </h4>
                 </div>
 
-                <div className="sm-showcase-content">
+                <div className="sm-showcase-content pcc-custom-scroll ai-output-scroll" style={{ maxHeight: "500px", overflowY: "auto" }}>
                   {analysisMode === "live" ? (
-                    <TypewriterText text={resultArchitect} speed={10} />
+                    <TypewriterText text={resultArchitect} speed={10} bypass={!isNewlyGenerated} />
                   ) : (
                     resultArchitect.split("\n").map((line, i) => (
                       <p key={i} style={{ margin: "0 0 6px 0" }}>
@@ -1556,12 +1709,29 @@ export default function SocialMedia({ stepNumber }) {
                   </h4>
                 </div>
 
-                <AnalysisModeSelector
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <AnalysisModeSelector
                   mode={analysisMode}
                   onChange={setAnalysisMode}
                   lang={lang}
                   accentColor="#3B82F6"
                 />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setViralAdaptation("");
+                        setSelectedViralVideo(trendingVideosList[0]);
+                        saveResult(null);
+                      }}
+                      className="sm-dock-btn"
+                      style={{
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        color: '#EF4444',
+                        border: '1px solid rgba(239, 68, 68, 0.2)',
+                        boxShadow: 'none', width: '36px', height: '36px', padding: '0', display: 'flex', justifyContent: 'center', alignItems: 'center' }} title={lang === 'en' ? 'Reset' : 'إعادة ضبط'}>
+                      <RotateCcw size={15} />
+                    </button>
+                  </div>
 
                 <div className="pcc-input-group" style={{ marginTop: "20px" }}>
                   <label className="pcc-label">
@@ -1782,9 +1952,9 @@ export default function SocialMedia({ stepNumber }) {
                         </span>
                       </h4>
                     </div>
-                    <div className="sm-showcase-content">
+                    <div className="sm-showcase-content pcc-custom-scroll ai-output-scroll" style={{ maxHeight: "500px", overflowY: "auto" }}>
                       {analysisMode === "live" ? (
-                        <TypewriterText text={scriptResult} speed={10} />
+                        <TypewriterText text={scriptResult} speed={10} bypass={!isNewlyGenerated} />
                       ) : (
                         scriptResult
                       )}
@@ -2032,7 +2202,29 @@ export default function SocialMedia({ stepNumber }) {
                       </div>
                     </div>
 
-                    <button
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setScriptTopic("");
+                          setScriptPlatform("reel");
+                          setScriptTone("enthusiastic");
+                          setScriptHookStyle("question");
+                          setScriptResult("");
+                          saveResult(null);
+                        }}
+                        className="sm-deck-btn"
+                        style={{
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          color: '#EF4444',
+                          border: '1px solid rgba(239, 68, 68, 0.2)',
+                          boxShadow: 'none',
+                          width: '48px', padding: '0', display: 'flex', justifyContent: 'center', alignItems: 'center' 
+                        }}
+                       title={lang === 'en' ? 'Reset' : 'إعادة ضبط'}>
+                        <RotateCcw size={18} />
+                      </button>
+                      <button
                       type="button"
                       onClick={handleGenerateScript}
                       className="sm-deck-btn"
@@ -2044,6 +2236,7 @@ export default function SocialMedia({ stepNumber }) {
                           : "توليد سكريبت الفيديو الاحترافي"}
                       </span>
                     </button>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -2085,9 +2278,9 @@ export default function SocialMedia({ stepNumber }) {
                         </span>
                       </h4>
                     </div>
-                    <div className="sm-showcase-content">
+                    <div className="sm-showcase-content pcc-custom-scroll ai-output-scroll" style={{ maxHeight: "500px", overflowY: "auto" }}>
                       {analysisMode === "live" ? (
-                        <TypewriterText text={captionResult} speed={10} />
+                        <TypewriterText text={captionResult} speed={10} bypass={!isNewlyGenerated} />
                       ) : (
                         captionResult
                       )}
@@ -2253,7 +2446,28 @@ export default function SocialMedia({ stepNumber }) {
                         ))}
                       </div>
                     </div>
-                    <button
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCaptionTopic("");
+                          setCaptionTone("educational");
+                          setCaptionHook("stat");
+                          setCaptionResult("");
+                          saveResult(null);
+                        }}
+                        className="sm-deck-btn"
+                        style={{
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          color: '#EF4444',
+                          border: '1px solid rgba(239, 68, 68, 0.2)',
+                          boxShadow: 'none',
+                          width: '48px', padding: '0', display: 'flex', justifyContent: 'center', alignItems: 'center' 
+                        }}
+                       title={lang === 'en' ? 'Reset' : 'إعادة ضبط'}>
+                        <RotateCcw size={18} />
+                      </button>
+                      <button
                       type="button"
                       onClick={handleGenerateCaption}
                       className="sm-deck-btn"
@@ -2265,6 +2479,7 @@ export default function SocialMedia({ stepNumber }) {
                           : "توليد الكابشن الآن"}
                       </span>
                     </button>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -2306,9 +2521,9 @@ export default function SocialMedia({ stepNumber }) {
                         </span>
                       </h4>
                     </div>
-                    <div className="sm-showcase-content">
+                    <div className="sm-showcase-content pcc-custom-scroll ai-output-scroll" style={{ maxHeight: "500px", overflowY: "auto" }}>
                       {analysisMode === "live" ? (
-                        <TypewriterText text={repurposeResult} speed={10} />
+                        <TypewriterText text={repurposeResult} speed={10} bypass={!isNewlyGenerated} />
                       ) : (
                         repurposeResult
                       )}
@@ -2403,7 +2618,27 @@ export default function SocialMedia({ stepNumber }) {
                         icon={Repeat}
                       />
                     </div>
-                    <button
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOriginalContent("");
+                          setRepurposeFormat("carousel");
+                          setRepurposeResult("");
+                          saveResult(null);
+                        }}
+                        className="sm-deck-btn"
+                        style={{
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          color: '#EF4444',
+                          border: '1px solid rgba(239, 68, 68, 0.2)',
+                          boxShadow: 'none',
+                          width: '48px', padding: '0', display: 'flex', justifyContent: 'center', alignItems: 'center' 
+                        }}
+                       title={lang === 'en' ? 'Reset' : 'إعادة ضبط'}>
+                        <RotateCcw size={18} />
+                      </button>
+                      <button
                       type="button"
                       onClick={handleGenerateRepurpose}
                       className="sm-deck-btn"
@@ -2415,6 +2650,7 @@ export default function SocialMedia({ stepNumber }) {
                           : "تحويل المحتوى الآن"}
                       </span>
                     </button>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -2459,9 +2695,9 @@ export default function SocialMedia({ stepNumber }) {
                         </span>
                       </h4>
                     </div>
-                    <div className="sm-showcase-content">
+                    <div className="sm-showcase-content pcc-custom-scroll ai-output-scroll" style={{ maxHeight: "500px", overflowY: "auto" }}>
                       {analysisMode === "live" ? (
-                        <TypewriterText text={qaResult} speed={10} />
+                        <TypewriterText text={qaResult} speed={10} bypass={!isNewlyGenerated} />
                       ) : (
                         qaResult
                       )}
@@ -2595,7 +2831,28 @@ export default function SocialMedia({ stepNumber }) {
                         {lang === "en" ? "Guaranteed Results?" : "هل مضمون؟"}
                       </button>
                     </div>
-                    <button
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setQaQuestion("");
+                          setQaTone("friendly");
+                          setQaFormat("story");
+                          setQaResult("");
+                          saveResult(null);
+                        }}
+                        className="sm-deck-btn"
+                        style={{
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          color: '#EF4444',
+                          border: '1px solid rgba(239, 68, 68, 0.2)',
+                          boxShadow: 'none',
+                          width: '48px', padding: '0', display: 'flex', justifyContent: 'center', alignItems: 'center' 
+                        }}
+                       title={lang === 'en' ? 'Reset' : 'إعادة ضبط'}>
+                        <RotateCcw size={18} />
+                      </button>
+                      <button
                       type="button"
                       onClick={handleGenerateQa}
                       className="sm-deck-btn"
@@ -2607,6 +2864,7 @@ export default function SocialMedia({ stepNumber }) {
                           : "توليد الرد الاستراتيجي"}
                       </span>
                     </button>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -2628,9 +2886,68 @@ export default function SocialMedia({ stepNumber }) {
                         : "مختبر أفكار الفيرال"}
                     </span>
                   </h4>
-                  <button
-                    type="button"
-                    onClick={handleGenerateIdeas}
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSavedIdeas([]);
+                          setIdeasResult(
+                            lang === "en"
+                              ? [
+                                  {
+                                    id: 1,
+                                    text: `How to start a ${nicheField} business from scratch in 2026`,
+                                    tag: "Educational",
+                                    type: "Carousel",
+                                  },
+                                  {
+                                    id: 2,
+                                    text: `5 Fatal mistakes destroying your ad profit and how to solve them`,
+                                    tag: "Viral",
+                                    type: "Short Reel",
+                                  },
+                                  {
+                                    id: 3,
+                                    text: `Behind the scenes of managing and scaling live ad campaigns`,
+                                    tag: "Story",
+                                    type: "Behind Scenes",
+                                  },
+                                ]
+                              : [
+                                  {
+                                    id: 1,
+                                    text: `كيف تبدأ بيزنس ${nicheField} من الصفر في 2026`,
+                                    tag: "تعليمي",
+                                    type: "كاروسيل",
+                                  },
+                                  {
+                                    id: 2,
+                                    text: `5 أخطاء قاتلة تدمر أرباح إعلاناتك وكيف تحلها`,
+                                    tag: "فيرال",
+                                    type: "ريل قصير",
+                                  },
+                                  {
+                                    id: 3,
+                                    text: `كواليس إدارة وتوسيع حملات إعلانية شغالة حالياً`,
+                                    tag: "قصة",
+                                    type: "كواليس",
+                                  },
+                                ]
+                          );
+                          saveResult(null);
+                        }}
+                        className="sm-dock-btn"
+                        style={{
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          color: '#EF4444',
+                          border: '1px solid rgba(239, 68, 68, 0.2)',
+                          boxShadow: 'none', width: '40px', padding: '0', display: 'flex', justifyContent: 'center', alignItems: 'center' }} title={lang === 'en' ? 'Reset' : 'إعادة ضبط'}>
+                        <RotateCcw size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        style={{ flex: 1 }}
+                        onClick={handleGenerateIdeas}
                     disabled={isGeneratingIdeas}
                     className="sm-dock-btn primary"
                   >
@@ -2641,6 +2958,7 @@ export default function SocialMedia({ stepNumber }) {
                         : (lang === "en" ? "Generate New Ideas" : "توليد أفكار جديدة")}
                     </span>
                   </button>
+                    </div>
                 </div>
 
                 <AnalysisModeSelector
@@ -2667,7 +2985,7 @@ export default function SocialMedia({ stepNumber }) {
                     </h3>
                   </div>
                 ) : (
-                  <div className="sm-idea-cards-grid" style={{ marginTop: "20px" }}>
+                  <div className="sm-idea-cards-grid pcc-custom-scroll ai-output-scroll" style={{ marginTop: "20px", maxHeight: "500px", overflowY: "auto" }}>
                     {ideasResult.map((idea) => (
                       <div key={idea.id} className="sm-idea-pro-card">
                         <div className="sm-idea-card-header">
@@ -2785,9 +3103,45 @@ export default function SocialMedia({ stepNumber }) {
                         : "الترندات والأصوات الأكثر رواجاً"}
                     </span>
                   </h4>
-                  <button
-                    type="button"
-                    onClick={handleGenerateTrends}
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTrendingHashtags([
+                            {
+                              tag: "#ترند_توضيحي",
+                              category: "hot",
+                              label: "نار نار",
+                              growth: "+340%",
+                            },
+                            {
+                              tag: "#ترند_صاعد",
+                              category: "rising",
+                              label: "صاعد بقوة",
+                              growth: "+180%",
+                            },
+                          ]);
+                          setTrendingAudios([
+                            {
+                              title: "Cyber Pulse Ambient Beat",
+                              creator: "Trend Beats",
+                              uses: "45.2K",
+                            },
+                          ]);
+                          saveResult(null);
+                        }}
+                        className="sm-dock-btn"
+                        style={{
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          color: '#EF4444',
+                          border: '1px solid rgba(239, 68, 68, 0.2)',
+                          boxShadow: 'none', width: '40px', padding: '0', display: 'flex', justifyContent: 'center', alignItems: 'center' }} title={lang === 'en' ? 'Reset' : 'إعادة ضبط'}>
+                        <RotateCcw size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        style={{ flex: 1 }}
+                        onClick={handleGenerateTrends}
                     disabled={isGeneratingTrends}
                     className="sm-dock-btn primary"
                   >
@@ -2798,6 +3152,7 @@ export default function SocialMedia({ stepNumber }) {
                         : (lang === "en" ? "Refresh Trends" : "تحديث الترندات")}
                     </span>
                   </button>
+                    </div>
                 </div>
 
                 <AnalysisModeSelector
@@ -2992,7 +3347,7 @@ export default function SocialMedia({ stepNumber }) {
                 {/* ════════════ 2-COLUMN LOCALIZED STAGE ════════════ */}
                 <div className="sm-viral-grid-layout">
                   {/* 1. LEFT PANE: INSTANT AI ANALYSIS & EXECUTION BREAKDOWN STAGE */}
-                  <div className="sm-viral-pane execution-pane">
+                  <div className="sm-viral-pane execution-pane pcc-custom-scroll ai-output-scroll" style={{ maxHeight: "500px", overflowY: "auto" }}>
                     <div className="sm-viral-exec-header">
                       <Sparkles size={18} style={{ color: "#EF4444" }} />
                       <span>
@@ -3213,7 +3568,7 @@ export default function SocialMedia({ stepNumber }) {
                 animate={{ opacity: 1, y: 0 }}
                 className="sm-deck-canvas"
               >
-                <div className="sm-deck-header">
+                <div className="sm-deck-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h4 className="sm-deck-title">
                     <Activity size={20} style={{ color: "#10B981" }} />
                     <span>
@@ -3222,11 +3577,28 @@ export default function SocialMedia({ stepNumber }) {
                         : "حماية الإرهاق الإبداعي ومعدل الطاقة"}
                     </span>
                   </h4>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEnergyScore(85);
+                        setSelectedMood("good");
+                        setWeeklyPostsCount(8);
+                        saveResult(null);
+                      }}
+                      className="sm-dock-btn"
+                      style={{
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        color: '#EF4444',
+                        border: '1px solid rgba(239, 68, 68, 0.2)',
+                        boxShadow: 'none', width: '36px', height: '36px', padding: '0', display: 'flex', justifyContent: 'center', alignItems: 'center' }} title={lang === 'en' ? 'Reset' : 'إعادة ضبط'}>
+                      <RotateCcw size={15} />
+                    </button>
                 </div>
                 <div
-                  className="sm-energy-score-box"
-                  style={{
-                    background: "rgba(16,185,129,0.1)",
+                  className="sm-energy-score-box pcc-custom-scroll ai-output-scroll"
+                    style={{
+                      maxHeight: "500px", overflowY: "auto",
+                      background: "rgba(16,185,129,0.1)",
                     border: "1px solid rgba(16,185,129,0.3)",
                     borderRadius: "20px",
                     padding: "24px",
@@ -3299,7 +3671,7 @@ export default function SocialMedia({ stepNumber }) {
                     </button>
                   </div>
                 </div>
-                <div className="sm-showcase-content">
+                <div className="sm-showcase-content pcc-custom-scroll ai-output-scroll" style={{ maxHeight: "500px", overflowY: "auto" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
                     <Lightbulb size={18} style={{ color: "#F59E0B", flexShrink: 0 }} />
                     <strong style={{ color: "#F8FAFC", fontSize: "14px" }}>
@@ -3463,8 +3835,8 @@ export default function SocialMedia({ stepNumber }) {
                   </div>
 
                   {modalAiResult && (
-                    <div className="sm-modal-output-scroll">
-                      <TypewriterText text={modalAiResult} speed={10} />
+                    <div className="sm-modal-output-scroll pcc-custom-scroll ai-output-scroll" style={{ maxHeight: "500px", overflowY: "auto" }}>
+                      <TypewriterText text={modalAiResult} speed={10} bypass={!isNewlyGenerated} />
                     </div>
                   )}
                 </motion.div>

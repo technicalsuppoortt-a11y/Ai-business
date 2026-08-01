@@ -68,7 +68,7 @@ export default function AdsPage() {
 
   const proceed = () => {
     dispatch({ type: 'COMPLETE_STEP', step: 'ads' });
-    toast(lang === 'en' ? 'Ads ready! Let\'s talk about growth 📈' : 'الإعلانات جاهزة! لنتحدث عن النمو 📈', 'success');
+    toast(lang ==='en' ?'Ads ready! Let\'s talk about growth' :'الإعلانات جاهزة! لنتحدث عن النمو','success');
     navigate('/dashboard/growth');
   };
 

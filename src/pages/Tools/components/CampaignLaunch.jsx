@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import useToolCache from '../../../hooks/useToolCache';
 import { useApp } from '../../../context/AppContext';
 import { useToast } from '../../../context/ToastContext';
 import ToolDashboardLayout from './ToolDashboardLayout';
@@ -45,6 +46,29 @@ export default function CampaignLaunch({ stepNumber }) {
   const [source, setSource] = useState('facebook');
   const [medium, setMedium] = useState('cpc');
   const [campaignName, setCampaignName] = useState('launch_offer');
+
+  // --- STATE PERSISTENCE & HYDRATION ---
+  const { cached, isLoadedFromCloud, saveResult } = useToolCache('campaign-launch');
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        if (cached.url !== undefined) setUrl(cached.url);
+        if (cached.source !== undefined) setSource(cached.source);
+        if (cached.medium !== undefined) setMedium(cached.medium);
+        if (cached.campaignName !== undefined) setCampaignName(cached.campaignName);
+      }
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    // Immediate save, no debounce
+    saveResult({ url, source, medium, campaignName });
+  }, [isLoadedFromCloud, url, source, medium, campaignName]);
+  // -------------------------------------
 
   const sources = [
     { id: 'facebook', label: 'Facebook', IconComp: Globe },
@@ -282,6 +306,7 @@ export default function CampaignLaunch({ stepNumber }) {
           </div>
 
           {/* 🛢️ STATION 4: THE FINAL UTM TERMINAL VAULT */}
+          <div className="cl-custom-scroll" style={{ maxHeight: '500px', overflowY: 'auto', paddingRight: '10px', borderRadius: '24px' }}>
           <motion.div 
             className="cl-terminal-container cl-station-4-vault"
             initial={{ opacity: 0, y: 20 }}
@@ -360,6 +385,7 @@ export default function CampaignLaunch({ stepNumber }) {
             </div>
           </motion.div>
 
+        </div>
         </div>
 
       </div>

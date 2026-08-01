@@ -183,6 +183,35 @@ function useNicheAnalysis({ selectedNiche, subNiche, targetCountry, isGlobalBenc
   const requestIdRef            = useRef(0);
 
   // Clear data when main inputs change
+  
+  
+
+  
+  const hydratedRef = useRef(false);
+
+  // 1. Hydrate state asynchronously when cache loads
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        if (cached.deepDiveTab !== undefined) setDeepDiveTab(cached.deepDiveTab);
+        if (cached.microNicheMode !== undefined) setMicroNicheMode(cached.microNicheMode);
+        if (cached.selectedNiche !== undefined) setSelectedNiche(cached.selectedNiche);
+        if (cached.targetCountry !== undefined) setTargetCountry(cached.targetCountry);
+      }
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  // 2. Safe Auto-save (only runs after hydration)
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    
+    const timeout = setTimeout(() => {
+      saveResult({ deepDiveTab, microNicheMode, selectedNiche, targetCountry });
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [isLoadedFromCloud, deepDiveTab, microNicheMode, selectedNiche, targetCountry]);
+
   useEffect(() => {
     setData(null);
     setError(null);
@@ -941,19 +970,22 @@ function FullPageCategoryLoader({ selectedNiche, lang }) {
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // 8. MAIN COMPONENT
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+import useToolCache from "../../../hooks/useToolCache";
+
 export default function NicheSelection({ stepNumber }) {
+  const { cached, isCached, isLoadedFromCloud, saveResult } = useToolCache('niche-selection');
   const { state, dispatch } = useApp();
   const { userData } = useAuth();
   const lang = state.language || 'ar';
 
   const [niches, setNiches]                 = useState([]);
   const [nichesLoading, setNichesLoading]   = useState(true);
-  const [selectedNiche, setSelectedNiche]   = useState(null);
+  const [selectedNiche, setSelectedNiche]   = useState(cached?.selectedNiche ?? null);
 
-  const [targetCountry, setTargetCountry]         = useState(state.targetCountry || 'sa');
+  const [targetCountry, setTargetCountry]         = useState(cached?.targetCountry ?? (state.targetCountry || 'sa'));
   const [isGlobalBenchmark, setIsGlobalBenchmark] = useState(false);
-  const [deepDiveTab, setDeepDiveTab]             = useState('opportunities');
-  const [microNicheMode, setMicroNicheMode]       = useState('fast'); // 'fast' | 'live' | 'custom'
+  const [deepDiveTab, setDeepDiveTab]             = useState(cached?.deepDiveTab ?? 'opportunities');
+  const [microNicheMode, setMicroNicheMode]       = useState(cached?.microNicheMode ?? 'fast'); // 'fast' | 'live' | 'custom'
   const [microSearchQuery, setMicroSearchQuery]   = useState('');
   const [microFilterBadge, setMicroFilterBadge]   = useState('all');
   const [customNicheInput, setCustomNicheInput]   = useState('');

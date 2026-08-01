@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import useToolCache from '../../../hooks/useToolCache';
 import { createPortal } from 'react-dom';
 import { useApp } from '../../../context/AppContext';
 import { useAuth } from '../../../context/AuthContext';
@@ -171,6 +172,42 @@ export default function ProductSource({ stepNumber }) {
 
   const [searchQuery, setSearchQuery] = useState('');
 
+  // --- STATE PERSISTENCE & HYDRATION ---
+  const { cached, isLoadedFromCloud, saveResult } = useToolCache('product-source');
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        if (cached.analysisMode !== undefined) setAnalysisMode(cached.analysisMode);
+        if (cached.structure !== undefined) setStructure(cached.structure);
+        if (cached.selectedType !== undefined) setSelectedType(cached.selectedType);
+        if (cached.selectedNiche !== undefined) setSelectedNiche(cached.selectedNiche);
+        if (cached.selectedEffort !== undefined) setSelectedEffort(cached.selectedEffort);
+        if (cached.isGenerating !== undefined) setIsGenerating(cached.isGenerating);
+        if (cached.ideas !== undefined) setIdeas(cached.ideas);
+        if (cached.selectedIdea !== undefined) setSelectedIdea(cached.selectedIdea);
+        if (cached.selectedToolingProduct !== undefined) setSelectedToolingProduct(cached.selectedToolingProduct);
+        if (cached.expandedToolIndex !== undefined) setExpandedToolIndex(cached.expandedToolIndex);
+        if (cached.aiTools !== undefined) setAiTools(cached.aiTools);
+        if (cached.isLoadingAiTools !== undefined) setIsLoadingAiTools(cached.isLoadingAiTools);
+        if (cached.aiToolsError !== undefined) setAiToolsError(cached.aiToolsError);
+        if (cached.myProducts !== undefined) setMyProducts(cached.myProducts);
+        if (cached.searchQuery !== undefined) setSearchQuery(cached.searchQuery);
+      }
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    const timeout = setTimeout(() => {
+      saveResult({ analysisMode, structure, selectedType, selectedNiche, selectedEffort, isGenerating, ideas, selectedIdea, selectedToolingProduct, expandedToolIndex, aiTools, isLoadingAiTools, aiToolsError, myProducts, searchQuery });
+    }, 1500);
+    return () => clearTimeout(timeout);
+  }, [isLoadedFromCloud, analysisMode, structure, selectedType, selectedNiche, selectedEffort, isGenerating, ideas, selectedIdea, selectedToolingProduct, expandedToolIndex, aiTools, isLoadingAiTools, aiToolsError, myProducts, searchQuery]);
+
+
   // Persist myProducts to LocalStorage
   useEffect(() => {
     try {
@@ -185,9 +222,9 @@ export default function ProductSource({ stepNumber }) {
       const data = await getProductIdeasStructure();
       if (data) {
         setStructure(data);
-        if (data.productTypes?.length) setSelectedType(data.productTypes[0].id);
-        if (data.niches?.length) setSelectedNiche(data.niches[0].id);
-        if (data.effortLevels?.length) setSelectedEffort(data.effortLevels[0].id);
+        if (data.productTypes?.length) setSelectedType(prev => prev || data.productTypes[0].id);
+        if (data.niches?.length) setSelectedNiche(prev => prev || data.niches[0].id);
+        if (data.effortLevels?.length) setSelectedEffort(prev => prev || data.effortLevels[0].id);
       }
     };
     load();
@@ -240,6 +277,7 @@ Generate step-by-step creation tools in ${isArabic ? 'Arabic' : 'English'}.`;
       const parsed = JSON.parse(responseContent);
       if (parsed && Array.isArray(parsed.tools) && parsed.tools.length > 0) {
         setAiTools(parsed.tools);
+          saveResult({ analysisMode, structure, selectedType, selectedNiche, selectedEffort, isGenerating, ideas, selectedIdea, selectedToolingProduct: product, expandedToolIndex: 0, aiTools: parsed.tools, isLoadingAiTools: false, aiToolsError: null, myProducts, searchQuery });
       } else {
         throw new Error('Invalid JSON structure returned from AI service.');
       }
@@ -413,6 +451,25 @@ Generate step-by-step creation tools in ${isArabic ? 'Arabic' : 'English'}.`;
     }
   };
 
+  const handleResetSession = () => {
+    setAnalysisMode('fast');
+    setStructure(null);
+    setSelectedType('');
+    setSelectedNiche('');
+    setSelectedEffort('');
+    setIsGenerating(false);
+    setIdeas(null);
+    setSelectedIdea(null);
+    setSelectedToolingProduct(null);
+    setExpandedToolIndex(0);
+    setAiTools([]);
+    setIsLoadingAiTools(false);
+    setAiToolsError(null);
+    setSearchQuery('');
+    saveResult(null);
+    toast(lang === 'en' ? 'Session reset successfully!' : 'تم إعادة ضبط الجلسة بنجاح!', 'info');
+  };
+
   const handleGenerate = async () => {
     setIsGenerating(true);
     setIdeas(null);
@@ -459,17 +516,20 @@ Generate step-by-step creation tools in ${isArabic ? 'Arabic' : 'English'}.`;
         });
 
         setIdeas(formattedIdeas);
+          saveResult({ analysisMode, structure, selectedType, selectedNiche, selectedEffort, isGenerating: false, ideas: formattedIdeas, selectedIdea, selectedToolingProduct, expandedToolIndex, aiTools, isLoadingAiTools, aiToolsError, myProducts, searchQuery });
         toast(lang === 'en' ? 'Etsy Top 10 Live AI Ideas generated!' : 'تم توليد أفضل 10 منتجات مبيعاً على Etsy بالذكاء الاصطناعي!', 'success');
       } else {
         await new Promise(r => setTimeout(r, 400));
         const etsyTop10 = generateEtsyTop10Ideas(selectedType, selectedNiche, selectedEffort);
         setIdeas(etsyTop10);
+          saveResult({ analysisMode, structure, selectedType, selectedNiche, selectedEffort, isGenerating: false, ideas: etsyTop10, selectedIdea, selectedToolingProduct, expandedToolIndex, aiTools, isLoadingAiTools, aiToolsError, myProducts, searchQuery });
         toast(lang === 'en' ? 'Top 10 Etsy best-selling products loaded!' : 'تم تحميل قائمة أكثر 10 منتجات مبيعاً على Etsy!', 'success');
       }
     } catch (error) {
       console.error(error);
       const fallback = generateEtsyTop10Ideas(selectedType, selectedNiche, selectedEffort);
       setIdeas(fallback);
+        saveResult({ analysisMode, structure, selectedType, selectedNiche, selectedEffort, isGenerating: false, ideas: fallback, selectedIdea, selectedToolingProduct, expandedToolIndex, aiTools, isLoadingAiTools, aiToolsError, myProducts, searchQuery });
       toast(lang === 'en' ? 'Loaded Etsy top products!' : 'تم عرض الأفكار الأكثر مبيعاً.', 'info');
     } finally {
       setIsGenerating(false);
@@ -721,7 +781,44 @@ Generate step-by-step creation tools in ${isArabic ? 'Arabic' : 'English'}.`;
                     {lang === 'en' ? 'Click "Scan Etsy Top 10" above to reveal top best-sellers.' : 'اضغط على زر "فحص أفضل 10 منتجات مبيعاً" بالأعلى للبدء.'}
                   </p>
                 </div>
-              ) : (
+              ) : isGenerating ? (
+                  <div className="ps-ideas-spatial-grid">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                      <div
+                        key={`skeleton-${i}`}
+                        className="ps-saas-card"
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          height: '100%',
+                          minHeight: '230px',
+                          border: '1px solid rgba(255,255,255,0.05)',
+                          background: 'rgba(30, 41, 59, 0.4)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <motion.div animate={{ opacity: [0.3, 0.7, 0.3] }} transition={{ repeat: Infinity, duration: 1.5 }} style={{ width: '60px', height: '22px', borderRadius: '6px', background: 'rgba(99, 102, 241, 0.2)' }} />
+                            <motion.div animate={{ opacity: [0.3, 0.7, 0.3] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.2 }} style={{ width: '70px', height: '22px', borderRadius: '6px', background: 'rgba(16, 185, 129, 0.15)' }} />
+                          </div>
+                          
+                          <motion.div animate={{ opacity: [0.3, 0.6, 0.3] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.1 }} style={{ width: '85%', height: '18px', borderRadius: '4px', background: 'rgba(248, 250, 252, 0.1)', marginTop: '4px' }} />
+                          
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <motion.div animate={{ opacity: [0.2, 0.4, 0.2] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.3 }} style={{ width: '100%', height: '12px', borderRadius: '3px', background: 'rgba(248, 250, 252, 0.05)' }} />
+                            <motion.div animate={{ opacity: [0.2, 0.4, 0.2] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.4 }} style={{ width: '90%', height: '12px', borderRadius: '3px', background: 'rgba(248, 250, 252, 0.05)' }} />
+                            <motion.div animate={{ opacity: [0.2, 0.4, 0.2] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.5 }} style={{ width: '60%', height: '12px', borderRadius: '3px', background: 'rgba(248, 250, 252, 0.05)' }} />
+                          </div>
+                        </div>
+                        
+                        <div style={{ marginTop: '20px' }}>
+                          <motion.div animate={{ opacity: [0.3, 0.6, 0.3] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.6 }} style={{ width: '100%', height: '36px', borderRadius: '8px', background: 'rgba(99, 102, 241, 0.1)' }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
                 <div className="ps-ideas-spatial-grid">
                   <AnimatePresence>
                     {activeIdeas.map((idea, i) => (

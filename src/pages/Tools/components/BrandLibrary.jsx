@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect , useRef } from 'react';
+import useToolCache from "../../../hooks/useToolCache";
 import { useToast } from '../../../context/ToastContext';
 import { createPortal } from 'react-dom';
 import { collection, getDocs } from 'firebase/firestore';
@@ -21,7 +22,7 @@ import {
   Eye,
   Download,
   Search
-} from 'lucide-react';
+, RefreshCw} from 'lucide-react';
 import './BrandLibrary.css';
 
 export default function BrandLibrary({ isMobile }) {
@@ -119,8 +120,75 @@ export default function BrandLibrary({ isMobile }) {
     setCurrentImageIndex((prev) => (prev - 1 + selectedAutomationImages.length) % selectedAutomationImages.length);
   };
 
+
+  // --- STATE PERSISTENCE & HYDRATION ---
+  const { cached, isLoadedFromCloud, saveResult } = useToolCache('brand-library');
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        if (cached.brands !== undefined) setBrands(cached.brands);
+        if (cached.loading !== undefined) setLoading(cached.loading);
+        if (cached.error !== undefined) setError(cached.error);
+        if (cached.selectedCategory !== undefined) setSelectedCategory(cached.selectedCategory);
+        if (cached.searchQuery !== undefined) setSearchQuery(cached.searchQuery);
+        if (cached.selectedAutomationImages !== undefined) setSelectedAutomationImages(cached.selectedAutomationImages);
+        if (cached.currentImageIndex !== undefined) setCurrentImageIndex(cached.currentImageIndex);
+        if (cached.selectedBrandDetails !== undefined) setSelectedBrandDetails(cached.selectedBrandDetails);
+      }
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    const timeout = setTimeout(() => {
+      saveResult({ brands, loading, error, selectedCategory, searchQuery, selectedAutomationImages, currentImageIndex, selectedBrandDetails });
+    }, 1500);
+    return () => clearTimeout(timeout);
+  }, [isLoadedFromCloud, brands, loading, error, selectedCategory, searchQuery, selectedAutomationImages, currentImageIndex, selectedBrandDetails]);
+
+  const handleResetSession = () => {
+    setBrands([]);
+    setLoading(true);
+    setError(null);
+    setSelectedCategory('الكل');
+    setSearchQuery('');
+    setSelectedAutomationImages(null);
+    setCurrentImageIndex(0);
+    setSelectedBrandDetails(null);
+    saveResult(null);
+  };
+  // -------------------------------------
+
   return (
     <div className="bl-container" dir={isRtl ? 'rtl' : 'ltr'}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '15px 20px 0 20px' }}>
+          <button
+            onClick={handleResetSession}
+            style={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#EF4444',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
+              zIndex: 10
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)' }}
+          >
+            <RefreshCw size={14} />
+            {(state?.language || 'ar') === 'en' ? 'Reset / Start Fresh' : 'إعادة ضبط / بدء من جديد'}
+          </button>
+        </div>
       
       {/* ═══════════════ HEADER ═══════════════ */}
       <div className="bl-header">

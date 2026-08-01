@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState , useRef , useEffect} from 'react';
+import useToolCache from "../../../hooks/useToolCache";
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../../context/AppContext';
 import { useAuth } from '../../../context/AuthContext';
@@ -27,7 +28,7 @@ import {
   FileText,
   Lightbulb,
   Plus
-} from 'lucide-react';
+, RefreshCw} from 'lucide-react';
 import './FreelanceProfileStudio.css';
 
 export default function FreelanceProfile({ stepNumber }) {
@@ -192,8 +193,69 @@ Exported via AI Business Platform
     'Motion Graphics Designer'
   ];
 
+
+  // --- STATE PERSISTENCE & HYDRATION ---
+  const { cached, isLoadedFromCloud, saveResult } = useToolCache('freelance-profile');
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        if (cached.activeStep !== undefined) setActiveStep(cached.activeStep);
+        if (cached.analysisMode !== undefined) setAnalysisMode(cached.analysisMode);
+        if (cached.isGenerating !== undefined) setIsGenerating(cached.isGenerating);
+        if (cached.bio !== undefined) setBio(cached.bio);
+        if (cached.experience !== undefined) setExperience(cached.experience);
+      }
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    const timeout = setTimeout(() => {
+      saveResult({ activeStep, analysisMode, isGenerating, bio, experience });
+    }, 1500);
+    return () => clearTimeout(timeout);
+  }, [isLoadedFromCloud, activeStep, analysisMode, isGenerating, bio, experience]);
+
+  const handleResetSession = () => {
+    setActiveStep(1);
+    setAnalysisMode('fast');
+    setIsGenerating(false);
+    setBio('');
+    setExperience('1');
+    saveResult(null);
+  };
+  // -------------------------------------
+
   return (
     <div className="fps-canvas" dir={isRtl ? 'rtl' : 'ltr'}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '15px 20px 0 20px' }}>
+          <button
+            onClick={handleResetSession}
+            style={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#EF4444',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
+              zIndex: 10
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)' }}
+          >
+            <RefreshCw size={14} />
+            {(state?.language || 'ar') === 'en' ? 'Reset / Start Fresh' : 'إعادة ضبط / بدء من جديد'}
+          </button>
+        </div>
       {/* Top Floating Spatial Node Bar */}
       <nav className="fps-node-bar">
         {steps.map((step, idx) => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useApp } from "../../../context/AppContext";
 import { useToast } from "../../../context/ToastContext";
@@ -84,15 +84,18 @@ import {
 } from "lucide-react";
 import "./EmailSetup.css";
 
+import useToolCache from "../../../hooks/useToolCache";
+
 export default function EmailSetup({ stepNumber }) {
+  const { cached, isCached, isLoadedFromCloud, saveResult } = useToolCache('email-setup');
   const { state } = useApp();
   const toast = useToast();
   const lang = state.language || "ar";
   const isRtl = lang === "ar";
 
   // Navigation tabs: 'crm' (Zoho-style Email Marketing & CRM) vs 'dns' (Cryptographic Transmission Pipeline Matrix)
-  const [mainTab, setMainTab] = useState("crm");
-  const [crmSubTab, setCrmSubTab] = useState("dashboard"); // 'dashboard' | 'contacts' | 'campaigns' | 'automations'
+  const [mainTab, setMainTab] = useState(cached?.mainTab ?? "crm");
+  const [crmSubTab, setCrmSubTab] = useState(cached?.crmSubTab ?? "dashboard"); // 'dashboard' | 'contacts' | 'campaigns' | 'automations'
 
   // Pipeline Focus State (Existing DNS feature)
   const [domainName, setDomainName] = useState(
@@ -104,7 +107,7 @@ export default function EmailSetup({ stepNumber }) {
 
   // ── 1. ACCOUNT & SMTP SETTINGS STATES (FIXED TO RESEND API) ────────
   const [settingsLoading, setSettingsLoading] = useState(true);
-  const [smtpSettings, setSmtpSettings] = useState({
+  const [smtpSettings, setSmtpSettings] = useState(cached?.smtpSettings ?? {
     provider: "resend",
     smtpHost: "smtp.resend.com",
     smtpPort: "587",
@@ -117,7 +120,7 @@ export default function EmailSetup({ stepNumber }) {
   const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   // ── 2. CONTACTS CRM STATES ──────────────────────────────────────
-  const [contacts, setContacts] = useState([]);
+  const [contacts, setContacts] = useState(cached?.contacts ?? []);
   const [contactsLoading, setContactsLoading] = useState(true);
   const [contactSearchQuery, setContactSearchQuery] = useState("");
   const [contactStatusFilter, setContactStatusFilter] = useState("all");
@@ -135,10 +138,10 @@ export default function EmailSetup({ stepNumber }) {
   const [editingContact, setEditingContact] = useState(null);
 
   // ── 3. ISOLATED CAMPAIGN WIZARD & HISTORY STATES ─────────────────
-  const [campaigns, setCampaigns] = useState([]);
+  const [campaigns, setCampaigns] = useState(cached?.campaigns ?? []);
   const [campaignsLoading, setCampaignsLoading] = useState(true);
   const [isWizardFullPageMode, setIsWizardFullPageMode] = useState(false);
-  const [campaignWizardStep, setCampaignWizardStep] = useState(1);
+  const [campaignWizardStep, setCampaignWizardStep] = useState(cached?.campaignWizardStep ?? 1);
   const [campaignForm, setCampaignForm] = useState({
     title: "",
     subject: "",
@@ -161,7 +164,7 @@ export default function EmailSetup({ stepNumber }) {
   const campaignsPerPage = 5;
 
   // ── 4. AUTOMATIONS STATES ────────────────────────────────────────
-  const [automations, setAutomations] = useState([]);
+  const [automations, setAutomations] = useState(cached?.automations ?? []);
   const [automationsLoading, setAutomationsLoading] = useState(true);
   const [isCreateAutomationOpen, setIsCreateAutomationOpen] = useState(false);
   const [editingAutomation, setEditingAutomation] = useState(null);
@@ -182,6 +185,38 @@ export default function EmailSetup({ stepNumber }) {
   });
 
   // ── LOCK SCROLL WHEN ANY MODAL IS OPEN ─────────────────────────
+  
+  
+
+  
+  const hydratedRef = useRef(false);
+
+  // 1. Hydrate state asynchronously when cache loads
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        if (cached.mainTab !== undefined) setMainTab(cached.mainTab);
+        if (cached.crmSubTab !== undefined) setCrmSubTab(cached.crmSubTab);
+        if (cached.campaignWizardStep !== undefined) setCampaignWizardStep(cached.campaignWizardStep);
+        if (cached.smtpSettings !== undefined) setSmtpSettings(cached.smtpSettings);
+        if (cached.contacts !== undefined) setContacts(cached.contacts);
+        if (cached.campaigns !== undefined) setCampaigns(cached.campaigns);
+        if (cached.automations !== undefined) setAutomations(cached.automations);
+      }
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  // 2. Safe Auto-save (only runs after hydration)
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    
+    const timeout = setTimeout(() => {
+      saveResult({ mainTab, crmSubTab, campaignWizardStep, smtpSettings, contacts, campaigns, automations });
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [isLoadedFromCloud, mainTab, crmSubTab, campaignWizardStep, smtpSettings, contacts, campaigns, automations]);
+
   useEffect(() => {
     const isAnyModalOpen =
       isAddContactModalOpen ||
@@ -299,8 +334,8 @@ export default function EmailSetup({ stepNumber }) {
       });
       toast(
         lang === "en"
-          ? "Resend API Connection Settings saved successfully! ✅"
-          : "تم حفظ إعدادات اتصال Resend API بنجاح! ✅",
+          ?"Resend API Connection Settings saved successfully!"
+          :"تم حفظ إعدادات اتصال Resend API بنجاح!",
         "success",
       );
     } catch (err) {
@@ -448,8 +483,8 @@ export default function EmailSetup({ stepNumber }) {
       });
       toast(
         lang === "en"
-          ? "Contact saved successfully! ✅"
-          : "تم حفظ العميل في قاعدة البيانات بنجاح! ✅",
+          ?"Contact saved successfully!"
+          :"تم حفظ العميل في قاعدة البيانات بنجاح!",
         "success",
       );
     } catch (err) {
@@ -471,8 +506,8 @@ export default function EmailSetup({ stepNumber }) {
       setEditingContact(null);
       toast(
         lang === "en"
-          ? "Contact updated successfully! ✅"
-          : "تم تحديث بيانات العميل في قاعدة البيانات بنجاح! ✅",
+          ?"Contact updated successfully!"
+          :"تم تحديث بيانات العميل في قاعدة البيانات بنجاح!",
         "success",
       );
     } catch (err) {
@@ -634,8 +669,8 @@ export default function EmailSetup({ stepNumber }) {
 
       toast(
         lang === "en"
-          ? `Dispatched ${resendRes.successCount}/${resendRes.total} emails via Resend API! (Batch ID: ${resendRes.resendBatchId}) 🚀`
-          : `تم إرسال ${resendRes.successCount}/${resendRes.total} إيميل حقيقي عبر Resend API! (معرّف الدفعة: ${resendRes.resendBatchId}) 🚀`,
+          ?`Dispatched ${resendRes.successCount}/${resendRes.total} emails via Resend API! (Batch ID: ${resendRes.resendBatchId})`
+          :`تم إرسال ${resendRes.successCount}/${resendRes.total} إيميل حقيقي عبر Resend API! (معرّف الدفعة: ${resendRes.resendBatchId})`,
         "success",
       );
     } catch (err) {
@@ -667,8 +702,8 @@ export default function EmailSetup({ stepNumber }) {
       });
       toast(
         lang === "en"
-          ? "Automation flow active! ⚡"
-          : "تم تفعيل مسار الأتمتة بنجاح! ⚡",
+          ?"Automation flow active!"
+          :"تم تفعيل مسار الأتمتة بنجاح!",
         "success",
       );
     } catch (err) {
@@ -694,8 +729,8 @@ export default function EmailSetup({ stepNumber }) {
       setEditingAutomation(null);
       toast(
         lang === "en"
-          ? "Automation workflow updated! ✅"
-          : "تم تحديث مسار الأتمتة بنجاح! ✅",
+          ?"Automation workflow updated!"
+          :"تم تحديث مسار الأتمتة بنجاح!",
         "success",
       );
     } catch (err) {

@@ -68,6 +68,37 @@ function PlannerCustomDropdown({ value, onChange, options, label, icon: Icon, pl
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
+  
+  
+
+  
+  const hydratedRef = useRef(false);
+
+  // 1. Hydrate state asynchronously when cache loads
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        if (cached.activeTab !== undefined) setActiveTab(cached.activeTab);
+        if (cached.taskSubTab !== undefined) setTaskSubTab(cached.taskSubTab);
+        if (cached.items !== undefined) setItems(cached.items);
+        if (cached.customTaskCategories !== undefined) setCustomTaskCategories(cached.customTaskCategories);
+        if (cached.customIdeaCategories !== undefined) setCustomIdeaCategories(cached.customIdeaCategories);
+        if (cached.customNoteCategories !== undefined) setCustomNoteCategories(cached.customNoteCategories);
+      }
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  // 2. Safe Auto-save (only runs after hydration)
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    
+    const timeout = setTimeout(() => {
+      saveResult({ activeTab, taskSubTab, items, customTaskCategories, customIdeaCategories, customNoteCategories });
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [isLoadedFromCloud, activeTab, taskSubTab, items, customTaskCategories, customIdeaCategories, customNoteCategories]);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -189,7 +220,10 @@ function PlannerFilterCategoryDropdown({ value, onChange, options, lang }) {
   );
 }
 
+import useToolCache from "../../../hooks/useToolCache";
+
 export default function SmartNotebook() {
+  const { cached, isCached, isLoadedFromCloud, saveResult } = useToolCache('smart-notebook');
   const toast = useToast();
   const { state } = useApp();
   const { userData } = useAuth();
@@ -197,14 +231,14 @@ export default function SmartNotebook() {
   const isRtl = lang === 'ar';
   
   // Data State
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState(cached?.items ?? []);
   const [activeNoteId, setActiveNoteId] = useState(null);
   
   // 4 Main Tab Architecture: 'tasks' | 'ideas' | 'notes' | 'favorites'
-  const [activeTab, setActiveTab] = useState('tasks');
+  const [activeTab, setActiveTab] = useState(cached?.activeTab ?? 'tasks');
   
   // Tasks Sub-Tab: 'active' | 'completed'
-  const [taskSubTab, setTaskSubTab] = useState('active');
+  const [taskSubTab, setTaskSubTab] = useState(cached?.taskSubTab ?? 'active');
   const [priorityFilter, setPriorityFilter] = useState('all'); // 'all' | 'high' | 'medium' | 'low'
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all'); // 'all' | category name
   
@@ -213,9 +247,9 @@ export default function SmartNotebook() {
   const [dragOverIndex, setDragOverIndex] = useState(null);
 
   // Custom Dynamic Categories (Persisted with Firebase)
-  const [customTaskCategories, setCustomTaskCategories] = useState(['Work', 'Home', 'General']);
-  const [customIdeaCategories, setCustomIdeaCategories] = useState(['Project', 'Travel', 'Content']);
-  const [customNoteCategories, setCustomNoteCategories] = useState(['Work', 'Personal', 'Study']);
+  const [customTaskCategories, setCustomTaskCategories] = useState(cached?.customTaskCategories ?? ['Work', 'Home', 'General']);
+  const [customIdeaCategories, setCustomIdeaCategories] = useState(cached?.customIdeaCategories ?? ['Project', 'Travel', 'Content']);
+  const [customNoteCategories, setCustomNoteCategories] = useState(cached?.customNoteCategories ?? ['Work', 'Personal', 'Study']);
   
   // New Category Modals State
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);

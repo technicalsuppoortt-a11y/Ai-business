@@ -57,7 +57,7 @@ export default function SuperAdminSettings() {
           setCompletedModules(prev => [...prev, modId]);
         }
       }
-      toast('تم تحديث الأقسام المختارة بنجاح! ✓', 'success');
+      toast('تم تحديث الأقسام المختارة بنجاح!','success');
     } catch (error) {
       toast('حدث خطأ أثناء التحديث', 'error');
       console.error(error);
@@ -74,7 +74,7 @@ export default function SuperAdminSettings() {
       toast('جاري تحديث قاعدة البيانات الشاملة...', 'info');
       try {
         await runFullContentSeed();
-        toast('تم تحديث قاعدة البيانات بنجاح! ✓', 'success');
+        toast('تم تحديث قاعدة البيانات بنجاح!','success');
       } catch (error) {
         toast('حدث خطأ أثناء التحديث', 'error');
         console.error(error);

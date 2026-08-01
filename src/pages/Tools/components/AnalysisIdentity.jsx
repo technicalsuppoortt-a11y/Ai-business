@@ -74,6 +74,7 @@ import {
   Code
 } from "lucide-react";
 import TypingText from "../../../components/common/TypingText";
+import useToolCache from "../../../hooks/useToolCache";
 
 export function getNicheVectorIcon(id, size = 20, color = 'currentColor') {
   switch (id) {
@@ -163,6 +164,7 @@ const COUNTRY_OPTIONS = [
 ];
 
 function CategorySelectPrompt({ lang }) {
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10, scale: 0.98 }}
@@ -564,6 +566,7 @@ function CustomDropdown({ value, onChange, options, placeholder }) {
 }
 
 export default function AnalysisIdentity() {
+  const { cached, isCached, isLoadedFromCloud, saveResult } = useToolCache("analysis-identity");
   const { state, dispatch } = useApp();
   const { userData } = useAuth();
   const toast = useToast();
@@ -574,34 +577,35 @@ export default function AnalysisIdentity() {
   const userCountry = state.user?.country || "EG";
 
   // Dual Independent Analysis Mode states
-  const [microNicheMode, setMicroNicheMode] = useState("fast"); // 'fast' | 'live'
-  const [analysisMode, setAnalysisMode] = useState("fast"); // 'fast' | 'live'
+  const [microNicheMode, setMicroNicheMode] = useState(cached?.microNicheMode ?? "fast"); // 'fast' | 'live'
+  const [analysisMode, setAnalysisMode] = useState(cached?.analysisMode ?? "fast"); // 'fast' | 'live'
 
   // Tabs management
-  const [activeTab, setActiveTab] = useState("niche"); // 'niche', 'name', 'identity'
+  const [activeTab, setActiveTab] = useState(cached?.activeTab ?? "niche"); // 'niche', 'name', 'identity'
 
   // Tab 1: Niche selection & Target Country States
   const [niches, setNiches] = useState([]);
   const [loadingNiches, setLoadingNiches] = useState(true);
-  const [selectedNiche, setSelectedNiche] = useState(null);
-  const [customNicheInput, setCustomNicheInput] = useState("");
+  const [selectedNiche, setSelectedNiche] = useState(cached?.selectedNiche ?? null);
+  const [selectedMicroNiche, setSelectedMicroNiche] = useState(cached?.selectedMicroNiche ?? null);
+  const [customNicheInput, setCustomNicheInput] = useState(cached?.customNicheInput ?? "");
   const [microSearchQuery, setMicroSearchQuery] = useState("");
   const [microFilterBadge, setMicroFilterBadge] = useState("all"); // 'all' | 'trend' | 'profit' | 'stable' | 'freelance'
   const [showAllMicroNiches, setShowAllMicroNiches] = useState(false);
   const [isAnalyzingNiche, setIsAnalyzingNiche] = useState(false);
-  const [targetCountry, setTargetCountry] = useState("sa");
+  const [targetCountry, setTargetCountry] = useState(cached?.targetCountry ?? "sa");
   const [isChangingMarket, setIsChangingMarket] = useState(false);
   const [isChangingCategory, setIsChangingCategory] = useState(false);
-  const [isGlobalBenchmark, setIsGlobalBenchmark] = useState(false);
+  const [isGlobalBenchmark, setIsGlobalBenchmark] = useState(cached?.isGlobalBenchmark ?? false);
 
   const [microNicheActiveTab, setMicroNicheActiveTab] = useState("opportunities"); // 'opportunities' | 'leaders'
-  const [liveAiMicroIdeas, setLiveAiMicroIdeas] = useState([]);
+  const [liveAiMicroIdeas, setLiveAiMicroIdeas] = useState(cached?.liveAiMicroIdeas ?? []);
   const [isFetchingLiveNiches, setIsFetchingLiveNiches] = useState(false);
-  const [nicheAnalysis, setNicheAnalysis] = useState(null);
+  const [nicheAnalysis, setNicheAnalysis] = useState(cached?.nicheAnalysis ?? null);
   const [nicheAnalysisOption, setNicheAnalysisOption] = useState("fast_radar"); // 'fast_radar' | 'deep_360'
 
   // ── Unified AI State (100% Dynamic Integration) ─────────────
-  const [aiData, setAiData] = useState({
+  const [aiData, setAiData] = useState(cached?.aiData ?? {
     benchmark: null,
     microNiches: [],
     marketOpportunities: null,
@@ -622,6 +626,10 @@ export default function AnalysisIdentity() {
     setTimeout(() => {
       setIsChangingMarket(false);
     }, 1600);
+    setAiData(prev => ({ ...prev, marketOpportunities: null, topLeaders: [] }));
+    fetchAIData('benchmark', { country: val });
+    fetchAIData('microNiches', { country: val });
+    console.log("🚀 USER CLICKED GENERATE (Country):", val);
   };
 
   const isMarketLoading = isChangingMarket || aiData.loading.benchmark || aiData.loading.microNiches || isFetchingLiveNiches;
@@ -651,6 +659,11 @@ export default function AnalysisIdentity() {
         systemPrompt = `You are a market analysis expert. Analyze niche "${nicheName}" in target market "${countryObj.name_en}". Compare this market with the best alternative global market. Return ONLY raw JSON strictly matching: { "primaryMarket": { "cagr": "+XX% CAGR", "saturation": "blue", "saturationText": "status description", "roi": "expected ROI" }, "alternativeMarket": { "name": "country name with flag", "cagr": "+XX% CAGR", "surge": "demand surge description" }, "recommendation": "AI strategic recommendation" }.`;
         userPrompt = `Generate benchmark analysis for "${nicheName}" in "${countryObj.name_en}". Language: ${language}.`;
       } else if (type === 'microNiches') {
+        setSelectedMicroNiche(null);
+        dispatch({ type: "SET_FIELD", field: "subNiche", value: "" });
+        setNicheAnalysis(null);
+        setAiData(prev => ({ ...prev, marketOpportunities: null, topLeaders: [] }));
+        
         systemPrompt = `You are a business strategist. Generate 8 innovative micro-niche business ideas in "${nicheName}" for "${countryObj.name_en}". Return ONLY raw JSON object with key "ideas" containing an array of 8 micro-niche strings.`;
         userPrompt = `Generate 8 micro-niche business ideas for "${nicheName}" in "${countryObj.name_en}". Language: ${language}.`;
       } else if (type === 'opportunities') {
@@ -697,13 +710,8 @@ export default function AnalysisIdentity() {
     }
   };
 
-  useEffect(() => {
-    if (selectedNiche) {
-      fetchAIData('benchmark');
-      fetchAIData('microNiches');
-      setAiData(prev => ({ ...prev, marketOpportunities: null, topLeaders: [] }));
-    }
-  }, [selectedNiche?.id, targetCountry, isGlobalBenchmark]);
+  // ABSOLUTE BLOCK: Zero automated API calls on mount or state change!
+  // fetchAIData is ONLY triggered by explicit UI event handlers.
 
   const fetchLiveMicroNichesFromOpenAI = async (overrideNiche = null) => {
     const targetNiche = overrideNiche || selectedNiche;
@@ -765,14 +773,14 @@ export default function AnalysisIdentity() {
   }, [microNicheMode, selectedNiche, targetCountry]);
 
   // Tab 2: Brand naming states
-  const [namingCategory, setNamingCategory] = useState("ecom");
+  const [namingCategory, setNamingCategory] = useState(cached?.namingCategory ?? "ecom");
   const [dynamicStyles, setDynamicStyles] = useState({});
   const [selectedStyle, setSelectedStyle] = useState(null);
   const [selectedCatalogs, setSelectedCatalogs] = useState([]);
   const [pinnedNames, setPinnedNames] = useState([]);
   const [nameLanguage, setNameLanguage] = useState("all");
   const [isGeneratingNames, setIsGeneratingNames] = useState(false);
-  const [generatedNames, setGeneratedNames] = useState(null);
+  const [generatedNames, setGeneratedNames] = useState(cached?.generatedNames ?? null);
   const [customNameInput, setCustomNameInput] = useState(state.brandName || "");
 
   // Tab 3: Visual identity & Simulator states
@@ -787,7 +795,11 @@ export default function AnalysisIdentity() {
   );
   const [logoPreview, setLogoPreview] = useState(state?.logo || null);
   const [isAnalyzingColors, setIsAnalyzingColors] = useState(false);
-  const [colorAnalysis, setColorAnalysis] = useState(null);
+  const [colorAnalysis, setColorAnalysis] = useState(cached?.colorAnalysis ?? null);
+  const [isNewlyGeneratedColors, setIsNewlyGeneratedColors] = useState(false);
+
+  
+
   const [mockupView, setMockupView] = useState("website"); // 'website' | 'social' | 'card'
   const [brandArchetype, setBrandArchetype] = useState("visionary"); // 'visionary' | 'luxury' | 'agile' | 'expert'
 
@@ -810,10 +822,98 @@ export default function AnalysisIdentity() {
   const [appliedCssCode, setAppliedCssCode] = useState("");
 
   // ═══════════════ INITIAL LOADS ═══════════════
+  const hydratedRef = useRef(false);
+
+  // 1. Hydrate state asynchronously when cache loads
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        if (cached.microNicheMode !== undefined) setMicroNicheMode(cached.microNicheMode);
+        if (cached.analysisMode !== undefined) setAnalysisMode(cached.analysisMode);
+        if (cached.activeTab !== undefined) setActiveTab(cached.activeTab);
+        if (cached.niches !== undefined) setNiches(cached.niches);
+        if (cached.loadingNiches !== undefined) setLoadingNiches(cached.loadingNiches);
+        if (cached.selectedNiche !== undefined) setSelectedNiche(cached.selectedNiche);
+        if (cached.selectedMicroNiche !== undefined) setSelectedMicroNiche(cached.selectedMicroNiche);
+        if (cached.customNicheInput !== undefined) setCustomNicheInput(cached.customNicheInput);
+        if (cached.microSearchQuery !== undefined) setMicroSearchQuery(cached.microSearchQuery);
+        if (cached.microFilterBadge !== undefined) setMicroFilterBadge(cached.microFilterBadge);
+        if (cached.showAllMicroNiches !== undefined) setShowAllMicroNiches(cached.showAllMicroNiches);
+        if (cached.isAnalyzingNiche !== undefined) setIsAnalyzingNiche(cached.isAnalyzingNiche);
+        if (cached.targetCountry !== undefined) setTargetCountry(cached.targetCountry);
+        if (cached.isChangingMarket !== undefined) setIsChangingMarket(cached.isChangingMarket);
+        if (cached.isChangingCategory !== undefined) setIsChangingCategory(cached.isChangingCategory);
+        if (cached.isGlobalBenchmark !== undefined) setIsGlobalBenchmark(cached.isGlobalBenchmark);
+        if (cached.microNicheActiveTab !== undefined) setMicroNicheActiveTab(cached.microNicheActiveTab);
+        if (cached.liveAiMicroIdeas !== undefined) setLiveAiMicroIdeas(cached.liveAiMicroIdeas);
+        if (cached.isFetchingLiveNiches !== undefined) setIsFetchingLiveNiches(cached.isFetchingLiveNiches);
+        if (cached.nicheAnalysis !== undefined) setNicheAnalysis(cached.nicheAnalysis);
+        if (cached.nicheAnalysisOption !== undefined) setNicheAnalysisOption(cached.nicheAnalysisOption);
+        if (cached.aiData !== undefined) setAiData(cached.aiData);
+        if (cached.namingCategory !== undefined) setNamingCategory(cached.namingCategory);
+        if (cached.dynamicStyles !== undefined) setDynamicStyles(cached.dynamicStyles);
+        if (cached.selectedStyle !== undefined) setSelectedStyle(cached.selectedStyle);
+        if (cached.selectedCatalogs !== undefined) setSelectedCatalogs(cached.selectedCatalogs);
+        if (cached.pinnedNames !== undefined) setPinnedNames(cached.pinnedNames);
+        if (cached.nameLanguage !== undefined) setNameLanguage(cached.nameLanguage);
+        if (cached.isGeneratingNames !== undefined) setIsGeneratingNames(cached.isGeneratingNames);
+        if (cached.generatedNames !== undefined) setGeneratedNames(cached.generatedNames);
+        if (cached.customNameInput !== undefined) setCustomNameInput(cached.customNameInput);
+        if (cached.primaryColor !== undefined) setPrimaryColor(cached.primaryColor);
+        if (cached.secondaryColor !== undefined) setSecondaryColor(cached.secondaryColor);
+        if (cached.accentColor !== undefined) setAccentColor(cached.accentColor);
+        if (cached.logoPreview !== undefined) setLogoPreview(cached.logoPreview);
+        if (cached.isAnalyzingColors !== undefined) setIsAnalyzingColors(cached.isAnalyzingColors);
+        if (cached.colorAnalysis !== undefined) setColorAnalysis(cached.colorAnalysis);
+        if (cached.mockupView !== undefined) setMockupView(cached.mockupView);
+        if (cached.brandArchetype !== undefined) setBrandArchetype(cached.brandArchetype);
+        if (cached.headingFont !== undefined) setHeadingFont(cached.headingFont);
+        if (cached.headingColor !== undefined) setHeadingColor(cached.headingColor);
+        if (cached.bodyTextColor !== undefined) setBodyTextColor(cached.bodyTextColor);
+        if (cached.buttonBgColor !== undefined) setButtonBgColor(cached.buttonBgColor);
+        if (cached.buttonTextColor !== undefined) setButtonTextColor(cached.buttonTextColor);
+        if (cached.buttonBorderColor !== undefined) setButtonBorderColor(cached.buttonBorderColor);
+        if (cached.buttonRadius !== undefined) setButtonRadius(cached.buttonRadius);
+        if (cached.buttonHoverBg !== undefined) setButtonHoverBg(cached.buttonHoverBg);
+        if (cached.heroBgColor !== undefined) setHeroBgColor(cached.heroBgColor);
+        if (cached.cardBgColor !== undefined) setCardBgColor(cached.cardBgColor);
+        if (cached.cardBorderColor !== undefined) setCardBorderColor(cached.cardBorderColor);
+        if (cached.customCssCode !== undefined) setCustomCssCode(cached.customCssCode);
+        if (cached.appliedCssCode !== undefined) setAppliedCssCode(cached.appliedCssCode);
+
+        // Special handling for aiData subfields
+        if (cached.aiData !== undefined || cached.marketOpportunities !== undefined || cached.top10Leaders !== undefined) {
+          setAiData(prev => ({
+             ...prev, 
+             ...(cached.aiData || {}),
+             marketOpportunities: cached.marketOpportunities || cached.aiData?.marketOpportunities || prev.marketOpportunities,
+             topLeaders: cached.top10Leaders || cached.aiData?.topLeaders || prev.topLeaders
+          }));
+        }
+      }
+      console.log("🔥 CACHE LOADED:", cached);
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  // 2. Safe Auto-save (only runs after hydration)
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    
+    const timeout = setTimeout(() => {
+      const payloadToSave = { 
+        microNicheMode, analysisMode, activeTab, niches, loadingNiches, selectedNiche, selectedMicroNiche, customNicheInput, microSearchQuery, microFilterBadge, showAllMicroNiches, isAnalyzingNiche, targetCountry, isChangingMarket, isChangingCategory, isGlobalBenchmark, microNicheActiveTab, liveAiMicroIdeas, isFetchingLiveNiches, nicheAnalysis, nicheAnalysisOption, aiData, namingCategory, dynamicStyles, selectedStyle, selectedCatalogs, pinnedNames, nameLanguage, isGeneratingNames, generatedNames, customNameInput, primaryColor, secondaryColor, accentColor, logoPreview, isAnalyzingColors, colorAnalysis, mockupView, brandArchetype, headingFont, headingColor, bodyTextColor, buttonBgColor, buttonTextColor, buttonBorderColor, buttonRadius, buttonHoverBg, heroBgColor, cardBgColor, cardBorderColor, customCssCode, appliedCssCode,
+        marketOpportunities: aiData?.marketOpportunities || null,
+        top10Leaders: aiData?.topLeaders || []
+      };
+      saveResult(payloadToSave);
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [isLoadedFromCloud, microNicheMode, analysisMode, activeTab, niches, loadingNiches, selectedNiche, selectedMicroNiche, customNicheInput, microSearchQuery, microFilterBadge, showAllMicroNiches, isAnalyzingNiche, targetCountry, isChangingMarket, isChangingCategory, isGlobalBenchmark, microNicheActiveTab, liveAiMicroIdeas, isFetchingLiveNiches, nicheAnalysis, nicheAnalysisOption, aiData, namingCategory, dynamicStyles, selectedStyle, selectedCatalogs, pinnedNames, nameLanguage, isGeneratingNames, generatedNames, customNameInput, primaryColor, secondaryColor, accentColor, logoPreview, isAnalyzingColors, colorAnalysis, mockupView, brandArchetype, headingFont, headingColor, bodyTextColor, buttonBgColor, buttonTextColor, buttonBorderColor, buttonRadius, buttonHoverBg, heroBgColor, cardBgColor, cardBorderColor, customCssCode, appliedCssCode]);
+;
+
   useEffect(() => {
     // 1. Fetch niches for Tab 1
-    dispatch({ type: 'SET_FIELD', field: 'niche', value: '' });
-    dispatch({ type: 'SET_FIELD', field: 'subNiche', value: '' });
 
     const fetchNichesData = async () => {
       try {
@@ -835,7 +935,7 @@ export default function AnalysisIdentity() {
         if (defs) {
           setDynamicStyles(defs);
           if (defs.ecom && defs.ecom.length > 0) {
-            setSelectedStyle(defs.ecom[0].id);
+            setSelectedStyle((prev) => prev || defs.ecom[0].id);
           }
         }
       } catch (error) {
@@ -847,22 +947,33 @@ export default function AnalysisIdentity() {
 
   // Update selected style when category changes
   const currentStyles = dynamicStyles[namingCategory] || [];
-  const currentCatalogs =
+  let currentCatalogs =
     currentStyles.find((s) => s.id === selectedStyle)?.catalogs || [];
 
+  if (!currentCatalogs || currentCatalogs.length === 0) {
+    currentCatalogs = [
+      { id: 'cat_general_premium', label_en: 'Premium Quality', label_ar: 'جودة متميزة' },
+      { id: 'cat_general_modern', label_en: 'Modern Edge', label_ar: 'طابع عصري' },
+      { id: 'cat_general_classic', label_en: 'Classic & Trust', label_ar: 'كلاسيك وموثوقية' },
+      { id: 'cat_general_creative', label_en: 'Creative Identity', label_ar: 'هوية إبداعية' },
+      { id: 'cat_general_global', label_en: 'Global Reach', label_ar: 'وصول عالمي' }
+    ];
+  }
+
+  const isHydratingStyleCascade = useRef(true);
   useEffect(() => {
+    if (isHydratingStyleCascade.current) {
+      isHydratingStyleCascade.current = false;
+      return;
+    }
     if (
       currentStyles.length > 0 &&
       !currentStyles.find((s) => s.id === selectedStyle)
     ) {
       setSelectedStyle(currentStyles[0].id);
+      setSelectedCatalogs([]);
     }
   }, [namingCategory, currentStyles]);
-
-  useEffect(() => {
-    setSelectedCatalogs([]);
-    setGeneratedNames(null);
-  }, [selectedStyle]);
 
   // Sync state variables back to global context
   const handleNicheSelect = (n) => {
@@ -882,14 +993,17 @@ export default function AnalysisIdentity() {
       marketOpportunities: null,
       topLeaders: [],
       loading: {
-        benchmark: true,
-        microNiches: true,
+        benchmark: false,
+        microNiches: false,
         opportunities: false,
         leaders: false
       },
       error: null
     });
     setLiveAiMicroIdeas([]);
+    fetchAIData('benchmark', { niche: n });
+    fetchAIData('microNiches', { niche: n });
+    console.log("🚀 USER CLICKED GENERATE (Niche):", n);
 
     setTimeout(() => {
       setIsChangingCategory(false);
@@ -898,10 +1012,11 @@ export default function AnalysisIdentity() {
 
   const handleSubNicheSelect = (sub) => {
     if (!sub) return;
-    dispatch({ type: "SET_FIELD", field: "subNiche", value: sub });
+    setSelectedMicroNiche(sub);
+    dispatch({ type: "SET_FIELD", field: "subNiche", value: typeof sub === 'string' ? sub : (sub.title || sub.name || sub.id || sub) });
     setCustomNicheInput("");
-    fetchAIData('opportunities', { microNiche: sub });
-    fetchAIData('leaders', { microNiche: sub });
+    fetchAIData('opportunities', { microNiche: typeof sub === 'string' ? sub : (sub.title || sub.name || sub.id || sub) });
+    fetchAIData('leaders', { microNiche: typeof sub === 'string' ? sub : (sub.title || sub.name || sub.id || sub) });
   };
 
   const handleCustomNicheChange = (val) => {
@@ -1310,6 +1425,10 @@ export default function AnalysisIdentity() {
             })),
           };
           setGeneratedNames(results);
+          // EXPLICIT SAVE FOR BRAND NAMES
+          setTimeout(() => {
+            saveResult({ ...cached, namingCategory, selectedStyle, nameLanguage, selectedCatalogs, generatedNames: results });
+          }, 100);
         }
       } else {
         await new Promise((r) => setTimeout(r, 400));
@@ -1339,6 +1458,10 @@ export default function AnalysisIdentity() {
         }
 
         setGeneratedNames(results);
+          // EXPLICIT SAVE FOR BRAND NAMES
+          setTimeout(() => {
+            saveResult({ ...cached, namingCategory, selectedStyle, nameLanguage, selectedCatalogs, generatedNames: results });
+          }, 100);
       }
       toast(
         lang === "en"
@@ -1443,7 +1566,8 @@ export default function AnalysisIdentity() {
           lang,
         });
         if (liveData) {
-          setColorAnalysis({
+          setIsNewlyGeneratedColors(true);
+            setColorAnalysis({
             psychology_ar:
               liveData.psychology ||
               "تحليل مباشر بالذكاء الاصطناعي للهوية البصرية.",
@@ -1475,6 +1599,7 @@ export default function AnalysisIdentity() {
         );
         if (dbResult) {
           setColorAnalysis(dbResult);
+            setIsNewlyGeneratedColors(true);
         } else {
           setColorAnalysis({
             psychology_ar:
@@ -1514,6 +1639,10 @@ export default function AnalysisIdentity() {
       console.error(err);
     } finally {
       setIsAnalyzingColors(false);
+      // EXPLICIT SAVE FOR VISUAL IDENTITY
+      setTimeout(() => {
+        saveResult({ ...cached, colorAnalysis: apiResponse, primaryColor: newPrimary, secondaryColor: newSecondary, accentColor: newAccent, headingFont: newFont, bodyTextColor: newBodyColor, heroBgColor: newHeroBg, buttonBgColor: newPrimary, cardBgColor: newCardBg, cardBorderColor: newAccent });
+      }, 100);
     }
   };
 
@@ -1543,10 +1672,94 @@ export default function AnalysisIdentity() {
       ? filteredIdeas
       : filteredIdeas.slice(0, 8);
 
+
+  const handleResetSession = () => {
+    if (activeTab === "niche") {
+      setSelectedNiche(null);
+      setSelectedMicroNiche(null);
+      dispatch({ type: 'SET_FIELD', field: 'niche', value: '' });
+      dispatch({ type: 'SET_FIELD', field: 'subNiche', value: '' });
+      setCustomNicheInput("");
+      setNicheAnalysis(null);
+      setAiData({
+        benchmark: null,
+        microNiches: [],
+        marketOpportunities: null,
+        topLeaders: [],
+        loading: {
+          benchmark: false,
+          microNiches: false,
+          opportunities: false,
+          leaders: false
+        },
+        error: null
+      });
+      setLiveAiMicroIdeas([]);
+      saveResult({ ...cached, selectedNiche: null, selectedMicroNiche: null, customNicheInput: "", aiData: null, nicheAnalysis: null, liveAiMicroIdeas: [] });
+    } else if (activeTab === "name") {
+      setGeneratedNames(null);
+      setSelectedCatalogs([]);
+      setCustomNameInput("");
+      setPinnedNames([]);
+      saveResult({ ...cached, generatedNames: null, selectedCatalogs: [], customNameInput: "", pinnedNames: [] });
+    } else if (activeTab === "identity") {
+      setColorAnalysis(null);
+      setLogoPreview(null);
+      saveResult({ ...cached, colorAnalysis: null, logoPreview: null });
+    }
+  };
+
+  const activeNicheTitle = 
+    selectedMicroNiche?.title || 
+    selectedMicroNiche?.name || 
+    (typeof selectedMicroNiche === 'string' ? selectedMicroNiche : null) || 
+    (lang === "en" ? selectedNiche?.label_en : selectedNiche?.label_ar) ||
+    selectedNiche?.title || 
+    selectedNiche?.name || 
+    (typeof selectedNiche === 'string' ? selectedNiche : null) || 
+    (lang === "en" ? "Please select or type a niche" : "الرجاء تحديد أو كتابة النيش");
+
+  const shouldShowAnalysis = Boolean(
+    selectedMicroNiche || 
+    state.subNiche || 
+    selectedNiche || 
+    aiData?.marketOpportunities || 
+    aiData?.topLeaders
+  );
+
   return (
     <div className="ai-container animate-fade-in" dir={isRtl ? "rtl" : "ltr"}>
       {/* ═══ STEP PROGRESS BAR + FLOATING PILL TAB BAR ═══ */}
-      <div className="ai-tabs-header-wrap">
+      <div className="ai-tabs-header-wrap" style={{ position: 'relative' }}>
+        <button
+          onClick={handleResetSession}
+          style={{
+            position: 'absolute',
+            left: isRtl ? 'auto' : '20px',
+            right: isRtl ? '20px' : 'auto',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            background: 'rgba(239, 68, 68, 0.1)',
+            color: '#EF4444',
+            border: '1px solid rgba(239, 68, 68, 0.2)',
+            padding: '6px 12px',
+            borderRadius: '8px',
+            fontSize: '11px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            transition: 'all 0.2s',
+            zIndex: 10
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)' }}
+        >
+          <RefreshCw size={12} />
+          {lang === 'en' ? 'Reset' : 'إعادة ضبط'}
+        </button>
+
         {/* Slim progress track */}
         <div className="ai-progress-track">
           <div
@@ -1560,7 +1773,7 @@ export default function AnalysisIdentity() {
           {/* Tab 01 */}
           <button
             type="button"
-            onClick={() => setActiveTab("niche")}
+            onClick={() => { setIsNewlyGeneratedColors(false); setActiveTab("niche"); }}
             className={`ai-tab-btn ${activeTab === "niche" ? "active" : ""}`}
           >
             <span className="ai-tab-step-badge">01</span>
@@ -1589,7 +1802,7 @@ export default function AnalysisIdentity() {
           {/* Tab 02 */}
           <button
             type="button"
-            onClick={() => setActiveTab("name")}
+            onClick={() => { setIsNewlyGeneratedColors(false); setActiveTab("name"); }}
             disabled={!state.niche}
             className={`ai-tab-btn ${activeTab === "name" ? "active" : ""}`}
           >
@@ -1619,7 +1832,7 @@ export default function AnalysisIdentity() {
           {/* Tab 03 */}
           <button
             type="button"
-            onClick={() => setActiveTab("identity")}
+            onClick={() => { setIsNewlyGeneratedColors(false); setActiveTab("identity"); }}
             disabled={!state.brandName || !state.niche}
             className={`ai-tab-btn ${activeTab === "identity" ? "active" : ""}`}
           >
@@ -2087,9 +2300,7 @@ export default function AnalysisIdentity() {
                       type="button"
                       onClick={() => {
                         setMicroNicheMode('live');
-                        if (aiData.microNiches.length === 0 && !aiData.loading.microNiches) {
-                          fetchAIData('microNiches');
-                        }
+                        fetchAIData('microNiches');
                       }}
                       style={{
                         padding: '6px 14px', borderRadius: '8px', fontSize: '11px', fontWeight: '800',
@@ -2314,8 +2525,19 @@ export default function AnalysisIdentity() {
 
                   return (
                     <div className="micro-niche-grid-2030">
-                      {filteredList.map(({ text: ideaText, originalIndex: i }) => {
-                        const isActive = state.subNiche === ideaText;
+                      {filteredList.map(({ idea: item, text: ideaText, originalIndex: i }) => {
+                        const isMicroNicheSelected = Boolean(
+                          selectedMicroNiche && (
+                            selectedMicroNiche === ideaText || 
+                            selectedMicroNiche === item ||
+                            (typeof selectedMicroNiche === 'object' && typeof item === 'object' && (
+                              (selectedMicroNiche.id && selectedMicroNiche.id === item.id) || 
+                              (selectedMicroNiche.title && selectedMicroNiche.title === item.title) || 
+                              (selectedMicroNiche.name && selectedMicroNiche.name === item.name)
+                            ))
+                          )
+                        );
+                        const isActive = isMicroNicheSelected || state.subNiche === ideaText;
                         const badge = getMarketBadges(i);
                         const BadgeIcon = badge.IconComp;
 
@@ -2361,7 +2583,7 @@ export default function AnalysisIdentity() {
               )}
 
               {/* ═══════════════ 3. MICRO-NICHE DEEP DIVE VIEWS (2-TAB COMPONENT) ═══════════════ */}
-              {state.subNiche && (
+              {shouldShowAnalysis && (
                 <div
                   className="ns-panel-card"
                   style={{
@@ -2601,10 +2823,7 @@ export default function AnalysisIdentity() {
                         fontWeight: "800",
                       }}
                     >
-                      {state.subNiche ||
-                        (lang === "en"
-                          ? "Please select or type a niche"
-                          : "الرجاء تحديد أو كتابة النيش")}
+                      {activeNicheTitle}
                     </div>
                   </div>
 
@@ -3060,7 +3279,7 @@ export default function AnalysisIdentity() {
                   {nicheAnalysis.nextStep}
                 </div>
                 <button
-                  onClick={() => setActiveTab("name")}
+                  onClick={() => { setIsNewlyGeneratedColors(false); setActiveTab("name"); }}
                   className="btn btn-primary"
                   style={{
                     padding: "8px 18px",
@@ -4619,7 +4838,7 @@ export default function AnalysisIdentity() {
                     margin: 0,
                   }}
                 >
-                  <TypingText
+                  <TypingText isCached={analysisMode === 'fast' || !isNewlyGeneratedColors}
                     text={lang === "en" ? colorAnalysis.psychology_en : colorAnalysis.psychology_ar}
                     speed={15}
                     delay={50}
@@ -4639,7 +4858,7 @@ export default function AnalysisIdentity() {
                   <Mic size={13} color="#6366F1" strokeWidth={1.5} />
                   <span>{lang === "en" ? "Tone:" : "نبرة صوت البراند:"}</span>
                   <strong style={{ color: "#fff" }}>
-                    <TypingText
+                    <TypingText isCached={analysisMode === 'fast' || !isNewlyGeneratedColors}
                       text={lang === "en" ? colorAnalysis.brand_tone_en : colorAnalysis.brand_tone_ar}
                       speed={15}
                       delay={120}
@@ -4680,7 +4899,7 @@ export default function AnalysisIdentity() {
                       {lang === "en" ? "Font Pairings:" : "تنسيق الخطوط:"}
                     </span>
                     <strong style={{ color: "#fff" }}>
-                      <TypingText
+                      <TypingText isCached={analysisMode === 'fast' || !isNewlyGeneratedColors}
                         text={lang === "en" ? colorAnalysis.font_pairings_en : colorAnalysis.font_pairings_ar}
                         speed={15}
                         delay={150}

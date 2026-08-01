@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import useToolCache from "../../../hooks/useToolCache";
 import { createPortal } from "react-dom";
 import { useApp } from "../../../context/AppContext";
 import { useAuth } from "../../../context/AuthContext";
@@ -678,6 +679,68 @@ export default function LandingPageContent({ stepNumber }) {
     lang === "en" ? "Fitting Action-Oriented CTA..." : "ضبط زر اتخاذ الإجراء وحساب التحويل...",
   ];
 
+
+  // --- STATE PERSISTENCE & HYDRATION ---
+  const { cached, isLoadedFromCloud, saveResult } = useToolCache('landing-page-content');
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        if (cached.analysisMode !== undefined) setAnalysisMode(cached.analysisMode);
+        if (cached.activeSectionIndex !== undefined) setActiveSectionIndex(cached.activeSectionIndex);
+        if (cached.isConsoleCollapsed !== undefined) setIsConsoleCollapsed(cached.isConsoleCollapsed);
+        if (cached.isInputDrawerOpen !== undefined) setIsInputDrawerOpen(cached.isInputDrawerOpen);
+        if (cached.scanningStep !== undefined) setScanningStep(cached.scanningStep);
+        if (cached.productName !== undefined) setProductName(cached.productName);
+        if (cached.audience !== undefined) setAudience(cached.audience);
+        if (cached.validationError !== undefined) setValidationError(cached.validationError);
+        if (cached.objective !== undefined) setObjective(cached.objective);
+        if (cached.awareness !== undefined) setAwareness(cached.awareness);
+        if (cached.pricePoint !== undefined) setPricePoint(cached.pricePoint);
+        if (cached.emotion !== undefined) setEmotion(cached.emotion);
+        if (cached.isGenerating !== undefined) setIsGenerating(cached.isGenerating);
+        if (cached.generatedContent !== undefined) setGeneratedContent(cached.generatedContent);
+        if (cached.activeIdeaIndex !== undefined) setActiveIdeaIndex(cached.activeIdeaIndex);
+      }
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    const timeout = setTimeout(() => {
+      saveResult({ analysisMode, activeSectionIndex, isConsoleCollapsed, isInputDrawerOpen, scanningStep, productName, audience, validationError, objective, awareness, pricePoint, emotion, isGenerating, generatedContent, activeIdeaIndex });
+    }, 1500);
+    return () => clearTimeout(timeout);
+  }, [isLoadedFromCloud, analysisMode, activeSectionIndex, isConsoleCollapsed, isInputDrawerOpen, scanningStep, productName, audience, validationError, objective, awareness, pricePoint, emotion, isGenerating, generatedContent, activeIdeaIndex]);
+
+  const handleResetSession = () => {
+    setAnalysisMode("fast");
+    setActiveSectionIndex(0);
+    setIsConsoleCollapsed(false);
+    setIsInputDrawerOpen(false);
+    setScanningStep(0);
+    setProductName(state.brandName || "");
+    setAudience(state.niche || "");
+    setValidationError("");
+    setObjective("direct_sales");
+    setAwareness("problem_aware");
+    setPricePoint("low_ticket");
+    setEmotion("urgency");
+    setIsGenerating(false);
+    setGeneratedContent(null);
+    setActiveIdeaIndex({
+    1: 0,
+    2: 0,
+    3: 0,
+    4: 0,
+    5: 0,
+  });
+    saveResult(null);
+  };
+  // -------------------------------------
+
   return (
     <ToolDashboardLayout
       id="landing-page-content"
@@ -695,6 +758,31 @@ export default function LandingPageContent({ stepNumber }) {
       accentColor="#6366F1"
       timeEstimate="10 - 20"
     >
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '15px 20px 0 20px' }}>
+          <button
+            onClick={handleResetSession}
+            style={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#EF4444',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
+              zIndex: 10
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)' }}
+          >
+            <RefreshCw size={14} />
+            {(state?.language || 'ar') === 'en' ? 'Reset / Start Fresh' : 'إعادة ضبط / بدء من جديد'}
+          </button>
+        </div>
       <div className="lpc-deck-workspace" dir={isRtl ? "rtl" : "ltr"}>
 
         {/* ═══════════════ 1. SLEEK TOP GLASSBAR & MASTER INPUT TRIGGER ═══════════════ */}

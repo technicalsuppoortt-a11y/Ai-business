@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState , useRef , useEffect} from 'react';
+import useToolCache from "../../../hooks/useToolCache";
 import InteractiveToolLayout from './InteractiveToolLayout';
 import { FREELANCE_DB } from '../../../data/freelanceData';
 import { useApp } from '../../../context/AppContext';
@@ -99,6 +100,28 @@ export default function PlatformRadar({ stepNumber }) {
 
   const leftContent = (
     <div className="space-y-6 animate-fade-in" dir="rtl">
+        <div style={{ display: 'flex', justifyContent: 'flex-end', paddingBottom: '10px' }}>
+          <button
+            onClick={handleResetSession}
+            style={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#EF4444',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              padding: '6px 12px',
+              borderRadius: '8px',
+              fontSize: '11px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s'
+            }}
+          >
+            <RefreshCw size={12} />
+            {(state?.language || 'ar') === 'en' ? 'Reset / Start Fresh' : 'إعادة ضبط / بدء من جديد'}
+          </button>
+        </div>
       {/* Filters */}
       <div className="flex flex-wrap gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
         {[
@@ -236,6 +259,42 @@ export default function PlatformRadar({ stepNumber }) {
       )}
     </div>
   );
+
+
+  // --- STATE PERSISTENCE & HYDRATION ---
+  const { cached, isLoadedFromCloud, saveResult } = useToolCache('platform-radar');
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        if (cached.analysisMode !== undefined) setAnalysisMode(cached.analysisMode);
+        if (cached.filter !== undefined) setFilter(cached.filter);
+        if (cached.selectedPlatform !== undefined) setSelectedPlatform(cached.selectedPlatform);
+        if (cached.isGenerating !== undefined) setIsGenerating(cached.isGenerating);
+        if (cached.aiStrategy !== undefined) setAiStrategy(cached.aiStrategy);
+      }
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    const timeout = setTimeout(() => {
+      saveResult({ analysisMode, filter, selectedPlatform, isGenerating, aiStrategy });
+    }, 1500);
+    return () => clearTimeout(timeout);
+  }, [isLoadedFromCloud, analysisMode, filter, selectedPlatform, isGenerating, aiStrategy]);
+
+  const handleResetSession = () => {
+    setAnalysisMode('fast');
+    setFilter('all');
+    setSelectedPlatform(null);
+    setIsGenerating(false);
+    setAiStrategy('');
+    saveResult(null);
+  };
+  // -------------------------------------
 
   return (
     <InteractiveToolLayout

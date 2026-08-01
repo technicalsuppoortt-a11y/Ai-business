@@ -3,11 +3,16 @@ import React, { useState, useEffect } from 'react';
 /**
  * TypingText Component — Renders text character-by-character with a blinking cursor
  */
-export const TypingText = ({ text, speed = 20, delay = 100, className = "" }) => {
-  const [displayText, setDisplayText] = useState('');
-  const [isComplete, setIsComplete] = useState(false);
+export const TypingText = ({ text, speed = 20, delay = 100, className = "", isCached = false }) => {
+  const [displayText, setDisplayText] = useState(isCached ? (text || '') : '');
+  const [isComplete, setIsComplete] = useState(isCached);
 
   useEffect(() => {
+    if (isCached) {
+      setDisplayText(text || '');
+      setIsComplete(true);
+      return;
+    }
     if (!text) {
       setDisplayText('');
       setIsComplete(true);

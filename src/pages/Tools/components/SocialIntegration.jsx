@@ -22,7 +22,8 @@ import {
   Activity,
   Cpu,
   Radio,
-  Layers
+  Layers,
+  RefreshCw
 } from 'lucide-react';
 import './SocialIntegration.css';
 

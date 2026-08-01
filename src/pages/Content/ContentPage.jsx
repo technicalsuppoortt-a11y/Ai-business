@@ -48,7 +48,7 @@ export default function ContentPage() {
 
   const proceed = () => {
     dispatch({ type: 'COMPLETE_STEP', step: 'content' });
-    toast(lang === 'en' ? 'Content ready! Let\'s build offers 💰' : 'المحتوى جاهز! لنبني العروض 💰', 'success');
+    toast(lang ==='en' ?'Content ready! Let\'s build offers' :'المحتوى جاهز! لنبني العروض','success');
     navigate('/dashboard/offers');
   };
 

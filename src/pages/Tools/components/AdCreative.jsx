@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect , useRef } from 'react';
+import useToolCache from "../../../hooks/useToolCache";
 import { useApp } from '../../../context/AppContext';
 import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../context/ToastContext';
@@ -36,7 +37,7 @@ import {
   Layers,
   Megaphone,
   ChevronDown
-} from 'lucide-react';
+, RefreshCw} from 'lucide-react';
 import './AdCreative.css';
 
 export default function AdCreative({ stepNumber }) {
@@ -217,6 +218,50 @@ export default function AdCreative({ stepNumber }) {
   const selectedPlatObj = structure?.platforms?.find(p => p.id === selectedPlatform);
   const ActivePlatIcon = platformIconsMap[selectedPlatform] || Share2;
 
+
+  // --- STATE PERSISTENCE & HYDRATION ---
+  const { cached, isLoadedFromCloud, saveResult } = useToolCache('ad-creative');
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        if (cached.analysisMode !== undefined) setAnalysisMode(cached.analysisMode);
+        if (cached.selectedProduct !== undefined) setSelectedProduct(cached.selectedProduct);
+        if (cached.selectedPain !== undefined) setSelectedPain(cached.selectedPain);
+        if (cached.selectedPlatform !== undefined) setSelectedPlatform(cached.selectedPlatform);
+        if (cached.selectedDialect !== undefined) setSelectedDialect(cached.selectedDialect);
+        if (cached.result !== undefined) setResult(cached.result);
+        if (cached.activeAngleTab !== undefined) setActiveAngleTab(cached.activeAngleTab);
+        
+        setIsGenerating(false);
+        setLoadingBadgeIndex(0);
+      }
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    saveResult({ analysisMode, selectedProduct, selectedPain, selectedPlatform, selectedDialect, result, activeAngleTab });
+  }, [isLoadedFromCloud, analysisMode, selectedProduct, selectedPain, selectedPlatform, selectedDialect, result, activeAngleTab]);
+
+  const handleResetSession = () => {
+    setAnalysisMode('fast');
+    setStructure(null);
+    setSelectedProduct(savedState.selectedProduct || '');
+    setSelectedPain(savedState.selectedPain || '');
+    setSelectedPlatform(savedState.selectedPlatform || '');
+    setSelectedDialect(savedState.selectedDialect || '');
+    setIsGenerating(false);
+    setResult(savedState.result || null);
+    setActivePopover(null);
+    setLoadingBadgeIndex(0);
+    setActiveAngleTab('hook');
+    saveResult(null);
+  };
+  // -------------------------------------
+
   return (
     <ToolDashboardLayout
       id="ad-creative"
@@ -227,6 +272,31 @@ export default function AdCreative({ stepNumber }) {
       timeEstimate="45 - 90"
       bottomSections={bottomSections}
     >
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '15px 20px 0 20px' }}>
+          <button
+            onClick={handleResetSession}
+            style={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#EF4444',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
+              zIndex: 10
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)' }}
+          >
+            <RefreshCw size={14} />
+            {(state?.language || 'ar') === 'en' ? 'Reset / Start Fresh' : 'إعادة ضبط / بدء من جديد'}
+          </button>
+        </div>
       <div className="ac-container" dir={isRtl ? 'rtl' : 'ltr'}>
         
         {/* ═══════════════ 1. TOP SECTION: FLOATING COMMAND RIBBON ═══════════════ */}
@@ -428,7 +498,7 @@ export default function AdCreative({ stepNumber }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.3 }}
-              className="ac-mockup-stage"
+              className="ac-mockup-stage ac-custom-scroll" style={{ maxHeight: '500px', overflowY: 'auto' }}
             >
               {/* Hook Angle Selector Bar */}
               <div className="ac-angle-selector-bar">

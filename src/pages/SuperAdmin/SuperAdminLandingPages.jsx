@@ -318,13 +318,13 @@ export default function SuperAdminLandingPages() {
         await setDoc(doc(db, "tc_website_templates_gallery", editingId), data, {
           merge: true,
         });
-        toast("تم تحديث القالب بنجاح ✅", "success");
+        toast("تم تحديث القالب بنجاح","success");
       } else {
         await addDoc(collection(db, "tc_website_templates_gallery"), {
           ...data,
           createdAt: serverTimestamp(),
         });
-        toast("تم إضافة القالب بنجاح ✅", "success");
+        toast("تم إضافة القالب بنجاح","success");
       }
 
       resetForm();
@@ -351,7 +351,7 @@ export default function SuperAdminLandingPages() {
 
   const handleCopyCode = (code) => {
     navigator.clipboard.writeText(code);
-    toast("تم نسخ الكود البرمجي بنجاح 📋", "success");
+    toast("تم نسخ الكود البرمجي بنجاح","success");
   };
 
   const handleDownloadCode = (code, filename) => {
@@ -363,7 +363,7 @@ export default function SuperAdminLandingPages() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast("تم بدء تحميل الملف 📥", "success");
+    toast("تم بدء تحميل الملف","success");
   };
 
   const handleExportCSV = () => {
@@ -392,7 +392,7 @@ export default function SuperAdminLandingPages() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast("تم تصدير البيانات بنجاح 📊", "success");
+    toast("تم تصدير البيانات بنجاح","success");
   };
 
   const handleResetFilters = () => {

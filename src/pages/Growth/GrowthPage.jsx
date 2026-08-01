@@ -18,7 +18,7 @@ export default function GrowthPage() {
 
   const handleComplete = () => {
     dispatch({ type: 'COMPLETE_STEP', step: 'growth' });
-    toast(lang === 'en' ? '🎉 Congratulations! You completed all the steps' : '🎉 مبروك! أكملت كل الخطوات', 'success');
+    toast(lang ==='en' ?' Congratulations! You completed all the steps' :' مبروك! أكملت كل الخطوات','success');
   };
 
   return (

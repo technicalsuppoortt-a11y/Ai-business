@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState , useRef , useEffect} from 'react';
+import useToolCache from "../../../hooks/useToolCache";
 import { useToast } from '../../../context/ToastContext';
 import { useApp } from '../../../context/AppContext';
 import { createPortal } from 'react-dom';
@@ -397,6 +398,38 @@ export default function ExternalTools() {
     return matchesCategory && (nameMatch || descArMatch || descEnMatch || helpArMatch || helpEnMatch);
   });
 
+
+  // --- STATE PERSISTENCE & HYDRATION ---
+  const { cached, isLoadedFromCloud, saveResult } = useToolCache('external-tools');
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        if (cached.selectedTool !== undefined) setSelectedTool(cached.selectedTool);
+        if (cached.searchQuery !== undefined) setSearchQuery(cached.searchQuery);
+        if (cached.selectedCategory !== undefined) setSelectedCategory(cached.selectedCategory);
+      }
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    const timeout = setTimeout(() => {
+      saveResult({ selectedTool, searchQuery, selectedCategory });
+    }, 1500);
+    return () => clearTimeout(timeout);
+  }, [isLoadedFromCloud, selectedTool, searchQuery, selectedCategory]);
+
+  const handleResetSession = () => {
+    setSelectedTool(null);
+    setSearchQuery('');
+    setSelectedCategory('all');
+    saveResult(null);
+  };
+  // -------------------------------------
+
   return (
     <ToolDashboardLayout
       id="external-tools"
@@ -405,6 +438,31 @@ export default function ExternalTools() {
       accentColor="#6366F1"
       timeEstimate="∞"
     >
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '15px 20px 0 20px' }}>
+          <button
+            onClick={handleResetSession}
+            style={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#EF4444',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
+              zIndex: 10
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)' }}
+          >
+            <RefreshCw size={14} />
+            {(state?.language || 'ar') === 'en' ? 'Reset / Start Fresh' : 'إعادة ضبط / بدء من جديد'}
+          </button>
+        </div>
       {/* Advanced Control & Filter Section */}
       <div className="et-control-panel">
         <div className="et-search-bar-row">

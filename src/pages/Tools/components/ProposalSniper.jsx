@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState , useRef , useEffect} from 'react';
+import useToolCache from "../../../hooks/useToolCache";
 import InteractiveToolLayout from './InteractiveToolLayout';
 import { useApp } from '../../../context/AppContext';
 import { useAuth } from '../../../context/AuthContext';
@@ -112,6 +113,28 @@ export default function ProposalSniper({ stepNumber }) {
 
   const leftContent = (
     <div className="space-y-6 animate-fade-in" dir={lang === 'en' ? 'ltr' : 'rtl'}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', paddingBottom: '10px' }}>
+          <button
+            onClick={handleResetSession}
+            style={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#EF4444',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              padding: '6px 12px',
+              borderRadius: '8px',
+              fontSize: '11px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s'
+            }}
+          >
+            <RefreshCw size={12} />
+            {(state?.language || 'ar') === 'en' ? 'Reset / Start Fresh' : 'إعادة ضبط / بدء من جديد'}
+          </button>
+        </div>
       <div>
         <label className="block text-xs font-bold text-slate-400 mb-3 uppercase tracking-widest">
           {lang === 'en' ? 'Job Description' : 'وصف الوظيفة (Job Description)'}
@@ -218,6 +241,44 @@ export default function ProposalSniper({ stepNumber }) {
       )}
     </div>
   );
+
+
+  // --- STATE PERSISTENCE & HYDRATION ---
+  const { cached, isLoadedFromCloud, saveResult } = useToolCache('proposal-sniper');
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        if (cached.analysisMode !== undefined) setAnalysisMode(cached.analysisMode);
+        if (cached.jobDescription !== undefined) setJobDescription(cached.jobDescription);
+        if (cached.tone !== undefined) setTone(cached.tone);
+        if (cached.proposalLang !== undefined) setProposalLang(cached.proposalLang);
+        if (cached.isGenerating !== undefined) setIsGenerating(cached.isGenerating);
+        if (cached.result !== undefined) setResult(cached.result);
+      }
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    const timeout = setTimeout(() => {
+      saveResult({ analysisMode, jobDescription, tone, proposalLang, isGenerating, result });
+    }, 1500);
+    return () => clearTimeout(timeout);
+  }, [isLoadedFromCloud, analysisMode, jobDescription, tone, proposalLang, isGenerating, result]);
+
+  const handleResetSession = () => {
+    setAnalysisMode('fast');
+    setJobDescription('');
+    setTone('expert');
+    setProposalLang('ar');
+    setIsGenerating(false);
+    setResult('');
+    saveResult(null);
+  };
+  // -------------------------------------
 
   return (
     <InteractiveToolLayout

@@ -12,7 +12,7 @@ export default function OffersPage() {
 
   const proceed = () => {
     dispatch({ type: 'COMPLETE_STEP', step: 'offers' });
-    toast(lang === 'en' ? 'Offers ready! Let\'s move to ads 📣' : 'العروض جاهزة! لننتقل للإعلانات 📣', 'success');
+    toast(lang ==='en' ?'Offers ready! Let\'s move to ads' :'العروض جاهزة! لننتقل للإعلانات','success');
     navigate('/dashboard/ads');
   };
 

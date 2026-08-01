@@ -44,7 +44,7 @@ export default function ContentFactory({ stepNumber }) {
   
   const savedState = state.toolResults['content-factory'] || {};
 
-  const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
+  const [analysisMode, setAnalysisMode] = useState(savedState.mode || 'fast'); // 'fast' | 'live'
   
   const audiences = [
     { id: 'beginners', label_ar: 'المبتدئين / الهواة', label_en: 'Beginners / Amateurs', IconComp: GraduationCap },
@@ -99,7 +99,7 @@ export default function ContentFactory({ stepNumber }) {
           context: { niche: state.niche, user: state.user },
           lang
         });
-        toast(lang === 'en' ? 'Live AI Content Plan generated! ✨' : 'تم توليد خطة المحتوى بالذكاء الاصطناعي الحي! ✨', 'success');
+        toast(lang ==='en' ?'Live AI Content Plan generated!' :'تم توليد خطة المحتوى بالذكاء الاصطناعي الحي!','success');
       } else {
         await new Promise(r => setTimeout(r, 400));
 
@@ -128,7 +128,7 @@ export default function ContentFactory({ stepNumber }) {
             ]
           };
         }
-        toast(lang === 'en' ? 'Content plan ready! 🚀' : 'خطة المحتوى جاهزة للإنتاج! 🚀', 'success');
+        toast(lang ==='en' ?'Content plan ready!' :'خطة المحتوى جاهزة للإنتاج!','success');
       }
       
       if (dbResult && dbResult.posts && dbResult.posts.length > 0) {
@@ -173,7 +173,7 @@ export default function ContentFactory({ stepNumber }) {
       });
     }
     navigator.clipboard.writeText(text);
-    toast(lang === 'en' ? 'Content plan copied to clipboard! ✅' : 'تم نسخ خطة المحتوى إلى الحافظة! ✅', 'success');
+    toast(lang ==='en' ?'Content plan copied to clipboard!' :'تم نسخ خطة المحتوى إلى الحافظة!','success');
   };
 
   const bottomSections = [

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState , useRef , useEffect} from 'react';
+import useToolCache from "../../../hooks/useToolCache";
 import InteractiveToolLayout from './InteractiveToolLayout';
 import { useApp } from '../../../context/AppContext';
 import { useAuth } from '../../../context/AuthContext';
@@ -83,6 +84,28 @@ export default function PortfolioBuilder({ stepNumber }) {
 
   const leftContent = (
     <div className="space-y-6 animate-fade-in" dir={lang === 'en' ? 'ltr' : 'rtl'}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', paddingBottom: '10px' }}>
+          <button
+            onClick={handleResetSession}
+            style={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#EF4444',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              padding: '6px 12px',
+              borderRadius: '8px',
+              fontSize: '11px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s'
+            }}
+          >
+            <RefreshCw size={12} />
+            {(state?.language || 'ar') === 'en' ? 'Reset / Start Fresh' : 'إعادة ضبط / بدء من جديد'}
+          </button>
+        </div>
       <div className="bg-slate-900/50 p-6 rounded-[2rem] border border-white/5 space-y-6">
         <div>
           <label className="text-[10px] text-slate-400 font-black uppercase mb-2 block tracking-widest">
@@ -238,6 +261,42 @@ export default function PortfolioBuilder({ stepNumber }) {
       )}
     </div>
   );
+
+
+  // --- STATE PERSISTENCE & HYDRATION ---
+  const { cached, isLoadedFromCloud, saveResult } = useToolCache('portfolio-builder');
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        if (cached.analysisMode !== undefined) setAnalysisMode(cached.analysisMode);
+        if (cached.projectData !== undefined) setProjectData(cached.projectData);
+        if (cached.generatedCaseStudy !== undefined) setGeneratedCaseStudy(cached.generatedCaseStudy);
+        if (cached.isGenerating !== undefined) setIsGenerating(cached.isGenerating);
+      }
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    const timeout = setTimeout(() => {
+      saveResult({ analysisMode, projectData, generatedCaseStudy, isGenerating });
+    }, 1500);
+    return () => clearTimeout(timeout);
+  }, [isLoadedFromCloud, analysisMode, projectData, generatedCaseStudy, isGenerating]);
+
+  const handleResetSession = () => {
+    setAnalysisMode('fast');
+    setProjectData({
+    title: '', client: '', challenge: '', solution: '', result: ''
+  });
+    setGeneratedCaseStudy('');
+    setIsGenerating(false);
+    saveResult(null);
+  };
+  // -------------------------------------
 
   return (
     <InteractiveToolLayout

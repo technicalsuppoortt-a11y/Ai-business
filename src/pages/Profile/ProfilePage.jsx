@@ -158,7 +158,7 @@ export default function ProfilePage() {
         ownerName: editName,
         brandName: editBrand
       }, { merge: true });
-      toast(lang === 'en' ? 'Profile updated successfully! ✅' : 'تم تحديث بيانات الملف الشخصي بنجاح! ✅', 'success');
+      toast(lang ==='en' ?'Profile updated successfully!' :'تم تحديث بيانات الملف الشخصي بنجاح!','success');
       setIsEditProfileOpen(false);
       triggerConfetti();
     } catch (err) {
@@ -193,7 +193,7 @@ export default function ProfilePage() {
                 await uploadBytes(imgRef, file);
                 const photoURL = await getDownloadURL(imgRef);
                 await setDoc(doc(db, 'users', userData.uid), { photoURL }, { merge: true });
-                toast(lang === 'en' ? 'Profile photo updated! ✅' : 'تم تحديث الصورة الشخصية! ✅', 'success');
+                toast(lang ==='en' ?'Profile photo updated!' :'تم تحديث الصورة الشخصية!','success');
               } catch (err) {
                 toast(lang === 'en' ? 'Error uploading photo' : 'حدث خطأ أثناء رفع الصورة', 'error');
               } finally {

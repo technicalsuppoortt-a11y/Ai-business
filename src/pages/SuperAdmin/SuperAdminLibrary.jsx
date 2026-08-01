@@ -270,13 +270,13 @@ export default function SuperAdminLibrary() {
 
       if (editingId) {
         await updateDoc(doc(libraryDb, "brandLibrary", editingId), data);
-        toast("تم تحديث المنتج بنجاح ✅", "success");
+        toast("تم تحديث المنتج بنجاح","success");
       } else {
         await addDoc(collection(libraryDb, "brandLibrary"), {
           ...data,
           createdAt: serverTimestamp(),
         });
-        toast("تم رفع المنتج للمكتبة بنجاح ✅", "success");
+        toast("تم رفع المنتج للمكتبة بنجاح","success");
       }
 
       resetForm();
@@ -320,7 +320,7 @@ export default function SuperAdminLibrary() {
       await updateDoc(doc(libraryDb, "brandLibrary", b.id), {
         isPrivate: false,
       });
-      toast("تم تحويل المنتج إلى عام بنجاح ✅", "success");
+      toast("تم تحويل المنتج إلى عام بنجاح","success");
       await loadLibrary();
     } catch (err) {
       toast("حدث خطأ في تحديث حالة المنتج", "error");

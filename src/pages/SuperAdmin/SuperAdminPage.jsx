@@ -296,7 +296,7 @@ export default function SuperAdminPage() {
       }
 
       toast(
-        `تم إنشاء ${role === "admin" ? "البراند" : "المستخدم"} بنجاح! ✅`,
+`تم إنشاء ${role ==="admin" ?"البراند" :"المستخدم"} بنجاح!`,
         "success",
       );
       setBrandName("");
@@ -420,7 +420,7 @@ export default function SuperAdminPage() {
           updatedAt: serverTimestamp(),
         },
       });
-      toast("تم التحديث بنجاح ✅", "success");
+      toast("تم التحديث بنجاح","success");
       cancelEdit();
       await loadBrands();
     } catch (err) {
@@ -444,7 +444,7 @@ export default function SuperAdminPage() {
     if (!confirmed) return;
     try {
       await deleteDoc(doc(db, "users", brand.id));
-      toast("تم الحذف ✅", "success");
+      toast("تم الحذف","success");
       await loadBrands();
     } catch (err) {
       toast("خطأ في الحذف", "error");
@@ -567,7 +567,7 @@ export default function SuperAdminPage() {
   const handleLogout = async () => {
     try {
       await logout("superadmin");
-      toast("تم تسجيل الخروج بنجاح 👋", "success");
+      toast("تم تسجيل الخروج بنجاح","success");
       navigate("/superadmin/login");
     } catch (error) {
       toast("حدث خطأ أثناء تسجيل الخروج", "error");

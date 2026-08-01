@@ -85,8 +85,8 @@ export default function ResetPasswordPage({ portal = 'user' }) {
       setResetSuccess(true);
       toast(
         lang === 'en'
-          ? 'Password updated successfully! You can now log in. 🔑'
-          : 'تم تحديث كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول. 🔑',
+          ?'Password updated successfully! You can now log in.'
+          :'تم تحديث كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول.',
         'success'
       );
     } catch (err) {

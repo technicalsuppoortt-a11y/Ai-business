@@ -313,6 +313,8 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true);
   const [plans, setPlans] = useState([]);
   const [brandError, setBrandError] = useState(null);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showSecurity, setShowSecurity] = useState(false);
   const [expandedPlans, setExpandedPlans] = useState({});
   const togglePlanExpand = (planId) => {
     setExpandedPlans((prev) => ({
@@ -3078,27 +3080,44 @@ export default function LandingPage() {
           <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 14 }}>
             {t.ctaFinal.bullets}
           </div>
+          <div style={{ marginTop: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 13, color: "var(--text2)", background: "rgba(255,255,255,0.05)", padding: "10px 18px", borderRadius: 20 }}>
+            <ShieldCheck size={18} color="#25D366" />
+            <span>{state.language === "en" ? "Your data is protected under the highest security and privacy standards" : "بياناتك محمية وفق أعلى معايير الأمان والخصوصية"}</span>
+          </div>
         </div>
       </motion.section>
 
-      {/* Simple Clean Footer without links */}
-      <footer className="lp-footer">
+      {/* Enhanced Professional Footer */}
+      <footer className="lp-footer" style={{ borderTop: "1px solid rgba(255,255,255,0.05)", background: "rgba(8, 12, 20, 0.8)", backdropFilter: "blur(20px)" }}>
         <div
           className="lp-footer-simple-inner"
           style={{
             flexDirection: state.language === "ar" ? "row-reverse" : "row",
+            alignItems: "center",
+            paddingTop: 16,
+            paddingBottom: 16
           }}
         >
-          <div className="lp-footer-brand-wrap">
+          <div className="lp-footer-brand-wrap" style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: state.language === "ar" ? "flex-end" : "flex-start" }}>
             <Logo
-              size={26}
+              size={28}
               showText={true}
               lang={state.language || "ar"}
               text={brandData?.brandName || "AI Brand Vision"}
             />
-            <span className="lp-footer-copyright-text">
+            <span className="lp-footer-copyright-text" style={{ fontSize: 13, opacity: 0.7 }}>
               {t.footer.copyright}
             </span>
+          </div>
+
+          <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
+            <button onClick={() => setShowPrivacy(true)} style={{ background: "none", border: "none", color: "var(--text2)", fontSize: "14px", cursor: "pointer", padding: 0, fontWeight: 500, transition: "color 0.2s" }} onMouseOver={(e) => e.target.style.color = "var(--text1)"} onMouseOut={(e) => e.target.style.color = "var(--text2)"}>
+              {t.footer.privacy || (state.language === "ar" ? "سياسة الخصوصية" : "Privacy Policy")}
+            </button>
+            <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--border1)" }} />
+            <button onClick={() => setShowSecurity(true)} style={{ background: "none", border: "none", color: "var(--text2)", fontSize: "14px", cursor: "pointer", padding: 0, fontWeight: 500, transition: "color 0.2s" }} onMouseOver={(e) => e.target.style.color = "var(--text1)"} onMouseOut={(e) => e.target.style.color = "var(--text2)"}>
+              {t.footer.security || (state.language === "ar" ? "سياسة الأمان" : "Security Policy")}
+            </button>
           </div>
 
           <div className="lp-footer-actions-wrap">
@@ -3112,12 +3131,118 @@ export default function LandingPage() {
               <Globe size={15} />
               <span>{state.language === "ar" ? "English" : "العربية"}</span>
             </button>
-            <button className="btn btn-sm" onClick={goAuth}>
+            <button className="btn btn-sm" onClick={goAuth} style={{ borderRadius: 8 }}>
               {t.nav.login}
             </button>
           </div>
         </div>
       </footer>
+      
+      {/* Privacy and Security Modals - Professional UI */}
+      <AnimatePresence>
+        {showPrivacy && (
+          <div className="modal-overlay" style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.4)", backdropFilter: "blur(12px)", zIndex: 999999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setShowPrivacy(false)}>
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-content custom-scrollbar" style={{ background: "var(--bg1)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 24, width: "100%", maxWidth: 650, maxHeight: "85vh", overflowY: "auto", position: "relative", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.05)" }} onClick={(e) => e.stopPropagation()}>
+              <div style={{ position: "sticky", top: 0, background: "rgba(var(--bg1-rgb, 15, 23, 42), 0.95)", backdropFilter: "blur(10px)", padding: "24px 30px", borderBottom: "1px solid var(--border1)", display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: "linear-gradient(135deg, rgba(59,130,246,0.1), rgba(147,51,234,0.1))", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(255,255,255,0.05)" }}>
+                    <FileText size={20} color="#3B82F6" />
+                  </div>
+                  <h3 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: "var(--text1)", letterSpacing: "-0.5px" }}>{t.footer.privacy || (state.language === "ar" ? "سياسة الخصوصية" : "Privacy Policy")}</h3>
+                </div>
+                <button onClick={() => setShowPrivacy(false)} style={{ background: "var(--bg2)", border: "1px solid var(--border1)", borderRadius: "50%", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text2)", cursor: "pointer", transition: "all 0.2s" }} onMouseOver={(e) => { e.currentTarget.style.background = "var(--bg3)"; e.currentTarget.style.color = "var(--text1)"; }} onMouseOut={(e) => { e.currentTarget.style.background = "var(--bg2)"; e.currentTarget.style.color = "var(--text2)"; }}><XCircle size={20} /></button>
+              </div>
+              <div style={{ padding: "30px 40px", color: "var(--text2)", fontSize: 16, lineHeight: 1.8, direction: state.language === "ar" ? "rtl" : "ltr", textAlign: state.language === "ar" ? "right" : "left" }}>
+                {state.language === "ar" ? (
+                  <>
+                    <p style={{ fontSize: 17, color: "var(--text1)", marginBottom: 20 }}>في AI Brand Vision، نأخذ خصوصيتك بجدية تامة. توضح هذه السياسة كيف نقوم بجمع واستخدام وحماية معلوماتك الشخصية.</p>
+                    <div style={{ background: "rgba(255,255,255,0.02)", padding: 20, borderRadius: 16, marginBottom: 20, border: "1px solid rgba(255,255,255,0.03)" }}>
+                      <h4 style={{ color: "var(--text1)", marginTop: 0, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#3B82F6" }}/> 1. جمع المعلومات</h4>
+                      <p style={{ margin: 0 }}>نقوم بجمع المعلومات التي تقدمها عند التسجيل أو استخدام خدماتنا، مثل الاسم، البريد الإلكتروني، ومعلومات نشاطك.</p>
+                    </div>
+                    <div style={{ background: "rgba(255,255,255,0.02)", padding: 20, borderRadius: 16, marginBottom: 20, border: "1px solid rgba(255,255,255,0.03)" }}>
+                      <h4 style={{ color: "var(--text1)", marginTop: 0, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#8B5CF6" }}/> 2. استخدام المعلومات</h4>
+                      <p style={{ margin: 0 }}>تستخدم معلوماتك لتخصيص تجربتك، تحسين منصتنا، وتقديم خدمات مخصصة مثل إنشاء العلامة التجارية الخاصة بك.</p>
+                    </div>
+                    <div style={{ background: "rgba(255,255,255,0.02)", padding: 20, borderRadius: 16, marginBottom: 20, border: "1px solid rgba(255,255,255,0.03)" }}>
+                      <h4 style={{ color: "var(--text1)", marginTop: 0, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }}/> 3. حماية البيانات</h4>
+                      <p style={{ margin: 0 }}>نحن نستخدم تقنيات التشفير المتقدمة لضمان أمان بياناتك، ولا نقوم ببيع أو مشاركة معلوماتك مع أطراف ثالثة دون موافقتك.</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p style={{ fontSize: 17, color: "var(--text1)", marginBottom: 20 }}>At AI Brand Vision, we take your privacy seriously. This policy explains how we collect, use, and protect your personal information.</p>
+                    <div style={{ background: "rgba(255,255,255,0.02)", padding: 20, borderRadius: 16, marginBottom: 20, border: "1px solid rgba(255,255,255,0.03)" }}>
+                      <h4 style={{ color: "var(--text1)", marginTop: 0, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#3B82F6" }}/> 1. Information Collection</h4>
+                      <p style={{ margin: 0 }}>We collect information you provide when registering or using our services, such as name, email, and activity data.</p>
+                    </div>
+                    <div style={{ background: "rgba(255,255,255,0.02)", padding: 20, borderRadius: 16, marginBottom: 20, border: "1px solid rgba(255,255,255,0.03)" }}>
+                      <h4 style={{ color: "var(--text1)", marginTop: 0, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#8B5CF6" }}/> 2. Use of Information</h4>
+                      <p style={{ margin: 0 }}>Your information is used to personalize your experience, improve our platform, and deliver tailored services like brand generation.</p>
+                    </div>
+                    <div style={{ background: "rgba(255,255,255,0.02)", padding: 20, borderRadius: 16, marginBottom: 20, border: "1px solid rgba(255,255,255,0.03)" }}>
+                      <h4 style={{ color: "var(--text1)", marginTop: 0, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }}/> 3. Data Protection</h4>
+                      <p style={{ margin: 0 }}>We use advanced encryption technologies to ensure your data is secure, and we do not sell or share your information with third parties without your consent.</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {showSecurity && (
+          <div className="modal-overlay" style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.4)", backdropFilter: "blur(12px)", zIndex: 999999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setShowSecurity(false)}>
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-content custom-scrollbar" style={{ background: "var(--bg1)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 24, width: "100%", maxWidth: 650, maxHeight: "85vh", overflowY: "auto", position: "relative", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.05)" }} onClick={(e) => e.stopPropagation()}>
+              <div style={{ position: "sticky", top: 0, background: "rgba(var(--bg1-rgb, 15, 23, 42), 0.95)", backdropFilter: "blur(10px)", padding: "24px 30px", borderBottom: "1px solid var(--border1)", display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: "linear-gradient(135deg, rgba(16,185,129,0.1), rgba(59,130,246,0.1))", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(255,255,255,0.05)" }}>
+                    <ShieldCheck size={20} color="#10B981" />
+                  </div>
+                  <h3 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: "var(--text1)", letterSpacing: "-0.5px" }}>{t.footer.security || (state.language === "ar" ? "سياسة الأمان" : "Security Policy")}</h3>
+                </div>
+                <button onClick={() => setShowSecurity(false)} style={{ background: "var(--bg2)", border: "1px solid var(--border1)", borderRadius: "50%", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text2)", cursor: "pointer", transition: "all 0.2s" }} onMouseOver={(e) => { e.currentTarget.style.background = "var(--bg3)"; e.currentTarget.style.color = "var(--text1)"; }} onMouseOut={(e) => { e.currentTarget.style.background = "var(--bg2)"; e.currentTarget.style.color = "var(--text2)"; }}><XCircle size={20} /></button>
+              </div>
+              <div style={{ padding: "30px 40px", color: "var(--text2)", fontSize: 16, lineHeight: 1.8, direction: state.language === "ar" ? "rtl" : "ltr", textAlign: state.language === "ar" ? "right" : "left" }}>
+                {state.language === "ar" ? (
+                  <>
+                    <p style={{ fontSize: 17, color: "var(--text1)", marginBottom: 20 }}>أمانك هو أولويتنا القصوى. صُممت أنظمتنا لحماية بياناتك من الوصول غير المصرح به.</p>
+                    <div style={{ background: "rgba(255,255,255,0.02)", padding: 20, borderRadius: 16, marginBottom: 20, border: "1px solid rgba(255,255,255,0.03)" }}>
+                      <h4 style={{ color: "var(--text1)", marginTop: 0, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }}/> 1. تشفير البيانات</h4>
+                      <p style={{ margin: 0 }}>جميع البيانات المنقولة بين جهازك وخوادمنا مشفرة باستخدام بروتوكولات الأمان القياسية (SSL/TLS).</p>
+                    </div>
+                    <div style={{ background: "rgba(255,255,255,0.02)", padding: 20, borderRadius: 16, marginBottom: 20, border: "1px solid rgba(255,255,255,0.03)" }}>
+                      <h4 style={{ color: "var(--text1)", marginTop: 0, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#3B82F6" }}/> 2. تخزين آمن</h4>
+                      <p style={{ margin: 0 }}>نحن نستخدم خدمات سحابية موثوقة بمعايير أمان عالية لتخزين بياناتك، مع إجراء عمليات نسخ احتياطي دورية.</p>
+                    </div>
+                    <div style={{ background: "rgba(255,255,255,0.02)", padding: 20, borderRadius: 16, marginBottom: 20, border: "1px solid rgba(255,255,255,0.03)" }}>
+                      <h4 style={{ color: "var(--text1)", marginTop: 0, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#8B5CF6" }}/> 3. الامتثال والمعايير</h4>
+                      <p style={{ margin: 0 }}>نحن نلتزم بأفضل ممارسات الأمان والخصوصية للحفاظ على بيئة آمنة لجميع مستخدمينا.</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p style={{ fontSize: 17, color: "var(--text1)", marginBottom: 20 }}>Your security is our top priority. Our systems are designed to protect your data from unauthorized access.</p>
+                    <div style={{ background: "rgba(255,255,255,0.02)", padding: 20, borderRadius: 16, marginBottom: 20, border: "1px solid rgba(255,255,255,0.03)" }}>
+                      <h4 style={{ color: "var(--text1)", marginTop: 0, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }}/> 1. Data Encryption</h4>
+                      <p style={{ margin: 0 }}>All data transmitted between your device and our servers is encrypted using standard security protocols (SSL/TLS).</p>
+                    </div>
+                    <div style={{ background: "rgba(255,255,255,0.02)", padding: 20, borderRadius: 16, marginBottom: 20, border: "1px solid rgba(255,255,255,0.03)" }}>
+                      <h4 style={{ color: "var(--text1)", marginTop: 0, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#3B82F6" }}/> 2. Secure Storage</h4>
+                      <p style={{ margin: 0 }}>We use trusted cloud services with high security standards to store your data, with regular backups.</p>
+                    </div>
+                    <div style={{ background: "rgba(255,255,255,0.02)", padding: 20, borderRadius: 16, marginBottom: 20, border: "1px solid rgba(255,255,255,0.03)" }}>
+                      <h4 style={{ color: "var(--text1)", marginTop: 0, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#8B5CF6" }}/> 3. Compliance & Standards</h4>
+                      <p style={{ margin: 0 }}>We adhere to the best security and privacy practices to maintain a safe environment for all our users.</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Floating WhatsApp Button */}
       {brandData?.phoneNumber && (
         <>
@@ -3144,6 +3269,20 @@ export default function LandingPage() {
                 width: 28px !important;
                 height: 28px !important;
               }
+            }
+            .custom-scrollbar::-webkit-scrollbar {
+              width: 8px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-track {
+              background: var(--bg2);
+              border-radius: 4px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+              background: var(--border1);
+              border-radius: 4px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+              background: var(--text3);
             }
           `}</style>
           <a

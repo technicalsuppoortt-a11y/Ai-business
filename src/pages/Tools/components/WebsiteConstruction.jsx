@@ -63,6 +63,37 @@ function CustomGlassSelect({ options, value, onChange }) {
 
   const selectedOpt = options.find((o) => o.value === value) || options[0];
 
+  
+  
+
+  
+  const hydratedRef = useRef(false);
+
+  // 1. Hydrate state asynchronously when cache loads
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        if (cached.currentStep !== undefined) setCurrentStep(cached.currentStep);
+        if (cached.analysisMode !== undefined) setAnalysisMode(cached.analysisMode);
+        if (cached.method !== undefined) setMethod(cached.method);
+        if (cached.storeConfig !== undefined) setStoreConfig(cached.storeConfig);
+        if (cached.generatedCode !== undefined) setGeneratedCode(cached.generatedCode);
+        if (cached.domainMatrix !== undefined) setDomainMatrix(cached.domainMatrix);
+      }
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  // 2. Safe Auto-save (only runs after hydration)
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    
+    const timeout = setTimeout(() => {
+      saveResult({ currentStep, analysisMode, method, storeConfig, generatedCode, domainMatrix });
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [isLoadedFromCloud, currentStep, analysisMode, method, storeConfig, generatedCode, domainMatrix]);
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -162,7 +193,10 @@ function CustomGlassSelect({ options, value, onChange }) {
   );
 }
 
+import useToolCache from "../../../hooks/useToolCache";
+
 export default function WebsiteConstruction({ stepNumber }) {
+  const { cached, isCached, isLoadedFromCloud, saveResult } = useToolCache('website-construction');
   const { state, dispatch } = useApp();
   const { userData } = useAuth();
   const toastContext = useToast();
@@ -185,8 +219,8 @@ export default function WebsiteConstruction({ stepNumber }) {
     return 1;
   };
 
-  const [currentStep, setCurrentStep] = useState(getStepFromParam(stepParam));
-  const [analysisMode, setAnalysisMode] = useState("fast"); // 'fast' | 'live'
+  const [currentStep, setCurrentStep] = useState(cached?.currentStep ?? getStepFromParam(stepParam));
+  const [analysisMode, setAnalysisMode] = useState(cached?.analysisMode ?? "fast"); // 'fast' | 'live'
 
   // Node Map Inspection Focus State
   const [activeNode, setActiveNode] = useState(null); // null | 1 | 2 | 3 | 4
@@ -222,9 +256,9 @@ export default function WebsiteConstruction({ stepNumber }) {
   const [isSavingKey, setIsSavingKey] = useState(false);
 
   // -- Step 1: Design State --
-  const [method, setMethod] = useState("gemini"); // 'gemini' | 'template'
+  const [method, setMethod] = useState(cached?.method ?? "gemini"); // 'gemini' | 'template'
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedCode, setGeneratedCode] = useState("");
+  const [generatedCode, setGeneratedCode] = useState(cached?.generatedCode ?? "");
   const [galleryTemplates, setGalleryTemplates] = useState([]);
   const [selectedGalleryTemplate, setSelectedGalleryTemplate] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -232,7 +266,7 @@ export default function WebsiteConstruction({ stepNumber }) {
   const [mobileStudioTab, setMobileStudioTab] = useState("code"); // 'code' | 'canvas'
 
   // -- Step 2: Store Configuration State --
-  const [storeConfig, setStoreConfig] = useState({
+  const [storeConfig, setStoreConfig] = useState(cached?.storeConfig ?? {
     storeName: state.brandName || "",
     currency: "USD",
     language: "ar",
@@ -301,8 +335,8 @@ export default function WebsiteConstruction({ stepNumber }) {
       await updateGatewayStatus(gatewayId, newStatus);
       toast(
         lang === "en"
-          ? `Payment Gateway ${gatewayId} updated in Firestore! ✅`
-          : `تم تحديث حالة بوابة الدفع ${gatewayId} في قاعدة البيانات! ✅`,
+          ?`Payment Gateway ${gatewayId} updated in Firestore!`
+          :`تم تحديث حالة بوابة الدفع ${gatewayId} في قاعدة البيانات!`,
         "success",
       );
     } catch (err) {
@@ -325,8 +359,8 @@ export default function WebsiteConstruction({ stepNumber }) {
       await updateVatStatus(newStatus);
       toast(
         lang === "en"
-          ? "VAT tax calculation state updated in Firestore! ✅"
-          : "تم تحديث حالة احتساب الضريبة في قاعدة البيانات! ✅",
+          ?"VAT tax calculation state updated in Firestore!"
+          :"تم تحديث حالة احتساب الضريبة في قاعدة البيانات!",
         "success",
       );
     } catch (err) {
@@ -355,7 +389,7 @@ export default function WebsiteConstruction({ stepNumber }) {
 
   // -- Step 3: Infrastructure State --
   const [isGeneratingDomain, setIsGeneratingDomain] = useState(false);
-  const [domainMatrix, setDomainMatrix] = useState(null);
+  const [domainMatrix, setDomainMatrix] = useState(cached?.domainMatrix ?? null);
 
   useEffect(() => {
     const loadGallery = async () => {
@@ -414,8 +448,8 @@ export default function WebsiteConstruction({ stepNumber }) {
       setApiKeyError(false);
       toast(
         lang === "en"
-          ? "API Key saved successfully! ✅"
-          : "تم حفظ مفتاح الـ API بنجاح! ✅",
+          ?"API Key saved successfully!"
+          :"تم حفظ مفتاح الـ API بنجاح!",
         "success",
       );
     } catch (err) {
@@ -466,8 +500,8 @@ export default function WebsiteConstruction({ stepNumber }) {
         setApiKeyError(false);
         toast(
           lang === "en"
-            ? "Website code generated dynamically! ✅"
-            : "تم توليد كود الموقع بالذكاء الاصطناعي بنجاح! ✅",
+            ?"Website code generated dynamically!"
+            :"تم توليد كود الموقع بالذكاء الاصطناعي بنجاح!",
           "success",
         );
       } else {
@@ -550,8 +584,8 @@ export default function WebsiteConstruction({ stepNumber }) {
         setApiKeyError(false);
         toast(
           lang === "en"
-            ? "Fast Radar website template loaded from database! ✅"
-            : "تم تحميل قالب الموقع السريع من قاعدة البيانات بنجاح! ✅",
+            ?"Fast Radar website template loaded from database!"
+            :"تم تحميل قالب الموقع السريع من قاعدة البيانات بنجاح!",
           "success",
         );
       }
@@ -668,6 +702,7 @@ export default function WebsiteConstruction({ stepNumber }) {
         });
         if (typeof liveResult === "object" && liveResult.classic) {
           setDomainMatrix(liveResult);
+          saveResult({ currentStep, analysisMode, method, storeConfig, generatedCode, domainMatrix: liveResult });
         } else {
           setDomainMatrix({
             error:
@@ -2445,8 +2480,8 @@ export default function WebsiteConstruction({ stepNumber }) {
                       });
                       toast(
                         lang === "en"
-                          ? "Website setup step confirmed as completed! ✅"
-                          : "تم تأكيد إكمال خطوة بناء وتجهيز الموقع بنجاح! ✅",
+                          ?"Website setup step confirmed as completed!"
+                          :"تم تأكيد إكمال خطوة بناء وتجهيز الموقع بنجاح!",
                         "success",
                       );
                     }}

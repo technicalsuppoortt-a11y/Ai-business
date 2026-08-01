@@ -186,7 +186,7 @@ export default function SuperAdminSales({ allUsers }) {
         createdAt: serverTimestamp(),
         createdBy: userData?.uid || 'superadmin'
       });
-      toast('تم إضافة المبيعات بنجاح ✅', 'success');
+      toast('تم إضافة المبيعات بنجاح','success');
       setIsAddModalOpen(false);
       setSelectedCustomer(null);
       setAmount('');

@@ -503,8 +503,8 @@ export default function AdminLibrary({ userData }) {
         await updateDoc(doc(libraryDb, "brandLibrary", editingId), data);
         toast(
           isEn
-            ? "Product updated successfully! ✅"
-            : "تم تحديث المنتج بنجاح ✅",
+            ?"Product updated successfully!"
+            :"تم تحديث المنتج بنجاح",
           "success",
         );
       } else {
@@ -518,8 +518,8 @@ export default function AdminLibrary({ userData }) {
         });
         toast(
           isEn
-            ? "Private product added successfully! ✅"
-            : "تم إضافة المنتج الخاص بك بنجاح ✅",
+            ?"Private product added successfully!"
+            :"تم إضافة المنتج الخاص بك بنجاح",
           "success",
         );
       }

@@ -267,7 +267,7 @@ export default function AdminSales({ subUsers = [] }) {
         createdBy: userData?.uid || "",
       });
       toast(
-        isEn ? "Sale added successfully ✅" : "تم إضافة المبيعات بنجاح ✅",
+        isEn ?"Sale added successfully" :"تم إضافة المبيعات بنجاح",
         "success",
       );
       setIsAddModalOpen(false);
@@ -398,7 +398,7 @@ export default function AdminSales({ subUsers = [] }) {
     link.click();
     document.body.removeChild(link);
     toast(
-      isEn ? "Sales exported successfully ✅" : "تم تصدير المبيعات بنجاح ✅",
+      isEn ?"Sales exported successfully" :"تم تصدير المبيعات بنجاح",
       "success",
     );
   };

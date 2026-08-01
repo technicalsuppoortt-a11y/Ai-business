@@ -17,7 +17,7 @@ export default function NichePage() {
   const proceed = () => {
     if (!state.niche) return toast(lang === 'en' ? 'Choose a niche first' : 'اختر نيتش أولاً', 'error');
     dispatch({ type: 'COMPLETE_STEP', step: 'niche' });
-    toast(lang === 'en' ? 'Excellent! Let\'s go to the Product Library 📚' : 'ممتاز! لننتقل إلى مكتبة المنتجات 📚', 'success');
+    toast(lang ==='en' ?'Excellent! Let\'s go to the Product Library' :'ممتاز! لننتقل إلى مكتبة المنتجات','success');
     navigate('/dashboard/brand-library');
   };
 

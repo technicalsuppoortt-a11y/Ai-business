@@ -38,7 +38,7 @@ export default function SocialPresence({ stepNumber }) {
   const toast = useToast();
   const lang = state.language || 'ar';
   const isRtl = lang === 'ar';
-  const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
+  const [analysisMode, setAnalysisMode] = useState(savedState.mode || 'fast'); // 'fast' | 'live'
   
   // Inputs
   const [platform, setPlatform] = useState('instagram');
@@ -100,7 +100,7 @@ export default function SocialPresence({ stepNumber }) {
             mode: 'live'
           }
         });
-        toast(lang === 'en' ? 'Live AI Strategy generated! ✨' : 'تم توليد الاستراتيجية بالذكاء الاصطناعي الحي! ✨', 'success');
+        toast(lang ==='en' ?'Live AI Strategy generated!' :'تم توليد الاستراتيجية بالذكاء الاصطناعي الحي!','success');
       } else {
         await new Promise(r => setTimeout(r, 400));
 
@@ -119,7 +119,7 @@ export default function SocialPresence({ stepNumber }) {
             mode: 'fast'
           }
         });
-        toast(lang === 'en' ? 'Account strategy ready! 🚀' : 'استراتيجية الحساب جاهزة! 🚀', 'success');
+        toast(lang ==='en' ?'Account strategy ready!' :'استراتيجية الحساب جاهزة!','success');
       }
     } catch (error) {
       console.error(error);
@@ -131,7 +131,7 @@ export default function SocialPresence({ stepNumber }) {
 
   const handleCopy = () => {
     navigator.clipboard.writeText(result);
-    toast(lang === 'en' ? 'Strategy copied to clipboard! ✅' : 'تم نسخ الاستراتيجية إلى الحافظة! ✅', 'success');
+    toast(lang ==='en' ?'Strategy copied to clipboard!' :'تم نسخ الاستراتيجية إلى الحافظة!','success');
   };
 
   const bottomSections = [

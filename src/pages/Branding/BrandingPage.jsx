@@ -62,7 +62,7 @@ export default function BrandingPage() {
 
   const proceed = () => {
     dispatch({ type: 'COMPLETE_STEP', step: 'branding' });
-    toast(lang === 'en' ? 'Brand ready! Let\'s create content ✍️' : 'البراند جاهز! لنصنع المحتوى ✍️', 'success');
+    toast(lang ==='en' ?'Brand ready! Let\'s create content ️' :'البراند جاهز! لنصنع المحتوى ️','success');
     navigate('/dashboard/content');
   };
 

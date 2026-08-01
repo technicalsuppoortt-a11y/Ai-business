@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../../context/AppContext';
+import useToolCache from '../../../hooks/useToolCache';
 import { useToast } from '../../../context/ToastContext';
 import ToolDashboardLayout from './ToolDashboardLayout';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -7,6 +8,7 @@ import {
   Shield,
   FileText,
   RotateCcw,
+  RefreshCw,
   Globe,
   Mail,
   Building,
@@ -202,6 +204,42 @@ export default function LegalPages({ stepNumber }) {
   const [validationError, setValidationError] = useState('');
   
   const [activeTab, setActiveTab] = useState('privacy'); // privacy | terms | refund | cookie
+
+  const { cached, isLoadedFromCloud, saveResult } = useToolCache('legal-pages');
+  const hydratedRef = useRef(false);
+
+  // Hydrate from Cache
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        if (cached.brandName !== undefined) setBrandName(cached.brandName);
+        if (cached.contactEmail !== undefined) setContactEmail(cached.contactEmail);
+        if (cached.websiteUrl !== undefined) setWebsiteUrl(cached.websiteUrl);
+        if (cached.country !== undefined) setCountry(cached.country);
+        if (cached.activeTab !== undefined) setActiveTab(cached.activeTab);
+      }
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  // Auto-Save to Cache
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    const timeout = setTimeout(() => {
+      saveResult({ brandName, contactEmail, websiteUrl, country, activeTab });
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [brandName, contactEmail, websiteUrl, country, activeTab, isLoadedFromCloud]);
+
+  const handleResetSession = () => {
+    setBrandName('');
+    setContactEmail('');
+    setWebsiteUrl('');
+    setCountry(lang === 'en' ? 'USA' : 'مصر');
+    setActiveTab('privacy');
+    saveResult(null);
+    toast(lang === 'en' ? 'Legal pages reset successfully!' : 'تم إعادة ضبط الوثائق القانونية!', 'info');
+  };
 
   // Global Keyboard Shortcut (Ctrl+K or Cmd+K) to open Inspector Drawer
   useEffect(() => {

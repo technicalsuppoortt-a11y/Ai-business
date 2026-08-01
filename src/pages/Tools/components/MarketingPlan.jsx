@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import useToolCache from "../../../hooks/useToolCache";
 import { useApp } from '../../../context/AppContext';
 import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../context/ToastContext';
@@ -39,7 +40,7 @@ import {
   FileText,
   Activity,
   Layers
-} from 'lucide-react';
+, RefreshCw} from 'lucide-react';
 import './MarketingPlan.css';
 
 export default function MarketingPlan({ stepNumber }) {
@@ -389,6 +390,50 @@ export default function MarketingPlan({ stepNumber }) {
     }
   ];
 
+
+  // --- STATE PERSISTENCE & HYDRATION ---
+  const { cached, isLoadedFromCloud, saveResult } = useToolCache('marketing-plan');
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        if (cached.analysisMode !== undefined) setAnalysisMode(cached.analysisMode);
+        if (cached.budget !== undefined) setBudget(cached.budget);
+        if (cached.duration !== undefined) setDuration(cached.duration);
+        if (cached.goal !== undefined) setGoal(cached.goal);
+        if (cached.clientLevel !== undefined) setClientLevel(cached.clientLevel);
+        if (cached.result !== undefined) setResult(cached.result);
+        if (cached.currentStep !== undefined) setCurrentStep(cached.currentStep);
+        if (cached.activeStrategyTab !== undefined) setActiveStrategyTab(cached.activeStrategyTab);
+        
+        setIsGenerating(false);
+        setLoadingBadgeIndex(0);
+      }
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    saveResult({ analysisMode, budget, duration, goal, clientLevel, result, currentStep, activeStrategyTab });
+  }, [isLoadedFromCloud, analysisMode, budget, duration, goal, clientLevel, result, currentStep, activeStrategyTab]);
+
+  const handleResetSession = () => {
+    setAnalysisMode('fast');
+    setBudget(savedState.budget || '500');
+    setDuration(savedState.duration || '30');
+    setGoal(savedState.goal || 'sales');
+    setClientLevel(savedState.clientLevel || 'beginner');
+    setIsGenerating(false);
+    setResult(savedState.result || '');
+    setCurrentStep(1);
+    setLoadingBadgeIndex(0);
+    setActiveStrategyTab('all');
+    saveResult(null);
+  };
+  // -------------------------------------
+
   return (
     <ToolDashboardLayout
       id="marketing-plan"
@@ -399,6 +444,31 @@ export default function MarketingPlan({ stepNumber }) {
       timeEstimate="30 - 45"
       bottomSections={bottomSections}
     >
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '15px 20px 0 20px' }}>
+          <button
+            onClick={handleResetSession}
+            style={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#EF4444',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
+              zIndex: 10
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)' }}
+          >
+            <RefreshCw size={14} />
+            {(state?.language || 'ar') === 'en' ? 'Reset / Start Fresh' : 'إعادة ضبط / بدء من جديد'}
+          </button>
+        </div>
       <div className="mp-container" dir={isRtl ? 'rtl' : 'ltr'}>
         
         {/* ═══════════════ 1. GUIDED ARC STEP NAVIGATOR ═══════════════ */}
@@ -480,7 +550,7 @@ export default function MarketingPlan({ stepNumber }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.3 }}
-              className="mp-strategy-stage"
+              className="mp-strategy-stage mp-custom-scroll" style={{ maxHeight: '600px', overflowY: 'auto' }}
             >
               <div className="mp-deck-header">
                 <div>

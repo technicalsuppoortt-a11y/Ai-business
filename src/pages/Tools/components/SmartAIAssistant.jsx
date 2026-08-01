@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import useToolCache from '../../../hooks/useToolCache';
 import { createPortal } from 'react-dom';
 import { useApp } from '../../../context/AppContext';
 import { useAuth } from '../../../context/AuthContext';
@@ -175,6 +176,42 @@ export default function SmartAIAssistant({ stepNumber }) {
   // Stage mode: 'input' (Stage 1), 'loading' (Stage 2), 'output' (Stage 3)
   const [activeStage, setActiveStage] = useState('input');
 
+  // --- STATE PERSISTENCE & HYDRATION ---
+  const { cached, isLoadedFromCloud, saveResult } = useToolCache('smart-ai-assistant');
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        if (cached.analysisMode) setAnalysisMode(cached.analysisMode);
+        if (cached.selectedGoal) setSelectedGoal(cached.selectedGoal);
+        if (cached.selectedChannel) setSelectedChannel(cached.selectedChannel);
+        if (cached.selectedClient) setSelectedClient(cached.selectedClient);
+        if (cached.selectedPricing) setSelectedPricing(cached.selectedPricing);
+        if (cached.activeStage) setActiveStage(cached.activeStage);
+        if (cached.result) setResult(cached.result);
+      }
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  // Synchronize state changes to Firebase
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    const timeout = setTimeout(() => {
+      saveResult({
+        analysisMode,
+        selectedGoal,
+        selectedChannel,
+        selectedClient,
+        selectedPricing,
+        activeStage,
+        result
+      });
+    }, 1500);
+    return () => clearTimeout(timeout);
+  }, [isLoadedFromCloud, analysisMode, selectedGoal, selectedChannel, selectedClient, selectedPricing, activeStage, result]);
+
   useEffect(() => {
     if (state.apiKey) {
       setTempApiKey(state.apiKey);
@@ -276,6 +313,15 @@ export default function SmartAIAssistant({ stepNumber }) {
 
         setResult(formattedResult);
         setActiveStage('output');
+        saveResult({
+          analysisMode,
+          selectedGoal,
+          selectedChannel,
+          selectedClient,
+          selectedPricing,
+          activeStage: 'output',
+          result: formattedResult
+        });
         dispatch({
           type: 'SAVE_TOOL_RESULT',
           toolId: 'smart-ai-assistant',
@@ -363,6 +409,15 @@ export default function SmartAIAssistant({ stepNumber }) {
       setResult(parsedData);
       setIsFallbackActive(false);
       setActiveStage('output');
+      saveResult({
+        analysisMode,
+        selectedGoal,
+        selectedChannel,
+        selectedClient,
+        selectedPricing,
+        activeStage: 'output',
+        result: parsedData
+      });
       dispatch({
         type: 'SAVE_TOOL_RESULT',
         toolId: 'smart-ai-assistant',
@@ -440,6 +495,25 @@ export default function SmartAIAssistant({ stepNumber }) {
     toast(lang === 'en' ? 'Docked to Workspace successfully!' : 'تم التثبيت في مساحة العمل بنجاح!', 'success');
   };
 
+const handleResetSession = () => {
+    setAnalysisMode('fast');
+    setSelectedGoal('close_deal');
+    setSelectedChannel('cold_email');
+    setSelectedClient('creators');
+    setSelectedPricing('mid');
+    setTempApiKey(state.apiKey || '');
+    setIsSavingKey(false);
+    setShowKeyModal(false);
+    setIsGenerating(false);
+    setLoadingPhase('');
+    setLoadingStatusIndex(0);
+    setResult(null);
+    setCopiedSection(null);
+    setIsFallbackActive(false);
+    setActiveStage('input');
+    saveResult(null); // Clear Firestore cache
+  };
+
   return (
     <ToolDashboardLayout
       id="smart-ai-assistant"
@@ -449,6 +523,31 @@ export default function SmartAIAssistant({ stepNumber }) {
       accentColor="#3B82F6"
       timeEstimate="5 - 15"
     >
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '15px 20px 0 20px' }}>
+          <button
+            onClick={handleResetSession}
+            style={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#EF4444',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
+              zIndex: 10
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)' }}
+          >
+            <RefreshCw size={14} />
+            {(state?.language || 'ar') === 'en' ? 'Reset / Clear Chat' : 'إعادة ضبط / بدء من جديد'}
+          </button>
+        </div>
       <div className="radial-ecosystem-root" dir={isRtl ? 'rtl' : 'ltr'}>
         
         {/* GEMINI KEY INTERACTIVE MODAL */}
@@ -976,13 +1075,7 @@ export default function SmartAIAssistant({ stepNumber }) {
                   <span>{lang === 'en' ? 'Branch Query (Refine)' : 'تعديل مدخلات النواة'}</span>
                 </button>
 
-                <button 
-                  onClick={handleSaveToWorkspace}
-                  className="orbital-dock-pill dock"
-                >
-                  <Save size={15} />
-                  <span>{lang === 'en' ? 'Dock to Workspace' : 'تثبيت بالمساحة'}</span>
-                </button>
+                
               </div>
 
             </motion.div>

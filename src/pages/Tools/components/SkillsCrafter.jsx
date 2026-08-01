@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState , useRef , useEffect} from 'react';
+import useToolCache from "../../../hooks/useToolCache";
 import InteractiveToolLayout from './InteractiveToolLayout';
 import { FREELANCE_DB } from '../../../data/freelanceData';
 import { useApp } from '../../../context/AppContext';
@@ -99,6 +100,28 @@ export default function SkillsCrafter({ stepNumber }) {
 
   const leftContent = (
     <div className="space-y-6 animate-fade-in" dir={lang === 'en' ? 'ltr' : 'rtl'}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', paddingBottom: '10px' }}>
+          <button
+            onClick={handleResetSession}
+            style={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#EF4444',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              padding: '6px 12px',
+              borderRadius: '8px',
+              fontSize: '11px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s'
+            }}
+          >
+            <RefreshCw size={12} />
+            {(state?.language || 'ar') === 'en' ? 'Reset / Start Fresh' : 'إعادة ضبط / بدء من جديد'}
+          </button>
+        </div>
       {/* Category Selector */}
       <div className="flex flex-wrap gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
         {Object.keys(FREELANCE_DB.skillsDB).map(cat => (
@@ -206,6 +229,42 @@ export default function SkillsCrafter({ stepNumber }) {
       )}
     </div>
   );
+
+
+  // --- STATE PERSISTENCE & HYDRATION ---
+  const { cached, isLoadedFromCloud, saveResult } = useToolCache('skills-crafting');
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        if (cached.analysisMode !== undefined) setAnalysisMode(cached.analysisMode);
+        if (cached.selectedCat !== undefined) setSelectedCat(cached.selectedCat);
+        if (cached.selectedSkills !== undefined) setSelectedSkills(cached.selectedSkills);
+        if (cached.isGenerating !== undefined) setIsGenerating(cached.isGenerating);
+        if (cached.result !== undefined) setResult(cached.result);
+      }
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    const timeout = setTimeout(() => {
+      saveResult({ analysisMode, selectedCat, selectedSkills, isGenerating, result });
+    }, 1500);
+    return () => clearTimeout(timeout);
+  }, [isLoadedFromCloud, analysisMode, selectedCat, selectedSkills, isGenerating, result]);
+
+  const handleResetSession = () => {
+    setAnalysisMode('fast');
+    setSelectedCat('design');
+    setSelectedSkills([]);
+    setIsGenerating(false);
+    setResult('');
+    saveResult(null);
+  };
+  // -------------------------------------
 
   return (
     <InteractiveToolLayout

@@ -156,7 +156,9 @@ export const landingTranslations = {
     },
     footer: {
       copyright: "© 2026 AI Brand Vision. جميع الحقوق محفوظة.",
-      login: "تسجيل الدخول ←"
+      login: "تسجيل الدخول ←",
+      privacy: "سياسة الخصوصية",
+      security: "سياسة الأمان"
     },
     whatsapp: {
       waMessage: "أهلاً، أود الاستفسار عن الخدمات المتاحة."
@@ -319,7 +321,9 @@ export const landingTranslations = {
     },
     footer: {
       copyright: "© 2026 AI Brand Vision. All rights reserved.",
-      login: "Login ←"
+      login: "Login ←",
+      privacy: "Privacy Policy",
+      security: "Security Policy"
     },
     whatsapp: {
       waMessage: "Hello, I would like to inquire about the available services."

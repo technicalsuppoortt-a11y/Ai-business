@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect , useRef } from 'react';
+import useToolCache from "../../../hooks/useToolCache";
 import InteractiveToolLayout from './InteractiveToolLayout';
 import { useApp } from '../../../context/AppContext';
 import { useAuth } from '../../../context/AuthContext';
@@ -113,6 +114,28 @@ export default function FreelancePricing({ stepNumber }) {
 
   const leftContent = (
     <div className="space-y-8 animate-fade-in" dir={lang === 'en' ? 'ltr' : 'rtl'}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', paddingBottom: '10px' }}>
+          <button
+            onClick={handleResetSession}
+            style={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#EF4444',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              padding: '6px 12px',
+              borderRadius: '8px',
+              fontSize: '11px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s'
+            }}
+          >
+            <RefreshCw size={12} />
+            {(state?.language || 'ar') === 'en' ? 'Reset / Start Fresh' : 'إعادة ضبط / بدء من جديد'}
+          </button>
+        </div>
       <div className="bg-white/5 p-8 rounded-[2rem] border border-white/10">
         <h3 className="text-blue-400 font-black text-xs uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
           <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></span>
@@ -276,6 +299,56 @@ export default function FreelancePricing({ stepNumber }) {
       </div>
     </div>
   );
+
+
+  // --- STATE PERSISTENCE & HYDRATION ---
+  const { cached, isLoadedFromCloud, saveResult } = useToolCache('freelance-pricing');
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        if (cached.analysisMode !== undefined) setAnalysisMode(cached.analysisMode);
+        if (cached.goal !== undefined) setGoal(cached.goal);
+        if (cached.currency !== undefined) setCurrency(cached.currency);
+        if (cached.hoursPerWeek !== undefined) setHoursPerWeek(cached.hoursPerWeek);
+        if (cached.billablePercent !== undefined) setBillablePercent(cached.billablePercent);
+        if (cached.expenses !== undefined) setExpenses(cached.expenses);
+        if (cached.hourlyRate !== undefined) setHourlyRate(cached.hourlyRate);
+        if (cached.projectRate !== undefined) setProjectRate(cached.projectRate);
+        if (cached.monthlyRevenue !== undefined) setMonthlyRevenue(cached.monthlyRevenue);
+        if (cached.actualHours !== undefined) setActualHours(cached.actualHours);
+        if (cached.isGenerating !== undefined) setIsGenerating(cached.isGenerating);
+        if (cached.aiAnalysis !== undefined) setAiAnalysis(cached.aiAnalysis);
+      }
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    const timeout = setTimeout(() => {
+      saveResult({ analysisMode, goal, currency, hoursPerWeek, billablePercent, expenses, hourlyRate, projectRate, monthlyRevenue, actualHours, isGenerating, aiAnalysis });
+    }, 1500);
+    return () => clearTimeout(timeout);
+  }, [isLoadedFromCloud, analysisMode, goal, currency, hoursPerWeek, billablePercent, expenses, hourlyRate, projectRate, monthlyRevenue, actualHours, isGenerating, aiAnalysis]);
+
+  const handleResetSession = () => {
+    setAnalysisMode('fast');
+    setGoal(2000);
+    setCurrency('USD');
+    setHoursPerWeek(20);
+    setBillablePercent(70);
+    setExpenses(200);
+    setHourlyRate(0);
+    setProjectRate(0);
+    setMonthlyRevenue(0);
+    setActualHours(0);
+    setIsGenerating(false);
+    setAiAnalysis('');
+    saveResult(null);
+  };
+  // -------------------------------------
 
   return (
     <InteractiveToolLayout

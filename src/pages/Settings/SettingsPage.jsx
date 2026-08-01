@@ -122,7 +122,7 @@ export default function SettingsPage() {
       const userRef = doc(db, 'users', userData.uid);
       await updateDoc(userRef, { personalOpenAiKey: key });
       localStorage.setItem('user_openai_api_key', key);
-      toast(lang === 'en' ? 'API Key saved successfully ✅' : 'تم حفظ المفتاح الخاص بنجاح ✅', 'success');
+      toast(lang ==='en' ?'API Key saved successfully' :'تم حفظ المفتاح الخاص بنجاح','success');
     } catch (err) {
       toast(lang === 'en' ? 'Error saving API key' : 'حدث خطأ أثناء حفظ المفتاح', 'error');
     }
@@ -137,7 +137,7 @@ export default function SettingsPage() {
       localStorage.removeItem('app_api_key');
       localStorage.removeItem('user_openai_api_key');
       setApiKeyInput('');
-      toast(lang === 'en' ? 'API Key removed successfully 🗑️' : 'تم إزالة المفتاح الخاص بنجاح 🗑️', 'info');
+      toast(lang ==='en' ?'API Key removed successfully ️' :'تم إزالة المفتاح الخاص بنجاح ️','info');
     } catch (err) {
       toast(lang === 'en' ? 'Error removing API key' : 'حدث خطأ أثناء إزالة المفتاح', 'error');
     }
@@ -147,7 +147,7 @@ export default function SettingsPage() {
   const handleCopyKey = () => {
     if (!apiKeyInput) return;
     navigator.clipboard.writeText(apiKeyInput);
-    toast(lang === 'en' ? 'API Key copied to clipboard 📋' : 'تم نسخ المفتاح إلى الحافظة 📋', 'success');
+    toast(lang ==='en' ?'API Key copied to clipboard' :'تم نسخ المفتاح إلى الحافظة','success');
   };
 
   // Profile Form Save Handler
@@ -166,7 +166,7 @@ export default function SettingsPage() {
       });
       // Immediately set application language context
       dispatch({ type: 'SET_LANGUAGE', payload: defaultLanguage });
-      toast(lang === 'en' ? 'Profile & settings updated! ✓' : 'تم تحديث البيانات والإعدادات بنجاح! ✓', 'success');
+      toast(lang ==='en' ?'Profile & settings updated!' :'تم تحديث البيانات والإعدادات بنجاح!','success');
     } catch (error) {
       console.error('Error updating profile:', error);
       toast(lang === 'en' ? 'Error updating profile data' : 'حدث خطأ أثناء تحديث البيانات', 'error');

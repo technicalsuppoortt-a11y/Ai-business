@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useApp } from '../../../context/AppContext';
 import { useAuth } from '../../../context/AuthContext';
+import useToolCache from "../../../hooks/useToolCache";
 import { useToast } from "../../../context/ToastContext";
 import { getProfitScenarioTemplate } from "../../../services/contentDbService";
 import { parseTemplate } from "../../../utils/templateParser";
@@ -120,6 +121,42 @@ export default function ProfitCalculator({ stepNumber }) {
 
   // -- Accordion State --
   const [openAccordions, setOpenAccordions] = useState({ 0: true, 1: false });
+  const [isNewlyGenerated, setIsNewlyGenerated] = useState(false);
+
+  // --- STATE PERSISTENCE & HYDRATION ---
+  const { cached, isLoadedFromCloud, saveResult } = useToolCache('profit-calculator');
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoadedFromCloud && !hydratedRef.current) {
+      hydratedRef.current = true;
+      if (cached) {
+        if (cached.activeMode) setActiveMode(cached.activeMode);
+        if (cached.analysisMode) setAnalysisMode(cached.analysisMode);
+        if (cached.salePrice !== undefined) setSalePrice(cached.salePrice);
+        if (cached.productCost !== undefined) setProductCost(cached.productCost);
+        if (cached.dailyBudget !== undefined) setDailyBudget(cached.dailyBudget);
+        if (cached.cpc !== undefined) setCpc(cached.cpc);
+        if (cached.cvr !== undefined) setCvr(cached.cvr);
+        if (cached.aiInsights) setAiInsights(cached.aiInsights);
+        if (cached.aiInsightsMode) setAiInsightsMode(cached.aiInsightsMode);
+        if (cached.monthlyBudget !== undefined) setMonthlyBudget(cached.monthlyBudget);
+        if (cached.targetMonthlyProfit !== undefined) setTargetMonthlyProfit(cached.targetMonthlyProfit);
+        if (cached.customNotes) setCustomNotes(cached.customNotes);
+        if (cached.monthlyPlanResult) setMonthlyPlanResult(cached.monthlyPlanResult);
+        if (cached.openAccordions) setOpenAccordions(cached.openAccordions);
+        setIsNewlyGenerated(false);
+      }
+    }
+  }, [isLoadedFromCloud, cached]);
+
+  useEffect(() => {
+    if (!isLoadedFromCloud || !hydratedRef.current) return;
+    const timeout = setTimeout(() => {
+      saveResult({ activeMode, analysisMode, salePrice, productCost, dailyBudget, cpc, cvr, aiInsights, aiInsightsMode, monthlyBudget, targetMonthlyProfit, customNotes, monthlyPlanResult, openAccordions });
+    }, 1500);
+    return () => clearTimeout(timeout);
+  }, [isLoadedFromCloud, activeMode, analysisMode, salePrice, productCost, dailyBudget, cpc, cvr, aiInsights, aiInsightsMode, monthlyBudget, targetMonthlyProfit, customNotes, monthlyPlanResult, openAccordions]);
 
   const toggleAccordion = (idx) => {
     setOpenAccordions((prev) => ({ ...prev, [idx]: !prev[idx] }));
@@ -189,6 +226,8 @@ export default function ProfitCalculator({ stepNumber }) {
           lang,
         });
         setAiInsights(liveResult);
+        setIsNewlyGenerated(true);
+        saveResult({ activeMode, analysisMode, salePrice, productCost, dailyBudget, cpc, cvr, aiInsights: liveResult, aiInsightsMode: "live", monthlyBudget, targetMonthlyProfit, customNotes, monthlyPlanResult, openAccordions });
         dispatch({
           type: "SAVE_TOOL_RESULT",
           toolId: "profit-calculator",
@@ -246,6 +285,8 @@ export default function ProfitCalculator({ stepNumber }) {
             productCost: productCost.toFixed(2),
           });
           setAiInsights(text);
+          setIsNewlyGenerated(true);
+          saveResult({ activeMode, analysisMode, salePrice, productCost, dailyBudget, cpc, cvr, aiInsights: text, aiInsightsMode: "fast", monthlyBudget, targetMonthlyProfit, customNotes, monthlyPlanResult, openAccordions });
           dispatch({
             type: "SAVE_TOOL_RESULT",
             toolId: "profit-calculator",
@@ -334,6 +375,8 @@ export default function ProfitCalculator({ stepNumber }) {
         };
 
         setMonthlyPlanResult(planObj);
+        setIsNewlyGenerated(true);
+        saveResult({ activeMode, analysisMode, salePrice, productCost, dailyBudget, cpc, cvr, aiInsights, aiInsightsMode, monthlyBudget, targetMonthlyProfit, customNotes, monthlyPlanResult: planObj, openAccordions });
         dispatch({
           type: "SAVE_TOOL_RESULT",
           toolId: "profit-calculator-monthly",
@@ -368,6 +411,8 @@ export default function ProfitCalculator({ stepNumber }) {
         };
 
         setMonthlyPlanResult(planObj);
+        setIsNewlyGenerated(true);
+        saveResult({ activeMode, analysisMode, salePrice, productCost, dailyBudget, cpc, cvr, aiInsights, aiInsightsMode, monthlyBudget, targetMonthlyProfit, customNotes, monthlyPlanResult: planObj, openAccordions });
         dispatch({
           type: "SAVE_TOOL_RESULT",
           toolId: "profit-calculator-monthly",
@@ -451,6 +496,24 @@ export default function ProfitCalculator({ stepNumber }) {
       accentColor="#3B82F6"
       timeEstimate="10 - 20"
     >
+      <style>{`
+        .pcc-custom-scroll {
+          max-height: 500px;
+          overflow-y: auto;
+          padding-right: 8px;
+        }
+        .pcc-custom-scroll::-webkit-scrollbar {
+          width: 6px;
+        }
+        .pcc-custom-scroll::-webkit-scrollbar-track {
+          background: rgba(0, 0, 0, 0.2);
+          border-radius: 8px;
+        }
+        .pcc-custom-scroll::-webkit-scrollbar-thumb {
+          background: #6366F1;
+          border-radius: 8px;
+        }
+      `}</style>
       <div className="pcc-3d-canvas" dir={isRtl ? "rtl" : "ltr"}>
         {/* ═══════════════ TOP GLASS MODE BAR WITH SLIDING PILL ═══════════════ */}
         <div className="pcc-3d-top-bar-wrap">
@@ -919,7 +982,7 @@ export default function ProfitCalculator({ stepNumber }) {
 
           {/* AI Outputs Panel Expansion (Typewriter streaming ONLY when mode === 'live') */}
           <AnimatePresence>
-            {(aiInsights || monthlyPlanResult) && (
+            {(aiInsights || monthlyPlanResult || isGenerating || isGeneratingMonthly) && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
@@ -927,6 +990,21 @@ export default function ProfitCalculator({ stepNumber }) {
                 transition={{ type: "spring", stiffness: 250, damping: 25 }}
                 style={{ overflow: "hidden" }}
               >
+                {isGenerating || isGeneratingMonthly ? (
+                  <div className={`pcc-insights-stage ${isGeneratingMonthly ? 'green' : ''}`} style={{ marginTop: "16px" }}>
+                    <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "16px" }}>
+                      <motion.div animate={{ opacity: [0.3, 0.7, 0.3] }} transition={{ repeat: Infinity, duration: 1.5 }} style={{ width: "24px", height: "24px", borderRadius: "50%", background: isGeneratingMonthly ? "rgba(52, 211, 153, 0.2)" : "rgba(96, 165, 250, 0.2)" }} />
+                      <motion.div animate={{ opacity: [0.3, 0.7, 0.3] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.1 }} style={{ width: "120px", height: "16px", borderRadius: "4px", background: isGeneratingMonthly ? "rgba(52, 211, 153, 0.1)" : "rgba(96, 165, 250, 0.1)" }} />
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      <motion.div animate={{ opacity: [0.2, 0.5, 0.2] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.2 }} style={{ width: "100%", height: "12px", borderRadius: "4px", background: "rgba(255, 255, 255, 0.05)" }} />
+                      <motion.div animate={{ opacity: [0.2, 0.5, 0.2] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.3 }} style={{ width: "95%", height: "12px", borderRadius: "4px", background: "rgba(255, 255, 255, 0.05)" }} />
+                      <motion.div animate={{ opacity: [0.2, 0.5, 0.2] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.4 }} style={{ width: "85%", height: "12px", borderRadius: "4px", background: "rgba(255, 255, 255, 0.05)" }} />
+                      <motion.div animate={{ opacity: [0.2, 0.5, 0.2] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.5 }} style={{ width: "90%", height: "12px", borderRadius: "4px", background: "rgba(255, 255, 255, 0.05)" }} />
+                    </div>
+                  </div>
+                ) : (
+                  <>
                 {activeMode === "daily" && aiInsights && (
                   <div
                     className="pcc-insights-stage"
@@ -954,12 +1032,12 @@ export default function ProfitCalculator({ stepNumber }) {
                       </span>
                     </h3>
 
-                    {aiInsightsMode === "live" ? (
-                      <div className="pcc-insights-body">
+                    {aiInsightsMode === "live" && isNewlyGenerated ? (
+                      <div className="pcc-insights-body pcc-custom-scroll">
                         <TypewriterText text={aiInsights} speed={10} />
                       </div>
                     ) : (
-                      <div className="pcc-insights-body">
+                      <div className="pcc-insights-body pcc-custom-scroll">
                         {aiInsights.split("\n").map((line, i) => (
                           <p key={i} style={{ margin: "0 0 6px 0" }}>
                             {line.replace(/\*/g, "")}
@@ -1036,15 +1114,15 @@ export default function ProfitCalculator({ stepNumber }) {
                       </div>
                     </div>
 
-                    {monthlyPlanResult.mode === "live" ? (
-                      <div className="pcc-insights-body">
+                    {monthlyPlanResult.mode === "live" && isNewlyGenerated ? (
+                      <div className="pcc-insights-body pcc-custom-scroll">
                         <TypewriterText
                           text={monthlyPlanResult.aiStrategy}
                           speed={10}
                         />
                       </div>
                     ) : (
-                      <div className="pcc-insights-body">
+                      <div className="pcc-insights-body pcc-custom-scroll">
                         {monthlyPlanResult.aiStrategy
                           .split("\n")
                           .map((line, i) => (
@@ -1055,6 +1133,8 @@ export default function ProfitCalculator({ stepNumber }) {
                       </div>
                     )}
                   </div>
+                )}
+                </>
                 )}
               </motion.div>
             )}

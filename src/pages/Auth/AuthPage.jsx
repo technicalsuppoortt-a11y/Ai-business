@@ -493,8 +493,8 @@ export default function AuthPage({
       } else {
         toast(
           state.language === "en"
-            ? "Password reset instructions sent successfully 🔑"
-            : "تم إرسال تعليمات إعادة التعيين بنجاح 🔑",
+            ?"Password reset instructions sent successfully"
+            :"تم إرسال تعليمات إعادة التعيين بنجاح",
           "success",
         );
         setIsForgotPasswordOpen(false);

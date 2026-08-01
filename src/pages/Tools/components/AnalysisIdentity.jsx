@@ -14,6 +14,7 @@ import ToolDashboardLayout from "./ToolDashboardLayout";
 import { useAuth } from "../../../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+  Eye,
   Target,
   Wand2,
   Palette,
@@ -581,7 +582,8 @@ export default function AnalysisIdentity() {
   const [analysisMode, setAnalysisMode] = useState(cached?.analysisMode ?? "fast"); // 'fast' | 'live'
 
   // Tabs management
-  const [activeTab, setActiveTab] = useState(cached?.activeTab ?? "niche"); // 'niche', 'name', 'identity'
+  const [activeTab, setActiveTab] = useState(cached?.activeTab ?? "niche");
+  const [isPreviewDrawerOpen, setIsPreviewDrawerOpen] = useState(false); // 'niche', 'name', 'identity'
 
   // Tab 1: Niche selection & Target Country States
   const [niches, setNiches] = useState([]);
@@ -4063,12 +4065,51 @@ export default function AnalysisIdentity() {
             </div>
           </div>
 
-          {/* Unique Dual-Pane Studio Canvas Grid */}
-          <div className="identity-canvas-studio-grid">
-            {/* LEFT PANE: Extended Studio Controls */}
-            <div className="identity-canvas-controls-pane">
-              {/* Presets Bar */}
-              <div>
+                    {/* Unique Vertical Flow Architecture for Visual Identity (Tab 3) */}
+          <div className="identity-vertical-flow-container">
+            
+            {/* SECTION 1 (TOP): ALL INPUT CONTROLS GRID */}
+            <div className="identity-input-grid" style={{ position: "relative" }}>
+                            {/* Quick Preview Trigger */}
+              <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: lang === "ar" ? "flex-start" : "flex-end", marginBottom: "4px" }}>
+                <button 
+                  type="button"
+                  onClick={() => setIsPreviewDrawerOpen(true)}
+                  style={{
+                    background: "linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(16, 185, 129, 0.2))",
+                    border: "1px solid rgba(99, 102, 241, 0.4)",
+                    backdropFilter: "blur(8px)",
+                    color: "#F8FAFC",
+                    padding: "8px 16px",
+                    borderRadius: "20px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    cursor: "pointer",
+                    fontSize: "12px",
+                    fontWeight: "bold",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                    transition: "all 0.3s ease"
+                  }}
+                  className="hover-glow-effect"
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 6px 16px rgba(99,102,241,0.3)";
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
+                  }}
+                >
+                  <Eye size={14} color="#818CF8" />
+                  <span>{lang === "en" ? "Live Preview" : "معاينة مباشرة"}</span>
+                </button>
+              </div>
+
+              {/* Card A: Color Studio */}
+              <div className="identity-input-card">
+                {/* Presets Bar */}
+              <div style={{ minWidth: "150px" }}>
                 <label
                   style={{
                     fontSize: "11px",
@@ -4110,8 +4151,8 @@ export default function AnalysisIdentity() {
                   ))}
                 </div>
               </div>
-
-              {/* 3-Color Pickers */}
+                <div style={{ height: '8px' }}></div>
+                {/* 3-Color Pickers */}
               <div>
                 <label
                   style={{
@@ -4227,9 +4268,110 @@ export default function AnalysisIdentity() {
                   </div>
                 </div>
               </div>
+              </div>
 
-              {/* ── GRANULAR CONTROL 1: TYPOGRAPHY CONTROLS ── */}
-              <div style={{ background: "rgba(0, 0, 0, 0.25)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "12px" }}>
+              {/* Card B: Brand Assets */}
+              <div className="identity-input-card">
+                {/* Logo Upload Dock */}
+                <div
+                  style={{
+                    position: "relative",
+                    border: "1px dashed rgba(255, 255, 255, 0.15)",
+                    borderRadius: "12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "12px",
+                    minHeight: "85px",
+                    cursor: "pointer",
+                    overflow: "hidden",
+                    background: "rgba(15, 23, 42, 0.4)",
+                  }}
+                >
+                  <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    opacity: 0,
+                    cursor: "pointer",
+                    zIndex: 10,
+                  }}
+                />
+                {!logoPreview ? (
+                  <>
+                    <UploadCloud size={20} color="#6366F1" strokeWidth={1.5} style={{ marginBottom: 4 }} />
+                    <p style={{ fontSize: "11px", color: "#94A3B8", fontWeight: "600", margin: 0 }}>
+                      {lang === "en" ? "Upload Logo Image" : "ارفع شعار البراند للمعاينة"}
+                    </p>
+                  </>
+                ) : (
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <img src={logoPreview} style={{ height: "36px", maxWidth: "150px", objectFit: "contain" }} alt="Logo" />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setLogoPreview(null);
+                      }}
+                      className="action-pill-btn"
+                      style={{ fontSize: "10px", padding: "3px 6px" }}
+                    >
+                      {lang === "en" ? "Remove" : "إزالة"}
+                    </button>
+                  </div>
+                )}
+                </div>
+                <div style={{ height: '8px' }}></div>
+                {/* Brand Archetype Selector */}
+              <div>
+                <label
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: "700",
+                    color: "#64748B",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    marginBottom: "8px",
+                  }}
+                >
+                  <Brain size={13} strokeWidth={1.5} color="#6366F1" />
+                  <span>
+                    {lang === "en"
+                      ? "BRAND ARCHETYPE"
+                      : "نبرة صوت البراند المستهدفة"}
+                  </span>
+                </label>
+                <div className="archetype-grid">
+                  {[
+                    { id: "visionary", label_en: "Visionary", label_ar: "ابتكاري مستقبلي" },
+                    { id: "luxury", label_en: "Elite Luxury", label_ar: "فاخر راقي" },
+                    { id: "agile", label_en: "Disruptor", label_ar: "جريء ومنافس" },
+                    { id: "expert", label_en: "Trusted Expert", label_ar: "خبير موثوق" },
+                  ].map((arch) => (
+                    <motion.button
+                      key={arch.id}
+                      onClick={() => setBrandArchetype(arch.id)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`archetype-card ${brandArchetype === arch.id ? "active" : ""}`}
+                    >
+                      {lang === "en" ? arch.label_en : arch.label_ar}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+              </div>
+
+              {/* Card C: Typography & Style */}
+              <div className="identity-input-card">
                 <label style={{ fontSize: "11px", fontWeight: "700", color: "#818CF8", textTransform: "uppercase", letterSpacing: "0.04em", display: "flex", alignItems: "center", gap: 6, marginBottom: "10px" }}>
                   <Type size={13} strokeWidth={1.5} color="#818CF8" />
                   <span>{lang === "en" ? "Typography Controls" : "التحكم بالخطوط والنصوص"}</span>
@@ -4305,10 +4447,7 @@ export default function AnalysisIdentity() {
                     </div>
                   </div>
                 </div>
-              </div>
-
-              {/* ── GRANULAR CONTROL 2: BUTTON & BORDER RADIUS CONTROLS ── */}
-              <div style={{ background: "rgba(0, 0, 0, 0.25)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "12px" }}>
+                <div style={{ height: '8px' }}></div>
                 <label style={{ fontSize: "11px", fontWeight: "700", color: "#818CF8", textTransform: "uppercase", letterSpacing: "0.04em", display: "flex", alignItems: "center", gap: 6, marginBottom: "10px" }}>
                   <Wand2 size={13} strokeWidth={1.5} color="#818CF8" />
                   <span>{lang === "en" ? "Button & Border Radius Controls" : "تنسيق الأزرار وحواف العناصر"}</span>
@@ -4391,8 +4530,8 @@ export default function AnalysisIdentity() {
                 </div>
               </div>
 
-              {/* ── GRANULAR CONTROL 3: CARDS & HERO SURFACES ── */}
-              <div style={{ background: "rgba(0, 0, 0, 0.25)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "12px" }}>
+              {/* Card D: Advanced */}
+              <div className="identity-input-card identity-input-card-wide">
                 <label style={{ fontSize: "11px", fontWeight: "700", color: "#818CF8", textTransform: "uppercase", letterSpacing: "0.04em", display: "flex", alignItems: "center", gap: 6, marginBottom: "10px" }}>
                   <Layout size={13} strokeWidth={1.5} color="#818CF8" />
                   <span>{lang === "en" ? "Hero & Card Surfaces" : "أسطح الهيرو والبطاقات"}</span>
@@ -4432,10 +4571,7 @@ export default function AnalysisIdentity() {
                     </div>
                   </div>
                 </div>
-              </div>
-
-              {/* ── LIVE CUSTOM CSS / FUNNEL CODE EDITOR ── */}
-              <div style={{ background: "rgba(13, 17, 23, 0.8)", border: "1px solid rgba(99, 102, 241, 0.3)", borderRadius: "12px", padding: "12px" }}>
+                <div style={{ height: '8px' }}></div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                   <label style={{ fontSize: "11px", fontWeight: "800", color: "#818CF8", textTransform: "uppercase", letterSpacing: "0.04em", display: "flex", alignItems: "center", gap: 6 }}>
                     <Code size={13} strokeWidth={1.5} color="#818CF8" />
@@ -4490,107 +4626,13 @@ export default function AnalysisIdentity() {
                   }}
                 />
               </div>
+            </div>
 
-              {/* Brand Archetype Selector */}
-              <div>
-                <label
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: "700",
-                    color: "#64748B",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.04em",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    marginBottom: "8px",
-                  }}
-                >
-                  <Brain size={13} strokeWidth={1.5} color="#6366F1" />
-                  <span>
-                    {lang === "en"
-                      ? "BRAND ARCHETYPE"
-                      : "نبرة صوت البراند المستهدفة"}
-                  </span>
-                </label>
-                <div className="archetype-grid">
-                  {[
-                    { id: "visionary", label_en: "Visionary", label_ar: "ابتكاري مستقبلي" },
-                    { id: "luxury", label_en: "Elite Luxury", label_ar: "فاخر راقي" },
-                    { id: "agile", label_en: "Disruptor", label_ar: "جريء ومنافس" },
-                    { id: "expert", label_en: "Trusted Expert", label_ar: "خبير موثوق" },
-                  ].map((arch) => (
-                    <motion.button
-                      key={arch.id}
-                      onClick={() => setBrandArchetype(arch.id)}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`archetype-card ${brandArchetype === arch.id ? "active" : ""}`}
-                    >
-                      {lang === "en" ? arch.label_en : arch.label_ar}
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Logo Upload Dock */}
-              <div
-                style={{
-                  position: "relative",
-                  border: "1px dashed rgba(255, 255, 255, 0.15)",
-                  borderRadius: "12px",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: "12px",
-                  minHeight: "85px",
-                  cursor: "pointer",
-                  overflow: "hidden",
-                  background: "rgba(15, 23, 42, 0.4)",
-                }}
-              >
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleLogoUpload}
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    width: "100%",
-                    height: "100%",
-                    opacity: 0,
-                    cursor: "pointer",
-                    zIndex: 10,
-                  }}
-                />
-                {!logoPreview ? (
-                  <>
-                    <UploadCloud size={20} color="#6366F1" strokeWidth={1.5} style={{ marginBottom: 4 }} />
-                    <p style={{ fontSize: "11px", color: "#94A3B8", fontWeight: "600", margin: 0 }}>
-                      {lang === "en" ? "Upload Logo Image" : "ارفع شعار البراند للمعاينة"}
-                    </p>
-                  </>
-                ) : (
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <img src={logoPreview} style={{ height: "36px", maxWidth: "150px", objectFit: "contain" }} alt="Logo" />
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setLogoPreview(null);
-                      }}
-                      className="action-pill-btn"
-                      style={{ fontSize: "10px", padding: "3px 6px" }}
-                    >
-                      {lang === "en" ? "Remove" : "إزالة"}
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Engine Mode & Analyze CTA */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "auto" }}>
-                <AnalysisModeSelector
+            {/* SECTION 3 (BOTTOM): PRIMARY ACTION BAR */}
+            <div className="identity-cta-bar">
+              <div style={{ width: "100%", maxWidth: "400px", margin: "0 auto" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <AnalysisModeSelector
                   mode={analysisMode}
                   onChange={setAnalysisMode}
                   lang={lang}
@@ -4622,12 +4664,22 @@ export default function AnalysisIdentity() {
                     </span>
                   )}
                 </motion.button>
+                </div>
               </div>
             </div>
 
-            {/* RIGHT PANE: Interactive Design Workbench Preview */}
-            <div className="identity-canvas-preview-pane">
-              <div className="identity-simulator-header">
+            {/* Slide-Over Drawer for Preview */}
+            <div className={`identity-preview-drawer ${isPreviewDrawerOpen ? 'open' : ''}`}>
+              <div className="identity-preview-drawer-overlay" onClick={() => setIsPreviewDrawerOpen(false)} />
+              <div className={`identity-preview-drawer-content ${lang === 'ar' ? 'rtl' : 'ltr'}`}>
+                <button 
+                  className="identity-preview-drawer-close"
+                  onClick={() => setIsPreviewDrawerOpen(false)}
+                >
+                  <X size={20} />
+                </button>
+                <div style={{ width: "100%", height: "100%", overflowY: "auto", padding: "40px 20px" }}>
+                  <div className="identity-simulator-header">
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                   <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#ef4444" }} />
                   <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#eab308" }} />
@@ -4665,8 +4717,7 @@ export default function AnalysisIdentity() {
                   </button>
                 </div>
               </div>
-
-              {/* Viewport content */}
+                  {/* Viewport content */}
               <div className="identity-simulator-viewport" style={{ background: secondaryColor, borderRadius: "12px", marginTop: "12px" }}>
                 {/* Live Custom CSS Injection */}
                 {appliedCssCode && <style>{appliedCssCode}</style>}
@@ -4795,7 +4846,10 @@ export default function AnalysisIdentity() {
                   )}
                 </AnimatePresence>
               </div>
+                </div>
+              </div>
             </div>
+
           </div>
 
           {/* AI Color Analysis Details with TypingText progressive effect */}

@@ -5,6 +5,7 @@ import { db } from "../../firebase";
 import { useApp } from "../../context/AppContext";
 import { useToast } from "../../context/ToastContext";
 import { useSystemBranding } from "../../context/SystemBrandingContext";
+import { useBrandTheme } from "../../hooks/useBrandTheme";
 import TermsContent from "../../components/common/TermsContent";
 import { landingTranslations } from "./LandingTranslations";
 import MadgicxTemplate from "./MadgicxTemplate";
@@ -309,6 +310,7 @@ export default function LandingPage() {
   const { state, dispatch } = useApp();
   const toast = useToast();
   const { brandName: globalBrandName } = useSystemBranding();
+  const { logoUrl, brandName } = useBrandTheme();
   const t = landingTranslations[state.language || "ar"] || landingTranslations.ar;
 
   const [brandData, setBrandData] = useState(null);
@@ -3095,21 +3097,24 @@ export default function LandingPage() {
         <div
           className="lp-footer-simple-inner"
           style={{
-            flexDirection: state.language === "ar" ? "row-reverse" : "row",
             alignItems: "center",
             paddingTop: 16,
             paddingBottom: 16
           }}
         >
-          <div className="lp-footer-brand-wrap" style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: state.language === "ar" ? "flex-end" : "flex-start" }}>
+          <div className="lp-footer-brand-wrap" style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "flex-start" }}>
             <Logo
               size={28}
               showText={true}
               lang={state.language || "ar"}
-              text={brandData?.brandName || globalBrandName}
+              text={brandData?.brandName || brandName || "Ai Business"}
             />
             <span className="lp-footer-copyright-text" style={{ fontSize: 13, opacity: 0.7 }}>
-              © {new Date().getFullYear()} {globalBrandName}. {state.language === 'ar' ? 'جميع الحقوق محفوظة.' : 'All rights reserved.'}
+              {state.language === 'ar' ? (
+                <>جميع الحقوق محفوظة © {new Date().getFullYear()} <span dir="ltr" style={{ display: "inline-block", margin: "0 4px" }}>{brandData?.brandName || brandName || "Ai Business"}</span></>
+              ) : (
+                <>© {new Date().getFullYear()} {brandData?.brandName || brandName || "Ai Business"}. All rights reserved.</>
+              )}
             </span>
           </div>
 
@@ -3169,14 +3174,14 @@ export default function LandingPage() {
                       System Dashboard
                     </span>
                     <span style={{ fontSize: 24, fontWeight: 800, color: "var(--text1)", letterSpacing: "-0.5px" }}>
-                      <span style={{ color: "transparent", WebkitBackgroundClip: "text", backgroundImage: "linear-gradient(90deg, #fff, #94a3b8)" }}>{globalBrandName} OS</span>
+                      <span style={{ color: "transparent", WebkitBackgroundClip: "text", backgroundImage: "linear-gradient(90deg, #fff, #94a3b8)" }}>{brandData?.brandName || brandName || "Ai Business"} OS</span>
                     </span>
                   </div>
                 </div>
                 
                 {state.language === "ar" ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-                    <p style={{ fontSize: 17, color: "var(--text1)", marginBottom: 20 }}>في {globalBrandName}، نأخذ خصوصيتك بجدية تامة. توضح هذه السياسة كيف نقوم بجمع واستخدام وحماية معلوماتك الشخصية.</p>
+                    <p style={{ fontSize: 17, color: "var(--text1)", marginBottom: 20 }}>في {brandData?.brandName || brandName || "Ai Business"}، نأخذ خصوصيتك بجدية تامة. توضح هذه السياسة كيف نقوم بجمع واستخدام وحماية معلوماتك الشخصية.</p>
                     
                     <div style={{ background: "rgba(59,130,246,0.05)", border: "1px solid rgba(59,130,246,0.1)", borderRadius: 16, padding: 20 }}>
                       <h4 style={{ color: "var(--text1)", marginTop: 0, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#3B82F6" }}/> 1. جمع المعلومات</h4>
@@ -3185,7 +3190,7 @@ export default function LandingPage() {
                   </div>
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-                    <p style={{ fontSize: 17, color: "var(--text1)", marginBottom: 20 }}>At {globalBrandName}, we take your privacy seriously. This policy explains how we collect, use, and protect your personal information.</p>
+                    <p style={{ fontSize: 17, color: "var(--text1)", marginBottom: 20 }}>At {brandData?.brandName || brandName || "Ai Business"}, we take your privacy seriously. This policy explains how we collect, use, and protect your personal information.</p>
                     
                     <div style={{ background: "rgba(59,130,246,0.05)", border: "1px solid rgba(59,130,246,0.1)", borderRadius: 16, padding: 20 }}>
                       <h4 style={{ color: "var(--text1)", marginTop: 0, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#3B82F6" }}/> 1. Information Collection</h4>

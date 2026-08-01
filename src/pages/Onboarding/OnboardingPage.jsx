@@ -184,7 +184,21 @@ export default function OnboardingPage() {
     dispatch({ type: 'SET_USER', payload: { level: lvl } });
   };
 
-  const proceed = () => {
+  const proceed = async () => {
+    try {
+      if (userData?.uid) {
+        const { doc, updateDoc } = await import('firebase/firestore');
+        const userRef = doc(db, 'users', userData.uid);
+        await updateDoc(userRef, {
+          name: state.user.name || '',
+          country: state.user.country || 'SA',
+          level: state.user.level || 'beginner'
+        });
+      }
+    } catch (err) {
+      console.error('Error saving onboarding data:', err);
+    }
+
     dispatch({ type: 'COMPLETE_STEP', step: 'onboarding' });
     toast(lang ==='en' ?'Excellent! Let\'s start with Niche Selection' :'ممتاز! لنبدأ باختيار النيش','success');
     navigate('/dashboard/tool/analysis-identity');

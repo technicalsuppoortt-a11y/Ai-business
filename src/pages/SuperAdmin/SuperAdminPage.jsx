@@ -124,6 +124,8 @@ export default function SuperAdminPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
+  const [brandLogoFile, setBrandLogoFile] = useState(null);
+  const [brandLogoPreview, setBrandLogoPreview] = useState(null);
   const [activeTab, setActiveTab] = useState(
     () => localStorage.getItem("sa-active-tab") || "users"
   ); // 'users' | 'library' | 'landing-pages' | 'settings' | 'employees'
@@ -242,6 +244,16 @@ export default function SuperAdminPage() {
         photoURL = await getDownloadURL(imgRef);
       }
 
+      let brandLogoUrl = "";
+      if (brandLogoFile && role === "admin") {
+        const logoRef = ref(
+          libraryStorage,
+          `brands/logos/${Date.now()}_${brandLogoFile.name}`
+        );
+        await uploadBytes(logoRef, brandLogoFile);
+        brandLogoUrl = await getDownloadURL(logoRef);
+      }
+
       const config = {
         apiKey: "AIzaSyCIF4HfPdDqjH6ue2Sc5NIIJwlOq3ytNA0",
         authDomain: "event-upklick.firebaseapp.com",
@@ -273,6 +285,7 @@ export default function SuperAdminPage() {
         brandName: role === "admin" ? brandName.trim() : "",
         ownerName: ownerName.trim(),
         brandUrl: role === "admin" ? brandUrl.trim() : "",
+        brandLogoUrl: role === "admin" ? brandLogoUrl : "",
         phoneNumber: `${phoneKey}${phoneNumber.trim().replace(/^\+/, "")}`,
         photoURL: photoURL || "",
         createdAt: serverTimestamp(),
@@ -292,6 +305,7 @@ export default function SuperAdminPage() {
             name: brandName.trim(),
             adminUid: uid,
             themeConfig: { accent: "#3B82F6", success: "#10B981" },
+            logoUrl: brandLogoUrl || null,
             createdAt: serverTimestamp(),
           },
           { merge: true },
@@ -350,6 +364,8 @@ export default function SuperAdminPage() {
     }
     setSubType(u.subscription?.type || "monthly");
     setSubDays(30);
+    setBrandLogoPreview(u.brandLogoUrl || null);
+    setBrandLogoFile(null);
     setIsAddModalOpen(true);
   };
 
@@ -360,6 +376,8 @@ export default function SuperAdminPage() {
     setEmail("");
     setBrandUrl("");
     setPhoneNumber("");
+    setBrandLogoFile(null);
+    setBrandLogoPreview(null);
     setIsAddModalOpen(false);
   };
 
@@ -400,6 +418,16 @@ export default function SuperAdminPage() {
         photoURL = await getDownloadURL(imgRef);
       }
 
+      let brandLogoUrl = editingUser.brandLogoUrl || "";
+      if (brandLogoFile && role === "admin") {
+        const logoRef = ref(
+          libraryStorage,
+          `brands/logos/${Date.now()}_${brandLogoFile.name}`
+        );
+        await uploadBytes(logoRef, brandLogoFile);
+        brandLogoUrl = await getDownloadURL(logoRef);
+      }
+
       let expiryDate = editingUser.subscription?.expiryDate?.toDate() || null;
       if (subType === "monthly") {
         expiryDate = new Date();
@@ -415,6 +443,7 @@ export default function SuperAdminPage() {
         brandName: role === "admin" ? brandName.trim() : "",
         ownerName: ownerName.trim(),
         brandUrl: role === "admin" ? brandUrl.trim() : "",
+        brandLogoUrl: role === "admin" ? brandLogoUrl : "",
         phoneNumber: `${phoneKey}${phoneNumber.trim().replace(/^\+/, "")}`,
         role: role,
         photoURL: photoURL || "",
@@ -425,6 +454,12 @@ export default function SuperAdminPage() {
           updatedAt: serverTimestamp(),
         },
       });
+      if (role === "admin") {
+        await setDoc(doc(db, "brands", brandName.trim()), {
+          logoUrl: brandLogoUrl || null
+        }, { merge: true });
+      }
+
       toast("تم التحديث بنجاح","success");
       cancelEdit();
       await loadBrands();
@@ -518,25 +553,21 @@ export default function SuperAdminPage() {
     const expiryDate = b.subscription?.expiryDate?.toDate() || null;
     const isExp = expiryDate && expiryDate < new Date();
 
-    let bg = "rgba(59, 130, 246, 0.1)";
-    let border = "1px solid rgba(59, 130, 246, 0.2)";
-    let color = "var(--blue)";
+    let bg = "rgba(16, 185, 129, 0.15)";
+    let color = "#34d399";
     let label = "شهري";
 
     if (status === "stopped" || isExp) {
-      bg = "rgba(239, 68, 68, 0.1)";
-      border = "1px solid rgba(239, 68, 68, 0.2)";
-      color = "var(--red)";
+      bg = "rgba(239, 68, 68, 0.15)";
+      color = "#f87171";
       label = status === "stopped" ? "موقف" : "منتهي";
     } else if (type === "lifetime") {
-      bg = "rgba(245, 158, 11, 0.1)";
-      border = "1px solid rgba(245, 158, 11, 0.2)";
-      color = "var(--amber)";
+      bg = "rgba(245, 158, 11, 0.15)";
+      color = "#fbbf24";
       label = "مدى الحياة";
     } else if (type === "custom") {
-      bg = "rgba(139, 92, 246, 0.1)";
-      border = "1px solid rgba(139, 92, 246, 0.2)";
-      color = "var(--purple)";
+      bg = "rgba(139, 92, 246, 0.15)";
+      color = "#a78bfa";
       label = "مخصص";
     }
 
@@ -547,15 +578,15 @@ export default function SuperAdminPage() {
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: "4px 10px",
+            padding: "4px 12px",
             borderRadius: "20px",
             fontSize: "11px",
             fontWeight: "700",
             background: bg,
-            border: border,
             color: color,
             backdropFilter: "blur(4px)",
             width: "fit-content",
+            whiteSpace: "nowrap"
           }}
         >
           {label}
@@ -2015,7 +2046,18 @@ export default function SuperAdminPage() {
                                     </td>
                                     <td>{renderSubscriptionBadge(b)}</td>
                                     <td>
-                                      <span className="sa-role-badge sa-role-admin">
+                                      <span style={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        padding: "4px 12px",
+                                        borderRadius: "20px",
+                                        fontSize: "11px",
+                                        fontWeight: "700",
+                                        background: "rgba(99, 102, 241, 0.15)",
+                                        color: "#818cf8",
+                                        whiteSpace: "nowrap"
+                                      }}>
                                         🛡 أدمن
                                       </span>
                                     </td>
@@ -2337,6 +2379,32 @@ export default function SuperAdminPage() {
                     />
                   </div>
                 </div>
+
+                {role === "admin" && (
+                  <div className="field" style={{ marginTop: 12 }}>
+                    <label className="field-label">لوجو البراند (اختياري)</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      {brandLogoPreview && (
+                        <img 
+                          src={brandLogoPreview} 
+                          alt="Preview" 
+                          style={{ width: 48, height: 48, borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--line)' }} 
+                        />
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            setBrandLogoFile(e.target.files[0]);
+                            setBrandLogoPreview(URL.createObjectURL(e.target.files[0]));
+                          }
+                        }}
+                        style={{ flex: 1, padding: '8px', background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--line)', borderRadius: '8px', color: 'var(--text2)', cursor: 'pointer' }}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {role !== "superadmin" && (
                   <>

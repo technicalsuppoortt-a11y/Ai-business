@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { useSystemBranding } from '../../context/SystemBrandingContext';
+import { useBrandTheme } from '../../hooks/useBrandTheme';
 
-export default function Logo({ className = '', size = 32, showText = true, lang = 'ar', text, forceDefault = false }) {
-  const { brandName, logoUrl, DEFAULT_BRAND_NAME } = useSystemBranding();
+export default function Logo({ className = '', size = 32, showText = true, lang = 'ar', text, forceDefault = false, overrideBrandName, overrideLogoUrl }) {
+  const { brandName, logoUrl } = useBrandTheme();
   const [imgError, setImgError] = useState(false);
 
   const isSuperAdmin = window.location.pathname.startsWith('/superadmin') || forceDefault;
-  const activeLogoUrl = isSuperAdmin ? null : logoUrl;
-  const activeBrandName = isSuperAdmin ? DEFAULT_BRAND_NAME : (text || brandName || DEFAULT_BRAND_NAME);
+  const activeLogoUrl = isSuperAdmin ? null : (overrideLogoUrl || logoUrl);
+  const activeBrandName = isSuperAdmin ? "Ai Business" : (overrideBrandName || text || brandName || "Ai Business");
 
   const renderDefaultSvg = () => (
     <svg

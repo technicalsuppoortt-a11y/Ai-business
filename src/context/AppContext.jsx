@@ -141,6 +141,18 @@ export function AppProvider({ children }) {
             // Document exists but no state yet (first login)
             dispatch({ type: 'SET_FIELD', field: 'isLoadedFromCloud', value: true });
           }
+
+          // Load Basic Information back into state
+          if (cloudData.name || cloudData.country || cloudData.level) {
+            dispatch({
+              type: 'SET_USER',
+              payload: {
+                name: cloudData.name || '',
+                country: cloudData.country || 'EG',
+                level: cloudData.level || 'beginner'
+              }
+            });
+          }
         } else {
           // New user, no document yet
           dispatch({ type: 'SET_FIELD', field: 'isLoadedFromCloud', value: true });
@@ -162,7 +174,12 @@ export function AppProvider({ children }) {
         // We save the entire state (excluding the user object and meta flags)
         const { user, isLoadedFromCloud, ...stateToSave } = state;
         const docRef = doc(db, 'users', userData.uid);
-        await setDoc(docRef, { appState: stateToSave }, { merge: true });
+        await setDoc(docRef, { 
+          appState: stateToSave,
+          name: user.name || '',
+          country: user.country || 'EG',
+          level: user.level || 'beginner'
+        }, { merge: true });
       } catch (err) {
         console.error("Error saving app state to Firestore:", err);
       }

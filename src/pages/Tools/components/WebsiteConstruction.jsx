@@ -7,6 +7,7 @@ import {
   getAllWebsiteGalleryTemplates,
   getDomainIdeasTemplate,
   getWebsiteTemplate,
+  getAllWebsiteTemplateCategories,
 } from "../../../services/contentDbService";
 import { parseTemplate } from "../../../utils/templateParser";
 import {
@@ -53,8 +54,51 @@ import {
   Monitor,
   RefreshCw,
   ExternalLink,
+  MonitorSmartphone,
+  ShoppingBag,
+  Stethoscope,
+  Wrench,
+  Home,
+  Palette,
+  Pizza,
+  Briefcase,
+  GraduationCap,
+  Dumbbell,
+  Camera,
+  Car,
+  Plane,
+  Music,
+  Scissors,
+  Heart,
+  Coffee,
+  Brush
 } from "lucide-react";
 import "./WebsiteConstruction.css";
+
+const getVectorIcon = (iconStr, cat) => {
+  const c = cat ? cat.toLowerCase() : '';
+  if (iconStr?.includes('📱') || c.includes('saas') || c.includes('tech')) return <MonitorSmartphone size={24} className="text-indigo-400" />;
+  if (iconStr?.includes('🛍') || iconStr?.includes('🛒') || c.includes('commerce') || c.includes('متجر')) return <ShoppingBag size={24} className="text-pink-400" />;
+  if (iconStr?.includes('🏥') || c.includes('health') || c.includes('صحة')) return <Stethoscope size={24} className="text-emerald-400" />;
+  if (iconStr?.includes('🔧') || c.includes('service') || c.includes('خدمات')) return <Wrench size={24} className="text-slate-400" />;
+  if (iconStr?.includes('🏠') || c.includes('real') || c.includes('عقار')) return <Home size={24} className="text-amber-400" />;
+  if (iconStr?.includes('🎨') || c.includes('art') || c.includes('فاشون')) return <Palette size={24} className="text-purple-400" />;
+  if (iconStr?.includes('🍔') || c.includes('food') || c.includes('مطعم')) return <Pizza size={24} className="text-orange-400" />;
+  if (iconStr?.includes('🚀') || c.includes('startup')) return <Rocket size={24} className="text-blue-400" />;
+  if (iconStr?.includes('💼') || c.includes('corporate') || c.includes('أعمال')) return <Briefcase size={24} className="text-sky-400" />;
+  if (iconStr?.includes('🎓') || c.includes('education') || c.includes('تعليم')) return <GraduationCap size={24} className="text-indigo-500" />;
+  if (iconStr?.includes('💪') || c.includes('fitness') || c.includes('جيم')) return <Dumbbell size={24} className="text-slate-500" />;
+  if (iconStr?.includes('📸') || c.includes('photo') || c.includes('تصوير')) return <Camera size={24} className="text-purple-500" />;
+  if (iconStr?.includes('🚗') || c.includes('auto') || c.includes('سيارات')) return <Car size={24} className="text-red-400" />;
+  if (iconStr?.includes('✈️') || c.includes('travel') || c.includes('سفر')) return <Plane size={24} className="text-sky-500" />;
+  if (iconStr?.includes('🎵') || c.includes('music') || c.includes('موسيقى')) return <Music size={24} className="text-pink-500" />;
+  if (iconStr?.includes('✂️') || c.includes('salon') || c.includes('صالون')) return <Scissors size={24} className="text-rose-400" />;
+  if (iconStr?.includes('❤️') || c.includes('charity') || c.includes('خيرية')) return <Heart size={24} className="text-red-500" />;
+  if (iconStr?.includes('☕') || c.includes('coffee') || c.includes('قهوة')) return <Coffee size={24} className="text-amber-600" />;
+  if (iconStr?.includes('🧹') || c.includes('clean') || c.includes('تنظيف')) return <Brush size={24} className="text-teal-400" />;
+  
+  return <Layout size={24} className="text-indigo-400" />;
+};
 
 // Custom Glassmorphic Select Dropdown Component for Step 2
 function CustomGlassSelect({ options, value, onChange }) {
@@ -170,12 +214,6 @@ export default function WebsiteConstruction({ stepNumber }) {
   const { cachedData: cached, isCached, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'website-construction');
   const isLoadedFromCloud = !isLoadingCache;
 
-
-  
-  
-
-  
-
   const toastContext = useToast();
   const toast =
     typeof toastContext === "function"
@@ -237,8 +275,9 @@ export default function WebsiteConstruction({ stepNumber }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedCode, setGeneratedCode] = useState(cached?.generatedCode ?? "");
   const [galleryTemplates, setGalleryTemplates] = useState([]);
-  const [selectedGalleryTemplate, setSelectedGalleryTemplate] = useState(null);
+  const [templateCategories, setTemplateCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedGalleryTemplate, setSelectedGalleryTemplate] = useState(null);
   const [viewportMode, setViewportMode] = useState("desktop"); // 'desktop' | 'mobile'
   const [mobileStudioTab, setMobileStudioTab] = useState("code"); // 'code' | 'canvas'
 
@@ -401,8 +440,12 @@ export default function WebsiteConstruction({ stepNumber }) {
 
   useEffect(() => {
     const loadGallery = async () => {
-      const templates = await getAllWebsiteGalleryTemplates();
-      setGalleryTemplates(templates);
+      const [templates, cats] = await Promise.all([
+        getAllWebsiteGalleryTemplates(),
+        getAllWebsiteTemplateCategories()
+      ]);
+      setGalleryTemplates(templates.filter(t => !t.status || String(t.status).trim().toLowerCase() !== 'draft'));
+      setTemplateCategories(cats.filter(c => c.isVisible));
     };
     loadGallery();
   }, []);
@@ -1108,14 +1151,14 @@ export default function WebsiteConstruction({ stepNumber }) {
                         <FolderOpen size={13} />
                         <span>{lang === "en" ? "All" : "الكل"}</span>
                       </button>
-                      {[...new Set(galleryTemplates.map((t) => t.category).filter(Boolean))].map((cat) => (
+                      {templateCategories.map((cat) => (
                         <button
-                          key={cat}
-                          className={`wc-category-pill ${selectedCategory === cat ? "active" : ""}`}
-                          onClick={() => setSelectedCategory(cat)}
+                          key={cat.id}
+                          className={`wc-category-pill ${selectedCategory === cat.label_en ? "active" : ""}`}
+                          onClick={() => setSelectedCategory(cat.label_en)}
                         >
                           <Layers size={13} />
-                          <span>{cat}</span>
+                          <span>{lang === "en" ? cat.label_en : cat.label_ar}</span>
                         </button>
                       ))}
                     </div>
@@ -1131,7 +1174,7 @@ export default function WebsiteConstruction({ stepNumber }) {
                             whileHover={{ y: -2 }}
                             whileTap={{ scale: 0.98 }}
                           >
-                            <div className="wc-template-icon">{tpl.icon}</div>
+                            <div className="wc-template-icon">{getVectorIcon(tpl.icon, tpl.category)}</div>
                             <h4 style={{ color: "#FFFFFF", fontSize: "13px", fontWeight: "800", margin: "0 0 2px 0" }}>
                               {lang === "en" ? tpl.name_en : tpl.name_ar}
                             </h4>

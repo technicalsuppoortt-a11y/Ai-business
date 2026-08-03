@@ -1359,12 +1359,41 @@ export default function AnalysisIdentity() {
       }
 
       const subName = state.subNiche;
+
+      let dynamicAge = "22 - 45";
+      if (subName) {
+        const n = subName.toLowerCase();
+        // 1. Kids / Children / Education (Parents / Educators)
+        if (n.includes("أطفال") || n.includes("تعليم") || n.includes("مدرسة") || n.includes("لعب") || n.includes("تربية") || n.includes("kids") || n.includes("children") || n.includes("education") || n.includes("school") || n.includes("learning") || n.includes("toys")) {
+          dynamicAge = "25 - 40";
+        }
+        // 2. Heritage / Culture / Art / Traditional
+        else if (n.includes("تراث") || n.includes("ثقافة") || n.includes("فن") || n.includes("تقليدي") || n.includes("تاريخ") || n.includes("heritage") || n.includes("culture") || n.includes("art") || n.includes("traditional") || n.includes("history")) {
+          dynamicAge = "25 - 60";
+        }
+        // 3. Freelancing / Digital Content Creation / Production
+        else if (n.includes("إنتاج") || n.includes("صناعة محتوى") || n.includes("فيديو") || n.includes("مستقل") || n.includes("موشن") || n.includes("تسويق") || n.includes("production") || n.includes("content") || n.includes("video") || n.includes("freelance") || n.includes("motion") || n.includes("creator")) {
+          dynamicAge = "20 - 38";
+        }
+        // 4. Gen-Z / Younger Audience
+        else if (n.includes("tiktok") || n.includes("gaming") || n.includes("gen-z") || n.includes("student") || n.includes("influencer") || n.includes("ألعاب") || n.includes("طالب")) {
+          dynamicAge = "18 - 28";
+        }
+        // 5. Older / High-End Corporate B2B
+        else if (n.includes("b2b") || n.includes("corporate") || n.includes("enterprise") || n.includes("real estate") || n.includes("consulting") || n.includes("شركات") || n.includes("عقارات") || n.includes("استشارات")) {
+          dynamicAge = "30 - 55";
+        }
+        // 6. Mid-Career / SaaS / E-com
+        else if (n.includes("saas") || n.includes("ecom") || n.includes("ecommerce") || n.includes("agency") || n.includes("متجر") || n.includes("تجارة")) {
+          dynamicAge = "25 - 45";
+        }
+      }
       setNicheAnalysis({
         verdict: lang === "en" 
           ? `High growth potential identified in ${subName} for target market.`
           : `تم رصد فرصة نمو عالية وممتازة في تخصص ${subName} في السوق المستهدف.`,
         icp: {
-          age: "22 - 45",
+          age: (typeof dbResult !== 'undefined' && dbResult?.target_audience?.demographics) ? dbResult.target_audience.demographics : dynamicAge,
           job: subName,
           pain: lang === "en" ? "Demand for high-efficiency specialized AI workflows" : "الاحتياج لنظام وأتمتة مخصصة وعالية الكفاءة"
         },

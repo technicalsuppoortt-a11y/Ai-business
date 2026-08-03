@@ -116,8 +116,10 @@ import {
   Palette,
   Layout,
   Database,
+  LayoutTemplate,
 } from "lucide-react";
 import "./Admin.css";
+import AdminTemplateManager from './components/AdminTemplateManager';
 
 // Animated Counter Component that starts from 0 to target value
 function AnimatedCounter({ value, duration = 1200 }) {
@@ -2004,7 +2006,7 @@ export default function AdminDashboardPage() {
 
   const formatDate = (ts) => {
     if (!ts?.seconds) return "—";
-    return new Date(ts.seconds * 1000).toLocaleDateString("ar-EG", {
+    return new Date(ts.seconds * 1000).toLocaleDateString(state.language === "en" ? "en-US" : "ar-EG", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -2284,6 +2286,12 @@ export default function AdminDashboardPage() {
                 label_en: "Product Library",
                 icon: Library,
               },
+              {
+                id: "templates",
+                label: "القوالب الجاهزة",
+                label_en: "Ready-Made Templates",
+                icon: LayoutTemplate,
+              },
             ].map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -2513,6 +2521,15 @@ export default function AdminDashboardPage() {
                       {state.language === "en"
                         ? "Tutorial Video"
                         : "فيديو الشرح"}
+                    </span>
+                  </>
+                ) : activeTab === "templates" ? (
+                  <>
+                    <LayoutTemplate size={20} style={{ color: "var(--accent)" }} />
+                    <span>
+                      {state.language === "en"
+                        ? "Ready-Made Templates"
+                        : "القوالب الجاهزة"}
                     </span>
                   </>
                 ) : activeTab === "library" ? (
@@ -9812,6 +9829,10 @@ export default function AdminDashboardPage() {
             </div>
           ) : activeTab === "library" ? (
             <AdminLibrary userData={userData} />
+          ) : activeTab === "templates" ? (
+            <div className="ad-content animate-in">
+              <AdminTemplateManager />
+            </div>
           ) : (
             <div className="ad-content animate-in" dir={state.language === "en" ? "ltr" : "rtl"}>
               {/* Brand Settings Page Header & Progress Section */}

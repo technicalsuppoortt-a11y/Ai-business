@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Video,
@@ -23,6 +23,35 @@ import './PlatformExplanation.css';
 const PlatformExplanation = ({ videoUrl, title, lang = 'ar' }) => {
   const isEn = lang === 'en';
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('all');
+
+  const videoRef = useRef(null);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(NaN);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+
+  const formatTime = (timeInSeconds) => {
+    if (isNaN(timeInSeconds) || !Number.isFinite(timeInSeconds)) return "--:--";
+    const m = Math.floor(timeInSeconds / 60).toString().padStart(2, '0');
+    const s = Math.floor(timeInSeconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
+  const handleLoadedMetadata = (e) => {
+    const video = e.target;
+    if (video.duration === Infinity) {
+      // Trick Chrome into fetching duration for streamed/blob webm by seeking temporarily
+      video.currentTime = 1e101;
+      video.addEventListener('timeupdate', function forceDuration() {
+        video.removeEventListener('timeupdate', forceDuration);
+        if (Number.isFinite(video.duration)) {
+          setDuration(video.duration);
+        }
+        video.currentTime = 0; // Reset to start
+      });
+    } else if (Number.isFinite(video.duration)) {
+      setDuration(video.duration);
+    }
+  };
 
   const sections = [
     {
@@ -152,11 +181,57 @@ const PlatformExplanation = ({ videoUrl, title, lang = 'ar' }) => {
             {/* Video Player */}
             <div className="pe-video-inner">
               <video
+                ref={videoRef}
                 src={videoUrl}
                 controls
+                preload="metadata"
                 className="pe-video-player"
                 poster=""
+                onTimeUpdate={(e) => {
+                  setCurrentTime(e.target.currentTime);
+                  if (Number.isNaN(duration) && Number.isFinite(e.target.duration)) {
+                    setDuration(e.target.duration);
+                  }
+                }}
+                onLoadedMetadata={handleLoadedMetadata}
+                onDurationChange={(e) => {
+                  if (Number.isFinite(e.target.duration)) {
+                    setDuration(e.target.duration);
+                  }
+                }}
               />
+              
+              {/* Custom Overlay Controls for Time & Speed */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.6)', padding: '10px 16px', borderBottomLeftRadius: '16px', borderBottomRightRadius: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ color: '#fff', fontSize: '13px', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Clock size={14} style={{ color: 'var(--accent)' }} />
+                  <span style={{ letterSpacing: '1px' }}>{formatTime(currentTime)} / {formatTime(duration)}</span>
+                </div>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {[0.5, 1, 1.25, 1.5, 2].map(speed => (
+                    <button
+                      key={speed}
+                      onClick={() => {
+                        setPlaybackSpeed(speed);
+                        if (videoRef.current) videoRef.current.playbackRate = speed;
+                      }}
+                      style={{
+                        background: playbackSpeed === speed ? 'var(--accent)' : 'rgba(255,255,255,0.1)',
+                        color: playbackSpeed === speed ? '#fff' : '#ccc',
+                        border: 'none',
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {speed}x
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 

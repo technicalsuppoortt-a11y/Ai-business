@@ -190,7 +190,7 @@ Return MUST be valid JSON strictly matching this structure:
   "competition_level": "Medium",
   "profit_margin": "30% - 45%",
   "target_audience": {
-    "demographics": "Age 22-45, tech-savvy professionals...",
+    "demographics": "[Dynamic age bracket tailored to niche e.g., 18-28 or 35-55, plus job/status]",
     "pain_points": ["Pain point 1", "Pain point 2", "Pain point 3"],
     "desires": ["Desire 1", "Desire 2"]
   },
@@ -200,7 +200,8 @@ Return MUST be valid JSON strictly matching this structure:
 }`;
 
       const userPrompt = `Analyze the business niche: "${selectedNicheName}" ${subNiche ? `(Sub-niche: ${subNiche})` : ''}.
-Target Market Region: ${context.user?.country || 'GCC & Global'}.`;
+Target Market Region: ${context.user?.country || 'GCC & Global'}.
+CRITICAL INSTRUCTION: Dynamically calculate and adapt the "demographics" age range and profile to precisely fit the target persona of the "${selectedNicheName}" niche. Do not use generic age brackets.`;
 
       const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true });
       return JSON.parse(responseText);

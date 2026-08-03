@@ -7,7 +7,7 @@
  * ====================================
  */
 import { db } from '../firebase';
-import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 
 // ─── Collection Names ───────────────────────────────────────────────────────
 export const COL = {
@@ -28,6 +28,7 @@ export const COL = {
   // Dynamic Templates
   WEBSITE_TEMPLATES:   'tc_website_templates',
   WEBSITE_TEMPLATES_GALLERY: 'tc_website_templates_gallery',
+  WEBSITE_TEMPLATE_CATEGORIES: 'tc_website_template_categories',
   DOMAIN_IDEAS:        'tc_domain_ideas',
   FREELANCE_AI:        'tc_freelance_ai',
   SOCIAL_PRESENCE:     'tc_social_presence',
@@ -352,7 +353,12 @@ export const getAllWebsiteGalleryTemplates = async () => {
     
     const templates = [];
     snapshot.forEach(doc => {
-      templates.push(doc.data());
+      const data = doc.data();
+      templates.push({
+        ...data,
+        status: data.status || 'published',
+        category: data.category || 'عام'
+      });
     });
     return templates;
   } catch (error) {
@@ -583,5 +589,79 @@ export const getProductIdeasV2 = async (typeId, nicheId, effortId) => {
   } catch (error) {
     console.error(`[ContentDB] Error fetching Product Ideas ${docId}:`, error);
     return null;
+  }
+};
+
+// ─── Dynamic Templates & Funnel Management (Admin & User) ──────────────
+
+export const getAllWebsiteTemplateCategories = async () => {
+  try {
+    const q = query(collection(db, COL.WEBSITE_TEMPLATE_CATEGORIES));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) return [];
+    
+    const categories = [];
+    snapshot.forEach(doc => {
+      categories.push({ id: doc.id, ...doc.data() });
+    });
+    return categories;
+  } catch (error) {
+    console.error('[ContentDB] Error fetching template categories:', error);
+    return [];
+  }
+};
+
+export const saveTemplateCategory = async (categoryData, categoryId = null) => {
+  try {
+    if (categoryId) {
+      const docRef = doc(db, COL.WEBSITE_TEMPLATE_CATEGORIES, categoryId);
+      await updateDoc(docRef, categoryData);
+      return categoryId;
+    } else {
+      const docRef = await addDoc(collection(db, COL.WEBSITE_TEMPLATE_CATEGORIES), categoryData);
+      return docRef.id;
+    }
+  } catch (error) {
+    console.error('[ContentDB] Error saving template category:', error);
+    throw error;
+  }
+};
+
+export const deleteTemplateCategory = async (categoryId) => {
+  try {
+    await deleteDoc(doc(db, COL.WEBSITE_TEMPLATE_CATEGORIES, categoryId));
+  } catch (error) {
+    console.error('[ContentDB] Error deleting template category:', error);
+    throw error;
+  }
+};
+
+export const saveWebsiteTemplate = async (templateData, templateId = null) => {
+  try {
+    if (templateId) {
+      const docRef = doc(db, COL.WEBSITE_TEMPLATES_GALLERY, templateId);
+      await updateDoc(docRef, templateData);
+      return templateId;
+    } else {
+      if (templateData.id) {
+        await setDoc(doc(db, COL.WEBSITE_TEMPLATES_GALLERY, templateData.id), templateData);
+        return templateData.id;
+      } else {
+        const docRef = await addDoc(collection(db, COL.WEBSITE_TEMPLATES_GALLERY), templateData);
+        return docRef.id;
+      }
+    }
+  } catch (error) {
+    console.error('[ContentDB] Error saving website template:', error);
+    throw error;
+  }
+};
+
+export const deleteWebsiteTemplate = async (templateId) => {
+  try {
+    await deleteDoc(doc(db, COL.WEBSITE_TEMPLATES_GALLERY, templateId));
+  } catch (error) {
+    console.error('[ContentDB] Error deleting website template:', error);
+    throw error;
   }
 };

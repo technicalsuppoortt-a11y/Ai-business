@@ -303,6 +303,63 @@ const generateUrlCandidates = (raw) => {
   return [...candidates].filter(Boolean);
 };
 
+const testimonials = [
+  {
+    name: "Klaus Schmitt",
+    title: "CEO",
+    title_ar: "مدير تنفيذي",
+    avatar: "https://cdn.prod.website-files.com/614b3e8cafbd9789234c277e/62d81b47c21bdfba58064b45_Klaus%20Schmitt%201%20(2)%20(1)%20(1)%20(1).avif",
+    feedback: "The AI tools changed my entire workflow. I now launch professional ads in minutes instead of hours.",
+    feedback_ar: "أدوات الذكاء الاصطناعي غيرت طريقة عملي تماماً. أصبحت أُطلق إعلانات احترافية في دقائق بدلاً من ساعات.",
+    rating: 5
+  },
+  {
+    name: "Sarah Jenkins",
+    title: "Marketing Director",
+    title_ar: "مديرة التسويق",
+    avatar: "https://i.pravatar.cc/150?img=47",
+    feedback: "Smart Analytics and the Ads Launcher saved me so much time and money. Highly recommended!",
+    feedback_ar: "تحليلات الأداء ومُطلق الإعلانات وفّرت علي الكثير من الجهد والمال. أنصح بها بشدة!",
+    rating: 5
+  },
+  {
+    name: "Ahmed Hassan",
+    title: "E-commerce Founder",
+    title_ar: "مؤسس متجر إلكتروني",
+    avatar: "https://i.pravatar.cc/150?img=11",
+    feedback: "Our sales increased by 300% in the first month thanks to the automated AI optimizations.",
+    feedback_ar: "حققت زيادة في المبيعات بنسبة 300% في الشهر الأول بفضل تحسينات الذكاء الاصطناعي التلقائية.",
+    rating: 5
+  }
+];
+
+const faqs = [
+  {
+    q: "How does the AI content generation work?",
+    q_ar: "كيف يعمل توليد المحتوى بالذكاء الاصطناعي؟",
+    a: "Our platform uses advanced language models tailored to your brand's voice to automatically generate ad copy, scripts, and social posts that convert.",
+    a_ar: "تستخدم منصتنا نماذج ذكاء اصطناعي متقدمة مخصصة لهوية علامتك التجارية لتوليد نصوص إعلانية ومنشورات عالية التحويل تلقائياً."
+  },
+  {
+    q: "Do I need technical skills to use this?",
+    q_ar: "هل أحتاج إلى مهارات تقنية لاستخدام المنصة؟",
+    a: "Not at all. The interface is designed to be intuitive and user-friendly. Just enter your goals and the AI handles the complex setups.",
+    a_ar: "إطلاقاً. الواجهة مصممة لتكون بسيطة وسهلة الاستخدام. فقط أدخل أهدافك وسيتولى الذكاء الاصطناعي الإعدادات المعقدة."
+  },
+  {
+    q: "Can I manage multiple social media accounts?",
+    q_ar: "هل يمكنني إدارة عدة حسابات على وسائل التواصل الاجتماعي؟",
+    a: "Yes! You can plan and export content for all major platforms including Facebook, Instagram, Twitter, and TikTok.",
+    a_ar: "نعم! يمكنك تخطيط وتصدير المحتوى لجميع المنصات الرئيسية بما في ذلك فيسبوك، إنستغرام، تويتر، وتيك توك."
+  },
+  {
+    q: "Is there a free trial available?",
+    q_ar: "هل تتوفر فترة تجريبية مجانية؟",
+    a: "Yes, you can try our core features for free before committing to a paid plan. Check the pricing section for more details.",
+    a_ar: "نعم، يمكنك تجربة ميزاتنا الأساسية مجاناً قبل الاشتراك في باقة مدفوعة. راجع قسم الأسعار لمزيد من التفاصيل."
+  }
+];
+
 export default function LandingPage() {
   const { brandSlug } = useParams();
   const navigate = useNavigate();
@@ -313,6 +370,11 @@ export default function LandingPage() {
   const { logoUrl, brandName } = useBrandTheme();
   const t = landingTranslations[state.language || "ar"] || landingTranslations.ar;
 
+  useEffect(() => {
+    const isArabic = state.language === "ar";
+    document.documentElement.dir = isArabic ? "rtl" : "ltr";
+    document.documentElement.lang = isArabic ? "ar" : "en";
+  }, [state.language]);
   const [brandData, setBrandData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [plans, setPlans] = useState([]);
@@ -320,6 +382,7 @@ export default function LandingPage() {
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [showSecurity, setShowSecurity] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+  const [activeFaqIndex, setActiveFaqIndex] = useState(null);
   const [expandedPlans, setExpandedPlans] = useState({});
   const togglePlanExpand = (planId) => {
     setExpandedPlans((prev) => ({
@@ -3092,6 +3155,106 @@ export default function LandingPage() {
         </div>
       </motion.section>
 
+      {/* TESTIMONIALS SECTION */}
+      <section className="lp-section lp-testimonials-section" style={{ backgroundColor: "var(--bg)", borderTop: "1px solid rgba(255,255,255,0.05)", padding: "80px 24px" }}>
+        <div className="lp-container" style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div className="lp-section-header" style={{ textAlign: "center", marginBottom: 40 }}>
+            <h2 style={{ fontSize: "clamp(28px, 4vw, 42px)", fontWeight: 800, marginBottom: 16 }}>
+              {state.language === "ar" ? "آراء وريفيوهات العملاء" : "What Our Customers Say"}
+            </h2>
+            <p style={{ color: "var(--text2)", fontSize: 16, maxWidth: 600, margin: "0 auto" }}>
+              {state.language === "ar" ? "تعرف على كيفية مساعدة منصتنا في تغيير طريقة عمل الشركات وإطلاق حملاتها التسويقية." : "Discover how our platform is changing the way businesses launch and scale their marketing."}
+            </p>
+          </div>
+          <div className="lp-testimonials-grid">
+            {testimonials.map((tItem, idx) => (
+              <div key={idx} className="lp-testimonial-card">
+                <div style={{ display: "flex", gap: 4, marginBottom: 16, color: "#FBBF24" }}>
+                  {[...Array(tItem.rating)].map((_, i) => <Star key={i} size={16} fill="currentColor" />)}
+                </div>
+                <p style={{ fontSize: 16, lineHeight: 1.6, color: "var(--text1)", flex: 1, margin: 0 }}>
+                  "{state.language === "ar" ? tItem.feedback_ar : tItem.feedback}"
+                </p>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 24 }}>
+                  <img src={tItem.avatar} alt={tItem.name} style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover" }} />
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 15, color: "var(--text1)" }}>{tItem.name}</div>
+                    <div style={{ fontSize: 13, color: "var(--text3)", marginTop: 2 }}>{state.language === "ar" ? tItem.title_ar : tItem.title}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ SECTION */}
+      <section className="lp-section lp-faq-section" style={{ backgroundColor: "var(--bg2)", padding: "80px 24px" }}>
+        <div className="lp-container" style={{ maxWidth: 800, margin: "0 auto" }}>
+          <div className="lp-section-header" style={{ textAlign: "center", marginBottom: 40 }}>
+            <h2 style={{ fontSize: "clamp(28px, 4vw, 42px)", fontWeight: 800, marginBottom: 16 }}>
+              {state.language === "ar" ? "الأسئلة الشائعة" : "Frequently Asked Questions"}
+            </h2>
+          </div>
+          <div className="lp-faq-list" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {faqs.map((faq, idx) => (
+              <div 
+                key={idx} 
+                className="lp-faq-item" 
+                style={{ 
+                  background: "var(--bg)", 
+                  borderRadius: 12, 
+                  border: "1px solid rgba(255,255,255,0.05)",
+                  overflow: "hidden"
+                }}
+              >
+                <button 
+                  onClick={() => setActiveFaqIndex(activeFaqIndex === idx ? null : idx)}
+                  style={{ 
+                    width: "100%", 
+                    display: "flex", 
+                    justifyContent: "space-between", 
+                    alignItems: "center", 
+                    padding: "20px 24px", 
+                    background: "none", 
+                    border: "none", 
+                    color: "var(--text1)", 
+                    fontSize: 16, 
+                    fontWeight: 600, 
+                    cursor: "pointer",
+                    textAlign: state.language === "ar" ? "right" : "left"
+                  }}
+                >
+                  <span>{state.language === "ar" ? faq.q_ar : faq.q}</span>
+                  <ChevronDown 
+                    size={20} 
+                    style={{ 
+                      color: "var(--text3)", 
+                      transform: activeFaqIndex === idx ? "rotate(180deg)" : "rotate(0deg)", 
+                      transition: "transform 0.3s ease",
+                      flexShrink: 0
+                    }} 
+                  />
+                </button>
+                <div 
+                  style={{ 
+                    maxHeight: activeFaqIndex === idx ? 500 : 0, 
+                    padding: activeFaqIndex === idx ? "0 24px 20px" : "0 24px",
+                    opacity: activeFaqIndex === idx ? 1 : 0,
+                    transition: "all 0.3s ease",
+                    color: "var(--text2)",
+                    fontSize: 15,
+                    lineHeight: 1.6
+                  }}
+                >
+                  {state.language === "ar" ? faq.a_ar : faq.a}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Enhanced Professional Footer */}
       <footer className="lp-footer" style={{ borderTop: "1px solid rgba(255,255,255,0.05)", background: "rgba(8, 12, 20, 0.8)", backdropFilter: "blur(20px)" }}>
         <div
@@ -3136,7 +3299,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
+          <div className="lp-footer-policies-wrap" style={{ display: "flex", gap: "24px", alignItems: "center" }}>
             <button onClick={() => setShowTerms(true)} style={{ background: "none", border: "none", color: "var(--text2)", fontSize: "14px", cursor: "pointer", padding: 0, fontWeight: 500, transition: "color 0.2s" }} onMouseOver={(e) => e.target.style.color = "var(--text1)"} onMouseOut={(e) => e.target.style.color = "var(--text2)"}>
               {state.language === "ar" ? "الشروط والأحكام" : "Terms & Conditions"}
             </button>

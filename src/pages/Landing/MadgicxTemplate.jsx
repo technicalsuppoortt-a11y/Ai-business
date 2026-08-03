@@ -1,6 +1,34 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import VideoShowcaseSection from '../../components/common/VideoShowcaseSection';
+import { ChevronDown } from 'lucide-react';
+
+const faqs = [
+  {
+    q: "How does the AI content generation work?",
+    q_ar: "كيف يعمل توليد المحتوى بالذكاء الاصطناعي؟",
+    a: "Our platform uses advanced language models tailored to your brand's voice to automatically generate ad copy, scripts, and social posts that convert.",
+    a_ar: "تستخدم منصتنا نماذج ذكاء اصطناعي متقدمة مخصصة لهوية علامتك التجارية لتوليد نصوص إعلانية ومنشورات عالية التحويل تلقائياً."
+  },
+  {
+    q: "Do I need technical skills to use this?",
+    q_ar: "هل أحتاج إلى مهارات تقنية لاستخدام المنصة؟",
+    a: "Not at all. The interface is designed to be intuitive and user-friendly. Just enter your goals and the AI handles the complex setups.",
+    a_ar: "إطلاقاً. الواجهة مصممة لتكون بسيطة وسهلة الاستخدام. فقط أدخل أهدافك وسيتولى الذكاء الاصطناعي الإعدادات المعقدة."
+  },
+  {
+    q: "Can I manage multiple social media accounts?",
+    q_ar: "هل يمكنني إدارة عدة حسابات على وسائل التواصل الاجتماعي؟",
+    a: "Yes! You can plan and export content for all major platforms including Facebook, Instagram, Twitter, and TikTok.",
+    a_ar: "نعم! يمكنك تخطيط وتصدير المحتوى لجميع المنصات الرئيسية بما في ذلك فيسبوك، إنستغرام، تويتر، وتيك توك."
+  },
+  {
+    q: "Is there a free trial available?",
+    q_ar: "هل تتوفر فترة تجريبية مجانية؟",
+    a: "Yes, you can try our core features for free before committing to a paid plan. Check the pricing section for more details.",
+    a_ar: "نعم، يمكنك تجربة ميزاتنا الأساسية مجاناً قبل الاشتراك في باقة مدفوعة. راجع قسم الأسعار لمزيد من التفاصيل."
+  }
+];
 
 export default function MadgicxTemplate({ brandData, plans, goAuth }) {
   const { state, dispatch } = useApp();
@@ -9,12 +37,18 @@ export default function MadgicxTemplate({ brandData, plans, goAuth }) {
     dispatch({ type: 'SET_LANGUAGE', payload: isArabic ? 'en' : 'ar' });
   };
   
+  useEffect(() => {
+    document.documentElement.dir = isArabic ? "rtl" : "ltr";
+    document.documentElement.lang = isArabic ? "ar" : "en";
+  }, [isArabic]);
+  
   const displayPlans = plans && plans.length > 0 ? plans : [
     { name: 'Pro Complete', price: '45', features: 'Automation\nTargeting\nAnalytics\nAd Management', name_ar: 'الباقة الاحترافية', features_ar: 'أتمتة\nاستهداف\nتحليلات\nإدارة الإعلانات' }
   ];
 
   const [activeIndex, setActiveIndex] = useState(displayPlans.length > 0 ? displayPlans.length - 1 : 0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeFaqIndex, setActiveFaqIndex] = useState(null);
   
   const selectedPlan = displayPlans[activeIndex] || displayPlans[0];
   const selectedPlanName = isArabic ? selectedPlan?.name_ar || selectedPlan?.name : selectedPlan?.name;
@@ -54,13 +88,25 @@ export default function MadgicxTemplate({ brandData, plans, goAuth }) {
         scroll-behavior: smooth !important;
       }
       .page-wrapper {
-        overflow: visible !important;
+        overflow-x: hidden !important;
         height: auto !important;
+        max-width: 100vw;
       }
       * {
         font-family: "Cairo", sans-serif !important;
       }
       
+      @media (max-width: 768px) {
+        .page-wrapper, .landing-page, body, html {
+          overflow-x: hidden !important;
+          max-width: 100vw;
+        }
+        .container-large, .padding-global {
+          padding-left: 16px !important;
+          padding-right: 16px !important;
+        }
+      }
+
       /* Mobile Responsiveness Overrides */
       @media screen and (max-width: 991px) {
         .half-grid, .w-layout-grid {
@@ -541,6 +587,66 @@ export default function MadgicxTemplate({ brandData, plans, goAuth }) {
 
         {/* VIDEO SHOWCASE SECTION */}
         <VideoShowcaseSection isArabic={isArabic} />
+
+        {/* FAQ SECTION */}
+        <section className="section_faq" style={{ backgroundColor: '#07070F', padding: '80px 24px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          <div className="padding-global">
+            <div className="container-large" style={{ maxWidth: '800px', margin: '0 auto' }}>
+              <div className="text-block_component" style={{ textAlign: 'center', marginBottom: '40px' }}>
+                <h2 style={{ color: '#fff', fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 'bold' }}>
+                  {isArabic ? "الأسئلة الشائعة" : "Frequently Asked Questions"}
+                </h2>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {faqs.map((faq, idx) => (
+                  <div key={idx} style={{ background: '#0e0e1a', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+                    <button 
+                      onClick={() => setActiveFaqIndex(activeFaqIndex === idx ? null : idx)}
+                      style={{ 
+                        width: '100%', 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center', 
+                        padding: '20px 24px', 
+                        background: 'none', 
+                        border: 'none', 
+                        color: '#fff', 
+                        fontSize: '16px', 
+                        fontWeight: '600', 
+                        cursor: 'pointer',
+                        textAlign: isArabic ? 'right' : 'left'
+                      }}
+                    >
+                      <span>{isArabic ? faq.q_ar : faq.q}</span>
+                      <ChevronDown 
+                        size={20} 
+                        style={{ 
+                          color: '#71717a', 
+                          transform: activeFaqIndex === idx ? 'rotate(180deg)' : 'rotate(0deg)', 
+                          transition: 'transform 0.3s ease',
+                          flexShrink: 0
+                        }} 
+                      />
+                    </button>
+                    <div 
+                      style={{ 
+                        maxHeight: activeFaqIndex === idx ? '500px' : '0', 
+                        padding: activeFaqIndex === idx ? '0 24px 20px' : '0 24px',
+                        opacity: activeFaqIndex === idx ? 1 : 0,
+                        transition: 'all 0.3s ease',
+                        color: '#cbd5e1',
+                        fontSize: '15px',
+                        lineHeight: '1.6'
+                      }}
+                    >
+                      {isArabic ? faq.a_ar : faq.a}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* CTA */}
         <section className="section_cta" style={{ backgroundColor: '#07070F' }}>

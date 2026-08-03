@@ -1,0 +1,19 @@
+- AI Bussiness
+    - All Reports is solved (14 report) => except 2 reports
+        - except part of report مشاكل عملاء ( ديدلاين24 ساعة )
+            - كان فيه هنا مشكلة وفي كل الساسات ان الاكونت لما بيتمسح منبعرفش نعمل اكونت بنفس الايميل
+            - سبب المشكلة : انه فاير بيز عمل قاعدة ان مينفعش مستخدم يمسح اكونت غير الاكونت بتاعه
+                - الحل الاول : تريقة فاير بيز
+                - ان اليوزر يقدر يسمح الاكونت بتاعه مباشرا
+        - second report : اللهجات المختلفة
+            - عايز استقرار علي لغات معينة عشان كل لغة بيتعملها تغيير في كل الصفح من
+            - عناوين
+            - محتوي ثابت 
+            - apis data
+            - Ai prompts results
+            - والجزء بتاع الدفع هنعمله تيست لما ندمجه نهائيا
+
+    - تم انشا صفحة القوالب الجاهزة والتحكم في كل شي من
+        - templetes creat/edit/delete/hide or no
+        - categories
+        - merge it with user dashboard in Template Library Workbench

@@ -302,7 +302,6 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  margin: auto;
 }
 
 .es-modal-card[dir="ltr"] {

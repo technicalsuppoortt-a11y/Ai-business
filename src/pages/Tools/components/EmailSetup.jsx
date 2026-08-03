@@ -23,6 +23,7 @@ import {
   sendEmailViaResend,
   sendCampaignViaResend,
 } from "../../../services/emailCrmService";
+import * as XLSX from "xlsx";
 import {
   Globe,
   Mail,
@@ -161,6 +162,7 @@ export default function EmailSetup({ stepNumber }) {
   const [previewViewport, setPreviewViewport] = useState("desktop");
   const [isSubscriberPickerOpen, setIsSubscriberPickerOpen] = useState(false);
   const [subscriberSearchText, setSubscriberSearchText] = useState("");
+  const [csvUploadedContacts, setCsvUploadedContacts] = useState([]); // Array to store parsed CSV contacts for the wizard
 
   // Campaign Pagination state
   const [campaignCurrentPage, setCampaignCurrentPage] = useState(1);
@@ -264,9 +266,10 @@ export default function EmailSetup({ stepNumber }) {
     fetchSettings();
 
     const fetchContactsData = async () => {
+      if (!userData?.uid) return;
       setContactsLoading(true);
       try {
-        const data = await getContacts();
+        const data = await getContacts(userData.uid);
         setContacts(data || []);
       } catch (err) {
         console.error("Contacts fetch error:", err);
@@ -277,9 +280,10 @@ export default function EmailSetup({ stepNumber }) {
     fetchContactsData();
 
     const fetchCampaignsData = async () => {
+      if (!userData?.uid) return;
       setCampaignsLoading(true);
       try {
-        const data = await getCampaigns();
+        const data = await getCampaigns(userData.uid);
         setCampaigns(data || []);
       } catch (err) {
         console.error("Campaigns fetch error:", err);
@@ -290,9 +294,10 @@ export default function EmailSetup({ stepNumber }) {
     fetchCampaignsData();
 
     const fetchAutomationsData = async () => {
+      if (!userData?.uid) return;
       setAutomationsLoading(true);
       try {
-        const data = await getAutomations();
+        const data = await getAutomations(userData.uid);
         setAutomations(data || []);
       } catch (err) {
         console.error("Automations fetch error:", err);
@@ -301,7 +306,7 @@ export default function EmailSetup({ stepNumber }) {
       }
     };
     fetchAutomationsData();
-  }, []);
+  }, [userData?.uid]);
 
   // Esc key listener
   useEffect(() => {
@@ -328,9 +333,10 @@ export default function EmailSetup({ stepNumber }) {
 
   // ── SETTINGS HANDLERS ──────────────────────────────────────────
   const handleSaveSettings = async () => {
+    if (!userData?.uid) return;
     setIsSavingSettings(true);
     try {
-      await saveEmailSettings("default_user", {
+      await saveEmailSettings(userData.uid, {
         ...smtpSettings,
         provider: "resend",
         isConnected: true,
@@ -376,58 +382,54 @@ export default function EmailSetup({ stepNumber }) {
 
     const reader = new FileReader();
     reader.onload = async (evt) => {
-      const text = evt.target.result;
-      const lines = text.split(/\r?\n/).filter((line) => line.trim() !== "");
-      if (lines.length <= 1) {
-        toast(
-          lang === "en" ? "CSV file is empty." : "ملف الـ CSV فارغ.",
-          "error",
-        );
-        return;
-      }
+      try {
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-      const parsed = [];
-      const headers = lines[0].toLowerCase().split(",");
-      const emailIdx = headers.findIndex((h) => h.includes("email"));
-      const nameIdx = headers.findIndex((h) => h.includes("name"));
-      const phoneIdx = headers.findIndex((h) => h.includes("phone"));
-      const statusIdx = headers.findIndex((h) => h.includes("status"));
-      const subEndDateIdx = headers.findIndex(
-        (h) =>
-          h.includes("subscription_end_date") ||
-          h.includes("expiry") ||
-          h.includes("end_date"),
-      );
+        if (json.length <= 1) {
+          toast(lang === "en" ? "File is empty or invalid." : "الملف فارغ أو غير صالح.", "error");
+          return;
+        }
 
-      lines.slice(1).forEach((line) => {
-        const parts = line.split(",");
-        if (parts.length > 0) {
-          const emailVal =
-            emailIdx !== -1
-              ? parts[emailIdx]
-              : parts.find((p) => p.includes("@"));
-          if (emailVal && emailVal.includes("@")) {
+        const headers = (json[0] || []).map(h => String(h || "").toLowerCase());
+        const emailIdx = headers.findIndex(h => h.includes("email"));
+        const nameIdx = headers.findIndex(h => h.includes("name"));
+        const phoneIdx = headers.findIndex(h => h.includes("phone"));
+        const statusIdx = headers.findIndex(h => h.includes("status"));
+        const subEndDateIdx = headers.findIndex(h => h.includes("subscription_end_date") || h.includes("expiry") || h.includes("end_date"));
+
+        const parsed = [];
+        const defaultExpiry = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
+
+        for (let i = 1; i < json.length; i++) {
+          const row = json[i];
+          if (!row || row.length === 0) continue;
+
+          const emailVal = emailIdx !== -1 ? row[emailIdx] : row.find(p => String(p || "").includes("@"));
+          if (emailVal && String(emailVal).includes("@")) {
             parsed.push({
-              name:
-                (nameIdx !== -1 ? parts[nameIdx] : parts[0])
-                  ?.trim()
-                  .replace(/"/g, "") || "Subscriber",
-              email: emailVal.trim().replace(/"/g, ""),
-              phone: (phoneIdx !== -1 ? parts[phoneIdx] : "")
-                ?.trim()
-                .replace(/"/g, ""),
-              status:
-                (statusIdx !== -1 ? parts[statusIdx] : "Active")
-                  ?.trim()
-                  .replace(/"/g, "") || "Active",
-              subscription_end_date:
-                (subEndDateIdx !== -1 ? parts[subEndDateIdx] : "")
-                  ?.trim()
-                  .replace(/"/g, "") || defaultExpiry,
+              name: (nameIdx !== -1 ? String(row[nameIdx] || "") : String(row[0] || ""))?.trim() || "Subscriber",
+              email: String(emailVal).trim(),
+              phone: (phoneIdx !== -1 ? String(row[phoneIdx] || "") : "")?.trim(),
+              status: (statusIdx !== -1 && row[statusIdx] ? String(row[statusIdx]) : "Active")?.trim(),
+              subscription_end_date: (subEndDateIdx !== -1 && row[subEndDateIdx] ? String(row[subEndDateIdx]) : "")?.trim() || defaultExpiry,
+              tags: ["csv_import"]
             });
           }
         }
-      });
+
+        if (parsed.length === 0) {
+          toast(
+            lang === "en"
+              ? "No valid contacts found. Enforce columns: name, email"
+              : "لم يتم العثور على سجلات صالحة. يرجى مطابقة أعمدة name, email",
+            "error"
+          );
+          return;
+        }
 
       if (parsed.length === 0) {
         toast(
@@ -440,8 +442,8 @@ export default function EmailSetup({ stepNumber }) {
       }
 
       try {
-        await importContactsBatch(parsed);
-        const updated = await getContacts();
+        await importContactsBatch(userData.uid, parsed);
+        const updated = await getContacts(userData.uid);
         setContacts(updated);
         toast(
           lang === "en"
@@ -457,8 +459,11 @@ export default function EmailSetup({ stepNumber }) {
           "error",
         );
       }
+      } catch (err) {
+        toast(lang === "en" ? "Error parsing file." : "خطأ في قراءة الملف.", "error");
+      }
     };
-    reader.readAsText(file);
+    reader.readAsArrayBuffer(file);
   };
 
   const handleCreateContactSubmit = async (e) => {
@@ -473,8 +478,8 @@ export default function EmailSetup({ stepNumber }) {
       return;
     }
     try {
-      await addContact(newContactForm);
-      const updated = await getContacts();
+      await addContact(userData.uid, newContactForm);
+      const updated = await getContacts(userData.uid);
       setContacts(updated);
       setIsAddContactModalOpen(false);
       setNewContactForm({
@@ -500,9 +505,9 @@ export default function EmailSetup({ stepNumber }) {
 
   const handleEditContactSubmit = async (e) => {
     e.preventDefault();
-    if (!editingContact || !editingContact.email) return;
+    if (!editingContact || !editingContact.email || !userData?.uid) return;
     try {
-      await updateContact(editingContact.id, editingContact);
+      await updateContact(userData.uid, editingContact.id, editingContact);
       setContacts((prev) =>
         prev.map((c) => (c.id === editingContact.id ? editingContact : c)),
       );
@@ -595,6 +600,8 @@ export default function EmailSetup({ stepNumber }) {
       targetRecipients = contacts.filter(
         (c) => c.status?.toLowerCase() === "active",
       );
+    } else if (campaignForm.audienceFilter === "csv_upload") {
+      targetRecipients = csvUploadedContacts;
     } else if (campaignForm.audienceFilter === "specific") {
       const found = contacts.find(
         (c) => c.email === campaignForm.specificContactEmail,
@@ -643,7 +650,7 @@ export default function EmailSetup({ stepNumber }) {
       });
 
       // 2. Persist real campaign log document into Firebase Firestore
-      await createCampaign({
+      await createCampaign(userData.uid, {
         title: campaignForm.title,
         subject: campaignForm.subject,
         templateHtml: campaignForm.templateHtml,
@@ -658,7 +665,7 @@ export default function EmailSetup({ stepNumber }) {
         },
       });
 
-      const updated = await getCampaigns();
+      const updated = await getCampaigns(userData.uid);
       setCampaigns(updated);
       setIsWizardFullPageMode(false);
       setCampaignWizardStep(1);
@@ -691,10 +698,10 @@ export default function EmailSetup({ stepNumber }) {
   // ── AUTOMATIONS HANDLERS ─────────────────────────────────────────
   const handleCreateAutomationSubmit = async (e) => {
     e.preventDefault();
-    if (!automationForm.title) return;
+    if (!automationForm.title || !userData?.uid) return;
     try {
-      await createAutomation(automationForm);
-      const updated = await getAutomations();
+      await createAutomation(userData.uid, automationForm);
+      const updated = await getAutomations(userData.uid);
       setAutomations(updated);
       setIsCreateAutomationOpen(false);
       setAutomationForm({
@@ -721,9 +728,9 @@ export default function EmailSetup({ stepNumber }) {
 
   const handleEditAutomationSubmit = async (e) => {
     e.preventDefault();
-    if (!editingAutomation || !editingAutomation.title) return;
+    if (!editingAutomation || !editingAutomation.title || !userData?.uid) return;
     try {
-      await updateAutomation(editingAutomation.id, editingAutomation);
+      await updateAutomation(userData.uid, editingAutomation.id, editingAutomation);
       setAutomations((prev) =>
         prev.map((a) =>
           a.id === editingAutomation.id ? editingAutomation : a,
@@ -745,8 +752,9 @@ export default function EmailSetup({ stepNumber }) {
   };
 
   const handleToggleAutomation = async (id, currentActive) => {
+    if (!userData?.uid) return;
     try {
-      await toggleAutomationStatus(id, currentActive);
+      await toggleAutomationStatus(userData.uid, id, currentActive);
       setAutomations((prev) =>
         prev.map((a) => (a.id === id ? { ...a, active: !currentActive } : a)),
       );
@@ -1299,8 +1307,8 @@ export default function EmailSetup({ stepNumber }) {
                     <Users size={18} color="#818CF8" />
                     <span>
                       {lang === "en"
-                        ? "Leads & Contacts CRM (Firestore)"
-                        : "إدارة العملاء وقوائم البريد (Firestore)"}
+                        ? "Leads & Contacts CRM"
+                        : "إدارة العملاء وقوائم البريد"}
                     </span>
                   </div>
 
@@ -1811,7 +1819,7 @@ export default function EmailSetup({ stepNumber }) {
                           <div
                             style={{
                               display: "grid",
-                              gridTemplateColumns: "1fr 1fr 1fr",
+                              gridTemplateColumns: "1fr 1fr 1fr 1fr",
                               gap: "10px",
                               marginTop: "6px",
                             }}
@@ -1972,7 +1980,190 @@ export default function EmailSetup({ stepNumber }) {
                                     : "اختر من القائمة"}
                               </div>
                             </div>
+
+                            <div
+                              onClick={() =>
+                                setCampaignForm({
+                                  ...campaignForm,
+                                  audienceFilter: "csv_upload",
+                                  specificContactEmail: "",
+                                })
+                              }
+                              style={{
+                                padding: "12px",
+                                borderRadius: "12px",
+                                background:
+                                  campaignForm.audienceFilter === "csv_upload"
+                                    ? "rgba(168, 85, 247, 0.2)"
+                                    : "rgba(15, 23, 42, 0.6)",
+                                border: `1px solid ${campaignForm.audienceFilter === "csv_upload" ? "#A855F7" : "rgba(255, 255, 255, 0.1)"}`,
+                                cursor: "pointer",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "4px",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  fontSize: "12px",
+                                  fontWeight: "900",
+                                  color: "#FFF",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                }}
+                              >
+                                <UploadCloud size={15} color="#A855F7" />
+                                <span>
+                                  {lang === "en"
+                                    ? "Upload CSV Sheet"
+                                    : "رفع ملف CSV"}
+                                </span>
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: "11px",
+                                  color: "#A855F7",
+                                  fontWeight: "800",
+                                }}
+                              >
+                                {csvUploadedContacts.length > 0 
+                                  ? `${csvUploadedContacts.length} ${lang === "en" ? "ready" : "جاهز"}`
+                                  : lang === "en"
+                                    ? "Import recipients"
+                                    : "استيراد المستلمين"}
+                              </div>
+                            </div>
                           </div>
+
+                          {/* Upload CSV Dropzone */}
+                          {campaignForm.audienceFilter === "csv_upload" && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              style={{ marginTop: "12px" }}
+                            >
+                              <label
+                                className="es-label"
+                                style={{
+                                  fontSize: "11px",
+                                  color: "#A855F7",
+                                  marginBottom: "6px",
+                                  display: "block",
+                                }}
+                              >
+                                <span>
+                                  {lang === "en"
+                                    ? "Upload a CSV/Excel file containing Names and Emails:"
+                                    : "ارفع ملف CSV/Excel يحتوي على الأسماء والايميلات:"}
+                                </span>
+                              </label>
+
+                              <label
+                                style={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  background: "rgba(168, 85, 247, 0.05)",
+                                  border: "1px dashed rgba(168, 85, 247, 0.4)",
+                                  borderRadius: "12px",
+                                  padding: "24px",
+                                  cursor: "pointer",
+                                  textAlign: "center",
+                                  gap: "8px",
+                                }}
+                              >
+                                <UploadCloud size={32} color="#A855F7" style={{ opacity: 0.8 }} />
+                                <span style={{ color: "#FFF", fontSize: "14px", fontWeight: "bold" }}>
+                                  {lang === "en" ? "Click to Upload Sheet" : "اضغط لرفع الملف"}
+                                </span>
+                                <span style={{ color: "#94A3B8", fontSize: "12px" }}>
+                                  {lang === "en" ? "Automatically added to CRM & used for this campaign" : "سيتم حفظهم تلقائياً بالعملاء واستخدامهم للحملة"}
+                                </span>
+                                <input
+                                  type="file"
+                                  accept=".csv, .txt, .xlsx, .xls"
+                                  style={{ display: "none" }}
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+
+                                    const reader = new FileReader();
+                                    reader.onload = async (evt) => {
+                                      try {
+                                        const data = new Uint8Array(evt.target.result);
+                                        const workbook = XLSX.read(data, { type: 'array' });
+                                        const firstSheetName = workbook.SheetNames[0];
+                                        const worksheet = workbook.Sheets[firstSheetName];
+                                        const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                                        if (json.length <= 1) {
+                                          toast(lang === "en" ? "Empty or invalid Excel/CSV file." : "الملف فارغ أو غير صالح.", "error");
+                                          return;
+                                        }
+
+                                        const parsed = [];
+                                        const headers = (json[0] || []).map(h => String(h || "").toLowerCase());
+                                        const emailIdx = headers.findIndex(h => h.includes("email"));
+                                        const nameIdx = headers.findIndex(h => h.includes("name"));
+                                        
+                                        for (let i = 1; i < json.length; i++) {
+                                          const row = json[i];
+                                          if (!row || row.length === 0) continue;
+
+                                          const emailVal = emailIdx !== -1 ? row[emailIdx] : row.find(p => String(p || "").includes("@"));
+                                          if (emailVal && String(emailVal).includes("@")) {
+                                            parsed.push({
+                                              name: (nameIdx !== -1 ? String(row[nameIdx] || "") : String(row[0] || ""))?.trim() || "Subscriber",
+                                              email: String(emailVal).trim(),
+                                              status: "Active",
+                                              tags: ["campaign_wizard_import"]
+                                            });
+                                          }
+                                        }
+
+                                        if (parsed.length === 0) {
+                                          toast(lang === "en" ? "No valid emails found." : "لم يتم العثور على ايميلات.", "error");
+                                          return;
+                                        }
+
+                                        setCsvUploadedContacts(parsed);
+                                        try {
+                                          await importContactsBatch(userData.uid, parsed);
+                                          const updated = await getContacts(userData.uid);
+                                          setContacts(updated);
+                                          toast(lang === "en" ? `Parsed ${parsed.length} contacts & imported to CRM!` : `تم قراءة ${parsed.length} وحفظهم بالعملاء!`, "success");
+                                        } catch(err) {
+                                          toast(lang === "en" ? "Import failed." : "فشل الاستيراد.", "error");
+                                        }
+                                      } catch(err) {
+                                        toast(lang === "en" ? "Error parsing file." : "خطأ في قراءة الملف.", "error");
+                                      }
+                                    };
+                                    reader.readAsArrayBuffer(file);
+                                  }}
+                                />
+                              </label>
+
+                              {csvUploadedContacts.length > 0 && (
+                                <div style={{ marginTop: "16px", background: "rgba(16, 185, 129, 0.05)", borderRadius: "12px", border: "1px solid rgba(16, 185, 129, 0.3)", overflow: "hidden" }}>
+                                  <div style={{ padding: "12px 16px", background: "rgba(16, 185, 129, 0.1)", display: "flex", alignItems: "center", gap: "8px", color: "#10B981", fontSize: "13px", fontWeight: "bold" }}>
+                                    <CheckCircle size={18} />
+                                    <span>{lang === "en" ? `✅ ${csvUploadedContacts.length} Contacts Loaded Successfully` : `✅ تم قراءة ${csvUploadedContacts.length} جهة اتصال بنجاح`}</span>
+                                  </div>
+                                  <div style={{ maxHeight: "200px", overflowY: "auto", padding: "8px" }}>
+                                    {csvUploadedContacts.map((c, idx) => (
+                                      <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", borderBottom: idx !== csvUploadedContacts.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
+                                        <div style={{ color: "#F8FAFC", fontSize: "12px", fontWeight: "600" }}>{c.name}</div>
+                                        <div style={{ color: "#94A3B8", fontSize: "11px", fontFamily: "monospace" }}>{c.email}</div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </motion.div>
+                          )}
 
                           {/* Executive Custom Subscriber Picker Dropdown */}
                           {campaignForm.audienceFilter === "specific" && (
@@ -3292,8 +3483,8 @@ export default function EmailSetup({ stepNumber }) {
               style={{ maxWidth: "480px" }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="es-modal-header">
-                <h3 className="es-modal-title">
+              <div className="es-modal-header" style={{ alignItems: "center" }}>
+                <h3 className="es-modal-title" style={{ margin: 0 }}>
                   {lang === "en"
                     ? "Add New Contact "
                     : "إضافة عميل جديد "}

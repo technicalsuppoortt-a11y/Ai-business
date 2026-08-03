@@ -10,6 +10,7 @@ import {
   deleteDoc,
   query,
   orderBy,
+  where,
   serverTimestamp
 } from 'firebase/firestore';
 
@@ -50,26 +51,34 @@ export async function saveEmailSettings(userId = 'default_user', settingsData) {
 }
 
 // ── 2. Contacts Management ─────────────────────────────────────
-export async function getContacts() {
+export async function getContacts(userId) {
   try {
+    if (!userId) return [];
     const colRef = collection(db, 'contacts');
-    const q = query(colRef, orderBy('createdAt', 'desc'));
+    const q = query(colRef, where('userId', '==', userId));
     const snap = await getDocs(q);
-    return snap.docs.map(docSnap => ({
+    const results = snap.docs.map(docSnap => ({
       id: docSnap.id,
       ...docSnap.data()
     }));
+    return results.sort((a, b) => {
+      const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return timeB - timeA;
+    });
   } catch (err) {
     console.error('Error fetching contacts from Firestore:', err);
     throw err;
   }
 }
 
-export async function addContact(contactData) {
+export async function addContact(userId, contactData) {
   try {
+    if (!userId) throw new Error("userId is required");
     const colRef = collection(db, 'contacts');
     const defaultExpiry = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
     const docRef = await addDoc(colRef, {
+      userId,
       name: contactData.name || 'Subscriber',
       email: contactData.email,
       phone: contactData.phone || '',
@@ -85,12 +94,14 @@ export async function addContact(contactData) {
   }
 }
 
-export async function importContactsBatch(contactsArray) {
+export async function importContactsBatch(userId, contactsArray) {
   try {
+    if (!userId) throw new Error("userId is required");
     const colRef = collection(db, 'contacts');
     const defaultExpiry = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
     const promises = contactsArray.map(contact =>
       addDoc(colRef, {
+        userId,
         name: contact.name || 'Subscriber',
         email: contact.email,
         phone: contact.phone || '',
@@ -136,25 +147,33 @@ export async function deleteContact(id) {
 }
 
 // ── 3. Campaigns Management ───────────────────────────────────
-export async function getCampaigns() {
+export async function getCampaigns(userId) {
   try {
+    if (!userId) return [];
     const colRef = collection(db, 'campaigns');
-    const q = query(colRef, orderBy('createdAt', 'desc'));
+    const q = query(colRef, where('userId', '==', userId));
     const snap = await getDocs(q);
-    return snap.docs.map(docSnap => ({
+    const results = snap.docs.map(docSnap => ({
       id: docSnap.id,
       ...docSnap.data()
     }));
+    return results.sort((a, b) => {
+      const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return timeB - timeA;
+    });
   } catch (err) {
     console.error('Error fetching campaigns from Firestore:', err);
     throw err;
   }
 }
 
-export async function createCampaign(campaignData) {
+export async function createCampaign(userId, campaignData) {
   try {
+    if (!userId) throw new Error("userId is required");
     const colRef = collection(db, 'campaigns');
     const dataToSave = {
+      userId,
       title: campaignData.title || 'Untitled Campaign',
       subject: campaignData.subject || '',
       templateHtml: campaignData.templateHtml || '',
@@ -185,25 +204,33 @@ export async function deleteCampaign(id) {
 }
 
 // ── 4. Automations Management ──────────────────────────────────
-export async function getAutomations() {
+export async function getAutomations(userId) {
   try {
+    if (!userId) return [];
     const colRef = collection(db, 'automations');
-    const q = query(colRef, orderBy('createdAt', 'desc'));
+    const q = query(colRef, where('userId', '==', userId));
     const snap = await getDocs(q);
-    return snap.docs.map(docSnap => ({
+    const results = snap.docs.map(docSnap => ({
       id: docSnap.id,
       ...docSnap.data()
     }));
+    return results.sort((a, b) => {
+      const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return timeB - timeA;
+    });
   } catch (err) {
     console.error('Error fetching automations from Firestore:', err);
     throw err;
   }
 }
 
-export async function createAutomation(automationData) {
+export async function createAutomation(userId, automationData) {
   try {
+    if (!userId) throw new Error("userId is required");
     const colRef = collection(db, 'automations');
     const dataToSave = {
+      userId,
       title: automationData.title || 'Subscription Renewal Flow',
       triggerType: automationData.triggerType || 'renewal', // 'renewal' | 'recurring'
       intervalDays: Number(automationData.intervalDays) || 3,

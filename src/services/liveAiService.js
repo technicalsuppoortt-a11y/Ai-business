@@ -661,6 +661,145 @@ User Name: ${context.user?.name || 'Freelancer'}`;
       return `### 🤖 ${isArabic ? 'عرض الذكاء الاصطناعي المباشر المخصص (Live AI Bid)' : 'Live AI Customized Proposal Bid'}\n\n${responseText}`;
     }
 
+    case 'script-writer': {
+      const { scriptTopic, scriptPlatform, scriptTone, scriptHookStyle, challengeText, featureText, activeAudio } = inputs;
+      const systemPrompt = `You are an elite Social Media Video Script Writer and Content Strategist.
+${languageInstruction}
+Format your response using professional markdown with headers, bullet points, and appropriate emojis. Ensure the script is highly engaging and structured for retention.`;
+
+      let userPrompt = `Write a high-converting video script for a business in the niche: "${nicheStr}".
+Topic / Core Concept: "${scriptTopic}"
+Platform: "${scriptPlatform || 'Instagram Reels'}"
+Tone & Energy: "${scriptTone || 'Engaging & Professional'}"
+Hook Style: "${scriptHookStyle || 'Curiosity Hook'}"`;
+
+      if (challengeText) {
+        userPrompt += `\nTarget Challenges & Objections to overcome: ${challengeText}`;
+      }
+      if (featureText) {
+        userPrompt += `\nCore Features & Advantages to highlight: ${featureText}`;
+      }
+      if (activeAudio) {
+        userPrompt += `\nNote: The user will use this background audio: "${activeAudio}". Please mention it in the directions.`;
+      }
+
+      userPrompt += `\n\nPlease structure the script with:
+1. A captivating Hook (0-3s).
+2. The core Body with high value/retention strategies.
+3. A strong Call to Action (CTA).`;
+
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false });
+      return responseText;
+    }
+
+    case 'caption-generator': {
+      const { captionTopic, captionTone, captionHook } = inputs;
+      const systemPrompt = `You are a world-class Social Media Copywriter and SEO expert.
+${languageInstruction}
+Provide a highly engaging, structured caption using markdown formatting, clear paragraph breaks, emojis, and relevant viral hashtags.`;
+
+      const userPrompt = `Write a high-converting social media caption for a business in the niche: "${nicheStr}".
+Topic / Visual Context: "${captionTopic}"
+Brand Tone: "${captionTone || 'Professional'}"
+Hook / Opening Style: "${captionHook || 'Value-driven'}"
+
+Ensure the caption includes:
+1. A scroll-stopping first sentence.
+2. Value-driven main body.
+3. A clear Call to Action (CTA).
+4. A set of 5-10 optimized hashtags.`;
+
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false });
+      return responseText;
+    }
+
+    case 'content-repurposer': {
+      const { originalContent, repurposeFormat } = inputs;
+      const systemPrompt = `You are a brilliant Content Repurposing Strategist.
+${languageInstruction}
+Format your output cleanly using professional markdown, bullet points, and emojis to make the content highly readable and visually engaging.`;
+
+      const userPrompt = `Take the following original content and transform it into a highly engaging "${repurposeFormat || 'Twitter Thread / Carousel'}".
+Original Content:
+"${originalContent}"
+
+Ensure the new format is optimized for its specific platform, maintaining the core value but adapting the structure for maximum engagement.`;
+
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false });
+      return responseText;
+    }
+
+    case 'qa-generator': {
+      const { qaQuestion, qaTone, qaFormat } = inputs;
+      const systemPrompt = `You are a knowledgeable industry expert and customer success specialist.
+${languageInstruction}
+Provide your response using structured markdown with headers, bullet points, and emojis. Be concise, authoritative, and helpful.`;
+
+      const userPrompt = `Answer the following audience question or objection for a business in the niche: "${nicheStr}".
+Question/Objection: "${qaQuestion}"
+Tone: "${qaTone || 'Empathetic & Professional'}"
+Desired Format: "${qaFormat || 'Short Direct Answer'}"
+
+Provide a clear, value-driven answer that builds trust and authority.`;
+
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false });
+      return responseText;
+    }
+
+    case 'idea-lab': {
+      const systemPrompt = `You are a creative Content Strategist and Viral Idea Generator.
+${languageInstruction}
+Return MUST be valid JSON strictly matching this structure:
+{
+  "ideas": [
+    { "title": "Catchy Idea 1", "description": "Brief description..." },
+    { "title": "Catchy Idea 2", "description": "Brief description..." },
+    { "title": "Catchy Idea 3", "description": "Brief description..." }
+  ]
+}`;
+      const userPrompt = `Generate 6 highly engaging, viral-potential content ideas for a business in the niche: "${nicheStr}". The ideas should be a mix of educational, entertaining, and promotional content.`;
+      
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true });
+      return JSON.parse(responseText);
+    }
+
+    case 'viral-vids': {
+      const { videoTitle } = inputs;
+      const systemPrompt = `You are an expert TikTok/Reels Growth Strategist.
+${languageInstruction}
+Provide a structured, professional markdown response detailing how to adapt a viral video trend for a specific business niche.`;
+
+      const userPrompt = `Adapt the viral video trend/concept "${videoTitle}" for a business in the niche: "${nicheStr}".
+
+Structure your advice:
+1. **Visual Hook:** What to show on screen in the first 3 seconds.
+2. **Verbal Hook:** The exact opening phrase to grab attention.
+3. **Body & CTA:** How to deliver the core value and end with a strong Call to Action.`;
+
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false });
+      return responseText;
+    }
+
+    case 'trends': {
+      const systemPrompt = `You are an expert Social Media Trend Analyst.
+${languageInstruction}
+Return MUST be valid JSON strictly matching this structure:
+{
+  "hashtags": [
+    { "tag": "#trend1", "category": "hot", "label": "Super Hot", "growth": "+450%" },
+    { "tag": "#trend2", "category": "rising", "label": "Rising Fast", "growth": "+290%" }
+  ],
+  "audios": [
+    { "title": "Viral Trend Sound", "creator": "Studio Audio", "uses": "120K uses" },
+    { "title": "Upbeat Promo Beat", "creator": "Creator Name", "uses": "45K uses" }
+  ]
+}`;
+      const userPrompt = `Identify 3 highly trending hashtags and 2 viral audio tracks currently popular in the niche: "${nicheStr}". Provide realistic growth metrics.`;
+      
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true });
+      return JSON.parse(responseText);
+    }
+
     default: {
       // General fallback for all interactive tools
       const systemPrompt = `You are an expert AI consultant for business growth and freelance automation.

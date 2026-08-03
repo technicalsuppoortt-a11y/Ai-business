@@ -7,6 +7,7 @@ import { useToast } from '../../../context/ToastContext';
 import { getProductIdeasStructure, getProductIdeasV2 } from '../../../services/contentDbService';
 import AnalysisModeSelector from '../../../components/common/AnalysisModeSelector';
 import { dispatchLiveAiAnalysis, callOpenAiApi } from '../../../services/liveAiService';
+import { getUserProducts, addUserProduct, updateUserProduct } from '../../../services/userProductService';
 import ToolDashboardLayout from './ToolDashboardLayout';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -160,15 +161,8 @@ export default function ProductSource({ stepNumber }) {
   const [isLoadingAiTools, setIsLoadingAiTools] = useState(false);
   const [aiToolsError, setAiToolsError] = useState(null);
 
-  // My Products LocalStorage Management
-  const [myProducts, setMyProducts] = useState(() => {
-    try {
-      const saved = localStorage.getItem('ps_my_products_spatial');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  // My Products strict User Isolation (Multi-Tenancy)
+  const [myProducts, setMyProducts] = useState([]);
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -209,14 +203,13 @@ export default function ProductSource({ stepNumber }) {
   }, [isLoadedFromCloud, analysisMode, structure, selectedType, selectedNiche, selectedEffort, isGenerating, ideas, selectedIdea, selectedToolingProduct, expandedToolIndex, aiTools, isLoadingAiTools, aiToolsError, myProducts, searchQuery]);
 
 
-  // Persist myProducts to LocalStorage
+  // Load active and completed products strictly for current user
   useEffect(() => {
-    try {
-      localStorage.setItem('ps_my_products_spatial', JSON.stringify(myProducts));
-    } catch (e) {
-      console.warn('LocalStorage error:', e);
+    const uid = userData?.uid || state?.user?.uid;
+    if (uid) {
+      getUserProducts(uid).then(setMyProducts);
     }
-  }, [myProducts]);
+  }, [userData?.uid, state?.user?.uid]);
 
   useEffect(() => {
     const load = async () => {
@@ -559,7 +552,9 @@ Generate step-by-step creation tools in ${isArabic ? 'Arabic' : 'English'}.`;
         'info'
       );
     } else {
-      setMyProducts(prev => [{ ...product, completed: false, addedAt: new Date().toISOString() }, ...prev]);
+      const newProduct = { ...product, completed: false, addedAt: new Date().toISOString() };
+      setMyProducts(prev => [newProduct, ...prev]);
+      addUserProduct(userData?.uid || state?.user?.uid, newProduct);
       toast(
         lang === 'en'
           ? 'Product added to "My Products" successfully!'
@@ -599,6 +594,11 @@ Generate step-by-step creation tools in ${isArabic ? 'Arabic' : 'English'}.`;
         : (lang === 'en' ? 'Product restored to Active Dock' : 'تمت إعادة المنتج إلى قائمة منتجاتي قيد التنفيذ'),
       willBeCompleted ? 'success' : 'info'
     );
+
+    updateUserProduct(userData?.uid || state?.user?.uid, productId, {
+      completed: willBeCompleted,
+      completedAt: willBeCompleted ? new Date().toISOString() : null,
+    });
   };
 
   // Filtered Lists

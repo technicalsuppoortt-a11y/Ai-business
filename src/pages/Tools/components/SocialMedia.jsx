@@ -361,12 +361,8 @@ export default function SocialMedia({ stepNumber }) {
     state.niche || (lang === "en" ? "Digital Products" : "المنتجات الرقمية"),
   );
 
-  // Micro Modals State
-  const [activeModal, setActiveModal] = useState(null);
   const [challengeText, setChallengeText] = useState("");
   const [featureText, setFeatureText] = useState("");
-  const [isGeneratingModal, setIsGeneratingModal] = useState(false);
-  const [modalAiResult, setModalAiResult] = useState("");
 
   // ═══════════════ TAB 2: THE 8 CONTENT FACTORY TOOLS STATE ═══════════════
   const [activeSubTool, setActiveSubTool] = useState("script-writer");
@@ -378,6 +374,7 @@ export default function SocialMedia({ stepNumber }) {
   const [scriptHookStyle, setScriptHookStyle] = useState("question");
   const [scriptResult, setScriptResult] = useState("");
   const [isGeneratingScript, setIsGeneratingScript] = useState(false);
+  const [autoGenerateScript, setAutoGenerateScript] = useState(false);
 
   // 2. Caption Generator State
   const [captionTopic, setCaptionTopic] = useState("");
@@ -514,10 +511,7 @@ export default function SocialMedia({ stepNumber }) {
   const [viralAdaptation, setViralAdaptation] = useState("");
   const [isGeneratingAdaptation, setIsGeneratingAdaptation] = useState(false);
 
-  // 8. Burnout Guard State
-  const [energyScore, setEnergyScore] = useState(85);
-  const [selectedMood, setSelectedMood] = useState("good");
-  const [weeklyPostsCount, setWeeklyPostsCount] = useState(8);
+
 
 
   // --- STATE PERSISTENCE & HYDRATION ---
@@ -533,7 +527,6 @@ export default function SocialMedia({ stepNumber }) {
         
         // Force all loading states to false
         setIsGeneratingArchitect(false);
-        setIsGeneratingModal(false);
         setIsGeneratingScript(false);
         setIsGeneratingCaption(false);
         setIsGeneratingRepurpose(false);
@@ -573,10 +566,7 @@ export default function SocialMedia({ stepNumber }) {
         if (cached.ideasResult !== undefined) setIdeasResult(cached.ideasResult);
         if (cached.viralAdaptation !== undefined) setViralAdaptation(cached.viralAdaptation);
         
-        if (cached.energyScore !== undefined) setEnergyScore(cached.energyScore);
-        if (cached.selectedMood !== undefined) setSelectedMood(cached.selectedMood);
-        if (cached.weeklyPostsCount !== undefined) setWeeklyPostsCount(cached.weeklyPostsCount);
-          
+
           if (cached.nicheField !== undefined) setNicheField(cached.nicheField);
           if (cached.savedIdeas !== undefined) setSavedIdeas(cached.savedIdeas);
           if (cached.trendingHashtags !== undefined) setTrendingHashtags(cached.trendingHashtags);
@@ -595,7 +585,6 @@ export default function SocialMedia({ stepNumber }) {
       originalContent, repurposeFormat, repurposeResult,
       qaQuestion, qaTone, qaFormat, qaResult,
       nicheField, ideasResult, viralAdaptation,
-      energyScore, selectedMood, weeklyPostsCount,
       savedIdeas, trendingHashtags, trendingAudios, selectedViralVideo
     });
   }, [
@@ -605,7 +594,6 @@ export default function SocialMedia({ stepNumber }) {
     originalContent, repurposeFormat, repurposeResult,
     qaQuestion, qaTone, qaFormat, qaResult,
     nicheField, ideasResult, viralAdaptation,
-    energyScore, selectedMood, weeklyPostsCount,
     savedIdeas, trendingHashtags, trendingAudios, selectedViralVideo
   ]);
 
@@ -625,10 +613,7 @@ export default function SocialMedia({ stepNumber }) {
     setQaQuestion("");
     setQaResult("");
     
-    setEnergyScore(85);
-    setSelectedMood("good");
-    setWeeklyPostsCount(8);
-    
+
     setIsGeneratingArchitect(false);
     setIsGeneratingScript(false);
     setIsGeneratingCaption(false);
@@ -704,12 +689,7 @@ export default function SocialMedia({ stepNumber }) {
       label_en: "Trending Videos",
       icon: PlaySquare,
     },
-    {
-      id: "burnout-guard",
-      label_ar: "حماية الإرهاق",
-      label_en: "Burnout Guard",
-      icon: Activity,
-    },
+
   ];
 
   // Platform options with vector icons
@@ -780,6 +760,7 @@ export default function SocialMedia({ stepNumber }) {
   };
 
   const handleSubToolChange = (subToolId) => {
+    setIsNewlyGenerated(false);
     setActiveSubTool(subToolId);
   };
 
@@ -789,6 +770,7 @@ export default function SocialMedia({ stepNumber }) {
   const handleUseAudioTrend = (audioItem) => {
     setActiveAudioRecommendation(audioItem);
     setActiveSubTool("script-writer");
+    setAutoGenerateScript(true);
     toast(
       lang === "en"
         ? `Audio "${audioItem.title}" applied! Navigated to Script Writer`
@@ -838,77 +820,12 @@ export default function SocialMedia({ stepNumber }) {
     );
   };
 
-  // OPENAI LIVE API MODAL HANDLER
-  const handleGenerateModalOpenAi = async (modalType) => {
-    const inputText = modalType === "challenges" ? challengeText : featureText;
-    if (!inputText.trim()) {
-      toast(
-        lang === "en"
-          ? "Please enter details before generating."
-          : "يرجى كتابة التفاصيل أولاً.",
-        "warning",
-      );
-      return;
-    }
 
-    setIsGeneratingModal(true);
-    setIsNewlyGenerated(true);
-    setModalAiResult("");
-
-    try {
-      let systemPrompt = "";
-      let userPrompt = "";
-
-      if (modalType === "challenges") {
-        systemPrompt =
-          lang === "en"
-            ? `You are a world-class Business & Content Strategist. The user's business niche is "${nicheField}". Respond in clear, professional English. Provide 3 actionable, high-converting strategies to overcome the user's specified business challenges and objections. Use markdown bullet points and emojis.`
-            : `You are a world-class Business & Content Strategist. The user's business niche is "${nicheField}". Respond in clear, professional Arabic. Provide 3 actionable, high-converting strategies to overcome the user's specified business challenges and objections. Use markdown bullet points and emojis.`;
-        userPrompt =
-          lang === "en"
-            ? `Business Challenges & Objections:\n${challengeText}`
-            : `التحديات والعقبات المذكورة:\n${challengeText}`;
-      } else {
-        systemPrompt =
-          lang === "en"
-            ? `You are a viral Social Media Marketing Copywriter. The user's business niche is "${nicheField}". Respond in clear, professional English. Provide 3 creative commercial hooks and content proposals to leverage the specified product features. Use markdown bullet points and emojis.`
-            : `You are a viral Social Media Marketing Copywriter. The user's business niche is "${nicheField}". Respond in clear, professional Arabic. Provide 3 creative commercial hooks and content proposals to leverage the specified product features. Use markdown bullet points and emojis.`;
-        userPrompt =
-          lang === "en"
-            ? `Product Advantages & Competitive Features:\n${featureText}`
-            : `المميزات والقيمة التنافسية للزيادة:\n${featureText}`;
-      }
-
-      const res = await callOpenAiApi({
-        systemPrompt,
-        userPrompt,
-        userEmail: state.user?.email,
-        uid: userData?.uid || state?.user?.uid
-      });
-
-      setModalAiResult(res);
-      toast(
-        lang === "en"
-          ? "Strategy generated via Live AI!"
-          : "تم توليد الاستراتيجية عبر الذكاء الاصطناعي الحي!",
-        "success",
-      );
-    } catch (err) {
-      console.error(err);
-      if (err?.message === 'OUT_OF_CREDITS' || err?.message?.includes('OUT_OF_CREDITS')) {
-        toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
-      } else {
-        toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
-      }
-    } finally {
-      setIsGeneratingModal(false);
-    }
-  };
 
   // Tab 1 Architect Handler with Firebase persistence
   const handleGenerateArchitect = async () => {
     setIsGeneratingArchitect(true);
-    setIsNewlyGenerated(true);
+    setIsNewlyGenerated(analysisMode === "live");
     setResultArchitect("");
 
     try {
@@ -981,7 +898,7 @@ export default function SocialMedia({ stepNumber }) {
       return;
     }
     setIsGeneratingScript(true);
-    setIsNewlyGenerated(true);
+    setIsNewlyGenerated(analysisMode === "live");
     setScriptResult("");
 
     try {
@@ -998,6 +915,8 @@ export default function SocialMedia({ stepNumber }) {
             scriptPlatform,
             scriptTone,
             scriptHookStyle,
+            challengeText: challengeText.trim() || undefined,
+            featureText: featureText.trim() || undefined,
             nicheField,
             activeAudio: activeAudioRecommendation ? activeAudioRecommendation.title : null,
           },
@@ -1041,6 +960,16 @@ export default function SocialMedia({ stepNumber }) {
     }
   };
 
+  // Auto-trigger Script Writer when loading a concept from Idea Lab / Trends
+  useEffect(() => {
+    if (autoGenerateScript && activeSubTool === "script-writer") {
+      setAutoGenerateScript(false);
+      if (scriptTopic) {
+        handleGenerateScript();
+      }
+    }
+  }, [autoGenerateScript, activeSubTool, scriptTopic]);
+
   // 2. Caption Generator Handler with Cross-Tool Hashtag Integration & Firebase persistence
   const handleGenerateCaption = async () => {
     if (!captionTopic.trim()) {
@@ -1053,7 +982,7 @@ export default function SocialMedia({ stepNumber }) {
       return;
     }
     setIsGeneratingCaption(true);
-    setIsNewlyGenerated(true);
+    setIsNewlyGenerated(analysisMode === "live");
     setCaptionResult("");
 
     try {
@@ -1113,7 +1042,7 @@ export default function SocialMedia({ stepNumber }) {
       return;
     }
     setIsGeneratingRepurpose(true);
-    setIsNewlyGenerated(true);
+    setIsNewlyGenerated(analysisMode === "live");
     setRepurposeResult("");
 
     try {
@@ -1171,7 +1100,7 @@ export default function SocialMedia({ stepNumber }) {
       return;
     }
     setIsGeneratingQa(true);
-    setIsNewlyGenerated(true);
+    setIsNewlyGenerated(analysisMode === "live");
     setQaResult("");
 
     try {
@@ -1228,7 +1157,7 @@ export default function SocialMedia({ stepNumber }) {
   // 5. Idea Lab Handler (Strictly Bilingual EN/AR & Clean Structured Card Parsing)
   const handleGenerateIdeas = async () => {
     setIsGeneratingIdeas(true);
-    setIsNewlyGenerated(true);
+    setIsNewlyGenerated(analysisMode === "live");
     try {
       let newIdeas = [];
       if (analysisMode === "live") {
@@ -1239,34 +1168,18 @@ export default function SocialMedia({ stepNumber }) {
           lang
     });
 
-        if (liveRes) {
-          const lines = liveRes
-            .split(/\n+/)
-            .map((l) => l.replace(/^[-*•\d.\s]+/, "").trim())
-            .filter(
-              (l) =>
-                l.length > 8 &&
-                !l.includes("عذراً") &&
-                !l.includes("sorry") &&
-                !l.includes("لا أستطيع") &&
-                !l.includes("Idea-lab") &&
-                !l.includes("أداة") &&
-                !l.includes("تنفيذ لحظية"),
-            );
+        if (liveRes && liveRes.ideas && Array.isArray(liveRes.ideas)) {
+          const tagsEn = ["Viral AI", "High Value", "Educational", "Story"];
+          const tagsAr = ["فيرال بالذكاء الاصطناعي", "قيمة عالية", "تعليمي", "قصصي"];
+          const typesEn = ["Short Reel", "Carousel", "Reel Script", "Story Post"];
+          const typesAr = ["فيديو قصير", "كاروسيل", "سكريبت ريلز", "بوست"];
 
-          if (lines.length > 0) {
-            const tagsEn = ["Viral AI", "High Value", "Educational", "Story"];
-            const tagsAr = ["فيرال بالذكاء الاصطناعي", "قيمة عالية", "تعليمي", "قصصي"];
-            const typesEn = ["Short Reel", "Carousel", "Reel Script", "Story Post"];
-            const typesAr = ["فيديو قصير", "كاروسيل", "سكريبت ريلز", "بوست"];
-
-            newIdeas = lines.slice(0, 3).map((line, idx) => ({
-              id: Date.now() + idx,
-              text: line.replace(/[*#"]/g, "").trim(),
-              tag: lang === "en" ? tagsEn[idx % tagsEn.length] : tagsAr[idx % tagsAr.length],
-              type: lang === "en" ? typesEn[idx % typesEn.length] : typesAr[idx % typesAr.length],
-            }));
-          }
+          newIdeas = liveRes.ideas.slice(0, 3).map((idea, idx) => ({
+            id: Date.now() + idx,
+            text: idea.title + (idea.description ? ` - ${idea.description}` : ""),
+            tag: lang === "en" ? tagsEn[idx % tagsEn.length] : tagsAr[idx % tagsAr.length],
+            type: lang === "en" ? typesEn[idx % typesEn.length] : typesAr[idx % typesAr.length],
+          }));
         }
       }
 
@@ -1363,7 +1276,7 @@ export default function SocialMedia({ stepNumber }) {
   // 6. Trends Generator Handler (With Dual Mode Live AI / Fast & Firebase Save)
   const handleGenerateTrends = async () => {
     setIsGeneratingTrends(true);
-    setIsNewlyGenerated(true);
+    setIsNewlyGenerated(analysisMode === "live");
     try {
       let hashtags = [];
       let audios = [];
@@ -1374,32 +1287,37 @@ export default function SocialMedia({ stepNumber }) {
           context: { niche: nicheField, user: state.user },
           lang
     });
-        hashtags = [
-          {
-            tag: `#${nicheField.replace(/\s+/g, "_")}_2026`,
-            category: "hot",
-            label: lang === "en" ? "Super Hot AI Trend" : "ترند بالذكاء الاصطناعي",
-            growth: "+450%",
-          },
-          {
-            tag: `#نمو_${nicheField.replace(/\s+/g, "_")}`,
-            category: "rising",
-            label: lang === "en" ? "Rising Fast" : "صاعد بسرعة",
-            growth: "+290%",
-          },
-        ];
-        audios = [
-          {
-            title: `AI Cinematic Beat - ${nicheField}`,
-            creator: "Studio AI",
-            uses: "89.4K فيديو",
-          },
-          {
-            title: "Viral Energy Trend Audio",
-            creator: "Top Beats",
-            uses: "142.1K فيديو",
-          },
-        ];
+        if (liveRes && liveRes.hashtags && liveRes.audios) {
+          hashtags = liveRes.hashtags;
+          audios = liveRes.audios;
+        } else {
+          hashtags = [
+            {
+              tag: `#${nicheField.replace(/\s+/g, "_")}_2026`,
+              category: "hot",
+              label: lang === "en" ? "Super Hot AI Trend" : "ترند بالذكاء الاصطناعي",
+              growth: "+450%",
+            },
+            {
+              tag: `#نمو_${nicheField.replace(/\s+/g, "_")}`,
+              category: "rising",
+              label: lang === "en" ? "Rising Fast" : "صاعد بسرعة",
+              growth: "+290%",
+            },
+          ];
+          audios = [
+            {
+              title: `AI Cinematic Beat - ${nicheField}`,
+              creator: "Studio AI",
+              uses: "89.4K فيديو",
+            },
+            {
+              title: "Viral Energy Trend Audio",
+              creator: "Top Beats",
+              uses: "142.1K فيديو",
+            },
+          ];
+        }
       } else {
         await new Promise((r) => setTimeout(r, 450));
         hashtags = [
@@ -1468,7 +1386,7 @@ export default function SocialMedia({ stepNumber }) {
   // 7. Viral Video Adaptation Handler (With Live AI & Firebase Persistence)
   const handleAdaptViralVideo = async (videoTitle) => {
     setIsGeneratingAdaptation(true);
-    setIsNewlyGenerated(true);
+    setIsNewlyGenerated(analysisMode === "live");
     setViralAdaptation("");
     try {
       let res = "";
@@ -1876,41 +1794,7 @@ export default function SocialMedia({ stepNumber }) {
                   />
                 </div>
 
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "12px" }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveModal("challenges");
-                      setModalAiResult("");
-                    }}
-                    className="sm-action-chip red"
-                  >
-                    <AlertTriangle size={16} style={{ color: "#F87171" }} />
-                    <span>
-                      {lang === "en"
-                        ? "Challenges"
-                        : "زرار التحديات (Challenges)"}
-                    </span>
-                  </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveModal("features");
-                      setModalAiResult("");
-                    }}
-                    className="sm-action-chip green"
-                  >
-                    <Award size={16} style={{ color: "#34D399" }} />
-                    <span>
-                      {lang === "en"
-                        ? "Features"
-                        : "زرار المميزات (Product Features)"}
-                    </span>
-                  </button>
-                </div>
               </div>
             </div>
 
@@ -2113,6 +1997,66 @@ export default function SocialMedia({ stepNumber }) {
                           lang === "en"
                             ? "e.g., 3 critical mistakes losing your ad profit and how to solve them in 30 seconds..."
                             : "مثال: 3 أخطاء بتضيع أرباحك في الإعلانات وإزاي تحلها في 30 ثانية..."
+                        }
+                        className="sm-script-textarea"
+                      />
+                    </div>
+
+                    <div className="pcc-input-group">
+                      <label
+                        className="pcc-label"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          color: "#F87171"
+                        }}
+                      >
+                        <AlertTriangle size={15} />
+                        <span>
+                          {lang === "en"
+                            ? "Challenges & Objections (Optional)"
+                            : "تحديات وعقبات العميل (اختياري)"}
+                        </span>
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={challengeText}
+                        onChange={(e) => setChallengeText(e.target.value)}
+                        placeholder={
+                          lang === "en"
+                            ? "e.g., High cost, customer doubt about results..."
+                            : "مثال: ارتفاع التكلفة، تخوف العميل من النتائج..."
+                        }
+                        className="sm-script-textarea"
+                      />
+                    </div>
+
+                    <div className="pcc-input-group">
+                      <label
+                        className="pcc-label"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          color: "#10B981"
+                        }}
+                      >
+                        <Award size={15} />
+                        <span>
+                          {lang === "en"
+                            ? "Core Features & Advantages (Optional)"
+                            : "مميزات وقيمة المنتج التنافسية (اختياري)"}
+                        </span>
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={featureText}
+                        onChange={(e) => setFeatureText(e.target.value)}
+                        placeholder={
+                          lang === "en"
+                            ? "e.g., 100% money back guarantee, 24/7 support..."
+                            : "مثال: ضمان 100%، دعم فني 24/7..."
                         }
                         className="sm-script-textarea"
                       />
@@ -3095,6 +3039,7 @@ export default function SocialMedia({ stepNumber }) {
                             onClick={() => {
                               setScriptTopic(s.text);
                               setActiveSubTool("script-writer");
+                              setAutoGenerateScript(true);
                               toast(lang === "en" ? "Idea loaded in Script Writer!" : "تم نقل الفكرة لكاتب السكريبت!", "success");
                             }}
                             className="sm-pill-btn"
@@ -3584,289 +3529,10 @@ export default function SocialMedia({ stepNumber }) {
               </motion.div>
             )}
 
-            {/* ═══════════════ SUB-TOOL 8: BURNOUT GUARD ═══════════════ */}
-            {activeSubTool === "burnout-guard" && (
-              <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="sm-deck-canvas"
-              >
-                <div className="sm-deck-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h4 className="sm-deck-title">
-                    <Activity size={20} style={{ color: "#10B981" }} />
-                    <span>
-                      {lang === "en"
-                        ? "Burnout Guard & Creative Energy Meter"
-                        : "حماية الإرهاق الإبداعي ومعدل الطاقة"}
-                    </span>
-                  </h4>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEnergyScore(85);
-                        setSelectedMood("good");
-                        setWeeklyPostsCount(8);
-                        saveResult(null);
-                      }}
-                      className="sm-dock-btn"
-                      style={{
-                        background: 'rgba(239, 68, 68, 0.1)',
-                        color: '#EF4444',
-                        border: '1px solid rgba(239, 68, 68, 0.2)',
-                        boxShadow: 'none', width: '36px', height: '36px', padding: '0', display: 'flex', justifyContent: 'center', alignItems: 'center' }} title={lang === 'en' ? 'Reset' : 'إعادة ضبط'}>
-                      <RotateCcw size={15} />
-                    </button>
-                </div>
-                <div
-                  className="sm-energy-score-box pcc-custom-scroll ai-output-scroll"
-                    style={{
-                      maxHeight: "500px", overflowY: "auto",
-                      background: "rgba(16,185,129,0.1)",
-                    border: "1px solid rgba(16,185,129,0.3)",
-                    borderRadius: "20px",
-                    padding: "24px",
-                    textAlign: "center",
-                  }}
-                >
-                  <span className="sm-energy-score-label">
-                    {lang === "en"
-                      ? "Current Creative Energy Score"
-                      : "طاقة الإبداع الحالية"}
-                  </span>
-                  <div
-                    style={{
-                      fontSize: "38px",
-                      fontWeight: "900",
-                      color: "#10B981",
-                      margin: "6px 0",
-                    }}
-                  >
-                    {energyScore}%
-                  </div>
-                  <span className="sm-energy-score-status">
-                    {lang === "en"
-                      ? "Optimal balanced energy to maintain creation!"
-                      : "حالة متزنة وممتازة لمواصلة الإنتاج!"}
-                  </span>
-                </div>
-                <div className="pcc-input-group">
-                  <label className="pcc-label">
-                    {lang === "en"
-                      ? "Log how you feel producing content today"
-                      : "سجل شعورك اليوم عند إنتاج المحتوى"}
-                  </label>
-                  <div className="sm-energy-logger-row">
-                    <button
-                      type="button"
-                      onClick={() => handleSelectMood("exhausted", 25)}
-                      className={`sm-energy-btn ${selectedMood === "exhausted" ? "active" : ""}`}
-                    >
-                      <Frown size={18} /> {lang === "en" ? "Exhausted" : "مرهق"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSelectMood("tired", 45)}
-                      className={`sm-energy-btn ${selectedMood === "tired" ? "active" : ""}`}
-                    >
-                      <Meh size={18} /> {lang === "en" ? "Tired" : "متعب"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSelectMood("normal", 65)}
-                      className={`sm-energy-btn ${selectedMood === "normal" ? "active" : ""}`}
-                    >
-                      <Smile size={18} /> {lang === "en" ? "Normal" : "عادي"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSelectMood("good", 85)}
-                      className={`sm-energy-btn ${selectedMood === "good" ? "active" : ""}`}
-                    >
-                      <Zap size={18} /> {lang === "en" ? "Good" : "جيد"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSelectMood("awesome", 100)}
-                      className={`sm-energy-btn ${selectedMood === "awesome" ? "active" : ""}`}
-                    >
-                      <Sparkles size={18} />{" "}
-                      {lang === "en" ? "Awesome" : "رائع"}
-                    </button>
-                  </div>
-                </div>
-                <div className="sm-showcase-content pcc-custom-scroll ai-output-scroll" style={{ maxHeight: "500px", overflowY: "auto" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
-                    <Lightbulb size={18} style={{ color: "#F59E0B", flexShrink: 0 }} />
-                    <strong style={{ color: "#F8FAFC", fontSize: "14px" }}>
-                      {lang === "en"
-                        ? "AI Recommendations to Prevent Burnout:"
-                        : "توصيات الذكاء الاصطناعي لتفادي الإرهاق:"}
-                    </strong>
-                  </div>
-                  {lang === "en" ? (
-                    <>
-                      1. <strong>Batching:</strong> Record all your videos in a single day per week to reduce mental fatigue.
-                      <br />
-                      2. <strong>Repurpose Content:</strong> Transforming a successful video into a carousel and text post reduces your effort by 60%.
-                      <br />
-                      3. <strong>Take Rest:</strong> Your current creative energy score of {energyScore}% allows you to comfortably produce {weeklyPostsCount} posts this week.
-                    </>
-                  ) : (
-                    <>
-                      1. <strong>نظام الدفعات (Batching):</strong> قم بتسجيل الفيديوهات في يوم واحد فقط في الأسبوع لتقليل التشتت الذهني.
-                      <br />
-                      2. <strong>أعِد استخدام المحتوى:</strong> تحويل الفيديو الناجح إلى كاورسيل وبوست نصي يقلل مجهودك بنسبة 60%.
-                      <br />
-                      3. <strong>خذ قسطاً من الراحة:</strong> طاقتك الإبداعية الحالية {energyScore}% تتيح لك إنتاج {weeklyPostsCount} منشورات هذا الأسبوع بأريحية كاملة.
-                    </>
-                  )}
-                </div>
-              </motion.div>
-            )}
+
           </motion.div>
         )}
 
-        {/* ═══════════════ CENTERED PORTAL POPUP MODAL ═══════════════ */}
-        {activeModal &&
-          createPortal(
-            <AnimatePresence>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="sm-modal-backdrop"
-                onClick={() => setActiveModal(null)}
-              >
-                <motion.div
-                  initial={{ scale: 0.9, y: 20 }}
-                  animate={{ scale: 1, y: 0 }}
-                  exit={{ scale: 0.9, y: 20 }}
-                  className="sm-modal-card"
-                  dir={isRtl ? "rtl" : "ltr"}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="sm-modal-header">
-                    <div className="sm-modal-title">
-                      {activeModal === "challenges" ? (
-                        <>
-                          <AlertTriangle
-                            size={22}
-                            style={{ color: "#F87171" }}
-                          />
-                          <span>
-                            {lang === "en"
-                              ? "Overcome Business Challenges (Live AI)"
-                              : "مقاومة التحديات التجارية (Live AI Strategy)"}
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <Award size={22} style={{ color: "#34D399" }} />
-                          <span>
-                            {lang === "en"
-                              ? "Leverage Product Advantages (Live AI)"
-                              : "استغلال مميزات المنتج استراتيجياً (Live AI Strategy)"}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setActiveModal(null)}
-                      style={{
-                        background: "rgba(255,255,255,0.05)",
-                        border: "1px solid rgba(255,255,255,0.1)",
-                        borderRadius: "10px",
-                        padding: "6px",
-                        color: "#94A3B8",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
-
-                  {activeModal === "challenges" ? (
-                    <div className="pcc-input-group">
-                      <label className="pcc-label" style={{ color: "#F87171" }}>
-                        {lang === "en"
-                          ? "Enter key business challenges & customer objections:"
-                          : "أدخل التحديات والعقبات التي تمنع العميل من الشراء:"}
-                      </label>
-                      <textarea
-                        rows={3}
-                        value={challengeText}
-                        onChange={(e) => setChallengeText(e.target.value)}
-                        placeholder={
-                          lang === "en"
-                            ? "e.g., High cost, customer doubt about results..."
-                            : "مثال: ارتفاع التكلفة، تخوف العميل من النتائج..."
-                        }
-                        className="sm-script-textarea"
-                      />
-                    </div>
-                  ) : (
-                    <div className="pcc-input-group">
-                      <label className="pcc-label green">
-                        {lang === "en"
-                          ? "Enter key product advantages & unique value:"
-                          : "أدخل القيمة التنافسية والميزات الحصرية لمنتجك:"}
-                      </label>
-                      <textarea
-                        rows={3}
-                        value={featureText}
-                        onChange={(e) => setFeatureText(e.target.value)}
-                        placeholder={
-                          lang === "en"
-                            ? "e.g., 100% money back guarantee, 24/7 support..."
-                            : "مثال: ضمان 100%، دعم فني 24/7..."
-                        }
-                        className="sm-script-textarea"
-                      />
-                    </div>
-                  )}
-
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: isRtl ? "flex-start" : "flex-end",
-                      gap: "10px",
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => handleGenerateModalOpenAi(activeModal)}
-                      disabled={isGeneratingModal}
-                      className={`pcc-pro-btn ${activeModal === "features" ? "green" : ""}`}
-                      style={{ minWidth: "220px" }}
-                    >
-                      <Sparkles size={16} />
-                      <span>
-                        {isGeneratingModal
-                          ? lang === "en"
-                            ? "Generating via Live AI..."
-                            : "جاري التحليل بالذكاء الاصطناعي..."
-                          : activeModal === "challenges"
-                            ? lang === "en"
-                              ? "Overcome Challenges"
-                              : "مقاومة التحديات (Live AI)"
-                            : lang === "en"
-                              ? "Leverage Advantages"
-                              : "استغلال المميزات (Live AI)"}
-                      </span>
-                    </button>
-                  </div>
-
-                  {modalAiResult && (
-                    <div className="sm-modal-output-scroll pcc-custom-scroll ai-output-scroll" style={{ maxHeight: "500px", overflowY: "auto" }}>
-                      <TypewriterText text={modalAiResult} speed={10} bypass={!isNewlyGenerated} />
-                    </div>
-                  )}
-                </motion.div>
-              </motion.div>
-            </AnimatePresence>,
-            document.body,
-          )}
       </div>
     </ToolDashboardLayout>
   );

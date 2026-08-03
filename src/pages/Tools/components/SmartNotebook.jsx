@@ -225,6 +225,12 @@ export default function SmartNotebook() {
   const [categoryTarget, setCategoryTarget] = useState('notes'); // 'tasks' | 'ideas' | 'notes'
   const [newCategoryName, setNewCategoryName] = useState('');
 
+  // Custom Main Tabs State
+  const [customTabs, setCustomTabs] = useState(cached?.customTabs ?? []);
+  const [isTabModalOpen, setIsTabModalOpen] = useState(false);
+  const [editingTabId, setEditingTabId] = useState(null);
+  const [newTabName, setNewTabName] = useState('');
+
   // Item Creation Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [createType, setCreateType] = useState('task'); // 'task' | 'idea' | 'note'
@@ -269,6 +275,7 @@ export default function SmartNotebook() {
         if (cached.customTaskCategories !== undefined) setCustomTaskCategories(cached.customTaskCategories);
         if (cached.customIdeaCategories !== undefined) setCustomIdeaCategories(cached.customIdeaCategories);
         if (cached.customNoteCategories !== undefined) setCustomNoteCategories(cached.customNoteCategories);
+        if (cached.customTabs !== undefined) setCustomTabs(cached.customTabs);
       }
     }
   }, [isLoadedFromCloud, cached]);
@@ -278,10 +285,10 @@ export default function SmartNotebook() {
     if (!isLoadedFromCloud || !hydratedRef.current) return;
     
     const timeout = setTimeout(() => {
-      saveResult({ activeTab, taskSubTab, items, customTaskCategories, customIdeaCategories, customNoteCategories });
+      saveResult({ activeTab, taskSubTab, items, customTaskCategories, customIdeaCategories, customNoteCategories, customTabs });
     }, 1000);
     return () => clearTimeout(timeout);
-  }, [isLoadedFromCloud, activeTab, taskSubTab, items, customTaskCategories, customIdeaCategories, customNoteCategories]);
+  }, [isLoadedFromCloud, activeTab, taskSubTab, items, customTaskCategories, customIdeaCategories, customNoteCategories, customTabs]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -314,6 +321,16 @@ export default function SmartNotebook() {
           }
           if (Array.isArray(catData.noteCategories) && catData.noteCategories.length > 0) {
             setCustomNoteCategories(catData.noteCategories);
+          }
+        }
+
+        // Fetch Custom Main Tabs Settings
+        const tabsDocRef = doc(db, 'users', userData.uid, 'planner_settings', 'tabs');
+        const tabsSnap = await getDoc(tabsDocRef);
+        if (tabsSnap.exists()) {
+          const tabsData = tabsSnap.data();
+          if (Array.isArray(tabsData.tabs)) {
+            setCustomTabs(tabsData.tabs);
           }
         }
       } catch (err) {
@@ -417,17 +434,19 @@ export default function SmartNotebook() {
     }
   };
 
-  // Create Item Handler (Task, Idea, Note)
+  // Create Item Handler (Task, Idea, Note, Custom)
   const handleCreateNewItem = async () => {
     if (!userData?.uid || !newItemTitle.trim()) return;
     const newId = Date.now().toString();
-    const itemType = createType; // 'task' | 'idea' | 'note'
+    const itemType = createType; // 'task' | 'idea' | 'note' | 'custom'
+    const isCustomTab = customTabs.some(t => t.id === activeTab);
     
     const newItem = {
       id: newId,
       title: newItemTitle.trim(),
       content: newItemContent.trim(),
-      type: itemType,
+      type: isCustomTab ? 'custom' : itemType,
+      tabId: isCustomTab ? activeTab : null,
       category: newItemCategory || (itemType === 'task' ? customTaskCategories[0] : itemType === 'idea' ? customIdeaCategories[0] : customNoteCategories[0]),
       priority: newItemPriority || 'medium',
       isCompleted: false,
@@ -526,6 +545,51 @@ export default function SmartNotebook() {
         toast(lang === 'en' ? 'Monthly Credits Exhausted. Please add your Personal API Key in Settings.' : 'لقد نفد رصيدك الشهري. يرجى إضافة مفتاح الـ API الخاص بك في الإعدادات.', 'error');
       } else {
         toast(lang === 'en' ? 'Error generating AI response.' : 'حدث خطأ أثناء التوليد.', 'error');
+      }
+    }
+  };
+
+  // Handle Save Custom Tab (Add / Edit)
+  const handleSaveTab = async () => {
+    if (!newTabName.trim()) return;
+    let updatedTabs = [...customTabs];
+    if (editingTabId) {
+      updatedTabs = updatedTabs.map(t => t.id === editingTabId ? { ...t, name: newTabName.trim() } : t);
+    } else {
+      updatedTabs.push({ id: `tab_${Date.now()}`, name: newTabName.trim() });
+    }
+    setCustomTabs(updatedTabs);
+    setNewTabName('');
+    setEditingTabId(null);
+    setIsTabModalOpen(false);
+    showToast(lang === 'en' ? 'Tab saved successfully!' : 'تم حفظ التبويب بنجاح!');
+
+    if (userData?.uid) {
+      try {
+        await setDoc(doc(db, 'users', userData.uid, 'planner_settings', 'tabs'), {
+          tabs: updatedTabs,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
+  const handleDeleteTab = async (tabId) => {
+    const updatedTabs = customTabs.filter(t => t.id !== tabId);
+    setCustomTabs(updatedTabs);
+    if (activeTab === tabId) setActiveTab('tasks');
+    showToast(lang === 'en' ? 'Tab deleted' : 'تم حذف التبويب');
+
+    if (userData?.uid) {
+      try {
+        await setDoc(doc(db, 'users', userData.uid, 'planner_settings', 'tabs'), {
+          tabs: updatedTabs,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } catch (err) {
+        console.error(err);
       }
     }
   };
@@ -665,6 +729,11 @@ export default function SmartNotebook() {
         return isNoteType;
       }
 
+      const customTab = customTabs.find(t => t.id === activeTab);
+      if (customTab) {
+        return item.tabId === activeTab;
+      }
+
       return true;
     });
   };
@@ -733,7 +802,8 @@ export default function SmartNotebook() {
     label: cat
   }));
 
-  const activeTabCategoryList = activeTab === 'ideas' ? customIdeaCategories : activeTab === 'notes' ? customNoteCategories : customTaskCategories;
+  const isCustomTabActive = customTabs.some(t => t.id === activeTab);
+  const activeTabCategoryList = activeTab === 'ideas' ? customIdeaCategories : activeTab === 'notes' || isCustomTabActive ? customNoteCategories : customTaskCategories;
 
   const categoryFilterDropdownOptions = [
     { value: 'all', label: lang === 'en' ? 'All Categories' : 'كل التصنيفات' },
@@ -783,8 +853,9 @@ export default function SmartNotebook() {
             <button 
               className="sn-primary-btn" 
               onClick={() => {
-                setCreateType(activeTab === 'ideas' ? 'idea' : activeTab === 'notes' ? 'note' : 'task');
-                setNewItemCategory(activeTab === 'ideas' ? customIdeaCategories[0] : activeTab === 'notes' ? customNoteCategories[0] : customTaskCategories[0]);
+                const isCustom = customTabs.some(t => t.id === activeTab);
+                setCreateType(activeTab === 'ideas' ? 'idea' : activeTab === 'notes' || isCustom ? 'note' : 'task');
+                setNewItemCategory(activeTab === 'ideas' ? customIdeaCategories[0] : activeTab === 'notes' || isCustom ? customNoteCategories[0] : customTaskCategories[0]);
                 setIsCreateModalOpen(true);
               }}
             >
@@ -875,7 +946,51 @@ export default function SmartNotebook() {
                 </span>
               )}
             </div>
+
+            {/* Custom Dynamic Tabs */}
+            {customTabs.map(tab => (
+              <div 
+                key={tab.id}
+                className={`sn-folder-item ${activeTab === tab.id ? 'active' : ''}`}
+                onClick={() => { setActiveTab(tab.id); setActiveNoteId(null); setSelectedCategoryFilter('all'); }}
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              >
+                <div className="sn-folder-left">
+                  <FolderPlus size={16} color="#6366F1" />
+                  {!isSidebarCollapsed && <span>{tab.name}</span>}
+                </div>
+                {!isSidebarCollapsed && (
+                  <div className="sn-folder-badge" style={{ background: 'transparent', padding: 0 }}>
+                    <button 
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', marginRight: '6px' }}
+                      onClick={(e) => { e.stopPropagation(); setEditingTabId(tab.id); setNewTabName(tab.name); setIsTabModalOpen(true); }}
+                      title={lang === 'en' ? 'Edit Tab' : 'تعديل التبويب'}
+                    >
+                      <Edit3 size={13} />
+                    </button>
+                    <button 
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444' }}
+                      onClick={(e) => { e.stopPropagation(); handleDeleteTab(tab.id); }}
+                      title={lang === 'en' ? 'Delete Tab' : 'حذف التبويب'}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
+
+          {!isSidebarCollapsed && (
+            <button 
+              className="sn-category-add-btn" 
+              style={{ marginTop: '8px', borderStyle: 'dashed' }}
+              onClick={() => { setEditingTabId(null); setNewTabName(''); setIsTabModalOpen(true); }}
+            >
+              <FolderPlus size={14} />
+              <span>{lang === 'en' ? '+ Add New Tab' : '+ إضافة تبويب جديد'}</span>
+            </button>
+          )}
 
           {/* Quick Create Custom Category Trigger */}
           {!isSidebarCollapsed && activeTab !== 'favorites' && (
@@ -1073,7 +1188,8 @@ export default function SmartNotebook() {
                   {activeTab === 'tasks' ? (lang === 'en' ? 'Tasks List' : 'قائمة المهام') :
                    activeTab === 'ideas' ? (lang === 'en' ? 'Ideas Space' : 'سجل الأفكار') :
                    activeTab === 'notes' ? (lang === 'en' ? 'Notes' : 'الملاحظات') :
-                   (lang === 'en' ? 'Favorites' : 'المفضلة')}
+                   activeTab === 'favorites' ? (lang === 'en' ? 'Favorites' : 'المفضلة') :
+                   customTabs.find(t => t.id === activeTab)?.name || 'Custom Tab'}
                 </h3>
               </div>
 
@@ -1101,8 +1217,9 @@ export default function SmartNotebook() {
                     className="sn-primary-btn" 
                     style={{ width: 'auto', margin: 0, padding: '8px 16px' }}
                     onClick={() => {
-                      setCreateType(activeTab === 'ideas' ? 'idea' : activeTab === 'notes' ? 'note' : 'task');
-                      setNewItemCategory(activeTab === 'ideas' ? customIdeaCategories[0] : activeTab === 'notes' ? customNoteCategories[0] : customTaskCategories[0]);
+                      const isCustom = customTabs.some(t => t.id === activeTab);
+                      setCreateType(activeTab === 'ideas' ? 'idea' : activeTab === 'notes' || isCustom ? 'note' : 'task');
+                      setNewItemCategory(activeTab === 'ideas' ? customIdeaCategories[0] : activeTab === 'notes' || isCustom ? customNoteCategories[0] : customTaskCategories[0]);
                       setIsCreateModalOpen(true);
                     }}
                   >
@@ -1254,7 +1371,8 @@ export default function SmartNotebook() {
                   {activeTab === 'tasks' ? (taskSubTab === 'completed' ? (lang === 'en' ? 'No completed tasks yet' : 'لا توجد مهام منجزة بعد') : (lang === 'en' ? 'No active tasks' : 'لا توجد مهام نشطة حالياً')) :
                    activeTab === 'ideas' ? (lang === 'en' ? 'No ideas recorded yet' : 'لم يتم تسجيل أي أفكار بعد') :
                    activeTab === 'notes' ? (lang === 'en' ? 'No notes in this section' : 'لا توجد ملاحظات') :
-                   (lang === 'en' ? 'No favorite items starred' : 'لا توجد عناصر مفضلة')}
+                   activeTab === 'favorites' ? (lang === 'en' ? 'No favorite items starred' : 'لا توجد عناصر مفضلة') :
+                   (lang === 'en' ? 'No items in this tab' : 'لا توجد عناصر في هذا التبويب')}
                 </h3>
                 <p>
                   {lang === 'en' ? 'Add a new item to organize your workflow efficiently.' : 'أضف عنصراً جديداً لتنظيم جدول عملك وأفكارك بسهولة.'}
@@ -1264,8 +1382,9 @@ export default function SmartNotebook() {
                     className="sn-primary-btn" 
                     style={{ width: 'auto', margin: '14px auto' }} 
                     onClick={() => {
-                      setCreateType(activeTab === 'ideas' ? 'idea' : activeTab === 'notes' ? 'note' : 'task');
-                      setNewItemCategory(activeTab === 'ideas' ? customIdeaCategories[0] : activeTab === 'notes' ? customNoteCategories[0] : customTaskCategories[0]);
+                      const isCustom = customTabs.some(t => t.id === activeTab);
+                      setCreateType(activeTab === 'ideas' ? 'idea' : activeTab === 'notes' || isCustom ? 'note' : 'task');
+                      setNewItemCategory(activeTab === 'ideas' ? customIdeaCategories[0] : activeTab === 'notes' || isCustom ? customNoteCategories[0] : customTaskCategories[0]);
                       setIsCreateModalOpen(true);
                     }}
                   >
@@ -1471,6 +1590,51 @@ export default function SmartNotebook() {
                   style={{ width: 'auto', margin: 0, padding: '8px 20px', borderRadius: 10, background: '#EF4444', boxShadow: '0 4px 14px rgba(239, 68, 68, 0.3)' }}
                 >
                   {lang === 'en' ? 'Delete' : 'حذف'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══════════════ DYNAMIC CUSTOM TAB CREATION MODAL ═══════════════ */}
+      <AnimatePresence>
+        {isTabModalOpen && (
+          <div className="sn-modal-backdrop" onClick={() => setIsTabModalOpen(false)}>
+            <motion.div 
+              className="sn-modal-box"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="sn-modal-title">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <FolderPlus size={20} color="#818CF8" />
+                  <span>{editingTabId ? (lang === 'en' ? 'Edit Tab' : 'تعديل التبويب') : (lang === 'en' ? 'Add New Tab' : 'إضافة تبويب جديد')}</span>
+                </div>
+                <button className="sn-icon-btn" onClick={() => setIsTabModalOpen(false)}>✕</button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div className="lpc-form-group">
+                  <label className="lpc-label">{lang === 'en' ? 'Tab Name' : 'اسم التبويب'}</label>
+                  <input 
+                    type="text" 
+                    className="lpc-input"
+                    placeholder={lang === 'en' ? 'e.g., Journal, Links' : 'مثال: يوميات، روابط هامة'}
+                    value={newTabName}
+                    onChange={e => setNewTabName(e.target.value)}
+                  />
+                </div>
+
+                <button 
+                  className="lpc-btn-primary"
+                  onClick={handleSaveTab}
+                  disabled={!newTabName.trim()}
+                >
+                  <FolderPlus size={16} />
+                  <span>{lang === 'en' ? 'Save Tab' : 'حفظ التبويب'}</span>
                 </button>
               </div>
             </motion.div>

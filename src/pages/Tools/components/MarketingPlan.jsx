@@ -422,12 +422,12 @@ export default function MarketingPlan({ stepNumber }) {
 
   const handleResetSession = () => {
     setAnalysisMode('fast');
-    setBudget(savedState.budget || '500');
-    setDuration(savedState.duration || '30');
-    setGoal(savedState.goal || 'sales');
-    setClientLevel(savedState.clientLevel || 'beginner');
+    setBudget('500');
+    setDuration('30');
+    setGoal('sales');
+    setClientLevel('beginner');
     setIsGenerating(false);
-    setResult(savedState.result || '');
+    setResult('');
     setCurrentStep(1);
     setLoadingBadgeIndex(0);
     setActiveStrategyTab('all');

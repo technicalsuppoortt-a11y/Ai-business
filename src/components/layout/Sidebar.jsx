@@ -70,6 +70,7 @@ const STEP_ICON_MAP = {
   "brand-library": Library,
   "external-tools": ExternalLink,
   settings: Settings,
+  tracking: Radar,
   tutorial: PlayCircle,
   subscription: Crown,
 };
@@ -201,6 +202,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
           currentAllowedTools.includes("visual-identity")
         );
       }
+
       return currentAllowedTools.includes(stepId);
     })();
 
@@ -266,7 +268,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
             }
             handleNav(
               step.id,
-              step.section === "tools" || step.section === "freelance",
+              (step.section === "tools" || step.section === "freelance") && step.id !== "tracking"
             );
           }}
         >

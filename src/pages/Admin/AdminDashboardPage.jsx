@@ -26,6 +26,7 @@ import { useConfirm } from "../../context/ConfirmContext";
 import { saveAdminOpenAiKey, getAdminOpenAiKey } from "../../services/creditsService";
 import AdminSales from "./AdminSales";
 import AdminLibrary from "./AdminLibrary";
+import MarketingTrackingSection from "../../components/Marketing/MarketingTrackingSection";
 import AiSettingsPage from "./components/AiSettingsPage";
 import Pagination from "../../components/common/Pagination";
 import PhoneInput from "../../components/PhoneInput";
@@ -724,6 +725,7 @@ export default function AdminDashboardPage() {
   const [paymentSearchQuery, setPaymentSearchQuery] = useState("");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
   const [paymentCurrentPage, setPaymentCurrentPage] = useState(1);
+  const [transactionsCurrentPage, setTransactionsCurrentPage] = useState(1);
   const [previewReceiptUrl, setPreviewReceiptUrl] = useState(null);
   const [showStripeKey, setShowStripeKey] = useState(false);
   const [stripeModalTab, setStripeModalTab] = useState("settings"); // 'settings' | 'test'
@@ -2173,15 +2175,9 @@ export default function AdminDashboardPage() {
                 icon: Tag,
               },
               {
-                id: "trial_settings",
-                label: "إعدادات الفترة المجانية",
-                label_en: "Free Trial Settings",
-                icon: Gift,
-              },
-              {
                 id: "payment_methods",
-                label: "طرق الدفع",
-                label_en: "Payment Methods",
+                label: "المعاملات والمدفوعات",
+                label_en: "Transactions & Payments",
                 icon: CreditCard,
               },
               {
@@ -2189,6 +2185,12 @@ export default function AdminDashboardPage() {
                 label: "إعدادات الذكاء الاصطناعي",
                 label_en: "AI Settings",
                 icon: Cpu,
+              },
+              {
+                id: "marketing_tracking",
+                label: "التسويق والتتبع",
+                label_en: "Marketing & Tracking",
+                icon: Activity,
               },
               {
                 id: "settings",
@@ -2216,7 +2218,7 @@ export default function AdminDashboardPage() {
               },
             ].map((item) => {
               const Icon = item.icon;
-              const isActive = activeTab === item.id;
+              const isActive = activeTab === item.id || (item.id === "subscriptions" && activeTab === "trial_settings");
               const label =
                 state.language === "en" ? item.label_en : item.label;
 
@@ -2409,7 +2411,7 @@ export default function AdminDashboardPage() {
                         : "إدارة المبيعات"}
                     </span>
                   </>
-                ) : activeTab === "subscriptions" ? (
+                ) : (activeTab === "subscriptions" || activeTab === "trial_settings") ? (
                   <>
                     <Tag size={20} style={{ color: "var(--accent)" }} />
                     <span>
@@ -2418,22 +2420,13 @@ export default function AdminDashboardPage() {
                         : "الباقات والتسعير"}
                     </span>
                   </>
-                ) : activeTab === "trial_settings" ? (
-                  <>
-                    <Gift size={20} style={{ color: "#f59e0b" }} />
-                    <span>
-                      {state.language === "en"
-                        ? "Free Trial Settings"
-                        : "إعدادات الفترة المجانية"}
-                    </span>
-                  </>
                 ) : activeTab === "payment_methods" ? (
                   <>
                     <CreditCard size={20} style={{ color: "#8b5cf6" }} />
                     <span>
                       {state.language === "en"
-                        ? "Payment Methods"
-                        : "طرق الدفع"}
+                        ? "Transactions & Payments"
+                        : "إدارة المعاملات والمدفوعات"}
                     </span>
                   </>
                 ) : activeTab === "tutorial" ? (
@@ -2452,6 +2445,15 @@ export default function AdminDashboardPage() {
                       {state.language === "en"
                         ? "AI Settings"
                         : "إعدادات الذكاء الاصطناعي"}
+                    </span>
+                  </>
+                ) : activeTab === "marketing_tracking" ? (
+                  <>
+                    <Activity size={20} style={{ color: "var(--accent)" }} />
+                    <span>
+                      {state.language === "en"
+                        ? "Marketing & Tracking"
+                        : "التسويق والتتبع"}
                     </span>
                   </>
                 ) : activeTab === "templates" ? (
@@ -3613,14 +3615,66 @@ export default function AdminDashboardPage() {
             <div className="ad-content animate-in">
               <AdminSales subUsers={regularUsers} />
             </div>
-          ) : activeTab === "subscriptions" ? (
+          ) : (activeTab === "subscriptions" || activeTab === "trial_settings") ? (
             <motion.div
               className="ad-content"
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="ad-table-card">
+              {/* Sub-Tabs Navigation */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  background: "var(--bg)",
+                  padding: "6px",
+                  borderRadius: "14px",
+                  border: "1px solid var(--line)",
+                  marginBottom: "20px",
+                  width: "fit-content"
+                }}
+              >
+                {[
+                  { id: "subscriptions", label_ar: "الخطط والأسعار", label_en: "Plans Overview", icon: Tag },
+                  { id: "trial_settings", label_ar: "إعدادات الفترة التجريبية", label_en: "Free Trial Settings", icon: Gift },
+                ].map((tab) => {
+                  const isActiveSub = activeTab === tab.id;
+                  const TabIcon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        padding: "8px 16px",
+                        borderRadius: "10px",
+                        border: "none",
+                        background: isActiveSub ? "var(--accent)" : "transparent",
+                        color: isActiveSub ? "#fff" : "var(--text)",
+                        fontWeight: isActiveSub ? "600" : "500",
+                        fontSize: "13px",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                      }}
+                    >
+                      <TabIcon size={15} />
+                      <span>
+                        {state.language === "en"
+                          ? tab.label_en
+                          : tab.label_ar}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {activeTab === "subscriptions" && (
+                <>
+                <div className="ad-table-card">
                 {/* Header section with title and action buttons */}
                 <div
                   className="sa-card-header"
@@ -4294,8 +4348,10 @@ export default function AdminDashboardPage() {
                   </span>
                 </button>
               </div>
-            </motion.div>
-          ) : activeTab === "trial_settings" ? (
+              </>
+              )}
+
+              {activeTab === "trial_settings" && (
             <div
               className="ad-content animate-in"
               dir={state.language === "en" ? "ltr" : "rtl"}
@@ -6308,6 +6364,8 @@ export default function AdminDashboardPage() {
                 )}
               </AnimatePresence>
             </div>
+              )}
+            </motion.div>
           ) : activeTab === "payment_methods" ? (
             <div className="ad-content animate-in" dir={state.language === "en" ? "ltr" : "rtl"}>
               {/* Header Title & Sub-tabs Row */}
@@ -6346,8 +6404,8 @@ export default function AdminDashboardPage() {
                       />
                       <span>
                         {state.language === "en"
-                          ? "Payment Methods & Transactions"
-                          : "إعدادات طرق الدفع والمعاملات المالية"}
+                          ? "Transactions & Payments"
+                          : "إدارة المعاملات والمدفوعات"}
                       </span>
                     </h2>
                     <p
@@ -7303,71 +7361,109 @@ export default function AdminDashboardPage() {
                     </p>
                   </div>
                   <div className="table-responsive">
-                    <table className="ad-table">
-                      <thead>
-                        <tr>
-                          <th>{state.language === "en" ? "Customer" : "العميل"}</th>
-                          <th>{state.language === "en" ? "Plan" : "الباقة"}</th>
-                          <th>{state.language === "en" ? "Payment Method" : "طريقة الدفع"}</th>
-                          <th>{state.language === "en" ? "Amount" : "المبلغ"}</th>
-                          <th>{state.language === "en" ? "Status" : "الحالة"}</th>
-                          <th>{state.language === "en" ? "Date" : "التاريخ"}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {pendingPayments
-                          .filter(p => p.status !== "pending")
-                          .slice(0, 50) // limit for performance in this view
-                          .map((p) => (
-                            <tr key={p.id}>
-                              <td>
-                                <div>
-                                  <strong style={{ color: "#fff", display: "block", fontSize: "13px" }}>
-                                    {p.userName || "User"}
-                                  </strong>
-                                  <span style={{ color: "var(--text3)", fontSize: "11px" }}>
-                                    {p.userEmail || p.userPhone}
-                                  </span>
-                                </div>
-                              </td>
-                              <td>{p.planName || p.planId || "N/A"}</td>
-                              <td>{p.paymentMethod || p.methodName || (state.language === "en" ? "N/A" : "تحويل بنكي / محفظة")}</td>
-                              <td>{p.amount ? (p.currency === 'USD' ? `$${p.amount}` : `${p.amount} ${p.currency || 'EGP'}`) : "-"}</td>
-                              <td>
-                                <span
-                                  style={{
-                                    fontSize: "11px",
-                                    fontWeight: "800",
-                                    padding: "4px 10px",
-                                    borderRadius: "12px",
-                                    background: p.status === "rejected" ? "rgba(239, 68, 68, 0.12)" : "rgba(16, 185, 129, 0.12)",
-                                    color: p.status === "rejected" ? "#EF4444" : "#10B981",
-                                    border: `1px solid ${p.status === "rejected" ? "rgba(239, 68, 68, 0.3)" : "rgba(16, 185, 129, 0.3)"}`
-                                  }}
-                                >
-                                  {p.status === "rejected"
-                                    ? (state.language === "en" ? "Rejected" : "مرفوض")
-                                    : (state.language === "en" ? "Approved/Completed" : "مكتمل / مقبول")}
-                                </span>
-                              </td>
-                              <td>
-                                {p.createdAt?.seconds
-                                  ? new Date(p.createdAt.seconds * 1000).toLocaleDateString(
-                                      state.language === "en" ? "en-US" : "ar-EG"
-                                    )
-                                  : "-"}
-                              </td>
-                            </tr>
-                        ))}
-                        {pendingPayments.filter(p => p.status !== "pending").length === 0 && (
-                          <tr>
-                            <td colSpan="5" style={{ textAlign: "center", padding: "40px" }}>
-                              {state.language === "en" ? "No transactions found." : "لا توجد معاملات."}
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
+                    {(() => {
+                      const transactionLogs = pendingPayments.filter(p => p.status !== "pending");
+                      const itemsPerPage = 8;
+                      const totalTransactionsPages = Math.ceil(transactionLogs.length / itemsPerPage) || 1;
+                      const paginatedLogs = transactionLogs.slice(
+                        (transactionsCurrentPage - 1) * itemsPerPage,
+                        transactionsCurrentPage * itemsPerPage
+                      );
+
+                      return (
+                        <>
+                          <table className="ad-table">
+                            <thead>
+                              <tr>
+                                <th>{state.language === "en" ? "Customer" : "العميل"}</th>
+                                <th>{state.language === "en" ? "Plan" : "الباقة"}</th>
+                                <th>{state.language === "en" ? "Payment Method" : "طريقة الدفع"}</th>
+                                <th>{state.language === "en" ? "Amount" : "المبلغ"}</th>
+                                <th>{state.language === "en" ? "Status" : "الحالة"}</th>
+                                <th>{state.language === "en" ? "Date" : "التاريخ"}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {paginatedLogs.map((p) => (
+                                <tr key={p.id}>
+                                  <td>
+                                    <div>
+                                      <strong style={{ color: "#fff", display: "block", fontSize: "13px" }}>
+                                        {p.userName || "User"}
+                                      </strong>
+                                      <span style={{ color: "var(--text3)", fontSize: "11px" }}>
+                                        {p.userEmail || p.userPhone}
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td>{p.planName || p.planId || "N/A"}</td>
+                                  <td>{p.paymentMethod || p.methodName || (state.language === "en" ? "N/A" : "تحويل بنكي / محفظة")}</td>
+                                  <td>{p.amount ? (p.currency === 'USD' ? `$${p.amount}` : `${p.amount} ${p.currency || 'EGP'}`) : "-"}</td>
+                                  <td>
+                                    <span
+                                      style={{
+                                        fontSize: "11px",
+                                        fontWeight: "800",
+                                        padding: "4px 10px",
+                                        borderRadius: "12px",
+                                        background: p.status === "rejected" ? "rgba(239, 68, 68, 0.12)" : "rgba(16, 185, 129, 0.12)",
+                                        color: p.status === "rejected" ? "#EF4444" : "#10B981",
+                                        border: `1px solid ${p.status === "rejected" ? "rgba(239, 68, 68, 0.3)" : "rgba(16, 185, 129, 0.3)"}`
+                                      }}
+                                    >
+                                      {p.status === "rejected"
+                                        ? (state.language === "en" ? "Rejected" : "مرفوض")
+                                        : (state.language === "en" ? "Approved/Completed" : "مكتمل / مقبول")}
+                                    </span>
+                                  </td>
+                                  <td>
+                                    {p.createdAt?.seconds
+                                      ? new Date(p.createdAt.seconds * 1000).toLocaleDateString(
+                                          state.language === "en" ? "en-US" : "ar-EG"
+                                        )
+                                      : "-"}
+                                  </td>
+                                </tr>
+                              ))}
+                              {loadingPayments ? (
+                                <tr>
+                                  <td colSpan="6" style={{ textAlign: "center", padding: "40px" }}>
+                                    <div
+                                      className="ad-submit-spinner"
+                                      style={{ margin: "0 auto 12px", borderTopColor: "var(--accent)" }}
+                                    />
+                                    <div style={{ color: "var(--text3)", fontSize: "14px" }}>
+                                      {state.language === "en"
+                                        ? "Loading transactions..."
+                                        : "جاري تحميل المعاملات..."}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ) : paginatedLogs.length === 0 ? (
+                                <tr>
+                                  <td colSpan="6" style={{ textAlign: "center", padding: "40px" }}>
+                                    <CreditCard size={32} style={{ opacity: 0.3, margin: "0 auto 12px", display: "block" }} />
+                                    <div style={{ color: "var(--text)", fontWeight: "600" }}>
+                                      {state.language === "en" ? "No transactions found." : "لا توجد معاملات."}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ) : null}
+                            </tbody>
+                          </table>
+
+                          {totalTransactionsPages > 1 && (
+                            <div style={{ marginTop: "20px" }}>
+                              <Pagination
+                                currentPage={transactionsCurrentPage}
+                                totalPages={totalTransactionsPages}
+                                onPageChange={setTransactionsCurrentPage}
+                              />
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               )}
@@ -8559,6 +8655,15 @@ export default function AdminDashboardPage() {
           ) : activeTab === "templates" ? (
             <div className="ad-content animate-in">
               <AdminTemplateManager />
+            </div>
+          ) : activeTab === "marketing_tracking" ? (
+            <div className="ad-content animate-in">
+              <MarketingTrackingSection 
+                isAdmin={true} 
+                userId={userData?.uid} 
+                isRtl={state.language === 'ar'} 
+                t={(ar, en) => state.language === 'ar' ? ar : en} 
+              />
             </div>
           ) : (
             <div className="ad-content animate-in" dir={state.language === "en" ? "ltr" : "rtl"}>
@@ -12290,3 +12395,5 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+

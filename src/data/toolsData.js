@@ -12,7 +12,8 @@ import {
   Film,
   Rocket,
   Bot,
-  Globe
+  Globe,
+  Radar
 } from 'lucide-react';
 
 export const TOOLS_24H = [
@@ -82,6 +83,9 @@ export const TOOLS_24H = [
     ]
   },
   { id: 'campaign-launch', label_ar: 'إطلاق الحملة', label_en: 'Campaign Launch', icon: Rocket, section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing' },
+  { 
+    id: 'tracking', label_ar: 'التسويق والتتبع', label_en: 'Marketing & Tracking', icon: Radar, section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing',
+  },
   { 
     id: 'smart-ai-assistant', label_ar: 'المساعد الذكي', label_en: 'AI Assistant', icon: Bot, section: 'tools', group_ar: 'إدارة وتشغيل', group_en: 'Management & Ops',
     liveAiFeatures: [

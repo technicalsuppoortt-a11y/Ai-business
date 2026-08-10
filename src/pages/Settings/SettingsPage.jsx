@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
@@ -27,9 +27,11 @@ import {
   Save,
   Sparkles,
   Layout,
-  MessageSquare
+  MessageSquare,
+  Activity
 } from 'lucide-react';
 import './SettingsPage.css';
+
 
 // Reusable Professional Custom Dropdown Component
 function CustomDropdown({ options, value, onChange, placeholder }) {
@@ -79,6 +81,7 @@ export default function SettingsPage() {
   const { state, dispatch } = useApp();
   const { userData, brandData } = useAuth();
   const toast = useToast();
+  const location = useLocation();
 
   const lang = state.language || 'ar';
   const isRtl = lang === 'ar';
@@ -138,7 +141,7 @@ export default function SettingsPage() {
   }
   // ─────────────────────────────────────────────────────────────────────────
 
-  // Navigation Tab State (Only 2 Tabs)
+  // Navigation Tab State
   const [activeTab, setActiveTab] = useState('account'); // 'account' | 'ai'
 
   // Account Form State
@@ -266,7 +269,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* TAB NAVIGATION BUTTONS (ONLY 2 TABS) */}
+        {/* TAB NAVIGATION BUTTONS */}
         <div className="settings-tabs-nav">
           <button className={`tab-nav-btn ${activeTab === 'account' ? 'active' : ''}`} onClick={() => setActiveTab('account')}>
             <UserCheck size={18} />
@@ -276,6 +279,7 @@ export default function SettingsPage() {
             <Cpu size={18} />
             <span>{lang === 'en' ? 'AI Engine & Usage' : 'الذكاء الاصطناعي والاستخدام'}</span>
           </button>
+
         </div>
 
         {/* TAB CONTENT PANELS */}
@@ -501,6 +505,8 @@ export default function SettingsPage() {
               </div>
             </motion.div>
           )}
+
+
 
         </AnimatePresence>
 

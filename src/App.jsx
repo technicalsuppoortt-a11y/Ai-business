@@ -12,15 +12,20 @@ import ProfilePage from './pages/Profile/ProfilePage';
 import TutorialPage from './pages/Tutorial/TutorialPage';
 import TermsPage from './pages/Terms/TermsPage';
 import SubscriptionPlansPage from './pages/Subscription/SubscriptionPlansPage';
+import MarketingTrackingPage from './pages/Tracking/MarketingTrackingPage';
 
 import ResetPasswordPage from './pages/Auth/ResetPasswordPage';
 
 import { useAuth } from './context/AuthContext';
 import { useApp } from './context/AppContext';
 import { useEffect } from 'react';
+import { useTrackingScripts } from './hooks/useTrackingScripts';
+
 export default function App() {
   const { brandData, userData, adminUserData, superAdminUserData } = useAuth();
   const { state, dispatch } = useApp();
+
+  useTrackingScripts();
 
   // Initialize theme from localStorage
   useEffect(() => {
@@ -122,6 +127,7 @@ export default function App() {
         <Route index element={<Navigate to="onboarding" replace />} />
         <Route path="onboarding" element={<OnboardingPage />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="tracking" element={<MarketingTrackingPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="tutorial" element={<TutorialPage />} />
         <Route path="subscription" element={<SubscriptionPlansPage />} />

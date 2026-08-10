@@ -1,5 +1,8 @@
-import { auth, adminAuth, superAdminAuth } from '../firebase';
-import { getUserCredits, getAdminOpenAiKey, getUserPersonalKey, deductCredit, refundCredit } from './creditsService';
+import { auth, adminAuth, superAdminAuth, db } from '../firebase';
+import { getUserCredits, getAdminOpenAiKey, deductCredit, refundCredit } from './creditsService';
+import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { TOOLS_24H } from '../data/toolsData';
+import { JOURNEY_STEPS } from '../data/database';
 
 /**
  * Helper to retrieve the active authenticated user's email
@@ -15,6 +18,32 @@ export function getCurrentUserEmail(userEmail = null) {
     // Ignore error in non-firebase environment
   }
   return '';
+}
+
+/**
+ * Helper to calculate estimated USD cost based on model and tokens
+ */
+export function calculateEstimatedCostUsd(model, promptTokens, completionTokens) {
+  let promptCost = 0;
+  let completionCost = 0;
+  const lowerModel = (model || 'gpt-4o-mini').toLowerCase();
+  
+  if (lowerModel.includes('gpt-4o-mini')) {
+    promptCost = (promptTokens / 1000000) * 0.150;
+    completionCost = (completionTokens / 1000000) * 0.600;
+  } else if (lowerModel.includes('gpt-4o')) {
+    promptCost = (promptTokens / 1000000) * 5.00;
+    completionCost = (completionTokens / 1000000) * 15.00;
+  } else if (lowerModel.includes('gpt-3.5') || lowerModel.includes('gpt-35')) {
+    promptCost = (promptTokens / 1000000) * 0.50;
+    completionCost = (completionTokens / 1000000) * 1.50;
+  } else {
+    // Default fallback to gpt-4o-mini pricing
+    promptCost = (promptTokens / 1000000) * 0.150;
+    completionCost = (completionTokens / 1000000) * 0.600;
+  }
+  
+  return promptCost + completionCost;
 }
 
 /**
@@ -44,15 +73,7 @@ export function getOpenAiApiKey(userEmail = null) {
     return key.trim();
   }
 
-  // Fallback to user's personal API key configured in Settings
-  try {
-    const personalKey = localStorage.getItem('app_api_key') || localStorage.getItem('user_openai_api_key') || '';
-    if (personalKey && typeof personalKey === 'string' && personalKey.trim()) {
-      return personalKey.trim();
-    }
-  } catch (e) {
-    // Ignore
-  }
+
 
   return '';
 }
@@ -60,49 +81,86 @@ export function getOpenAiApiKey(userEmail = null) {
 /**
  * Core function to dispatch prompt to OpenAI Chat Completion API
  */
-export async function callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode = false, userEmail = null }) {
+export async function callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode = false, userEmail = null, costKey }) {
   if (!uid) {
     throw new Error('User ID is required to process Live AI requests.');
   }
 
-  // 1. Strict Pre-flight Check: Fetch user credits & personal key BEFORE fetching Admin Key or sending HTTP request
-  const credits = await getUserCredits(uid);
-  const personalKeyRaw = await getUserPersonalKey(uid);
-  const personalKey = (personalKeyRaw && typeof personalKeyRaw === 'string') ? personalKeyRaw.trim() : '';
+  const activeEmail = userEmail || getCurrentUserEmail() || 'Unknown';
+  let activeName = activeEmail.split('@')[0];
+  try {
+    const usr = auth?.currentUser || adminAuth?.currentUser || superAdminAuth?.currentUser;
+    if (usr && usr.displayName) activeName = usr.displayName;
+  } catch (e) {}
 
-  let apiKeyToUse = '';
-  let usingAdminKey = false;
-
-  if (personalKey) {
-    // User configured a valid Personal OpenAI Key -> Proceed using Personal Key without deducting credits
-    apiKeyToUse = personalKey;
-    usingAdminKey = false;
-  } else {
-    // User relies on Admin Key / Platform Credits
-    if (credits <= 0) {
-      // THROW AN ERROR IMMEDIATELY and cancel execution BEFORE any API request to OpenAI
-      throw new Error('Out of credits! Please upgrade your plan or configure your Personal OpenAI Key in Settings.');
-    }
-
-    const adminKey = await getAdminOpenAiKey();
-    if (adminKey && adminKey.trim()) {
-      apiKeyToUse = adminKey.trim();
-      usingAdminKey = true;
-    } else {
-      throw new Error('Master API Key not configured. Please configure your Personal OpenAI Key in Settings.');
+  // Resolve tool Name from costKey
+  let resolvedToolName = 'AI Action';
+  let defaultCost = 10;
+  
+  console.log('[SocialMedia Deduction] Resolving cost for:', { toolId: costKey, passedCostKey: costKey });
+  
+  const allTools = [...JOURNEY_STEPS, ...TOOLS_24H];
+  for (const tool of allTools) {
+    if (tool.liveAiFeatures) {
+      const feat = tool.liveAiFeatures.find(f => f.key === costKey);
+      if (feat) {
+        resolvedToolName = feat.label_en || feat.label_ar || 'AI Action';
+        defaultCost = feat.defaultCost || 10;
+        break;
+      }
     }
   }
 
-  if (!apiKeyToUse) {
-    throw new Error('Out of credits! Please upgrade your plan or configure your Personal OpenAI Key in Settings.');
+  // Fetch Global Configuration for Cost & API Key
+  const globalRef = doc(db, 'tenants', 'global');
+  const globalSnap = await getDoc(globalRef);
+  let globalData = {};
+  if (globalSnap.exists()) {
+    globalData = globalSnap.data();
   }
 
-  // 2. Atomic Deduction: Call and verify deductCredit(uid) BEFORE initiating callOpenAiApi fetch
+  // Determine API Key
+  let apiKeyToUse = globalData.openaiKey || getOpenAiApiKey(activeEmail) || getAdminOpenAiKey();
+  if (!apiKeyToUse || apiKeyToUse.trim() === '') {
+    throw new Error('OpenAI API Key is missing. Please contact support or add it in Settings.');
+  }
+
+  // Calculate dynamic cost based on costKey
+  let toolCost = defaultCost; // Default
+  if (costKey && globalData[costKey] !== undefined) {
+    toolCost = Number(globalData[costKey]);
+  }
+  
+  // Enforce Max Budget if provided (simple guard)
+  if (globalData.maxBudget) {
+    // Add budget validation here in a full analytics sync if needed
+  }
+
+  // 1. Pre-flight check: Verify User Credits Before Deducting
+  const usingAdminKey = (apiKeyToUse === globalData.openaiKey || apiKeyToUse === getAdminOpenAiKey() || apiKeyToUse === getOpenAiApiKey());
+  
+  if (usingAdminKey) {
+    const credits = await getUserCredits(uid);
+    if (credits < toolCost) {
+      throw new Error('Out of credits! Please upgrade your plan to continue using AI tools.');
+    }
+  }
+
+  // Prepare advanced settings
+  let finalSystemPrompt = systemPrompt;
+  if (globalData.systemPrompt && globalData.systemPrompt.trim() !== '') {
+    finalSystemPrompt = `${globalData.systemPrompt}\n\n${systemPrompt}`;
+  }
+  const temperature = globalData.temperature !== undefined ? Number(globalData.temperature) : 0.7;
+  const maxTokens = globalData.maxTokens !== undefined ? Number(globalData.maxTokens) : 2000;
+  const modelToUse = globalData.openaiModel || 'gpt-4o-mini';
+
+  // 2. Atomic Deduction: Call and verify deductCredit(uid, cost) BEFORE initiating callOpenAiApi fetch
   let creditDeducted = false;
   if (usingAdminKey) {
-    const success = await deductCredit(uid);
+    const success = await deductCredit(uid, toolCost);
     if (!success) {
-      throw new Error('Out of credits! Please upgrade your plan or configure your Personal OpenAI Key in Settings.');
+      throw new Error('Out of credits! Please upgrade your plan to continue using AI tools.');
     }
     creditDeducted = true;
   }
@@ -111,12 +169,13 @@ export async function callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, 
     const url = 'https://api.openai.com/v1/chat/completions';
 
     const body = {
-      model: 'gpt-4o-mini',
+      model: modelToUse,
       messages: [
-        { role: 'system', content: systemPrompt },
+        { role: 'system', content: finalSystemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      temperature: 0.7,
+      temperature: temperature,
+      max_tokens: maxTokens,
     };
 
     if (jsonMode) {
@@ -139,16 +198,52 @@ export async function callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, 
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content;
+    const usage = data.usage || {};
+    
+    const promptTokens = usage.prompt_tokens || 0;
+    const completionTokens = usage.completion_tokens || 0;
+    const totalTokens = usage.total_tokens || 0;
+    const estimatedCostUsd = calculateEstimatedCostUsd(modelToUse, promptTokens, completionTokens);
 
     if (!content) {
       throw new Error('Empty response received from Live AI API.');
     }
 
+    try {
+      await addDoc(collection(db, 'usage_logs'), {
+        userId: uid,
+        userEmail: activeEmail,
+        userName: activeName,
+        toolKey: costKey || 'unknown',
+        toolName: resolvedToolName,
+        model: modelToUse,
+        promptTokens,
+        completionTokens,
+        totalTokens,
+        estimatedCostUsd,
+        creditsDeducted: toolCost,
+        timestamp: serverTimestamp(),
+        status: 'success'
+      });
+    } catch(e) { console.error('Failed to write usage log', e); }
+
     return content;
   } catch (error) {
     // If credit was deducted upfront but API call failed, refund the credit
     if (creditDeducted) {
-      await refundCredit(uid);
+      await refundCredit(uid, toolCost);
+      try {
+        await addDoc(collection(db, 'usage_logs'), {
+          userId: uid,
+          userEmail: userEmail || getCurrentUserEmail() || 'Unknown',
+          toolKey: costKey || 'unknown',
+          toolName: resolvedToolName,
+          creditsDeducted: 0,
+          timestamp: serverTimestamp(),
+          status: 'failed',
+          error: error.message || 'API Error'
+        });
+      } catch(e) {}
     }
     throw error;
   }
@@ -165,8 +260,43 @@ export async function dispatchLiveAiAnalysis({
   inputs = {},
   context = {},
   lang = 'ar',
-  uid
+  uid,
+  costKey = null
 }) {
+  if (!costKey) {
+    const defaultCostKeyMap = {
+      'niche-selection': 'costNicheAutoGenerate',
+      'analysis-niche': 'costNicheAutoGenerate',
+      'brand-naming': 'costBrandNamingStudio',
+      'visual-identity': 'costVisualIdentity',
+      'content-factory': 'costContentIdeas',
+      'marketing-plan': 'costMarketingPlan',
+      'website-construction': 'costWebsiteConstruction',
+      'landing-page-content': 'costLandingPageContent',
+      'product-source': 'costProductSource',
+  'build-my-version': 'costBuildMyVersion',
+  'profit-calculator': 'costDailyFunnel',
+  'profit-calculator-monthly': 'costMonthlyGoalPlanner',
+  'daily-funnel': 'costDailyFunnel',
+  'monthly-goal-planner': 'costMonthlyGoalPlanner',
+      'smart-ai-assistant': 'costSmartAiAssistant',
+      'profit-calculator': 'costProfitCalculator',
+      'ad-creative': 'costAdCreative',
+      'script-writer': 'costScriptWriter',
+      'caption-generator': 'costCaptionGenerator',
+      'content-repurposer': 'costContentRepurposer',
+      'qa-generator': 'costQaGenerator',
+      'idea-lab': 'costIdeaLab',
+      'viral-vids': 'costViralReels',
+      'trends': 'costTrends',
+      'social-media-architect': 'costSocialMedia',
+      'social-presence': 'costSocialMedia',
+      'social-media': 'costSocialMedia',
+      'socialMedia': 'costSocialMedia'
+    };
+    costKey = defaultCostKeyMap[toolId] || null;
+  }
+
   const isArabic = lang === 'ar';
   const languageInstruction = isArabic
     ? 'Produce the entire response in Modern Standard Arabic (العربية الفصحى البسيطة والاحترافية).'
@@ -203,7 +333,8 @@ Return MUST be valid JSON strictly matching this structure:
 Target Market Region: ${context.user?.country || 'GCC & Global'}.
 CRITICAL INSTRUCTION: Dynamically calculate and adapt the "demographics" age range and profile to precisely fit the target persona of the "${selectedNicheName}" niche. Do not use generic age brackets.`;
 
-      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true });
+      const resolvedCostKey = costKey || 'costNicheAutoGenerate';
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true, costKey: resolvedCostKey });
       return JSON.parse(responseText);
     }
 
@@ -243,7 +374,8 @@ Return MUST be valid JSON strictly matching this structure:
 
       const userPrompt = `Generate 3 innovative brand names for a business in Niche: "${nicheStr}", Category: "${category}", Style: "${style}", Name Language Preference: "${nameLang}".`;
 
-      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true });
+      const resolvedCostKey = costKey || 'costBrandNamingStudio';
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true, costKey: resolvedCostKey });
       return JSON.parse(responseText);
     }
 
@@ -265,7 +397,8 @@ Return MUST be valid JSON strictly matching this structure:
       const userPrompt = `Analyze this color palette for brand "${brandNameStr}" in niche "${nicheStr}":
 Primary Color: ${primary}, Secondary: ${secondary}, Accent: ${accent}.`;
 
-      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true });
+      const resolvedCostKey = costKey || 'costVisualIdentity';
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true, costKey: resolvedCostKey });
       return JSON.parse(responseText);
     }
 
@@ -306,7 +439,8 @@ Return MUST be valid JSON strictly matching this structure:
 
       const userPrompt = `Create a high-converting content plan for Niche: "${nicheStr}", Platform: "${platform}", Content Format: "${contentFormat}", Target Audience: "${targetAudience}", Dialect: "${selectedDialect}".`;
 
-      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true });
+      const resolvedCostKey = costKey || 'costContentIdeas';
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true, costKey: resolvedCostKey });
       return JSON.parse(responseText);
     }
 
@@ -397,7 +531,7 @@ You MUST follow this exact Markdown structure and style. Do not change section t
 - Main Goal: ${goal || 'sales'}
 - Client Experience Level: ${clientLevel || 'beginner'}`;
 
-      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false });
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false, costKey });
       return responseText;
     }
 
@@ -411,7 +545,7 @@ Primary Color: ${colorHex || '#10B981'}
 Secondary Color: ${secondaryColor || '#0f172a'}
 Include: Hero section with CTA, 3 Features, Testimonials, Contact/Footer. Return ONLY raw HTML code.`;
 
-      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false });
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false, costKey });
       return responseText;
     }
 
@@ -452,21 +586,44 @@ Return MUST be valid JSON strictly matching this structure:
 }`;
       const userPrompt = `Generate strategic domain matrix suggestions for brand: "${bName}" in niche: "${nicheStr}".`;
 
-      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true });
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true, costKey });
       return JSON.parse(responseText);
     }
 
     case 'landing-page-content': {
       const { productName, audience, objective, awareness, pricePoint, emotion } = inputs;
-      const systemPrompt = `You are a direct-response landing page copywriter. Produce a 5-section landing page structure in JSON format.
+      const systemPrompt = `You are an elite Principal Copywriter and Conversion Designer specializing in high-converting landing pages.
+
+Generate compelling landing page copy in JSON format based on the user's inputs.
 ${languageInstruction}
-Return MUST be valid JSON strictly matching:
+
+Return MUST be valid JSON strictly matching this structure:
 {
-  "hero": ["Hero Headline 1\\n\\nSubheadline 1", "Hero Headline 2\\n\\nSubheadline 2"],
-  "problem": ["Problem Statement 1", "Problem Statement 2"],
-  "offer": ["Offer Copy 1", "Offer Copy 2"],
-  "proof": ["Social Proof 1", "Social Proof 2"],
-  "cta": ["Call To Action 1", "Call To Action 2"]
+  "hero": [
+    "Headline: Main attention-grabbing hook",
+    "Sub-headline: Supporting value proposition",
+    "Primary CTA: Action-oriented button text"
+  ],
+  "problem": [
+    "Identify the pain point",
+    "Agitate the problem",
+    "Introduce the gap in the market"
+  ],
+  "offer": [
+    "Introduce your product as the solution",
+    "Key Benefit 1",
+    "Key Benefit 2",
+    "Key Benefit 3"
+  ],
+  "proof": [
+    "Testimonial quote or stat",
+    "Authority marker (e.g. As seen on...)",
+    "Risk reversal / Guarantee"
+  ],
+  "cta": [
+    "Final strong call to action",
+    "Secondary CTA or FAQ highlight"
+  ]
 }`;
       const userPrompt = `Generate landing page copy for:
 Product Name: ${productName || brandNameStr}
@@ -476,7 +633,7 @@ Awareness Level: ${awareness || 'problem_aware'}
 Price Point: ${pricePoint || 'low_ticket'}
 Emotional Trigger: ${emotion || 'urgency'}`;
 
-      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true });
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true, costKey });
       return JSON.parse(responseText);
     }
 
@@ -533,7 +690,7 @@ Product Type: ${selectedType || 'digital/physical'}
 Niche: ${selectedNiche || nicheStr}
 Effort Level: ${selectedEffort || 'medium'}`;
 
-      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true });
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true, costKey });
       return JSON.parse(responseText);
     }
 
@@ -582,7 +739,7 @@ Target Client: ${selectedClient}
 Pricing Tier: ${selectedPricing}
 Freelancer Niche: ${nicheStr}`;
 
-      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true });
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true, costKey });
       return JSON.parse(responseText);
     }
 
@@ -600,7 +757,7 @@ ${languageInstruction}`;
 - Profit Margin: ${profitMargin}%
 - Est. Net Daily Profit: $${netProfitDaily}`;
 
-      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false });
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false, costKey });
       return responseText;
     }
 
@@ -639,28 +796,10 @@ Return MUST be valid JSON strictly matching this structure:
 
       const userPrompt = `Generate a high-converting video ad script for Product: "${selectedProduct}", Pain Point: "${selectedPain}", Platform: "${selectedPlatform}", Dialect/Language: "${selectedDialect}".`;
 
-      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true });
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true, costKey });
       return JSON.parse(responseText);
     }
 
-    case 'proposal-sniper': {
-      const { jobDescription, tone, proposalLang } = inputs;
-
-      const systemPrompt = `You are an elite freelancer proposal writer.
-Write a winning proposal bid tailored directly to the client's job post.
-Language for proposal: ${proposalLang === 'en' ? 'English' : 'Arabic'}.`;
-
-      const userPrompt = `Write a winning proposal for this job post:
----
-${jobDescription}
----
-Freelancer Niche: ${nicheStr}
-Tone of Voice: ${tone || 'expert'}
-User Name: ${context.user?.name || 'Freelancer'}`;
-
-      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false });
-      return `### 🤖 ${isArabic ? 'عرض الذكاء الاصطناعي المباشر المخصص (Live AI Bid)' : 'Live AI Customized Proposal Bid'}\n\n${responseText}`;
-    }
 
     case 'script-writer': {
       const { scriptTopic, scriptPlatform, scriptTone, scriptHookStyle, challengeText, featureText, activeAudio } = inputs;
@@ -689,7 +828,7 @@ Hook Style: "${scriptHookStyle || 'Curiosity Hook'}"`;
 2. The core Body with high value/retention strategies.
 3. A strong Call to Action (CTA).`;
 
-      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false });
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false, costKey });
       return responseText;
     }
 
@@ -710,7 +849,7 @@ Ensure the caption includes:
 3. A clear Call to Action (CTA).
 4. A set of 5-10 optimized hashtags.`;
 
-      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false });
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false, costKey });
       return responseText;
     }
 
@@ -726,7 +865,7 @@ Original Content:
 
 Ensure the new format is optimized for its specific platform, maintaining the core value but adapting the structure for maximum engagement.`;
 
-      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false });
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false, costKey });
       return responseText;
     }
 
@@ -743,7 +882,7 @@ Desired Format: "${qaFormat || 'Short Direct Answer'}"
 
 Provide a clear, value-driven answer that builds trust and authority.`;
 
-      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false });
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false, costKey });
       return responseText;
     }
 
@@ -760,7 +899,7 @@ Return MUST be valid JSON strictly matching this structure:
 }`;
       const userPrompt = `Generate 6 highly engaging, viral-potential content ideas for a business in the niche: "${nicheStr}". The ideas should be a mix of educational, entertaining, and promotional content.`;
       
-      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true });
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true, costKey });
       return JSON.parse(responseText);
     }
 
@@ -777,7 +916,7 @@ Structure your advice:
 2. **Verbal Hook:** The exact opening phrase to grab attention.
 3. **Body & CTA:** How to deliver the core value and end with a strong Call to Action.`;
 
-      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false });
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false, costKey });
       return responseText;
     }
 
@@ -797,7 +936,7 @@ Return MUST be valid JSON strictly matching this structure:
 }`;
       const userPrompt = `Identify 3 highly trending hashtags and 2 viral audio tracks currently popular in the niche: "${nicheStr}". Provide realistic growth metrics.`;
       
-      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true });
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: true, costKey });
       return JSON.parse(responseText);
     }
 
@@ -810,7 +949,7 @@ ${languageInstruction}`;
 User Context: Niche="${nicheStr}", Brand="${brandNameStr}".
 Tool Input Details: ${JSON.stringify(inputs)}`;
 
-      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false });
+      const responseText = await callOpenAiApiWithCredits({ uid, systemPrompt, userPrompt, jsonMode: false, costKey });
       return responseText;
     }
   }

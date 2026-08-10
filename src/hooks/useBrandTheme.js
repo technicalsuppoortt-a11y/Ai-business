@@ -27,8 +27,8 @@ export function useBrandTheme() {
     // 1. If the logged in user IS an admin (Brand Owner), use their direct user doc data
     if (activeUser.role === 'admin') {
       setBranding({
-        brandName: activeUser.brandName || DEFAULT_BRAND_NAME,
-        logoUrl: activeUser.brandLogoUrl || DEFAULT_LOGO_URL,
+        brandName: activeUser.brandName || activeUser.ownerName || DEFAULT_BRAND_NAME,
+        logoUrl: activeUser.photoURL || DEFAULT_LOGO_URL,
         isLoading: false
       });
       return;
@@ -39,7 +39,7 @@ export function useBrandTheme() {
       if (brandData) {
         setBranding({
           brandName: brandData.name || activeUser.brandName || DEFAULT_BRAND_NAME,
-          logoUrl: brandData.logoUrl || DEFAULT_LOGO_URL,
+          logoUrl: brandData.logoUrl || brandData.photoURL || DEFAULT_LOGO_URL,
           isLoading: false
         });
       } else {

@@ -2164,9 +2164,9 @@ h2, h3, h4 {
   /* FIX */
   position: fixed;
   top: 0;
+  left: 0;
   right: 0;
-  width: 100vw;
-  height: 100vh;
+  bottom: 0;
   z-index: 9999;
   pointer-events: none;
   visibility: hidden;
@@ -2226,7 +2226,7 @@ h2, h3, h4 {
   left: 0;
 }
 
-.identity-preview-drawer-content.rtl.open {
+.identity-preview-drawer.open .identity-preview-drawer-content.rtl {
   transform: translateX(0);
 }
 

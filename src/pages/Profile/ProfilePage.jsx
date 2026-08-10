@@ -140,10 +140,7 @@ export default function ProfilePage() {
             {state.primaryColor}
           </div>
         ) : null;
-      case 'skills-crafting':
-        return state.skills?.length > 0 ? state.skills.map(s => s.label).join(', ') : null;
-      case 'freelance-pricing':
-        return state.targetMonthlyIncome ? `${state.targetMonthlyIncome} ${state.currency || 'USD'}` : null;
+
       default:
         return null;
     }

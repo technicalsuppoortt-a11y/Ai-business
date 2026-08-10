@@ -1,27 +1,94 @@
-export const TOOLS_24H = [
-  { id: 'analysis-identity', label_ar: 'التحليل والهوية', label_en: 'Analysis & Identity', icon: '🎯', section: 'tools', group_ar: 'التحليل والهوية', group_en: 'Analysis & Identity' },
-  { id: 'website-construction', label_ar: 'بناء وتجهيز الموقع', label_en: 'Website Setup & Build', icon: '💻', section: 'tools', group_ar: 'بناء وتجهيز المتجر', group_en: 'Store Setup' },
-  { id: 'landing-page-content', label_ar: 'محتوى الموقع', label_en: 'Page Content', icon: '📄', section: 'tools', group_ar: 'بناء وتجهيز المتجر', group_en: 'Store Setup' },
-  { id: 'legal-pages', label_ar: 'الصفحات القانونية', label_en: 'Legal Pages', icon: '⚖️', section: 'tools', group_ar: 'بناء وتجهيز المتجر', group_en: 'Store Setup' },
-  { id: 'social-integration', label_ar: 'ربط السوشيال', label_en: 'Social Integration', icon: '🔗', section: 'tools', group_ar: 'بناء وتجهيز المتجر', group_en: 'Store Setup' },
-  { id: 'email-setup', label_ar: 'التسويق عبر الإيميل', label_en: 'Email Marketing', icon: '📧', section: 'tools', group_ar: 'بناء وتجهيز المتجر', group_en: 'Store Setup' },
-  { id: 'product-source', label_ar: 'مصدر المنتج', label_en: 'Product Source', icon: '📦', section: 'tools', group_ar: 'المنتج والربحية', group_en: 'Product & Profit' },
-  { id: 'profit-calculator', label_ar: 'حاسبة الأرباح', label_en: 'Profit Calculator', icon: '💰', section: 'tools', group_ar: 'المنتج والربحية', group_en: 'Product & Profit' },
-  { id: 'social-media', label_ar: 'منصة السوشيال ميديا', label_en: 'Social Media', icon: '📱', section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing' },
-  { id: 'marketing-plan', label_ar: 'مخطط الحملات', label_en: 'Campaign planner', icon: '🗺️', section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing' },
-  { id: 'ad-creative', label_ar: 'أفكار الإعلانات', label_en: 'Ad Creative', icon: '🎞️', section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing' },
-  { id: 'campaign-launch', label_ar: 'إطلاق الحملة', label_en: 'Campaign Launch', icon: '🚀', section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing' },
+import {
+  Target,
+  Monitor,
+  FileText,
+  Scale,
+  Link,
+  Mail,
+  Package,
+  Calculator,
+  Share2,
+  Map,
+  Film,
+  Rocket,
+  Bot,
+  Globe
+} from 'lucide-react';
 
-  { id: 'smart-ai-assistant', label_ar: 'المساعد الذكي', label_en: 'AI Assistant', icon: '🤖', section: 'tools', group_ar: 'إدارة وتشغيل', group_en: 'Management & Ops' },
-  { id: 'external-tools', label_ar: 'أدوات خارجية', label_en: 'External Tools', icon: '🌐', section: 'tools', group_ar: 'إدارة وتشغيل', group_en: 'Management & Ops' },
-  { id: 'freelance-profile', label_ar: 'الملف المهني', label_en: 'Freelance Profile', icon: '👤', section: 'freelance', group_ar: 'أدوات العمل الحر', group_en: 'Freelance & Agency' },
-  { id: 'platform-radar', label_ar: 'رادار المنصات', label_en: 'Platform Radar', icon: '🌐', section: 'freelance', group_ar: 'أدوات العمل الحر', group_en: 'Freelance & Agency' },
-  { id: 'freelance-pricing', label_ar: 'حاسبة التسعير', label_en: 'Pricing Calculator', icon: '💰', section: 'freelance', group_ar: 'أدوات العمل الحر', group_en: 'Freelance & Agency' },
-  { id: 'skills-crafting', label_ar: 'صياغة المهارات', label_en: 'Skills Crafting', icon: '⚡', section: 'freelance', group_ar: 'أدوات العمل الحر', group_en: 'Freelance & Agency' },
-  { id: 'portfolio-builder', label_ar: 'معرض الأعمال', label_en: 'Portfolio Builder', icon: '📁', section: 'freelance', group_ar: 'أدوات العمل الحر', group_en: 'Freelance & Agency' },
-  { id: 'proposal-sniper', label_ar: 'قناص العروض', label_en: 'Proposal Sniper', icon: '🎯', section: 'freelance', group_ar: 'أدوات العمل الحر', group_en: 'Freelance & Agency' },
-  { id: 'interview-prep', label_ar: 'أسئلة المقابلات', label_en: 'Interview Prep', icon: '🎤', section: 'freelance', group_ar: 'أدوات العمل الحر', group_en: 'Freelance & Agency' },
-  { id: 'sales-templates', label_ar: 'نماذج المبيعات', label_en: 'Sales Templates', icon: '💬', section: 'freelance', group_ar: 'أدوات العمل الحر', group_en: 'Freelance & Agency' },
+export const TOOLS_24H = [
+  { 
+    id: 'analysis-identity', label_ar: 'التحليل والهوية', label_en: 'Analysis & Identity', icon: Target, section: 'tools', group_ar: 'التحليل والهوية', group_en: 'Analysis & Identity',
+    liveAiFeatures: [
+      { key: 'costNicheAutoGenerate', label_en: 'Niche Auto Generate', label_ar: 'التوليد التلقائي (Niche)', defaultCost: 10, groupHeader_ar: 'تحديد النيش', groupHeader_en: 'Niche Selection' },
+      { key: 'costMicroNicheIdea', label_en: 'Micro-Niche Idea Generate', label_ar: 'أفكار المايكرو نيش', defaultCost: 15, groupHeader_ar: 'تحديد النيش', groupHeader_en: 'Niche Selection' },
+      { key: 'costSubnicheAutoGenerate', label_en: 'Subniche Auto Generate', label_ar: 'التوليد التلقائي (Subniche)', defaultCost: 10, groupHeader_ar: 'تحديد النيش', groupHeader_en: 'Niche Selection' },
+      { key: 'costDeepStrategicAnalysis', label_en: 'Deep Strategic Analysis', label_ar: 'التحليل الاستراتيجي العميق', defaultCost: 50, groupHeader_ar: 'تحديد النيش', groupHeader_en: 'Niche Selection' },
+      { key: 'costBrandNamingStudio', label_en: 'Brand Naming Studio', label_ar: 'استوديو ابتكار الأسماء', defaultCost: 25, groupHeader_ar: 'بناء واستوديو الهوية', groupHeader_en: 'Identity Studio' },
+      { key: 'costVisualIdentity', label_en: 'Visual Identity', label_ar: 'الهوية البصرية', defaultCost: 35, groupHeader_ar: 'بناء واستوديو الهوية', groupHeader_en: 'Identity Studio' }
+    ]
+  },
+  { 
+    id: 'website-construction', label_ar: 'بناء وتجهيز الموقع', label_en: 'Website Setup & Build', icon: Monitor, section: 'tools', group_ar: 'بناء وتجهيز المتجر', group_en: 'Store Setup',
+    liveAiFeatures: [
+      { key: 'costWebsiteConstruction', label_en: 'Smart Website Builder', label_ar: 'المبني الذكي للموقع', defaultCost: 50 }
+    ]
+  },
+  { 
+    id: 'landing-page-content', label_ar: 'محتوى الموقع', label_en: 'Page Content', icon: FileText, section: 'tools', group_ar: 'بناء وتجهيز المتجر', group_en: 'Store Setup',
+    liveAiFeatures: [
+      { key: 'costLandingPageContent', label_en: 'Generate Page Content', label_ar: 'توليد محتوى الصفحة', defaultCost: 30 }
+    ]
+  },
+  { id: 'legal-pages', label_ar: 'الصفحات القانونية', label_en: 'Legal Pages', icon: Scale, section: 'tools', group_ar: 'بناء وتجهيز المتجر', group_en: 'Store Setup' },
+  { id: 'social-integration', label_ar: 'ربط السوشيال', label_en: 'Social Integration', icon: Link, section: 'tools', group_ar: 'بناء وتجهيز المتجر', group_en: 'Store Setup' },
+  { id: 'email-setup', label_ar: 'التسويق عبر الإيميل', label_en: 'Email Marketing', icon: Mail, section: 'tools', group_ar: 'بناء وتجهيز المتجر', group_en: 'Store Setup' },
+  { 
+    id: 'product-source', label_ar: 'مصدر المنتج', label_en: 'Product Source', icon: Package, section: 'tools', group_ar: 'المنتج والربحية', group_en: 'Product & Profit',
+    liveAiFeatures: [
+      { key: 'costProductSource', label_en: 'Etsy Top Ideas Generate', label_ar: 'توليد أفكار المنتجات', defaultCost: 20 },
+      { key: 'costBuildMyVersion', label_en: 'Build My Version', label_ar: 'إنشاء نسختي', defaultCost: 10 }
+    ]
+  },
+  { 
+    id: 'profit-calculator', label_ar: 'حاسبة الأرباح', label_en: 'Profit Calculator', icon: Calculator, section: 'tools', group_ar: 'المنتج والربحية', group_en: 'Product & Profit',
+    liveAiFeatures: [
+      { key: 'costDailyFunnel', label_en: 'Daily Funnel Engine', label_ar: 'محرك القمع اليومي', defaultCost: 10 },
+      { key: 'costMonthlyGoalPlanner', label_en: 'Monthly Goal Planner', label_ar: 'مخطط الأهداف الشهرية', defaultCost: 10 }
+    ]
+  },
+  { 
+    id: 'social-media', label_ar: 'منصة السوشيال ميديا', label_en: 'Social Media', icon: Share2, section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing',
+    liveAiFeatures: [
+      { key: 'costScriptWriter', label_en: 'Script Writer', label_ar: 'كاتب السكريبت', defaultCost: 15 },
+      { key: 'costCaptionGenerator', label_en: 'Caption Generator', label_ar: 'كاتب الكابشن', defaultCost: 10 },
+      { key: 'costViralReels', label_en: 'Viral Reels Studio', label_ar: 'استوديو الريلز', defaultCost: 20 },
+      { key: 'costContentRepurposer', label_en: 'Content Rewriter', label_ar: 'إعادة صياغة المحتوى', defaultCost: 10 },
+      { key: 'costQaGenerator', label_en: 'Q&A Generator', label_ar: 'توليد الأسئلة والأجوبة', defaultCost: 10 },
+      { key: 'costIdeaLab', label_en: 'Idea Lab', label_ar: 'مختبر الأفكار', defaultCost: 15 },
+      { key: 'costTrends', label_en: 'Trends Tracker', label_ar: 'متتبع التريندات', defaultCost: 15 },
+      { key: 'costSocialMedia', label_en: 'General Social AI', label_ar: 'الذكاء العام للسوشيال', defaultCost: 3 }
+    ]
+  },
+  { 
+    id: 'marketing-plan', label_ar: 'مخطط الحملات', label_en: 'Campaign planner', icon: Map, section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing',
+    liveAiFeatures: [
+      { key: 'costMarketingPlan', label_en: 'Generate Marketing Plan', label_ar: 'توليد خطة التسويق', defaultCost: 35 }
+    ]
+  },
+  { 
+    id: 'ad-creative', label_ar: 'أفكار الإعلانات', label_en: 'Ad Creative', icon: Film, section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing',
+    liveAiFeatures: [
+      { key: 'costAdCreative', label_en: 'Generate Ad Ideas', label_ar: 'توليد أفكار الإعلانات', defaultCost: 25 }
+    ]
+  },
+  { id: 'campaign-launch', label_ar: 'إطلاق الحملة', label_en: 'Campaign Launch', icon: Rocket, section: 'tools', group_ar: 'المحتوى والتسويق', group_en: 'Content & Marketing' },
+  { 
+    id: 'smart-ai-assistant', label_ar: 'المساعد الذكي', label_en: 'AI Assistant', icon: Bot, section: 'tools', group_ar: 'إدارة وتشغيل', group_en: 'Management & Ops',
+    liveAiFeatures: [
+      { key: 'costSmartAiAssistant', label_en: 'General AI Queries', label_ar: 'استفسارات الذكاء الاصطناعي', defaultCost: 5 }
+    ]
+  },
+  { id: 'external-tools', label_ar: 'أدوات خارجية', label_en: 'External Tools', icon: Globe, section: 'tools', group_ar: 'إدارة وتشغيل', group_en: 'Management & Ops' },
 ];
 
 export const TOOLS_CONTENT = {

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Navigate } from 'react-router-dom';
 import { TOOLS_CONTENT } from '../../data/toolsData';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { db } from '../../firebase';
 import './ToolPage.css';
 
@@ -25,14 +26,6 @@ import ContentFactory from './components/ContentFactory';
 import MarketingPlan from './components/MarketingPlan';
 import AdCreative from './components/AdCreative';
 import CampaignLaunch from './components/CampaignLaunch';
-import PlatformRadar from './components/PlatformRadar';
-import FreelancePricing from './components/FreelancePricing';
-import SkillsCrafter from './components/SkillsCrafter';
-import PortfolioBuilder from './components/PortfolioBuilder';
-import ProposalSniper from './components/ProposalSniper';
-import InterviewPrep from './components/InterviewPrep';
-import SalesTemplates from './components/SalesTemplates';
-import FreelanceProfile from './components/FreelanceProfile';
 import SmartAIAssistant from './components/SmartAIAssistant';
 import BrandLibrary from './components/BrandLibrary';
 import SmartNotebook from './components/SmartNotebook';
@@ -43,6 +36,7 @@ export default function ToolPage() {
   const { toolId } = useParams();
   const { state, dispatch } = useApp();
   const { userData, brandData } = useAuth();
+  const toast = useToast();
   const lang = state.language || 'ar';
   const [content, setContent] = useState(null);
   const [adminPhone, setAdminPhone] = useState('');
@@ -96,60 +90,87 @@ export default function ToolPage() {
     fetchAdminPhone();
   }, [userData, brandData]);
 
-  const isTrial = userData?.subscription?.type === 'trial';
-  const allowedTools = userData?.freeTrialSettings?.allowedTools || brandData?.freeTrialSettings?.allowedTools || [];
-  const isLocked = isTrial && normalizedId !== 'onboarding' && (
-    allowedTools.length > 0 ? !allowedTools.includes(normalizedId) : false
-  );
+  // ── UNIVERSAL PERMISSION GUARD ──────────────────────────────────────────────
+  // STRICT SEPARATION: Trial Users vs Paid Plan Users
+  const resolveAllowedTools = () => {
+    const rootPlanId = userData?.planId;
+    const subPlanId = userData?.subscription?.planId;
+    
+    const isValidId = (id) => id && id !== "free_trial" && id !== "trial" && id !== "free";
+    
+    const hasValidPaidPlan = 
+      isValidId(rootPlanId) || 
+      isValidId(subPlanId) || 
+      (userData?.subscription?.status === 'active' && userData?.subscription?.type !== 'trial');
+    
+    // User is ONLY trial if they don't have a valid paid plan AND their sub/plan indicates trial
+    const isTrial = !hasValidPaidPlan && (
+      userData?.subscription?.type === "trial" ||
+      !rootPlanId ||
+      rootPlanId === "free_trial" ||
+      rootPlanId === "trial" ||
+      rootPlanId === "free" ||
+      userData?.isTrial === true
+    );
+
+    const activePlanId = isValidId(rootPlanId) ? rootPlanId : (isValidId(subPlanId) ? subPlanId : null);
+
+    console.log("[Auth/Permissions - ToolPage] Active Plan ID:", activePlanId, "| Computed isTrial:", isTrial);
+    
+    if (isTrial) {
+      // 1. FREE TRIAL LOGIC (Strictly for Trial Users)
+      // Read from LIVE brandData root first to avoid stale user cache
+      const trialTools =
+        brandData?.freeTrialSettings?.allowedTools ||
+        userData?.freeTrialSettings?.allowedTools;
+      
+      if (Array.isArray(trialTools)) return trialTools;
+    } else {
+      // 2. PAID PLAN LOGIC (Strictly for Paid/Lifetime Users)
+      // Live lookup against brandData FIRST for instant plan updates
+      if (activePlanId && Array.isArray(brandData?.plans)) {
+        const matchedPlan = brandData.plans.find(
+          (p) => String(p.id) === String(activePlanId)
+        );
+        if (matchedPlan && Array.isArray(matchedPlan.allowedTools)) {
+          return matchedPlan.allowedTools;
+        }
+      }
+      // Fallback to snapshot on user doc
+      if (Array.isArray(userData?.allowedTools)) {
+        return userData.allowedTools;
+      }
+      // Read from embedded subscription snapshot
+      if (Array.isArray(userData?.subscription?.allowedTools)) {
+        return userData.subscription.allowedTools;
+      }
+    }
+    return null; // null = no restrictions defined
+  };
+
+  const resolvedAllowedTools = resolveAllowedTools();
+  
+  // Strict Lock Enforcement: If not explicitly allowed, it MUST be locked.
+  const isAllowed = Array.isArray(resolvedAllowedTools) && resolvedAllowedTools.includes(normalizedId);
+  const isLocked = !isAllowed;
+
+  console.log('[ToolPage] toolId:', normalizedId, '| resolvedAllowedTools:', resolvedAllowedTools, '| isLocked:', isLocked);
+
+  useEffect(() => {
+    if (isLocked) {
+      toast(
+        lang === 'en'
+          ? "🔒 This tool is not included in your current plan. Please upgrade!"
+          : "🔒 هذه الأداة غير متاحة في باقتك الحالية. يرجى ترقية الباقة!",
+        "error"
+      );
+    }
+  }, [isLocked, lang, toast]);
 
   if (isLocked) {
-    return (
-      <div className="tool-page-container">
-        <div className="whatsapp-lock-overlay">
-          <div className="whatsapp-lock-card">
-            <div className="whatsapp-lock-icon">🔒</div>
-            <h3>{lang === 'ar' ? 'هذه الأداة مغلقة في النسخة التجريبية' : 'This Tool is Locked in Free Trial'}</h3>
-            <p>
-              {lang === 'ar' 
-                ? 'للوصول إلى هذه الأداة وجميع مميزات المنصة الكاملة، يرجى الترقية والاشتراك.' 
-                : 'To access this tool and all full platform features, please upgrade and subscribe.'}
-            </p>
-            {adminPhone && (
-              <a 
-                href={`https://wa.me/${adminPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(lang === 'ar' ? `مرحباً، أود الترقية والاشتراك في المنصة (اسم البراند: ${adminBrandName})` : `Hello, I would like to upgrade my subscription (Brand: ${adminBrandName})`)}`}
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="whatsapp-lock-btn"
-              >
-                <span>💬</span>
-                {lang === 'ar' ? 'الاشتراك عن طريق الواتساب' : 'Subscribe via WhatsApp'}
-              </a>
-            )}
-            
-            <button 
-              onClick={() => setIsPaymentModalOpen(true)}
-              className="btn btn-primary" 
-              style={{ width: '100%', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '14px', borderRadius: '12px' }}
-            >
-              <span>💳</span>
-              {lang === 'ar' ? 'الدفع والاشتراك (المحافظ الإلكترونية)' : 'Pay and Subscribe (E-Wallets)'}
-            </button>
-          </div>
-        </div>
-
-        <PaymentModal 
-          isOpen={isPaymentModalOpen}
-          onClose={() => setIsPaymentModalOpen(false)}
-          paymentMethods={brandData?.paymentMethods || {}}
-          plans={brandData?.plans || []}
-          userData={userData}
-          adminUid={adminUid}
-          adminBrandName={adminBrandName}
-          lang={lang}
-        />
-      </div>
-    );
+    return <Navigate to="/dashboard/subscription" replace />;
   }
+
 
   // Exact Components Mapping (From tools.html)
   const toolComponents = {
@@ -172,14 +193,7 @@ export default function ToolPage() {
     'ad-creative': <AdCreative stepNumber={21} />,
     'campaign-launch': <CampaignLaunch stepNumber={22} />,
     'smart-ai-assistant': <SmartAIAssistant stepNumber={23} />,
-    'freelance-profile': <FreelanceProfile stepNumber={24} />,
-    'platform-radar': <PlatformRadar stepNumber={25} />,
-    'freelance-pricing': <FreelancePricing stepNumber={26} />,
-    'skills-crafting': <SkillsCrafter stepNumber={27} />,
-    'portfolio-builder': <PortfolioBuilder stepNumber={28} />,
-    'proposal-sniper': <ProposalSniper stepNumber={29} />,
-    'interview-prep': <InterviewPrep stepNumber={30} />,
-    'sales-templates': <SalesTemplates stepNumber={31} />,
+
     'brand-library': <BrandLibrary />,
     'smart-notebook': <SmartNotebook />,
     'external-tools': <ExternalTools />,

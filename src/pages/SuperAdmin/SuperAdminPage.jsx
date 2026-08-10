@@ -456,7 +456,15 @@ export default function SuperAdminPage() {
       });
       if (role === "admin") {
         await setDoc(doc(db, "brands", brandName.trim()), {
-          logoUrl: brandLogoUrl || null
+          logoUrl: brandLogoUrl || null,
+          publicPaymentMethods: {
+            stripe: { enabled: false, publishableKey: "", paymentLink: "", paymentLinkAnnual: "" },
+            manualMethods: [
+              { id: "def-1", name: "Vodafone Cash / فودافون كاش", value: "" },
+              { id: "def-2", name: "InstaPay / انستا باي", value: "" },
+              { id: "def-3", name: "Bank Transfer / تحويل بنكي", value: "" }
+            ]
+          }
         }, { merge: true });
       }
 

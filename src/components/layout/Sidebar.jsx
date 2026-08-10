@@ -43,6 +43,7 @@ import {
   PanelLeftOpen,
   UserCheck,
   ExternalLink,
+  Crown,
 } from "lucide-react";
 import "./Sidebar.css";
 
@@ -59,15 +60,7 @@ const STEP_ICON_MAP = {
   "content-factory": Video,
   "marketing-plan": TrendingUp,
   "ad-creative": Megaphone,
-  "proposal-sniper": Send,
-  "platform-radar": Radar,
-  "skills-crafter": Zap,
-  "skills-crafting": Zap,
-  "interview-prep": Users,
-  "sales-templates": MessageSquare,
-  "freelance-pricing": Calculator,
-  "portfolio-builder": Briefcase,
-  "freelance-profile": UserCheck,
+
   "smart-ai-assistant": Bot,
   "profit-calculator": DollarSign,
   "social-presence": Share2,
@@ -78,6 +71,7 @@ const STEP_ICON_MAP = {
   "external-tools": ExternalLink,
   settings: Settings,
   tutorial: PlayCircle,
+  subscription: Crown,
 };
 
 export default function Sidebar({ isCollapsed, setIsCollapsed }) {
@@ -129,24 +123,89 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
     }));
   };
 
-  const isTrial = userData?.subscription?.type === "trial";
-  const allowedTools =
-    userData?.freeTrialSettings?.allowedTools ||
-    brandData?.freeTrialSettings?.allowedTools ||
-    [];
+  // ── PERMISSION RESOLUTION ──────────────────────────────────────────────────
+  // STRICT SEPARATION: Trial Users vs Paid Plan Users
+  const resolveAllowedTools = () => {
+    const rootPlanId = userData?.planId;
+    const subPlanId = userData?.subscription?.planId;
+    
+    const isValidId = (id) => id && id !== "free_trial" && id !== "trial" && id !== "free";
+    
+    const hasValidPaidPlan = 
+      isValidId(rootPlanId) || 
+      isValidId(subPlanId) || 
+      (userData?.subscription?.status === 'active' && userData?.subscription?.type !== 'trial');
+    
+    // User is ONLY trial if they don't have a valid paid plan AND their sub/plan indicates trial
+    const isTrial = !hasValidPaidPlan && (
+      userData?.subscription?.type === "trial" ||
+      !rootPlanId ||
+      rootPlanId === "free_trial" ||
+      rootPlanId === "trial" ||
+      rootPlanId === "free" ||
+      userData?.isTrial === true
+    );
+
+    const activePlanId = isValidId(rootPlanId) ? rootPlanId : (isValidId(subPlanId) ? subPlanId : null);
+    
+    console.log("[Auth/Permissions - Sidebar] Active Plan ID:", activePlanId, "| Computed isTrial:", isTrial);
+
+    if (isTrial) {
+      // 1. FREE TRIAL LOGIC (Strictly for Trial Users)
+      // Read from LIVE brandData root first to avoid stale user cache
+      const trialTools =
+        brandData?.freeTrialSettings?.allowedTools ||
+        userData?.freeTrialSettings?.allowedTools;
+      
+      if (Array.isArray(trialTools)) return trialTools;
+    } else {
+      // 2. PAID PLAN LOGIC (Strictly for Paid/Lifetime Users)
+      // Live lookup against brandData FIRST for instant plan updates
+      if (activePlanId && Array.isArray(brandData?.plans)) {
+        const matchedPlan = brandData.plans.find(
+          (p) => String(p.id) === String(activePlanId)
+        );
+        if (matchedPlan && Array.isArray(matchedPlan.allowedTools)) {
+          return matchedPlan.allowedTools;
+        }
+      }
+      // Fallback to snapshot on user doc
+      if (Array.isArray(userData?.allowedTools)) {
+        return userData.allowedTools;
+      }
+      // Read from embedded subscription snapshot
+      if (Array.isArray(userData?.subscription?.allowedTools)) {
+        return userData.subscription.allowedTools;
+      }
+    }
+    return null; // null = no restrictions defined
+  };
+
+  const currentAllowedTools = resolveAllowedTools();
+
+  // ── DEBUG LOG (remove after confirming fix) ────────────────────────────────
+  console.log("[Sidebar] userData.planId:", userData?.planId);
+  console.log("[Sidebar] resolved allowedTools:", currentAllowedTools);
 
   const isStepLocked = (stepId) => {
     if (stepId === "onboarding") return false;
-    if (!isTrial) return false;
-    if (stepId === "analysis-identity") {
-      return (
-        !allowedTools.includes("analysis-identity") &&
-        !allowedTools.includes("niche-selection") &&
-        !allowedTools.includes("brand-naming") &&
-        !allowedTools.includes("visual-identity")
-      );
-    }
-    return !allowedTools.includes(stepId);
+    
+    // Strict Lock Enforcement: If not explicitly allowed, it MUST be locked.
+    const isAllowed = Array.isArray(currentAllowedTools) && (() => {
+      // Custom condition for Identity group
+      if (stepId === "analysis-identity") {
+        return (
+          currentAllowedTools.includes("analysis-identity") ||
+          currentAllowedTools.includes("niche-selection") ||
+          currentAllowedTools.includes("brand-naming") ||
+          currentAllowedTools.includes("visual-identity")
+        );
+      }
+      return currentAllowedTools.includes(stepId);
+    })();
+
+    const isLocked = !isAllowed;
+    return isLocked;
   };
 
   const handleNav = (stepId, isTool = false) => {
@@ -177,7 +236,8 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
       lang === "en" && step.label_en
         ? step.label_en
         : step.label_ar || step.label;
-    const isLocked = isStepLocked(step.id);
+    const isLocked = step.id === "subscription" ? false : isStepLocked(step.id);
+    console.log(`[Sidebar] item "${step.id}" → isLocked:`, isLocked);
 
     const IconComponent = STEP_ICON_MAP[step.id] || Sparkles;
 
@@ -197,10 +257,11 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
             if (isLocked) {
               toast(
                 lang === "en"
-                  ? "Sorry, this tool is locked during the free trial."
-                  : "عذراً، هذه الأداة غير متاحة في الفترة المجانية.",
+                  ? "🔒 This tool is not included in your current plan. Please upgrade your plan to access it!"
+                  : "🔒 هذه الأداة غير متاحة في باقتك الحالية. يرجى ترقية الباقة للوصول إليها!",
                 "warning",
               );
+              navigate("/dashboard/subscription");
               return;
             }
             handleNav(
@@ -221,7 +282,11 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
             )}
           </div>
 
-          {!isCollapsed && <span className="nav-item-label">{label}</span>}
+          {!isCollapsed && (
+            <span className="nav-item-label" style={{ display: 'flex', alignItems: 'center' }}>
+              {label} {isLocked && <Lock size={12} style={{ marginInlineStart: '6px', opacity: 0.7 }} />}
+            </span>
+          )}
         </motion.div>
 
         {/* Collapsed Mode Floating Tooltip */}
@@ -411,6 +476,13 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
             id: "tutorial",
             label_ar: "فيديو الشرح",
             label_en: "Tutorial",
+            section: "",
+          })}
+
+          {renderNavItem({
+            id: "subscription",
+            label_ar: "ترقية الباقة",
+            label_en: "Upgrade Plan",
             section: "",
           })}
 

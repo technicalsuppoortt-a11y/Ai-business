@@ -88,9 +88,50 @@ export default function DashboardNavbar({
   const displayName = userData?.ownerName || userData?.brandName || state.user.name || (lang === 'en' ? 'User' : 'مستخدم');
   const displayEmail = userData?.email || '';
 
-  const isTrial = userData?.subscription?.type === 'trial';
-  const allowedTools = userData?.freeTrialSettings?.allowedTools || [];
-  const isNotebookLocked = isTrial && !allowedTools.includes('smart-notebook');
+  // ── UNIVERSAL PERMISSION GUARD ──────────────────────────────────────────────
+  const resolveAllowedTools = () => {
+    const rootPlanId = userData?.planId;
+    const subPlanId = userData?.subscription?.planId;
+    
+    const isValidId = (id) => id && id !== "free_trial" && id !== "trial" && id !== "free";
+    
+    const hasValidPaidPlan = 
+      isValidId(rootPlanId) || 
+      isValidId(subPlanId) || 
+      (userData?.subscription?.status === 'active' && userData?.subscription?.type !== 'trial');
+    
+    const isTrial = !hasValidPaidPlan && (
+      userData?.subscription?.type === "trial" ||
+      !rootPlanId ||
+      rootPlanId === "free_trial" ||
+      rootPlanId === "trial" ||
+      rootPlanId === "free" ||
+      userData?.isTrial === true
+    );
+
+    const activePlanId = isValidId(rootPlanId) ? rootPlanId : (isValidId(subPlanId) ? subPlanId : null);
+
+    if (isTrial) {
+      // Read from LIVE brandData root first to avoid stale user cache
+      const trialTools = brandData?.freeTrialSettings?.allowedTools || userData?.freeTrialSettings?.allowedTools;
+      if (Array.isArray(trialTools)) return trialTools;
+    } else {
+      if (activePlanId && Array.isArray(brandData?.plans)) {
+        const matchedPlan = brandData.plans.find((p) => String(p.id) === String(activePlanId));
+        if (matchedPlan && Array.isArray(matchedPlan.allowedTools)) return matchedPlan.allowedTools;
+      }
+      if (Array.isArray(userData?.allowedTools)) return userData.allowedTools;
+      if (Array.isArray(userData?.subscription?.allowedTools)) return userData.subscription.allowedTools;
+    }
+    return null;
+  };
+
+  const resolvedAllowedTools = resolveAllowedTools();
+  
+  // Strict Lock Enforcement: If not explicitly allowed, it MUST be locked.
+  const isAllowed = Array.isArray(resolvedAllowedTools) && resolvedAllowedTools.includes('smart-notebook');
+  const isNotebookLocked = !isAllowed;
+  const computedIsTrial = !userData?.planId || userData?.planId === "free" || userData?.planId === "trial" || userData?.subscription?.type === 'trial';
 
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
@@ -153,11 +194,8 @@ export default function DashboardNavbar({
           {(() => {
             const rawCredits = typeof userData?.credits === 'object' ? (userData?.credits?.credits ?? 0) : (userData?.credits ?? 0);
             const currentCredits = typeof rawCredits === 'number' ? rawCredits : (Number(rawCredits) || 0);
-            const hasPersonalKey = !!userData?.personalOpenAiKey;
             if (currentCredits > 0) {
               return <span className="btn-label">🟢 {lang === 'en' ? 'Admin Key' : 'مفتاح المسؤول'}</span>;
-            } else if (hasPersonalKey) {
-              return <span className="btn-label">🟡 {lang === 'en' ? 'Personal Key' : 'مفتاح شخصي'}</span>;
             } else {
               return <span className="btn-label">🔴 {lang === 'en' ? 'No Credits' : 'نفد الرصيد'}</span>;
             }
@@ -176,7 +214,7 @@ export default function DashboardNavbar({
               const rawCredits = typeof userData?.credits === 'object' ? (userData?.credits?.credits ?? 0) : (userData?.credits ?? 0);
               const currentCredits = typeof rawCredits === 'number' ? rawCredits : (Number(rawCredits) || 0);
               const plans = brandData?.plans || [];
-              const currentPlan = plans.find(p => String(p.id) === String(userData?.planId));
+              const currentPlan = plans.find(p => String(p.id) === String(userData?.subscription?.planId || userData?.planId));
               const totalCredits = userData?.totalCredits ?? (currentPlan ? Number(currentPlan.creditsPerMonth || 0) : currentCredits);
               return `${currentCredits} / ${totalCredits}`;
             })()} {lang === 'en' ? 'Credits' : 'رصيد'}
@@ -190,7 +228,7 @@ export default function DashboardNavbar({
           style={{ cursor: 'default' }}
         >
           <span className="btn-label" style={{ textTransform: 'capitalize' }}>
-            {userData?.planName || (lang === 'en' ? 'Free Plan' : 'خطة مجانية')}
+            {userData?.subscription?.planName || userData?.planName || (lang === 'en' ? 'Free Plan' : 'خطة مجانية')}
           </span>
         </div>
 
@@ -201,9 +239,9 @@ export default function DashboardNavbar({
             if (isNotebookLocked) {
               toast(
                 lang === 'en' 
-                  ? 'Smart Notebook is locked during free trial.' 
-                  : 'دفتر الملاحظات غير متاح في الفترة المجانية.',
-                'warning'
+                  ? 'Smart Notebook is not included in your current plan. Please upgrade!' 
+                  : 'دفتر الملاحظات غير متاح في باقتك الحالية. يرجى ترقية الباقة!',
+                'error'
               );
               return;
             }

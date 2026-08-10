@@ -71,12 +71,18 @@ export function AuthProvider({ children }) {
               unsubscribeBrand = onSnapshot(doc(db, 'brands', data.brandName), (bSnap) => {
                 if (bSnap.exists()) setBrandData(bSnap.data());
                 else setBrandData({ name: data.brandName, themeConfig: data.themeConfig || null });
+                setLoadingUser(false);
+              }, (error) => {
+                console.error("Brand snapshot error:", error);
+                setLoadingUser(false);
               });
+            } else {
+              setLoadingUser(false);
             }
           } else {
             setUserData({ uid: firebaseUser.uid, email: firebaseUser.email, role: 'user' });
+            setLoadingUser(false);
           }
-          setLoadingUser(false);
         }, (error) => {
           console.error('User Firestore snapshot error:', error);
           setUserData({ uid: firebaseUser.uid, email: firebaseUser.email, role: 'user' });

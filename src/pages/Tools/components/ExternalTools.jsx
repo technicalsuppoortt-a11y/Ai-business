@@ -723,12 +723,12 @@ export default function ExternalTools() {
                   <span className="et-cat-badge">
                     {CATEGORIES_META[tool.category]?.[lang] || tool.category}
                   </span>
-                  {tool.id === "upklick" && (
+                  {/* {tool.id === "upklick" && (
                     <span className="et-featured-badge">
                       ★{" "}
                       {lang === "en" ? "Featured Platform" : "منصتنا المتميزة"}
                     </span>
-                  )}
+                  )} */}
                 </div>
 
                 <div className="et-card-inner">

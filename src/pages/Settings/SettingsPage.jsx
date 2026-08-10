@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
@@ -82,6 +83,61 @@ export default function SettingsPage() {
   const lang = state.language || 'ar';
   const isRtl = lang === 'ar';
 
+  // ── UNIVERSAL PERMISSION GUARD ──────────────────────────────────────────────
+  const resolveAllowedTools = () => {
+    const rootPlanId = userData?.planId;
+    const subPlanId = userData?.subscription?.planId;
+    
+    const isValidId = (id) => id && id !== "free_trial" && id !== "trial" && id !== "free";
+    
+    const hasValidPaidPlan = 
+      isValidId(rootPlanId) || 
+      isValidId(subPlanId) || 
+      (userData?.subscription?.status === 'active' && userData?.subscription?.type !== 'trial');
+    
+    const isTrial = !hasValidPaidPlan && (
+      userData?.subscription?.type === "trial" ||
+      !rootPlanId ||
+      rootPlanId === "free_trial" ||
+      rootPlanId === "trial" ||
+      rootPlanId === "free" ||
+      userData?.isTrial === true
+    );
+
+    const activePlanId = isValidId(rootPlanId) ? rootPlanId : (isValidId(subPlanId) ? subPlanId : null);
+
+    if (isTrial) {
+      // Read from LIVE brandData root first to avoid stale user cache
+      const trialTools = brandData?.freeTrialSettings?.allowedTools || userData?.freeTrialSettings?.allowedTools;
+      if (Array.isArray(trialTools)) return trialTools;
+    } else {
+      if (activePlanId && Array.isArray(brandData?.plans)) {
+        const matchedPlan = brandData.plans.find((p) => String(p.id) === String(activePlanId));
+        if (matchedPlan && Array.isArray(matchedPlan.allowedTools)) return matchedPlan.allowedTools;
+      }
+      if (Array.isArray(userData?.allowedTools)) return userData.allowedTools;
+      if (Array.isArray(userData?.subscription?.allowedTools)) return userData.subscription.allowedTools;
+    }
+    return null;
+  };
+
+  const resolvedAllowedTools = resolveAllowedTools();
+  
+  // Strict Lock Enforcement: If not explicitly allowed, it MUST be locked.
+  const isAllowed = Array.isArray(resolvedAllowedTools) && resolvedAllowedTools.includes('settings');
+  const isLocked = !isAllowed;
+
+  useEffect(() => {
+    if (isLocked) {
+      toast(lang === 'en' ? "🔒 Settings are not included in your current plan. Please upgrade!" : "🔒 الإعدادات غير متاحة في باقتك الحالية. يرجى ترقية الباقة!", "error");
+    }
+  }, [isLocked, lang, toast]);
+
+  if (isLocked) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   // Navigation Tab State (Only 2 Tabs)
   const [activeTab, setActiveTab] = useState('account'); // 'account' | 'ai'
 
@@ -97,8 +153,6 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   // AI Key & Engine State
-  const [apiKeyInput, setApiKeyInput] = useState(state.apiKey || '');
-  const [showApiKey, setShowApiKey] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   useEffect(() => {
@@ -109,46 +163,10 @@ export default function SettingsPage() {
       setDefaultLanguage(userData.defaultLanguage || 'ar');
       setLogoDisplayMode(userData.logoDisplayMode || 'both');
       setShowWhatsappLoginBtn(userData.showWhatsappLoginBtn !== false);
-      setApiKeyInput(userData.personalOpenAiKey || '');
     }
   }, [userData]);
 
-  // Save API Key Handler
-  const handleSaveApiKey = async () => {
-    const key = apiKeyInput.trim();
-    if (!key) return toast(lang === 'en' ? 'Please enter the API key first' : 'يرجى إدخال المفتاح أولاً', 'error');
-    if (!userData?.uid) return;
-    try {
-      const userRef = doc(db, 'users', userData.uid);
-      await updateDoc(userRef, { personalOpenAiKey: key });
-      localStorage.setItem('user_openai_api_key', key);
-      toast(lang ==='en' ?'API Key saved successfully' :'تم حفظ المفتاح الخاص بنجاح','success');
-    } catch (err) {
-      toast(lang === 'en' ? 'Error saving API key' : 'حدث خطأ أثناء حفظ المفتاح', 'error');
-    }
-  };
 
-  // Remove API Key Handler
-  const handleRemoveApiKey = async () => {
-    if (!userData?.uid) return;
-    try {
-      const userRef = doc(db, 'users', userData.uid);
-      await updateDoc(userRef, { personalOpenAiKey: '' });
-      localStorage.removeItem('app_api_key');
-      localStorage.removeItem('user_openai_api_key');
-      setApiKeyInput('');
-      toast(lang ==='en' ?'API Key removed successfully ️' :'تم إزالة المفتاح الخاص بنجاح ️','info');
-    } catch (err) {
-      toast(lang === 'en' ? 'Error removing API key' : 'حدث خطأ أثناء إزالة المفتاح', 'error');
-    }
-  };
-
-  // Copy API Key
-  const handleCopyKey = () => {
-    if (!apiKeyInput) return;
-    navigator.clipboard.writeText(apiKeyInput);
-    toast(lang ==='en' ?'API Key copied to clipboard' :'تم نسخ المفتاح إلى الحافظة','success');
-  };
 
   // Profile Form Save Handler
   const handleSaveProfile = async () => {
@@ -178,10 +196,9 @@ export default function SettingsPage() {
   // Calculate Settings Completion Percentage
   const calculateCompletion = () => {
     let score = 0;
-    if (ownerName) score += 25;
-    if (brandName) score += 25;
-    if (email) score += 25;
-    if (apiKeyInput) score += 25;
+    if (ownerName) score += 33;
+    if (brandName) score += 33;
+    if (email) score += 34;
     return score;
   };
 
@@ -257,7 +274,7 @@ export default function SettingsPage() {
           </button>
           <button className={`tab-nav-btn ${activeTab === 'ai' ? 'active' : ''}`} onClick={() => setActiveTab('ai')}>
             <Cpu size={18} />
-            <span>{lang === 'en' ? 'AI Engine & Gemini API Keys' : 'الذكاء الاصطناعي والمفاتيح'}</span>
+            <span>{lang === 'en' ? 'AI Engine & Usage' : 'الذكاء الاصطناعي والاستخدام'}</span>
           </button>
         </div>
 
@@ -481,84 +498,6 @@ export default function SettingsPage() {
                   }}></div>
                 </div>
 
-                {((typeof userData?.credits === 'object' ? userData.credits.credits : userData?.credits) || 0) === 0 && (
-                  <div style={{ color: "var(--red)", fontSize: "12px", fontWeight: "600", background: "rgba(239, 68, 68, 0.1)", padding: "10px", borderRadius: "8px" }}>
-                    {lang === 'en' ? '⚠️ Monthly Credits Exhausted. Add your Personal OpenAI API Key below to continue using tools.' : '⚠️ لقد استنفدت رصيدك الشهري. يرجى إضافة مفتاح OpenAI API الخاص بك بالأسفل للاستمرار.'}
-                  </div>
-                )}
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 className="panel-header-title">
-                  <Cpu size={22} color="#10B981" />
-                  <span>{lang === 'en' ? 'AI Engine & OpenAI API Keys' : 'مفتاح الذكاء الاصطناعي (OpenAI)'}</span>
-                </h3>
-                <span className={`status-tag ${apiKeyInput ? 'done' : 'pending'}`}>
-                  {apiKeyInput ? (lang === 'en' ? '🟢 Key Configured' : '🟢 المفتاح مُفعّل') : (lang === 'en' ? '🔴 Missing Key' : '🔴 المفتاح غير مضاف')}
-                </span>
-              </div>
-              <p className="panel-header-sub">
-                {lang === 'en' ? 'Configure your Personal OpenAI API Key to enable real-time dynamic AI analysis once your monthly credits are exhausted.' : 'أضف مفتاح OpenAI API الخاص بك لتشغيل التحليل المباشر بعد نفاد رصيدك الشهري.'}
-              </p>
-
-              <div className="api-box-container">
-                <label className="setting-field-label" style={{ color: 'var(--text)' }}>
-                  <div className="setting-field-label-left">
-                    <KeyRound size={16} color="#6366F1" />
-                    <span>{lang === 'en' ? 'Personal OpenAI API Key' : 'مفتاح OpenAI API الخاص بك'}</span>
-                  </div>
-                </label>
-
-                <div className="key-input-wrapper">
-                  <div className="key-input-container">
-                    <input
-                      type={showApiKey ? 'text' : 'password'}
-                      className="key-input-field"
-                      value={apiKeyInput}
-                      onChange={e => setApiKeyInput(e.target.value)}
-                      placeholder="AIzaSy..."
-                    />
-                    <button className="eye-toggle-btn" onClick={() => setShowApiKey(!showApiKey)}>
-                      {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-
-                  <button className="btn-icon" onClick={handleCopyKey} title={lang === 'en' ? 'Copy Key' : 'نسخ المفتاح'}>
-                    <Copy size={14} />
-                  </button>
-
-                  {userData?.personalOpenAiKey && (
-                    <button className="btn btn-red" onClick={handleRemoveApiKey} style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
-                      {lang === 'en' ? 'Stop / Remove Key' : 'إيقاف / إزالة المفتاح'}
-                    </button>
-                  )}
-
-                  <button className="btn btn-green" onClick={handleSaveApiKey}>
-                    {lang === 'en' ? 'Save Key' : 'حفظ المفتاح'}
-                  </button>
-                </div>
-
-                {/* Expandable Guide Accordion */}
-                <div className="guide-accordion">
-                  <div className="guide-accordion-header" onClick={() => setIsGuideOpen(!isGuideOpen)}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <HelpCircle size={16} />
-                      <span>{lang === 'en' ? 'How to get an OpenAI API key?' : 'كيف تحصل على مفتاح OpenAI الخاص بك؟'}</span>
-                    </div>
-                    {isGuideOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                  </div>
-
-                  {isGuideOpen && (
-                    <div className="guide-accordion-body">
-                      <ol style={{ paddingInlineStart: 20, margin: 0 }}>
-                        <li>1. Go to <strong><a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>OpenAI Platform</a></strong> and sign in with your account.</li>
-                        <li>2. Click the <strong>"Create new secret key"</strong> button.</li>
-                        <li>3. Name your key and generate it.</li>
-                        <li>4. Copy your key (starts with sk-...), paste it into the input above, and click <strong>"Save Key"</strong>.</li>
-                      </ol>
-                    </div>
-                  )}
-                </div>
               </div>
             </motion.div>
           )}

@@ -351,7 +351,7 @@ export default function SocialMedia({ stepNumber }) {
   // ═══════════════ TAB 1: SOCIAL MEDIA ARCHITECT STATE ═══════════════
   const [platformArchitect, setPlatformArchitect] = useState("instagram");
   const [goalArchitect, setGoalArchitect] = useState("awareness");
-  const [isNewlyGenerated, setIsNewlyGenerated] = useState(false);
+  const [isLiveGenerating, setIsLiveGenerating] = useState(false);
   const [isGeneratingArchitect, setIsGeneratingArchitect] = useState(false);
   const [resultArchitect, setResultArchitect] = useState("");
   const [matrixData, setMatrixData] = useState(null);
@@ -366,6 +366,14 @@ export default function SocialMedia({ stepNumber }) {
 
   // ═══════════════ TAB 2: THE 8 CONTENT FACTORY TOOLS STATE ═══════════════
   const [activeSubTool, setActiveSubTool] = useState("script-writer");
+
+  // Issue 1 Fix: Ensure it is false on mount, unmount, and whenever tab/tool changes
+  useEffect(() => {
+    setIsLiveGenerating(false);
+    return () => {
+      setIsLiveGenerating(false);
+    };
+  }, [activeTab, activeSubTool, toolId]);
 
   // 1. Script Writer State
   const [scriptTopic, setScriptTopic] = useState("");
@@ -523,7 +531,7 @@ export default function SocialMedia({ stepNumber }) {
     if (isLoadedFromCloud && !hydratedRef.current) {
       hydratedRef.current = true;
       if (cached) {
-        setIsNewlyGenerated(false); // Force bypass typing on load
+        setIsLiveGenerating(false); // Force bypass typing on load
         
         // Force all loading states to false
         setIsGeneratingArchitect(false);
@@ -760,7 +768,7 @@ export default function SocialMedia({ stepNumber }) {
   };
 
   const handleSubToolChange = (subToolId) => {
-    setIsNewlyGenerated(false);
+    setIsLiveGenerating(false);
     setActiveSubTool(subToolId);
   };
 
@@ -825,14 +833,15 @@ export default function SocialMedia({ stepNumber }) {
   // Tab 1 Architect Handler with Firebase persistence
   const handleGenerateArchitect = async () => {
     setIsGeneratingArchitect(true);
-    setIsNewlyGenerated(analysisMode === "live");
+    setIsLiveGenerating(analysisMode === "live");
     setResultArchitect("");
 
     try {
       let text = "";
       if (analysisMode === "live") {
-        text = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
-      toolId: "social-presence",
+        text = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid,
+          toolId: "social-presence",
+          costKey: "costSocialMedia",
           inputs: { platform: platformArchitect, goal: goalArchitect },
           context: {
             niche: nicheField || state.niche,
@@ -898,7 +907,7 @@ export default function SocialMedia({ stepNumber }) {
       return;
     }
     setIsGeneratingScript(true);
-    setIsNewlyGenerated(analysisMode === "live");
+    setIsLiveGenerating(analysisMode === "live");
     setScriptResult("");
 
     try {
@@ -908,8 +917,9 @@ export default function SocialMedia({ stepNumber }) {
         : "";
 
       if (analysisMode === "live") {
-        res = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
-      toolId: "script-writer",
+        res = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid,
+          toolId: "script-writer",
+          costKey: "costSocialMedia",
           inputs: {
             scriptTopic: scriptTopic + audioInfo,
             scriptPlatform,
@@ -982,15 +992,16 @@ export default function SocialMedia({ stepNumber }) {
       return;
     }
     setIsGeneratingCaption(true);
-    setIsNewlyGenerated(analysisMode === "live");
+    setIsLiveGenerating(analysisMode === "live");
     setCaptionResult("");
 
     try {
       let res = "";
       const attachedHashtag = activeTrendingTopic ? ` ${activeTrendingTopic}` : "";
       if (analysisMode === "live") {
-        res = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
-      toolId: "caption-generator",
+        res = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid,
+          toolId: "caption-generator",
+          costKey: "costSocialMedia",
           inputs: { captionTopic: captionTopic + attachedHashtag, captionTone, captionHook, nicheField },
           context: { niche: nicheField, user: state.user },
           lang
@@ -1042,14 +1053,15 @@ export default function SocialMedia({ stepNumber }) {
       return;
     }
     setIsGeneratingRepurpose(true);
-    setIsNewlyGenerated(analysisMode === "live");
+    setIsLiveGenerating(analysisMode === "live");
     setRepurposeResult("");
 
     try {
       let res = "";
       if (analysisMode === "live") {
-        res = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
-      toolId: "content-repurposer",
+        res = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid,
+          toolId: "content-repurposer",
+          costKey: "costSocialMedia",
           inputs: { originalContent, repurposeFormat, nicheField },
           context: { niche: nicheField, user: state.user },
           lang
@@ -1100,14 +1112,15 @@ export default function SocialMedia({ stepNumber }) {
       return;
     }
     setIsGeneratingQa(true);
-    setIsNewlyGenerated(analysisMode === "live");
+    setIsLiveGenerating(analysisMode === "live");
     setQaResult("");
 
     try {
       let res = "";
       if (analysisMode === "live") {
-        res = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
-      toolId: "qa-generator",
+        res = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid,
+          toolId: "qa-generator",
+          costKey: "costSocialMedia",
           inputs: { qaQuestion, qaTone, qaFormat, nicheField },
           context: { niche: nicheField, user: state.user },
           lang
@@ -1157,12 +1170,13 @@ export default function SocialMedia({ stepNumber }) {
   // 5. Idea Lab Handler (Strictly Bilingual EN/AR & Clean Structured Card Parsing)
   const handleGenerateIdeas = async () => {
     setIsGeneratingIdeas(true);
-    setIsNewlyGenerated(analysisMode === "live");
+    setIsLiveGenerating(analysisMode === "live");
     try {
       let newIdeas = [];
       if (analysisMode === "live") {
-        const liveRes = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
-      toolId: "idea-lab",
+        const liveRes = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid,
+          toolId: "idea-lab",
+          costKey: "costSocialMedia",
           inputs: { nicheField },
           context: { niche: nicheField, user: state.user },
           lang
@@ -1276,13 +1290,14 @@ export default function SocialMedia({ stepNumber }) {
   // 6. Trends Generator Handler (With Dual Mode Live AI / Fast & Firebase Save)
   const handleGenerateTrends = async () => {
     setIsGeneratingTrends(true);
-    setIsNewlyGenerated(analysisMode === "live");
+    setIsLiveGenerating(analysisMode === "live");
     try {
       let hashtags = [];
       let audios = [];
       if (analysisMode === "live") {
-        const liveRes = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
-      toolId: "trends",
+        const liveRes = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid,
+          toolId: "trends",
+          costKey: "costSocialMedia",
           inputs: { nicheField },
           context: { niche: nicheField, user: state.user },
           lang
@@ -1386,13 +1401,14 @@ export default function SocialMedia({ stepNumber }) {
   // 7. Viral Video Adaptation Handler (With Live AI & Firebase Persistence)
   const handleAdaptViralVideo = async (videoTitle) => {
     setIsGeneratingAdaptation(true);
-    setIsNewlyGenerated(analysisMode === "live");
+    setIsLiveGenerating(analysisMode === "live");
     setViralAdaptation("");
     try {
       let res = "";
       if (analysisMode === "live") {
-        res = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
-      toolId: "viral-vids",
+        res = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid,
+          toolId: "viral-vids",
+          costKey: "costSocialMedia",
           inputs: { videoTitle, nicheField },
           context: { niche: nicheField, user: state.user },
           lang
@@ -1592,7 +1608,11 @@ export default function SocialMedia({ stepNumber }) {
 
                 <div className="sm-showcase-content pcc-custom-scroll ai-output-scroll" style={{ maxHeight: "500px", overflowY: "auto" }}>
                   {analysisMode === "live" ? (
-                    <TypewriterText text={resultArchitect} speed={10} bypass={!isNewlyGenerated} />
+                    isLiveGenerating ? (
+                          <TypewriterText text={resultArchitect} speed={10} bypass={false} />
+                        ) : (
+                          <span style={{ whiteSpace: "pre-wrap" }}>{resultArchitect}</span>
+                        )
                   ) : (
                     resultArchitect.split("\n").map((line, i) => (
                       <p key={i} style={{ margin: "0 0 6px 0" }}>
@@ -1861,7 +1881,11 @@ export default function SocialMedia({ stepNumber }) {
                     </div>
                     <div className="sm-showcase-content pcc-custom-scroll ai-output-scroll" style={{ maxHeight: "500px", overflowY: "auto" }}>
                       {analysisMode === "live" ? (
-                        <TypewriterText text={scriptResult} speed={10} bypass={!isNewlyGenerated} />
+                        isLiveGenerating ? (
+                          <TypewriterText text={scriptResult} speed={10} bypass={false} />
+                        ) : (
+                          <span style={{ whiteSpace: "pre-wrap" }}>{scriptResult}</span>
+                        )
                       ) : (
                         scriptResult
                       )}
@@ -2247,7 +2271,11 @@ export default function SocialMedia({ stepNumber }) {
                     </div>
                     <div className="sm-showcase-content pcc-custom-scroll ai-output-scroll" style={{ maxHeight: "500px", overflowY: "auto" }}>
                       {analysisMode === "live" ? (
-                        <TypewriterText text={captionResult} speed={10} bypass={!isNewlyGenerated} />
+                        isLiveGenerating ? (
+                          <TypewriterText text={captionResult} speed={10} bypass={false} />
+                        ) : (
+                          <span style={{ whiteSpace: "pre-wrap" }}>{captionResult}</span>
+                        )
                       ) : (
                         captionResult
                       )}
@@ -2490,7 +2518,11 @@ export default function SocialMedia({ stepNumber }) {
                     </div>
                     <div className="sm-showcase-content pcc-custom-scroll ai-output-scroll" style={{ maxHeight: "500px", overflowY: "auto" }}>
                       {analysisMode === "live" ? (
-                        <TypewriterText text={repurposeResult} speed={10} bypass={!isNewlyGenerated} />
+                        isLiveGenerating ? (
+                          <TypewriterText text={repurposeResult} speed={10} bypass={false} />
+                        ) : (
+                          <span style={{ whiteSpace: "pre-wrap" }}>{repurposeResult}</span>
+                        )
                       ) : (
                         repurposeResult
                       )}
@@ -2664,7 +2696,11 @@ export default function SocialMedia({ stepNumber }) {
                     </div>
                     <div className="sm-showcase-content pcc-custom-scroll ai-output-scroll" style={{ maxHeight: "500px", overflowY: "auto" }}>
                       {analysisMode === "live" ? (
-                        <TypewriterText text={qaResult} speed={10} bypass={!isNewlyGenerated} />
+                        isLiveGenerating ? (
+                          <TypewriterText text={qaResult} speed={10} bypass={false} />
+                        ) : (
+                          <span style={{ whiteSpace: "pre-wrap" }}>{qaResult}</span>
+                        )
                       ) : (
                         qaResult
                       )}

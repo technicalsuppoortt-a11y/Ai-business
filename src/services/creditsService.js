@@ -4,11 +4,11 @@ import { doc, getDoc, updateDoc, setDoc, increment } from 'firebase/firestore';
 /**
  * Platform config document for storing Master OpenAI Key
  */
-const PLATFORM_CONFIG_REF = doc(db, 'platform', 'config');
+const PLATFORM_CONFIG_REF = doc(db, 'tenants', 'global');
 
 export async function saveAdminOpenAiKey(key) {
   try {
-    await setDoc(PLATFORM_CONFIG_REF, { adminOpenAiKey: key }, { merge: true });
+    await setDoc(PLATFORM_CONFIG_REF, { openaiApiKey: key }, { merge: true });
     return true;
   } catch (error) {
     console.error("Error saving admin key:", error);
@@ -20,7 +20,7 @@ export async function getAdminOpenAiKey() {
   try {
     const snap = await getDoc(PLATFORM_CONFIG_REF);
     if (snap.exists()) {
-      return snap.data().adminOpenAiKey || '';
+      return snap.data().openaiApiKey || '';
     }
   } catch (error) {
     console.error("Error fetching admin key:", error);
@@ -77,12 +77,12 @@ export async function getUserCredits(uid) {
   return 0; // Default if completely not found
 }
 
-export async function deductCredit(uid) {
+export async function deductCredit(uid, amount = 1) {
   if (!uid) return false;
   try {
     const userRef = doc(db, 'users', uid);
     await updateDoc(userRef, {
-      credits: increment(-1)
+      credits: increment(-amount)
     });
     return true;
   } catch (error) {
@@ -91,12 +91,12 @@ export async function deductCredit(uid) {
   }
 }
 
-export async function refundCredit(uid) {
+export async function refundCredit(uid, amount = 1) {
   if (!uid) return false;
   try {
     const userRef = doc(db, 'users', uid);
     await updateDoc(userRef, {
-      credits: increment(1)
+      credits: increment(amount)
     });
     return true;
   } catch (error) {

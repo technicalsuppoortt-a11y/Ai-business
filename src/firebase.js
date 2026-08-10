@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
@@ -13,6 +13,16 @@ const firebaseConfig = {
   measurementId: "G-WZ3K99ZS3H"
 };
 
+const receiptsFirebaseConfig = {
+  apiKey: "AIzaSyCaswftcLmfIepG_F8fzizqGXFl5mnXvj8",
+  authDomain: "aibrand-vision.firebaseapp.com",
+  projectId: "aibrand-vision",
+  storageBucket: "aibrand-vision.firebasestorage.app",
+  messagingSenderId: "36898907108",
+  appId: "1:36898907108:web:423352bb5b0f5825d65df1",
+  measurementId: "G-G0CFX66Q3V"
+};
+
 // Create 3 independent apps to allow multiple login sessions on the same domain
 const app = initializeApp(firebaseConfig);
 const adminApp = initializeApp(firebaseConfig, 'admin-portal');
@@ -20,6 +30,13 @@ const superAdminApp = initializeApp(firebaseConfig, 'superadmin-portal');
 
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+// Receipts-specific Storage Instance
+const receiptsApp = !getApps().some(a => a.name === "receiptsApp")
+  ? initializeApp(receiptsFirebaseConfig, "receiptsApp")
+  : getApp("receiptsApp");
+
+export const receiptsStorage = getStorage(receiptsApp);
 
 // Independent Auth instances
 export const auth = getAuth(app);

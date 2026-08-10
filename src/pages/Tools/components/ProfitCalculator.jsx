@@ -121,7 +121,13 @@ export default function ProfitCalculator({ stepNumber }) {
 
   // -- Accordion State --
   const [openAccordions, setOpenAccordions] = useState({ 0: true, 1: false });
-  const [isNewlyGenerated, setIsNewlyGenerated] = useState(false);
+  const [isLiveGenerating, setIsLiveGenerating] = useState(false);
+
+  // Fix Typewriter Effect on Stored Data
+  useEffect(() => {
+    setIsLiveGenerating(false);
+    return () => setIsLiveGenerating(false);
+  }, [activeMode]);
 
   // --- STATE PERSISTENCE & HYDRATION ---
   const { cachedData: cached, isLoadingCache, saveResult } = useToolCache(userData?.uid, 'profit-calculator');
@@ -146,7 +152,7 @@ export default function ProfitCalculator({ stepNumber }) {
         if (cached.customNotes) setCustomNotes(cached.customNotes);
         if (cached.monthlyPlanResult) setMonthlyPlanResult(cached.monthlyPlanResult);
         if (cached.openAccordions) setOpenAccordions(cached.openAccordions);
-        setIsNewlyGenerated(false);
+        setIsLiveGenerating(false);
       }
     }
   }, [isLoadedFromCloud, cached]);
@@ -211,8 +217,10 @@ export default function ProfitCalculator({ stepNumber }) {
 
     try {
       if (analysisMode === "live") {
+        setIsLiveGenerating(true);
         const liveResult = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
           toolId: "profit-calculator",
+          costKey: "costDailyFunnel",
           inputs: {
             salePrice,
             productCost,
@@ -227,7 +235,6 @@ export default function ProfitCalculator({ stepNumber }) {
           lang,
         });
         setAiInsights(liveResult);
-        setIsNewlyGenerated(true);
         saveResult({ activeMode, analysisMode, salePrice, productCost, dailyBudget, cpc, cvr, aiInsights: liveResult, aiInsightsMode: "live", monthlyBudget, targetMonthlyProfit, customNotes, monthlyPlanResult, openAccordions });
         dispatch({
           type: "SAVE_TOOL_RESULT",
@@ -286,7 +293,7 @@ export default function ProfitCalculator({ stepNumber }) {
             productCost: productCost.toFixed(2),
           });
           setAiInsights(text);
-          setIsNewlyGenerated(true);
+          setIsLiveGenerating(true);
           saveResult({ activeMode, analysisMode, salePrice, productCost, dailyBudget, cpc, cvr, aiInsights: text, aiInsightsMode: "fast", monthlyBudget, targetMonthlyProfit, customNotes, monthlyPlanResult, openAccordions });
           dispatch({
             type: "SAVE_TOOL_RESULT",
@@ -326,6 +333,7 @@ export default function ProfitCalculator({ stepNumber }) {
       );
     } finally {
       setIsGenerating(false);
+      setIsLiveGenerating(false);
     }
   };
 
@@ -348,8 +356,10 @@ export default function ProfitCalculator({ stepNumber }) {
 
     try {
       if (analysisMode === "live") {
+        setIsLiveGenerating(true);
         const liveResult = await dispatchLiveAiAnalysis({ uid: userData?.uid || state?.user?.uid, 
           toolId: "profit-calculator-monthly",
+          costKey: "costMonthlyGoalPlanner",
           inputs: {
             monthlyBudget,
             targetMonthlyProfit,
@@ -376,7 +386,6 @@ export default function ProfitCalculator({ stepNumber }) {
         };
 
         setMonthlyPlanResult(planObj);
-        setIsNewlyGenerated(true);
         saveResult({ activeMode, analysisMode, salePrice, productCost, dailyBudget, cpc, cvr, aiInsights, aiInsightsMode, monthlyBudget, targetMonthlyProfit, customNotes, monthlyPlanResult: planObj, openAccordions });
         dispatch({
           type: "SAVE_TOOL_RESULT",
@@ -412,7 +421,6 @@ export default function ProfitCalculator({ stepNumber }) {
         };
 
         setMonthlyPlanResult(planObj);
-        setIsNewlyGenerated(true);
         saveResult({ activeMode, analysisMode, salePrice, productCost, dailyBudget, cpc, cvr, aiInsights, aiInsightsMode, monthlyBudget, targetMonthlyProfit, customNotes, monthlyPlanResult: planObj, openAccordions });
         dispatch({
           type: "SAVE_TOOL_RESULT",
@@ -436,6 +444,7 @@ export default function ProfitCalculator({ stepNumber }) {
       );
     } finally {
       setIsGeneratingMonthly(false);
+      setIsLiveGenerating(false);
     }
   };
 
@@ -1055,7 +1064,7 @@ export default function ProfitCalculator({ stepNumber }) {
                       </span>
                     </h3>
 
-                    {aiInsightsMode === "live" && isNewlyGenerated ? (
+                    {aiInsightsMode === "live" && isLiveGenerating ? (
                       <div className="pcc-insights-body pcc-custom-scroll">
                         <TypewriterText text={aiInsights} speed={10} />
                       </div>
@@ -1137,7 +1146,7 @@ export default function ProfitCalculator({ stepNumber }) {
                       </div>
                     </div>
 
-                    {monthlyPlanResult.mode === "live" && isNewlyGenerated ? (
+                    {monthlyPlanResult.mode === "live" && isLiveGenerating ? (
                       <div className="pcc-insights-body pcc-custom-scroll">
                         <TypewriterText
                           text={monthlyPlanResult.aiStrategy}

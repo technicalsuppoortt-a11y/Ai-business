@@ -15,7 +15,7 @@ export default function TermsPage() {
   }, []);
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg, #080C14)', color: 'var(--text, #fff)' }}>
+    <div style={{ height: '100dvh', overflowY: 'auto', background: 'var(--bg, #080C14)', color: 'var(--text, #fff)' }}>
       {/* Simple Header */}
       <div style={{
         padding: '20px 40px',

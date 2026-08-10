@@ -265,7 +265,8 @@ Generate step-by-step creation tools in ${isArabic ? 'Arabic' : 'English'}.`;
         systemPrompt,
         userPrompt,
         jsonMode: true,
-        userEmail: state.user?.email
+        userEmail: state.user?.email,
+        costKey: "costBuildMyVersion"
       });
 
       const parsed = JSON.parse(responseContent);

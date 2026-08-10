@@ -330,7 +330,6 @@ export default function AdCreative({ stepNumber }) {
 
   const handleResetSession = () => {
     setAnalysisMode("fast");
-    setStructure(null);
     setSelectedProduct("");
     setSelectedPain("");
     setSelectedPlatform("");

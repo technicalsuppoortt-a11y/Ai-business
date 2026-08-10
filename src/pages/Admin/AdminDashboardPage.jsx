@@ -26,6 +26,7 @@ import { useConfirm } from "../../context/ConfirmContext";
 import { saveAdminOpenAiKey, getAdminOpenAiKey } from "../../services/creditsService";
 import AdminSales from "./AdminSales";
 import AdminLibrary from "./AdminLibrary";
+import AiSettingsPage from "./components/AiSettingsPage";
 import Pagination from "../../components/common/Pagination";
 import PhoneInput from "../../components/PhoneInput";
 import PlatformExplanation from "../../components/common/PlatformExplanation";
@@ -121,28 +122,9 @@ import {
 import "./Admin.css";
 import AdminTemplateManager from './components/AdminTemplateManager';
 
-// Animated Counter Component that starts from 0 to target value
-function AnimatedCounter({ value, duration = 1200 }) {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    let startTimestamp = null;
-    const step = (timestamp) => {
-      if (!startTimestamp) startTimestamp = timestamp;
-      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-      setCount(Math.floor(progress * value));
-      if (progress < 1) {
-        window.requestAnimationFrame(step);
-      } else {
-        setCount(value);
-      }
-    };
-
-    const animId = window.requestAnimationFrame(step);
-    return () => window.cancelAnimationFrame(animId);
-  }, [value, duration]);
-
-  return <span>{count}</span>;
+// Counter Component that displays actual value directly without count animation
+function AnimatedCounter({ value }) {
+  return <span>{value}</span>;
 }
 
 // Vector Icon Mapping Helper for Tools & Features (Replaces Emojis)
@@ -185,22 +167,7 @@ function getToolVectorIcon(item, size = 18) {
       return <Bot size={size} style={{ color: "#6366f1" }} />;
     case "external-tools":
       return <ExternalLink size={size} style={{ color: "#64748b" }} />;
-    case "freelance-profile":
-      return <UserCheck size={size} style={{ color: "#3b82f6" }} />;
-    case "platform-radar":
-      return <Crosshair size={size} style={{ color: "#ef4444" }} />;
-    case "freelance-pricing":
-      return <Tag size={size} style={{ color: "#eab308" }} />;
-    case "skills-crafting":
-      return <Award size={size} style={{ color: "#f59e0b" }} />;
-    case "portfolio-builder":
-      return <Briefcase size={size} style={{ color: "#06b6d4" }} />;
-    case "proposal-sniper":
-      return <Zap size={size} style={{ color: "#ec4899" }} />;
-    case "interview-prep":
-      return <Mic size={size} style={{ color: "#8b5cf6" }} />;
-    case "sales-templates":
-      return <Copy size={size} style={{ color: "#10b981" }} />;
+
     case "brand-library":
       return <Library size={size} style={{ color: "#3b82f6" }} />;
     case "smart-notebook":
@@ -226,8 +193,7 @@ function getToolVectorIcon(item, size = 18) {
     return <Calculator size={size} style={{ color: "#10b981" }} />;
   if (id.includes("ai") || id.includes("bot"))
     return <Bot size={size} style={{ color: "#6366f1" }} />;
-  if (id.includes("freelance") || id.includes("profile"))
-    return <Briefcase size={size} style={{ color: "#06b6d4" }} />;
+
 
   return <Layers size={size} style={{ color: "var(--accent)" }} />;
 }
@@ -529,7 +495,13 @@ export default function AdminDashboardPage() {
   const [planCurrency, setPlanCurrency] = useState("EGP");
   const [planFeatures, setPlanFeatures] = useState("");
   const [planFeaturesEn, setPlanFeaturesEn] = useState("");
-  const [planPaddlePriceId, setPlanPaddlePriceId] = useState("");
+  const [planDisplayOnWebsite, setPlanDisplayOnWebsite] = useState(true);
+  const [planBillingCycle, setPlanBillingCycle] = useState("monthly");
+  const [planBadgeAr, setPlanBadgeAr] = useState("");
+  const [planBadgeEn, setPlanBadgeEn] = useState("");
+  const [planCtaAr, setPlanCtaAr] = useState("");
+  const [planCtaEn, setPlanCtaEn] = useState("");
+  const [planAllowedTools, setPlanAllowedTools] = useState([]);
 
   // Plans Filtering, Pagination & Modal States
   const [plansSearchQuery, setPlansSearchQuery] = useState("");
@@ -561,8 +533,30 @@ export default function AdminDashboardPage() {
   const [userPlanId, setUserPlanId] = useState("free");
 
   // Free Trial Settings
+  const [enableFreeTrial, setEnableFreeTrial] = useState(true);
   const [freeTrialDays, setFreeTrialDays] = useState(7);
+  const [freeTrialCredits, setFreeTrialCredits] = useState(20);
+  const [trialPlanNameAr, setTrialPlanNameAr] = useState("");
+  const [trialPlanNameEn, setTrialPlanNameEn] = useState("");
+  const [trialBadgeAr, setTrialBadgeAr] = useState("");
+  const [trialBadgeEn, setTrialBadgeEn] = useState("");
+  const [trialCtaAr, setTrialCtaAr] = useState("");
+  const [trialCtaEn, setTrialCtaEn] = useState("");
+  const [trialFeaturesAr, setTrialFeaturesAr] = useState([""]);
+  const [trialFeaturesEn, setTrialFeaturesEn] = useState([""]);
   const [allowedTrialTools, setAllowedTrialTools] = useState([]);
+  
+  // ── FIX: REFS TO AVOID STALE CLOSURES DURING FIRESTORE WRITES ──
+  const allowedTrialToolsRef = useRef([]);
+  useEffect(() => {
+    allowedTrialToolsRef.current = allowedTrialTools;
+  }, [allowedTrialTools]);
+
+  const planAllowedToolsRef = useRef([]);
+  useEffect(() => {
+    planAllowedToolsRef.current = planAllowedTools;
+  }, [planAllowedTools]);
+  // ───────────────────────────────────────────────────────────────
   const [autoIncludeNewTools, setAutoIncludeNewTools] = useState(true);
   const [isTrialPreviewModalOpen, setIsTrialPreviewModalOpen] = useState(false);
   const [previewModalTab, setPreviewModalTab] = useState("all");
@@ -578,29 +572,21 @@ export default function AdminDashboardPage() {
 
   // Payment Methods Standardized State & DEFAULTS
   const [paymentMethods, setPaymentMethods] = useState({
-    instapay: { enabled: false, address: "" },
-    vodafoneCash: { enabled: false, number: "" },
-    stripe: {
-      enabled: false,
-      publishableKey: "",
-      secretKey: "",
-      paymentLink: "",
-      paymentLinkAnnual: "",
-    },
-    paypal: { enabled: false, email: "" },
-    paddle: {
-      enabled: false,
-      connected: false,
-      sellerId: "",
-      vendorId: "",
-      clientToken: "",
-      priceIdMonthly: "",
-      priceIdAnnual: "",
-    },
+    
+    manualMethods: [
+      { id: "def-1", name: "Vodafone Cash / فودافون كاش", value: "" },
+      { id: "def-2", name: "InstaPay / انستا باي", value: "" },
+      { id: "def-3", name: "Bank Transfer / تحويل بنكي", value: "" }
+    ],
   });
   const [paymentSaving, setPaymentSaving] = useState(false);
   const [paymentSaved, setPaymentSaved] = useState(false);
-  const [showPaddleManual, setShowPaddleManual] = useState(false);
+
+  const [newPayName, setNewPayName] = useState("");
+  const [newPayValue, setNewPayValue] = useState("");
+  const [editingPayId, setEditingPayId] = useState(null);
+  const [editingPayName, setEditingPayName] = useState("");
+  const [editingPayValue, setEditingPayValue] = useState("");
 
   // Tenant Payment Methods Firestore Sync & OAuth Callback
   useEffect(() => {
@@ -609,88 +595,32 @@ export default function AdminDashboardPage() {
       if (!uid) return;
 
       const DEFAULTS = {
-        instapay: { enabled: false, address: "" },
-        vodafoneCash: { enabled: false, number: "" },
-        stripe: {
-          enabled: false,
-          publishableKey: "",
-          secretKey: "",
-          paymentLink: "",
-          paymentLinkAnnual: "",
-        },
-        paypal: { enabled: false, email: "" },
-        paddle: {
-          enabled: false,
-          connected: false,
-          sellerId: "",
-          vendorId: "",
-          clientToken: "",
-          priceIdMonthly: "",
-          priceIdAnnual: "",
-        },
+        
+        manualMethods: [
+          { id: "def-1", name: "Vodafone Cash / فودافون كاش", value: "" },
+          { id: "def-2", name: "InstaPay / انستا باي", value: "" },
+          { id: "def-3", name: "Bank Transfer / تحويل بنكي", value: "" }
+        ],
       };
 
       try {
-        const tenantRef = doc(db, "tenants", uid);
-        const snap = await getDoc(tenantRef);
+        const userRef = doc(db, "users", uid);
+        const snap = await getDoc(userRef);
 
         const searchParams = new URLSearchParams(window.location.search);
-        const isPaddleOAuth =
-          searchParams.get("code") === "pdl_auth_mock123456" &&
-          searchParams.get("state") === "PADDLE_OAUTH";
+        
 
         let loadedPM = DEFAULTS;
 
         if (snap.exists() && snap.data()?.paymentMethods) {
           const pmData = snap.data().paymentMethods;
           loadedPM = {
-            instapay: { ...DEFAULTS.instapay, ...(pmData.instapay || {}) },
-            vodafoneCash: {
-              ...DEFAULTS.vodafoneCash,
-              ...(pmData.vodafoneCash || {}),
-            },
             stripe: { ...DEFAULTS.stripe, ...(pmData.stripe || {}) },
-            paypal: { ...DEFAULTS.paypal, ...(pmData.paypal || {}) },
-            paddle: { ...DEFAULTS.paddle, ...(pmData.paddle || {}) },
+            manualMethods: pmData.manualMethods || DEFAULTS.manualMethods,
           };
         }
 
-        if (isPaddleOAuth) {
-          loadedPM = {
-            ...loadedPM,
-            paddle: {
-              ...loadedPM.paddle,
-              enabled: true,
-              connected: true,
-              sellerId: loadedPM.paddle.sellerId || "987654",
-              vendorId: loadedPM.paddle.vendorId || "987654",
-              clientToken:
-                loadedPM.paddle.clientToken ||
-                "pt_mock_token_paddle_xyz789",
-              priceIdMonthly:
-                loadedPM.paddle.priceIdMonthly ||
-                "pri_01h8m3v4x5y6z7a8b9c0d1e2f3",
-              priceIdAnnual:
-                loadedPM.paddle.priceIdAnnual ||
-                "pri_01h8m3v4x5y6z7a8b9c0d1e2f4",
-            },
-          };
 
-          await setDoc(
-            tenantRef,
-            { paymentMethods: loadedPM, updatedAt: serverTimestamp() },
-            { merge: true },
-          );
-
-          const newUrl = window.location.pathname;
-          window.history.replaceState({}, document.title, newUrl);
-          toast(
-            state.language === "en"
-              ? "Paddle Connected Successfully!"
-              : "تم ربط حساب Paddle بنجاح!",
-            "success",
-          );
-        }
 
         setPaymentMethods(loadedPM);
       } catch (err) {
@@ -709,12 +639,52 @@ export default function AdminDashboardPage() {
     setPaymentSaved(false);
 
     try {
+      const fullPaymentMethods = {
+        stripe: {
+          enabled: paymentMethods.stripe?.enabled ?? false,
+          publishableKey: paymentMethods.stripe?.publishableKey || stripePublishableKey || "",
+          secretKey: paymentMethods.stripe?.secretKey || stripeSecretKey || "",
+          paymentLink: paymentMethods.stripe?.paymentLink || "",
+          paymentLinkAnnual: paymentMethods.stripe?.paymentLinkAnnual || "",
+        },
+        manualMethods: paymentMethods.manualMethods || [],
+      };
+
+      const publicPaymentMethods = {
+        stripe: {
+          enabled: paymentMethods.stripe?.enabled ?? false,
+          publishableKey: paymentMethods.stripe?.publishableKey || stripePublishableKey || "",
+          paymentLink: paymentMethods.stripe?.paymentLink || "",
+          paymentLinkAnnual: paymentMethods.stripe?.paymentLinkAnnual || "",
+        },
+        manualMethods: paymentMethods.manualMethods || [],
+      };
+
+      // 1. Update tenants document
       const tenantRef = doc(db, "tenants", uid);
       await setDoc(
         tenantRef,
-        { paymentMethods, updatedAt: serverTimestamp() },
+        { paymentMethods: fullPaymentMethods, updatedAt: serverTimestamp() },
         { merge: true },
       );
+
+      // 2. Update users document (with secrets)
+      const userRef = doc(db, "users", uid);
+      await setDoc(
+        userRef,
+        { paymentMethods: fullPaymentMethods },
+        { merge: true },
+      );
+
+      // 3. Update brands document (without secrets)
+      if (brandNameForm) {
+        const brandRef = doc(db, "brands", brandNameForm);
+        await setDoc(
+          brandRef,
+          { paymentMethods: publicPaymentMethods },
+          { merge: true }
+        );
+      }
 
       setPaymentSaved(true);
       toast(
@@ -737,88 +707,12 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handlePaddleConnect = () => {
-    const mockOAuthUrl = `${window.location.pathname}?code=pdl_auth_mock123456&state=PADDLE_OAUTH`;
-    window.location.href = mockOAuthUrl;
-  };
-
-  const handlePaddleDisconnect = async () => {
-    const DEFAULTS = {
-      instapay: { enabled: false, address: "" },
-      vodafoneCash: { enabled: false, number: "" },
-      stripe: {
-        enabled: false,
-        publishableKey: "",
-        secretKey: "",
-        paymentLink: "",
-        paymentLinkAnnual: "",
-      },
-      paypal: { enabled: false, email: "" },
-      paddle: {
-        enabled: false,
-        connected: false,
-        sellerId: "",
-        vendorId: "",
-        clientToken: "",
-        priceIdMonthly: "",
-        priceIdAnnual: "",
-      },
-    };
-
-    const updatedPM = {
-      ...paymentMethods,
-      paddle: {
-        ...DEFAULTS.paddle,
-        enabled: false,
-        connected: false,
-      },
-    };
-    setPaymentMethods(updatedPM);
-    setShowPaddleManual(false);
-
-    const uid = userData?.uid || state?.user?.uid;
-    if (uid) {
-      try {
-        await setDoc(
-          doc(db, "tenants", uid),
-          { paymentMethods: updatedPM, updatedAt: serverTimestamp() },
-          { merge: true },
-        );
-        toast(
-          state.language === "en"
-            ? "Paddle disconnected"
-            : "تم إلغاء ربط Paddle",
-          "info",
-        );
-      } catch (err) {
-        console.error(err);
-      }
-    }
-  };
-
-  // Legacy Payment Methods
-  const [vodafoneWallet, setVodafoneWallet] = useState("");
-  const [etisalatWallet, setEtisalatWallet] = useState("");
-  const [orangeWallet, setOrangeWallet] = useState("");
-  const [instapayWallet, setInstapayWallet] = useState("");
-  const [stripeSecretKey, setStripeSecretKey] = useState("");
-  const [stripePublishableKey, setStripePublishableKey] = useState("");
-  const [stripeWebhookSecret, setStripeWebhookSecret] = useState("");
-  const [paddleVendorId, setPaddleVendorId] = useState("");
-  const [paddleApiKey, setPaddleApiKey] = useState("");
-  const [paddleClientKey, setPaddleClientKey] = useState("");
-  const [paddleWebhookSecret, setPaddleWebhookSecret] = useState("");
-  const [paddleEnvironment, setPaddleEnvironment] = useState("sandbox");
-  const [paddleEnabled, setPaddleEnabled] = useState(false);
-  const [isPaddleValidating, setIsPaddleValidating] = useState(false);
-  const [isPaddleValidated, setIsPaddleValidated] = useState(false);
-  const [paddleValidationError, setPaddleValidationError] = useState("");
-  const [isPaddleSettingsModalOpen, setIsPaddleSettingsModalOpen] =
-    useState(false);
   const [isSyncingStripe, setIsSyncingStripe] = useState(false);
   const [pendingPayments, setPendingPayments] = useState([]);
-  const [loadingPayments, setLoadingPayments] = useState(false);
+  const [loadingPayments, setLoadingPayments] = useState(true);
   const [paymentToApprove, setPaymentToApprove] = useState(null);
+  const [paymentToReject, setPaymentToReject] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState("");
   const [selectedPlanForPayment, setSelectedPlanForPayment] = useState("");
   const [selectedDurationForPayment, setSelectedDurationForPayment] =
     useState(30);
@@ -832,13 +726,12 @@ export default function AdminDashboardPage() {
   const [paymentCurrentPage, setPaymentCurrentPage] = useState(1);
   const [previewReceiptUrl, setPreviewReceiptUrl] = useState(null);
   const [showStripeKey, setShowStripeKey] = useState(false);
-  const [showPaddleKey, setShowPaddleKey] = useState(false);
   const [stripeModalTab, setStripeModalTab] = useState("settings"); // 'settings' | 'test'
-  const [paddleModalTab, setPaddleModalTab] = useState("settings"); // 'settings' | 'test'
   const [isTestingStripe, setIsTestingStripe] = useState(false);
   const [stripeTestSuccess, setStripeTestSuccess] = useState(false);
-  const [isTestingPaddle, setIsTestingPaddle] = useState(false);
-  const [paddleTestSuccess, setPaddleTestSuccess] = useState(false);
+  const [stripeSecretKey, setStripeSecretKey] = useState("");
+  const [stripePublishableKey, setStripePublishableKey] = useState("");
+  const [stripeWebhookSecret, setStripeWebhookSecret] = useState("");
 
   // Brand Settings Modernized UI States
   const [brandSubTab, setBrandSubTab] = useState("personal"); // 'personal' | 'colors' | 'social' | 'templates' | 'preview'
@@ -1072,6 +965,18 @@ export default function AdminDashboardPage() {
       label_en: "Smart Notebook",
       section: "additional",
     },
+    {
+      id: "settings",
+      label_ar: "الإعدادات",
+      label_en: "Settings",
+      section: "additional",
+    },
+    {
+      id: "tutorial",
+      label_ar: "فيديو الشرح",
+      label_en: "Tutorial",
+      section: "additional",
+    },
   ];
   const CHECKLIST_ITEMS = [...ALL_STEPS, ...ADDITIONAL_RESOURCES];
 
@@ -1146,7 +1051,17 @@ export default function AdminDashboardPage() {
       );
 
       // Load free trial settings
+      setEnableFreeTrial(userData.freeTrialSettings?.enabled ?? true);
       setFreeTrialDays(userData.freeTrialSettings?.days || 7);
+      setFreeTrialCredits(userData.freeTrialSettings?.credits || 20);
+      setTrialPlanNameAr(userData.freeTrialSettings?.planName_ar || "");
+      setTrialPlanNameEn(userData.freeTrialSettings?.planName_en || "");
+      setTrialBadgeAr(userData.freeTrialSettings?.badge_ar || "");
+      setTrialBadgeEn(userData.freeTrialSettings?.badge_en || "");
+      setTrialCtaAr(userData.freeTrialSettings?.cta_ar || "");
+      setTrialCtaEn(userData.freeTrialSettings?.cta_en || "");
+      setTrialFeaturesAr(userData.freeTrialSettings?.features_ar || [""]);
+      setTrialFeaturesEn(userData.freeTrialSettings?.features_en || [""]);
       setAllowedTrialTools(
         userData.freeTrialSettings?.allowedTools ||
           CHECKLIST_ITEMS.map((s) => s.id),
@@ -1155,32 +1070,13 @@ export default function AdminDashboardPage() {
         userData.freeTrialSettings?.autoIncludeNewTools ?? true,
       );
 
-      // Load payment methods
-      setVodafoneWallet(userData.paymentMethods?.vodafone || "");
-      setEtisalatWallet(userData.paymentMethods?.etisalat || "");
-      setOrangeWallet(userData.paymentMethods?.orange || "");
-      setInstapayWallet(userData.paymentMethods?.instapay || "");
-      setStripeSecretKey(userData.paymentMethods?.stripeKeys?.secretKey || "");
+      setStripeSecretKey(userData.paymentMethods?.stripe?.secretKey || "");
       setStripePublishableKey(
-        userData.paymentMethods?.stripeKeys?.publishableKey || "",
+        userData.paymentMethods?.stripe?.publishableKey || "",
       );
       setStripeWebhookSecret(
-        userData.paymentMethods?.stripeKeys?.webhookSecret || "",
+        userData.paymentMethods?.stripe?.webhookSecret || "",
       );
-      setPaddleVendorId(userData.paymentMethods?.paddleKeys?.vendorId || "");
-      setPaddleApiKey(userData.paymentMethods?.paddleKeys?.apiKey || "");
-      setPaddleClientKey(userData.paymentMethods?.paddleKeys?.clientKey || "");
-      setPaddleWebhookSecret(
-        userData.paymentMethods?.paddleKeys?.webhookSecret || "",
-      );
-      setPaddleEnvironment(
-        userData.paymentMethods?.paddleKeys?.environment || "sandbox",
-      );
-      setPaddleEnabled(
-        userData.paymentMethods?.paddleKeys?.enabled ??
-          !!userData.paymentMethods?.paddleKeys?.clientKey,
-      );
-      setIsPaddleValidated(!!userData.paymentMethods?.paddleKeys?.apiKey);
 
       setIsInitialized(true);
     }
@@ -1271,67 +1167,7 @@ export default function AdminDashboardPage() {
 
 
 
-  const handleValidatePaddle = async () => {
-    if (
-      !paddleVendorId.trim() ||
-      !paddleClientKey.trim() ||
-      !paddleApiKey.trim() ||
-      !paddleWebhookSecret.trim()
-    ) {
-      setPaddleValidationError(
-        state.language === "en"
-          ? "All fields are required."
-          : "جميع الحقول مطلوبة للتحقق.",
-      );
-      return;
-    }
 
-    setIsPaddleValidating(true);
-    setPaddleValidationError("");
-    try {
-      const baseUrl =
-        import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
-      const response = await fetch(
-        `${baseUrl}/api/paddle/validate-credentials`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            apiKey: paddleApiKey.trim(),
-            environment: paddleEnvironment,
-          }),
-        },
-      );
-      const data = await response.json();
-      if (response.ok && data.success) {
-        setIsPaddleValidated(true);
-        toast(
-          state.language === "en"
-            ?"Paddle keys validated successfully!"
-            :"تم التحقق من مفاتيح Paddle بنجاح!",
-          "success",
-        );
-      } else {
-        setIsPaddleValidated(false);
-        setPaddleValidationError(
-          data.error ||
-            (state.language === "en"
-              ? "Validation failed. Check API Key."
-              : "فشل التحقق. تأكد من مفتاح API."),
-        );
-      }
-    } catch (err) {
-      console.error(err);
-      setIsPaddleValidated(false);
-      setPaddleValidationError(
-        state.language === "en"
-          ? "Error connecting to validation server."
-          : "حدث خطأ في الاتصال بخادم التحقق.",
-      );
-    } finally {
-      setIsPaddleValidating(false);
-    }
-  };
 
   const handleSyncStripePlans = async () => {
     if (!stripeSecretKey) {
@@ -1379,11 +1215,14 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleUpdateAdminProfile = async (overridePlans = null) => {
+  const handleUpdateAdminProfile = async (overridePlansOrEvent = null) => {
     if (!userData?.uid) return;
     if (!brandNameForm.trim()) {
       return toast("يرجى تحديد اسم البراند أولاً في الإعدادات", "error");
     }
+
+    // React onClick passes a synthetic event. Ignore it if it's not an array.
+    const actualOverridePlans = Array.isArray(overridePlansOrEvent) ? overridePlansOrEvent : null;
 
     setIsUpdatingProfile(true);
     try {
@@ -1413,30 +1252,33 @@ export default function AdminDashboardPage() {
           line: lineColor,
         },
         socialLinks: socialLinks,
-        plans: overridePlans || plans,
+        plans: actualOverridePlans || plans,
         freeTrialSettings: {
+          enabled: enableFreeTrial,
           days: Number(freeTrialDays) || 7,
-          allowedTools: allowedTrialTools || [],
+          credits: Number(freeTrialCredits) || 20,
+          planName_ar: trialPlanNameAr,
+          planName_en: trialPlanNameEn,
+          badge_ar: trialBadgeAr,
+          badge_en: trialBadgeEn,
+          cta_ar: trialCtaAr,
+          cta_en: trialCtaEn,
+          features_ar: trialFeaturesAr,
+          features_en: trialFeaturesEn,
+          // Read from ref to avoid async state closure lag, and filter out invalid/duplicate items
+          allowedTools: Array.from(new Set(allowedTrialToolsRef.current || [])).filter(id => CHECKLIST_ITEMS.some(item => item.id === id)),
           autoIncludeNewTools: !!autoIncludeNewTools,
         },
         paymentMethods: {
-          vodafone: vodafoneWallet,
-          etisalat: etisalatWallet,
-          orange: orangeWallet,
-          instapay: instapayWallet,
-          stripeKeys: {
-            secretKey: stripeSecretKey,
-            publishableKey: stripePublishableKey,
-            webhookSecret: stripeWebhookSecret,
+          // Modern object-based payment config matching new UI
+          stripe: {
+            enabled: paymentMethods.stripe?.enabled ?? false,
+            publishableKey: paymentMethods.stripe?.publishableKey || "",
+            secretKey: paymentMethods.stripe?.secretKey || stripeSecretKey || "",
+            paymentLink: paymentMethods.stripe?.paymentLink || "",
+            paymentLinkAnnual: paymentMethods.stripe?.paymentLinkAnnual || "",
           },
-          paddleKeys: {
-            enabled: paddleEnabled,
-            vendorId: paddleVendorId,
-            apiKey: paddleApiKey,
-            clientKey: paddleClientKey,
-            webhookSecret: paddleWebhookSecret,
-            environment: paddleEnvironment,
-          },
+          manualMethods: paymentMethods.manualMethods || [],
         },
         defaultLanguage: defaultLanguage,
         landingTemplate: landingTemplate,
@@ -1444,33 +1286,16 @@ export default function AdminDashboardPage() {
         showWhatsappLoginBtn: showWhatsappLoginBtn,
       };
 
-      // Validation check before save
-      if (paddleEnabled && !isPaddleValidated) {
-        toast(
-          state.language === "en"
-            ? "Please validate your Paddle credentials first!"
-            : "يرجى التحقق من صحة مفاتيح Paddle أولاً!",
-          "error",
-        );
-        setIsUpdatingProfile(false);
-        return;
-      }
 
-      // Filter public payment methods to prevent exposing secret keys in the public brand document
+
       const publicPaymentMethods = {
-        vodafone: vodafoneWallet,
-        etisalat: etisalatWallet,
-        orange: orangeWallet,
-        instapay: instapayWallet,
-        stripeKeys: {
-          publishableKey: stripePublishableKey,
+        stripe: {
+          enabled: paymentMethods.stripe?.enabled ?? false,
+          publishableKey: paymentMethods.stripe?.publishableKey || stripePublishableKey || "",
+          paymentLink: paymentMethods.stripe?.paymentLink || "",
+          paymentLinkAnnual: paymentMethods.stripe?.paymentLinkAnnual || "",
         },
-        paddleKeys: {
-          enabled: paddleEnabled,
-          vendorId: paddleVendorId,
-          clientKey: paddleClientKey,
-          environment: paddleEnvironment,
-        },
+        manualMethods: paymentMethods.manualMethods || [],
       };
 
       // 1. Update Admin User document (contains secrets)
@@ -1485,16 +1310,28 @@ export default function AdminDashboardPage() {
           adminUid: userData.uid,
           themeConfig: updateData.themeConfig,
           socialLinks: updateData.socialLinks,
-          plans: plans,
+          plans: updateData.plans,
           freeTrialSettings: updateData.freeTrialSettings,
           paymentMethods: publicPaymentMethods,
           defaultLanguage: updateData.defaultLanguage,
           landingTemplate: updateData.landingTemplate,
           logoDisplayMode: updateData.logoDisplayMode,
           showWhatsappLoginBtn: updateData.showWhatsappLoginBtn,
+          logoUrl: updateData.photoURL || "",
           updatedAt: serverTimestamp(),
         },
         { merge: true },
+      );
+
+      // 3. Update Tenants document (for frontend tools access and landing page)
+      await setDoc(
+        doc(db, "tenants", userData.uid),
+        {
+          plans: updateData.plans,
+          freeTrialSettings: updateData.freeTrialSettings,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
       );
 
       setLastSavedTimestamp(new Date());
@@ -1582,6 +1419,11 @@ export default function AdminDashboardPage() {
     if (!selectedPlanForPayment) return toast("يرجى اختيار الباقة", "error");
 
     try {
+      // Find the selected plan from the brand's plans to get credits and name
+      const approvedPlan = plans.find(p => String(p.id) === String(selectedPlanForPayment));
+      const planCredits = approvedPlan ? (Number(approvedPlan.creditsPerMonth) || 20) : 20;
+      const planName = approvedPlan ? (approvedPlan.name_ar || approvedPlan.name) : "Unknown Plan";
+
       // 1. Update Payment status
       await updateDoc(doc(db, "payments", paymentToApprove.id), {
         status: "approved",
@@ -1599,8 +1441,14 @@ export default function AdminDashboardPage() {
       await setDoc(
         doc(db, "users", paymentToApprove.userId),
         {
+          planId: null, // Clear legacy field
+          planName: null, // Clear legacy field
+          credits: planCredits,
+          totalCredits: planCredits,
           subscription: {
-            type: selectedPlanForPayment, // Using planId/name as type
+            planId: selectedPlanForPayment, // Standardize on planId
+            planName: planName,
+            type: selectedPlanForPayment, // Keep type for backward compatibility
             expiryDate: expiryDate,
             status: "active",
             updatedAt: serverTimestamp(),
@@ -1619,6 +1467,56 @@ export default function AdminDashboardPage() {
     } catch (err) {
       console.error(err);
       toast("حدث خطأ أثناء الموافقة على الدفع", "error");
+    }
+  };
+
+  // Handle Reject Payment
+  const handleRejectPayment = async () => {
+    if (!paymentToReject || !rejectionReason.trim()) {
+      return toast("يرجى إدخال سبب الرفض", "error");
+    }
+
+    try {
+      // 1. Update Payment status to rejected
+      await updateDoc(doc(db, "payments", paymentToReject.id), {
+        status: "rejected",
+        rejectionReason: rejectionReason.trim(),
+        rejectedAt: serverTimestamp(),
+      });
+
+      // 2. Safely fall back user to Free Plan if they had no active premium plan
+      // We assume they should fall back to Free if their request fails.
+      if (paymentToReject.userId) {
+        await setDoc(
+          doc(db, "users", paymentToReject.userId),
+          {
+            planId: null, // Clear legacy field
+            planName: null, // Clear legacy field
+            credits: freeTrialCredits || 20, // Reset to dynamic free limit
+            totalCredits: freeTrialCredits || 20, // Reset to dynamic free limit
+            subscription: {
+              status: "active",
+              planId: "free",
+              planName: "Free Plan",
+              currentPeriodStart: new Date().toISOString(),
+              currentPeriodEnd: "2099-12-31T23:59:59Z", // Lifetime free
+            }
+          },
+          { merge: true }
+        );
+      }
+
+      toast(
+        state.language === "en" ? "Payment request rejected successfully!" : "تم رفض طلب الدفع بنجاح",
+        "success"
+      );
+      setPaymentToReject(null);
+      setRejectionReason("");
+      await loadPayments();
+      await loadUsers();
+    } catch (err) {
+      console.error(err);
+      toast("حدث خطأ أثناء رفض الطلب", "error");
     }
   };
 
@@ -1674,8 +1572,9 @@ export default function AdminDashboardPage() {
       const selectedPlan = plans.find(p => String(p.id) === String(userPlanId));
       const planNameVal = selectedPlan ? (selectedPlan.name_ar || selectedPlan.name) : "Free";
       const planCreditsVal = selectedPlan ? Number(selectedPlan.creditsPerMonth || 20) : 20;
+      const planAllowedToolsVal = selectedPlan?.allowedTools || null;
 
-      await setDoc(doc(db, "users", uid), {
+      const newUserDoc = {
         email: userEmail.trim().toLowerCase(),
         role: userRole,
         ownerName: userName.trim(),
@@ -1689,11 +1588,20 @@ export default function AdminDashboardPage() {
         createdBy: userData?.uid || "",
         subscription: {
           type: subType,
+          planId: userPlanId,
           expiryDate: expiryDate ? expiryDate : null,
           status: subType === "stopped" ? "stopped" : "active",
           updatedAt: serverTimestamp(),
+          allowedTools: planAllowedToolsVal,
         },
-      });
+      };
+
+      // Write allowedTools at root level too for easy access
+      if (planAllowedToolsVal !== null) {
+        newUserDoc.allowedTools = planAllowedToolsVal;
+      }
+
+      await setDoc(doc(db, "users", uid), newUserDoc);
 
       toast(
 `تم إنشاء ${userRole ==="admin" ?"الأدمن" :"المستخدم"} بنجاح!`,
@@ -1821,6 +1729,7 @@ export default function AdminDashboardPage() {
       const selectedPlan = plans.find(p => String(p.id) === String(userPlanId));
       const planNameVal = selectedPlan ? (selectedPlan.name_ar || selectedPlan.name) : "Free";
       const planCreditsVal = selectedPlan ? Number(selectedPlan.creditsPerMonth || 20) : 20;
+      const planAllowedToolsVal = selectedPlan?.allowedTools || null;
 
       // Only reset current credits if the plan changed
       const updateData = {
@@ -1832,11 +1741,18 @@ export default function AdminDashboardPage() {
         totalCredits: planCreditsVal,
         subscription: {
           type: subType,
+          planId: userPlanId,
           expiryDate: expiryDate ? expiryDate : null,
           status: subType === "stopped" ? "stopped" : "active",
           updatedAt: serverTimestamp(),
+          allowedTools: planAllowedToolsVal,
         },
       };
+
+      // Write allowedTools at root level too for easy sidebar access
+      if (planAllowedToolsVal !== null) {
+        updateData.allowedTools = planAllowedToolsVal;
+      }
 
       // Only reset credits if the plan actually changed
       if (editingUser.planId !== userPlanId) {
@@ -2269,6 +2185,12 @@ export default function AdminDashboardPage() {
                 icon: CreditCard,
               },
               {
+                id: "ai_settings",
+                label: "إعدادات الذكاء الاصطناعي",
+                label_en: "AI Settings",
+                icon: Cpu,
+              },
+              {
                 id: "settings",
                 label: "إعدادات البراند",
                 label_en: "Brand Settings",
@@ -2521,6 +2443,15 @@ export default function AdminDashboardPage() {
                       {state.language === "en"
                         ? "Tutorial Video"
                         : "فيديو الشرح"}
+                    </span>
+                  </>
+                ) : activeTab === "ai_settings" ? (
+                  <>
+                    <Cpu size={20} style={{ color: "var(--accent)" }} />
+                    <span>
+                      {state.language === "en"
+                        ? "AI Settings"
+                        : "إعدادات الذكاء الاصطناعي"}
                     </span>
                   </>
                 ) : activeTab === "templates" ? (
@@ -3775,7 +3706,13 @@ export default function AdminDashboardPage() {
                           setPlanPrice("");
                           setPlanCredits("20");
                           setPlanCurrency("EGP");
-                          setPlanPaddlePriceId("");
+                          setPlanDisplayOnWebsite(true);
+                          setPlanBillingCycle("monthly");
+                          setPlanBadgeAr("");
+                          setPlanBadgeEn("");
+                          setPlanCtaAr("");
+                          setPlanCtaEn("");
+                          setPlanAllowedTools([]);
                           setDynamicFeaturesAr([""]);
                           setDynamicFeaturesEn([""]);
                           setIsPlanModalOpen(true);
@@ -4064,18 +4001,7 @@ export default function AdminDashboardPage() {
                                   {p.name_en}
                                 </div>
                               )}
-                              {p.paddlePriceId && (
-                                <div
-                                  style={{
-                                    fontSize: 9,
-                                    color: "#00bfff",
-                                    marginTop: 4,
-                                    fontFamily: "monospace",
-                                  }}
-                                >
-                                  Paddle ID: {p.paddlePriceId}
-                                </div>
-                              )}
+
                               {p.stripe_product_id ? (
                                 <div
                                   style={{
@@ -4215,7 +4141,13 @@ export default function AdminDashboardPage() {
                                     setPlanPrice(p.price || "");
                                     setPlanCredits(p.creditsPerMonth || "20");
                                     setPlanCurrency(p.currency || "EGP");
-                                    setPlanPaddlePriceId(p.paddlePriceId || "");
+                                    setPlanDisplayOnWebsite(p.displayOnWebsite !== false);
+                                    setPlanBillingCycle(p.billingCycle || "monthly");
+                                    setPlanBadgeAr(p.badge_ar || "");
+                                    setPlanBadgeEn(p.badge_en || "");
+                                    setPlanCtaAr(p.cta_ar || "");
+                                    setPlanCtaEn(p.cta_en || "");
+                                    setPlanAllowedTools(p.allowedTools || []);
                                     setDynamicFeaturesAr(
                                       featArList.length > 0 ? featArList : [""],
                                     );
@@ -4679,7 +4611,7 @@ export default function AdminDashboardPage() {
                             marginTop: "2px",
                           }}
                         >
-                          <AnimatedCounter value={allowedTrialTools.length} /> /{" "}
+                          <AnimatedCounter value={Array.from(new Set(allowedTrialTools)).filter(id => CHECKLIST_ITEMS.some(i => i.id === id)).length} /> /{" "}
                           {CHECKLIST_ITEMS.length}
                         </div>
                         <div
@@ -4731,7 +4663,7 @@ export default function AdminDashboardPage() {
                   </div>
 
                   <div className="ad-form-body" style={{ padding: 0 }}>
-                    {/* Trial Duration Quick Picks & Validation */}
+                    {/* Enable Free Trial Toggle */}
                     <div
                       style={{
                         background: "rgba(255, 255, 255, 0.02)",
@@ -4739,38 +4671,383 @@ export default function AdminDashboardPage() {
                         borderRadius: "16px",
                         border: "1px solid var(--line)",
                         marginBottom: "24px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
                       }}
                     >
-                      <div
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <Gift size={20} style={{ color: "var(--accent)" }} />
+                        <div>
+                          <div style={{ fontSize: "15px", fontWeight: "800", color: "#fff" }}>
+                            {state.language === "en" ? "Enable Free Trial for New Users" : "تفعيل الفترة التجريبية للمستخدمين الجدد"}
+                          </div>
+                          <div style={{ fontSize: "12px", color: "var(--text3)" }}>
+                            {state.language === "en" ? "Turn on or off the free trial feature globally." : "تشغيل أو إيقاف ميزة الفترة التجريبية بشكل عام."}
+                          </div>
+                        </div>
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setEnableFreeTrial(!enableFreeTrial)}
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "10px",
-                          marginBottom: "16px",
+                          width: 48,
+                          height: 24,
+                          borderRadius: 12,
+                          background: enableFreeTrial ? "var(--green)" : "rgba(255, 255, 255, 0.1)",
+                          position: "relative",
+                          cursor: "pointer",
+                          border: "none",
                         }}
                       >
-                        <Clock size={20} style={{ color: "var(--accent)" }} />
-                        <label
+                        <motion.div
+                          animate={{ left: enableFreeTrial ? 26 : 2 }}
                           style={{
-                            fontSize: "15px",
-                            fontWeight: "800",
-                            color: "#fff",
+                            width: 20,
+                            height: 20,
+                            borderRadius: "50%",
+                            background: "#fff",
+                            position: "absolute",
+                            top: 2,
+                            boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
                           }}
-                        >
-                          {state.language === "en"
-                            ? "Trial Duration (Days)"
-                            : "مدة الفترة المجانية المسموح بها (بالأيام)"}
-                        </label>
+                        />
+                      </motion.button>
+                    </div>
+
+                    {/* Bilingual Metadata */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 24 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                        <div className="field">
+                          <label className="field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <Tag size={14} style={{ color: "var(--accent)" }} />
+                            <span>{state.language === "en" ? "Plan Name (Arabic)" : "اسم الباقة المجانية (بالعربية)"}</span>
+                          </label>
+                          <input className="field-input" value={trialPlanNameAr} onChange={(e) => setTrialPlanNameAr(e.target.value)} placeholder={state.language === "en" ? "e.g. Free Trial" : "مثال: الفترة المجانية"} dir={state.language === "en" ? "ltr" : "rtl"} style={{ textAlign: state.language === "en" ? "left" : "right" }} />
+                        </div>
+                        <div className="field">
+                          <label className="field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <Tag size={14} style={{ color: "var(--accent)" }} />
+                            <span>{state.language === "en" ? "Plan Name (English)" : "اسم الباقة المجانية (بالإنجليزية)"}</span>
+                          </label>
+                          <input className="field-input" value={trialPlanNameEn} onChange={(e) => setTrialPlanNameEn(e.target.value)} placeholder="e.g. Free Trial" dir="ltr" style={{ textAlign: "left" }} />
+                        </div>
                       </div>
 
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "16px",
-                          flexWrap: "wrap",
-                        }}
-                      >
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                        <div className="field">
+                          <label className="field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <Award size={14} style={{ color: "var(--accent)" }} />
+                            <span>{state.language === "en" ? "Badge Label (Arabic)" : "شارة التمييز (بالعربية)"}</span>
+                          </label>
+                          <input className="field-input" value={trialBadgeAr} onChange={(e) => setTrialBadgeAr(e.target.value)} placeholder={state.language === "en" ? "e.g. Popular" : "مثال: الأكثر طلباً"} dir={state.language === "en" ? "ltr" : "rtl"} style={{ textAlign: state.language === "en" ? "left" : "right" }} />
+                        </div>
+                        <div className="field">
+                          <label className="field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <Award size={14} style={{ color: "var(--accent)" }} />
+                            <span>{state.language === "en" ? "Badge Label (English)" : "شارة التمييز (بالإنجليزية)"}</span>
+                          </label>
+                          <input className="field-input" value={trialBadgeEn} onChange={(e) => setTrialBadgeEn(e.target.value)} placeholder="e.g. Popular" dir="ltr" style={{ textAlign: "left" }} />
+                        </div>
+                      </div>
+
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                        <div className="field">
+                          <label className="field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <Zap size={14} style={{ color: "var(--accent)" }} />
+                            <span>{state.language === "en" ? "CTA Button Text (Arabic)" : "نص زر الإجراء (بالعربية)"}</span>
+                          </label>
+                          <input className="field-input" value={trialCtaAr} onChange={(e) => setTrialCtaAr(e.target.value)} placeholder={state.language === "en" ? "e.g. Start Free Trial" : "مثال: ابدأ فترتك المجانية"} dir={state.language === "en" ? "ltr" : "rtl"} style={{ textAlign: state.language === "en" ? "left" : "right" }} />
+                        </div>
+                        <div className="field">
+                          <label className="field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <Zap size={14} style={{ color: "var(--accent)" }} />
+                            <span>{state.language === "en" ? "CTA Button Text (English)" : "نص زر الإجراء (بالإنجليزية)"}</span>
+                          </label>
+                          <input className="field-input" value={trialCtaEn} onChange={(e) => setTrialCtaEn(e.target.value)} placeholder="e.g. Start Free Trial" dir="ltr" style={{ textAlign: "left" }} />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Arabic Dynamic Features for Trial */}
+                    <div className="field" style={{ marginBottom: 24 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                        <label className="field-label" style={{ display: "flex", alignItems: "center", gap: 6, margin: 0 }}>
+                          <Sparkles size={14} style={{ color: "var(--green)" }} />
+                          <span>{state.language === "en" ? "Features List (Arabic)" : "ميزات الباقة (بالعربية)"}</span>
+                        </label>
+                        <button type="button" className="btn btn-xs" onClick={() => setTrialFeaturesAr([...trialFeaturesAr, ""])} style={{ background: "rgba(16, 185, 129, 0.15)", color: "var(--green)", border: "1px solid rgba(16, 185, 129, 0.3)", display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 6 }}>
+                          <Plus size={12} /><span>{state.language === "en" ? "Add Feature" : "إضافة ميزة"}</span>
+                        </button>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {trialFeaturesAr.map((feat, idx) => (
+                          <div key={idx} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                            <input className="field-input" value={feat} onChange={(e) => { const next = [...trialFeaturesAr]; next[idx] = e.target.value; setTrialFeaturesAr(next); }} placeholder={state.language === "en" ? "e.g. Access to limited tools" : "مثال: وصول لبعض الأدوات"} dir={state.language === "en" ? "ltr" : "rtl"} style={{ textAlign: state.language === "en" ? "left" : "right", flex: 1 }} />
+                            {trialFeaturesAr.length > 1 && (
+                              <button type="button" className="sa-delete-btn btn-xs" style={{ width: 34, height: 34, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }} onClick={() => setTrialFeaturesAr(trialFeaturesAr.filter((_, i) => i !== idx))} title={state.language === "en" ? "Delete Feature" : "حذف الميزة"}>
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* English Dynamic Features for Trial */}
+                    <div className="field" style={{ marginBottom: 24 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                        <label className="field-label" style={{ display: "flex", alignItems: "center", gap: 6, margin: 0 }}>
+                          <Sparkles size={14} style={{ color: "var(--accent)" }} />
+                          <span>{state.language === "en" ? "Features List (English)" : "ميزات الباقة (بالإنجليزية)"}</span>
+                        </label>
+                        <button type="button" className="btn btn-xs" onClick={() => setTrialFeaturesEn([...trialFeaturesEn, ""])} style={{ background: "rgba(59, 130, 246, 0.15)", color: "var(--accent)", border: "1px solid rgba(59, 130, 246, 0.3)", display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 6 }}>
+                          <Plus size={12} /><span>{state.language === "en" ? "Add Feature" : "إضافة ميزة"}</span>
+                        </button>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {trialFeaturesEn.map((feat, idx) => (
+                          <div key={idx} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                            <input className="field-input" value={feat} onChange={(e) => { const next = [...trialFeaturesEn]; next[idx] = e.target.value; setTrialFeaturesEn(next); }} placeholder="e.g. Access to limited tools" dir="ltr" style={{ textAlign: "left", flex: 1 }} />
+                            {trialFeaturesEn.length > 1 && (
+                              <button type="button" className="sa-delete-btn btn-xs" style={{ width: 34, height: 34, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }} onClick={() => setTrialFeaturesEn(trialFeaturesEn.filter((_, i) => i !== idx))} title={state.language === "en" ? "Delete Feature" : "حذف الميزة"}>
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Trial Duration & Credits Included */}
+                    <div
+                      style={{
+                        background: "rgba(255, 255, 255, 0.02)",
+                        padding: "24px",
+                        borderRadius: "16px",
+                        border: "1px solid var(--line)",
+                        marginBottom: "24px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "24px"
+                      }}
+                    >
+                      {/* Duration */}
+                      <div>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "10px",
+                            marginBottom: "16px",
+                          }}
+                        >
+                          <Clock size={20} style={{ color: "var(--accent)" }} />
+                          <label
+                            style={{
+                              fontSize: "15px",
+                              fontWeight: "800",
+                              color: "#fff",
+                            }}
+                          >
+                            {state.language === "en"
+                              ? "Trial Duration (Days)"
+                              : "مدة الفترة المجانية (بالأيام)"}
+                          </label>
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "16px",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "12px",
+                            }}
+                          >
+                            <input
+                              type="number"
+                              min="1"
+                              max="90"
+                              className="field-input"
+                              style={{
+                                width: "110px",
+                                fontSize: "18px",
+                                fontWeight: "800",
+                                textAlign: "center",
+                                background: "rgba(0, 0, 0, 0.3)",
+                                borderColor:
+                                  freeTrialDays < 1 || freeTrialDays > 90
+                                    ? "var(--red)"
+                                    : "var(--accent)",
+                                color: "#fff",
+                              }}
+                              value={freeTrialDays}
+                              onChange={(e) =>
+                                setFreeTrialDays(Number(e.target.value))
+                              }
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "var(--text2)",
+                                fontWeight: "600",
+                              }}
+                            >
+                              {state.language === "en"
+                                ? "Days starting from registration date"
+                                : "أيام تجريبية تبدأ تلقائياً من تاريخ التسجيل"}
+                            </span>
+                          </div>
+
+                          {/* Quick Picks Preset Buttons */}
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              flexWrap: "wrap",
+                              marginLeft: state.language === "en" ? "auto" : "0",
+                              marginRight: state.language === "en" ? "0" : "auto",
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: "11px",
+                                color: "var(--text3)",
+                                fontWeight: "700",
+                              }}
+                            >
+                              {state.language === "en"
+                                ? "Quick Presets:"
+                                : "خيارات سريعة:"}
+                            </span>
+                            {[3, 7, 14, 30].map((preset) => {
+                              const isSelected = freeTrialDays === preset;
+                              return (
+                                <motion.button
+                                  key={preset}
+                                  type="button"
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => setFreeTrialDays(preset)}
+                                  style={{
+                                    padding: "6px 14px",
+                                    borderRadius: "8px",
+                                    fontSize: "12px",
+                                    fontWeight: "700",
+                                    cursor: "pointer",
+                                    transition: "all 0.2s ease",
+                                    background: isSelected
+                                      ? "var(--accent)"
+                                      : "rgba(255, 255, 255, 0.05)",
+                                    color: isSelected ? "#fff" : "var(--text2)",
+                                    border: isSelected
+                                      ? "1px solid var(--accent)"
+                                      : "1px solid rgba(255, 255, 255, 0.1)",
+                                    boxShadow: isSelected
+                                      ? "0 4px 12px rgba(59, 130, 246, 0.3)"
+                                      : "none",
+                                  }}
+                                >
+                                  {preset}{" "}
+                                  {state.language === "en"
+                                    ? "Days"
+                                    : preset === 3
+                                      ? "أيام"
+                                      : preset === 7
+                                        ? "أيام"
+                                        : "يوم"}
+                                </motion.button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Real-time Inline Validation Warnings */}
+                        {freeTrialDays < 1 && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            style={{
+                              marginTop: "14px",
+                              padding: "10px 14px",
+                              background: "rgba(239, 68, 68, 0.1)",
+                              border: "1px solid rgba(239, 68, 68, 0.3)",
+                              borderRadius: "8px",
+                              color: "var(--red)",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                            }}
+                          >
+                            <AlertTriangle size={16} />
+                            <span>
+                              {state.language === "en"
+                                ? "Minimum trial duration is 1 day."
+                                : "تنبيه: الحد الأقصى الأدنى للفترة المجانية هو يوم واحد."}
+                            </span>
+                          </motion.div>
+                        )}
+                        {freeTrialDays > 90 && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            style={{
+                              marginTop: "14px",
+                              padding: "10px 14px",
+                              background: "rgba(245, 158, 11, 0.1)",
+                              border: "1px solid rgba(245, 158, 11, 0.3)",
+                              borderRadius: "8px",
+                              color: "var(--amber, #f59e0b)",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                            }}
+                          >
+                            <AlertTriangle size={16} />
+                            <span>
+                              {state.language === "en"
+                                ? "Warning: Recommended maximum trial duration is 90 days."
+                                : "تنبيه: الحد الأقصى الموصى به للفترة التجريبية هو 90 يوماً."}
+                            </span>
+                          </motion.div>
+                        )}
+                      </div>
+
+                      {/* Credits Included */}
+                      <div>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "10px",
+                            marginBottom: "16px",
+                          }}
+                        >
+                          <Sparkles size={20} style={{ color: "var(--green)" }} />
+                          <label
+                            style={{
+                              fontSize: "15px",
+                              fontWeight: "800",
+                              color: "#fff",
+                            }}
+                          >
+                            {state.language === "en"
+                              ? "Credits Included"
+                              : "عدد الكريديتس المتاحة"}
+                          </label>
+                        </div>
                         <div
                           style={{
                             display: "flex",
@@ -4780,8 +5057,7 @@ export default function AdminDashboardPage() {
                         >
                           <input
                             type="number"
-                            min="1"
-                            max="90"
+                            min="0"
                             className="field-input"
                             style={{
                               width: "110px",
@@ -4789,16 +5065,11 @@ export default function AdminDashboardPage() {
                               fontWeight: "800",
                               textAlign: "center",
                               background: "rgba(0, 0, 0, 0.3)",
-                              borderColor:
-                                freeTrialDays < 1 || freeTrialDays > 90
-                                  ? "var(--red)"
-                                  : "var(--accent)",
+                              borderColor: "var(--green)",
                               color: "#fff",
                             }}
-                            value={freeTrialDays}
-                            onChange={(e) =>
-                              setFreeTrialDays(Number(e.target.value))
-                            }
+                            value={freeTrialCredits}
+                            onChange={(e) => setFreeTrialCredits(Number(e.target.value))}
                           />
                           <span
                             style={{
@@ -4808,128 +5079,11 @@ export default function AdminDashboardPage() {
                             }}
                           >
                             {state.language === "en"
-                              ? "Days starting from registration date"
-                              : "أيام تجريبية تبدأ تلقائياً من تاريخ التسجيل"}
+                              ? "Credits given to user during trial"
+                              : "رصيد الكريديتس المتاح للمستخدم أثناء التجربة"}
                           </span>
-                        </div>
-
-                        {/* Quick Picks Preset Buttons */}
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            flexWrap: "wrap",
-                            marginLeft: state.language === "en" ? "auto" : "0",
-                            marginRight: state.language === "en" ? "0" : "auto",
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontSize: "11px",
-                              color: "var(--text3)",
-                              fontWeight: "700",
-                            }}
-                          >
-                            {state.language === "en"
-                              ? "Quick Presets:"
-                              : "خيارات سريعة:"}
-                          </span>
-                          {[3, 7, 14, 30].map((preset) => {
-                            const isSelected = freeTrialDays === preset;
-                            return (
-                              <motion.button
-                                key={preset}
-                                type="button"
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => setFreeTrialDays(preset)}
-                                style={{
-                                  padding: "6px 14px",
-                                  borderRadius: "8px",
-                                  fontSize: "12px",
-                                  fontWeight: "700",
-                                  cursor: "pointer",
-                                  transition: "all 0.2s ease",
-                                  background: isSelected
-                                    ? "var(--accent)"
-                                    : "rgba(255, 255, 255, 0.05)",
-                                  color: isSelected ? "#fff" : "var(--text2)",
-                                  border: isSelected
-                                    ? "1px solid var(--accent)"
-                                    : "1px solid rgba(255, 255, 255, 0.1)",
-                                  boxShadow: isSelected
-                                    ? "0 4px 12px rgba(59, 130, 246, 0.3)"
-                                    : "none",
-                                }}
-                              >
-                                {preset}{" "}
-                                {state.language === "en"
-                                  ? "Days"
-                                  : preset === 3
-                                    ? "أيام"
-                                    : preset === 7
-                                      ? "أيام"
-                                      : "يوم"}
-                              </motion.button>
-                            );
-                          })}
                         </div>
                       </div>
-
-                      {/* Real-time Inline Validation Warnings */}
-                      {freeTrialDays < 1 && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          style={{
-                            marginTop: "14px",
-                            padding: "10px 14px",
-                            background: "rgba(239, 68, 68, 0.1)",
-                            border: "1px solid rgba(239, 68, 68, 0.3)",
-                            borderRadius: "8px",
-                            color: "var(--red)",
-                            fontSize: "12px",
-                            fontWeight: "700",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                          }}
-                        >
-                          <AlertTriangle size={16} />
-                          <span>
-                            {state.language === "en"
-                              ? "Minimum trial duration is 1 day."
-                              : "تنبيه: الحد الأقصى الأدنى للفترة المجانية هو يوم واحد."}
-                          </span>
-                        </motion.div>
-                      )}
-                      {freeTrialDays > 90 && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          style={{
-                            marginTop: "14px",
-                            padding: "10px 14px",
-                            background: "rgba(245, 158, 11, 0.1)",
-                            border: "1px solid rgba(245, 158, 11, 0.3)",
-                            borderRadius: "8px",
-                            color: "var(--amber, #f59e0b)",
-                            fontSize: "12px",
-                            fontWeight: "700",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                          }}
-                        >
-                          <AlertTriangle size={16} />
-                          <span>
-                            {state.language === "en"
-                              ? "Warning: Recommended maximum trial duration is 90 days."
-                              : "تنبيه: الحد الأقصى الموصى به للفترة التجريبية هو 90 يوماً."}
-                          </span>
-                        </motion.div>
-                      )}
                     </div>
 
                     {/* Auto-Include Future Tools Option */}
@@ -5101,7 +5255,7 @@ export default function AdminDashboardPage() {
                               borderRadius: "12px",
                             }}
                           >
-                            {allowedTrialTools.length} /{" "}
+                            {Array.from(new Set(allowedTrialTools)).filter(id => CHECKLIST_ITEMS.some(i => i.id === id)).length} /{" "}
                             {CHECKLIST_ITEMS.length}{" "}
                             {state.language === "en" ? "Active" : "أداة مفعّلة"}
                           </span>
@@ -5126,9 +5280,11 @@ export default function AdminDashboardPage() {
                           type="button"
                           className="btn btn-xs"
                           onClick={() =>
-                            setAllowedTrialTools(
-                              CHECKLIST_ITEMS.map((item) => item.id),
-                            )
+                            setAllowedTrialTools(() => {
+                              const next = Array.from(new Set(CHECKLIST_ITEMS.map((item) => item.id).filter(Boolean)));
+                              allowedTrialToolsRef.current = next;
+                              return next;
+                            })
                           }
                           style={{
                             background: "rgba(59, 130, 246, 0.12)",
@@ -5155,7 +5311,10 @@ export default function AdminDashboardPage() {
                           whileTap={{ scale: 0.96 }}
                           type="button"
                           className="btn btn-xs"
-                          onClick={() => setAllowedTrialTools([])}
+                          onClick={() => setAllowedTrialTools(() => {
+                            allowedTrialToolsRef.current = [];
+                            return [];
+                          })}
                           style={{
                             background: "rgba(239, 68, 68, 0.1)",
                             color: "var(--red)",
@@ -5253,17 +5412,7 @@ export default function AdminDashboardPage() {
                               item.group_en === "Management & Ops",
                           ),
                         },
-                        {
-                          id: 5,
-                          icon: Briefcase,
-                          title:
-                            state.language === "en"
-                              ? "Freelance & Agency Tools"
-                              : "أدوات العمل الحر وفريلانس",
-                          items: CHECKLIST_ITEMS.filter(
-                            (item) => item.section === "freelance",
-                          ),
-                        },
+
                         {
                           id: 6,
                           icon: BookOpen,
@@ -5445,16 +5594,17 @@ export default function AdminDashboardPage() {
                                           whileTap={{ scale: 0.98 }}
                                           onClick={() => {
                                             if (isChecked) {
-                                              setAllowedTrialTools(
-                                                allowedTrialTools.filter(
-                                                  (t) => t !== item.id,
-                                                ),
-                                              );
+                                              setAllowedTrialTools(prev => {
+                                                const next = prev.filter((t) => t !== item.id);
+                                                allowedTrialToolsRef.current = next;
+                                                return next;
+                                              });
                                             } else {
-                                              setAllowedTrialTools([
-                                                ...allowedTrialTools,
-                                                item.id,
-                                              ]);
+                                              setAllowedTrialTools(prev => {
+                                                const next = [...prev, item.id];
+                                                allowedTrialToolsRef.current = next;
+                                                return next;
+                                              });
                                             }
                                           }}
                                           style={{
@@ -5663,8 +5813,8 @@ export default function AdminDashboardPage() {
                           }}
                         >
                           {state.language === "en"
-                            ? `Trial: ${freeTrialDays} Days | Active Tools: ${allowedTrialTools.length}/${CHECKLIST_ITEMS.length}`
-                            : `مدة التجربة: ${freeTrialDays} يوماً | الأدوات المتاحة: ${allowedTrialTools.length} من ${CHECKLIST_ITEMS.length}`}
+                            ? `Trial: ${freeTrialDays} Days | Active Tools: ${Array.from(new Set(allowedTrialTools)).filter(id => CHECKLIST_ITEMS.some(i => i.id === id)).length}/${CHECKLIST_ITEMS.length}`
+                            : `مدة التجربة: ${freeTrialDays} يوماً | الأدوات المتاحة: ${Array.from(new Set(allowedTrialTools)).filter(id => CHECKLIST_ITEMS.some(i => i.id === id)).length} من ${CHECKLIST_ITEMS.length}`}
                         </span>
                       </div>
 
@@ -6227,20 +6377,20 @@ export default function AdminDashboardPage() {
                     {[
                       {
                         id: "transactions",
-                        label_ar: `سجل المعاملات (${pendingPayments.length})`,
-                        label_en: `Transactions Log (${pendingPayments.length})`,
+                        label_ar: `سجل المعاملات (${pendingPayments.filter(p => p.status !== 'pending').length})`,
+                        label_en: `Transactions Log (${pendingPayments.filter(p => p.status !== 'pending').length})`,
                         icon: Activity,
                       },
                       {
-                        id: "wallets",
-                        label_ar: "المحافظ الإلكترونية",
-                        label_en: "E-Wallets",
-                        icon: Wallet,
+                        id: "requests",
+                        label_ar: `طلبات الدفع (${pendingPayments.filter(p => p.status === 'pending').length})`,
+                        label_en: `Payment Requests (${pendingPayments.filter(p => p.status === 'pending').length})`,
+                        icon: Clock,
                       },
                       {
                         id: "gateways",
-                        label_ar: "بوابات الدفع",
-                        label_en: "Payment Gateways",
+                        label_ar: "بوابات وطرق الدفع",
+                        label_en: "Payment Gateways & Methods",
                         icon: CreditCard,
                       },
                     ].map((tab) => {
@@ -6526,8 +6676,8 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              {/* Sub-Tab 1: Transactions Log */}
-              {paymentsSubTab === "transactions" && (
+              {/* Sub-Tab: Payment Requests */}
+              {paymentsSubTab === "requests" && (
                 <div className="ad-table-card" style={{ padding: "24px" }} dir={state.language === "en" ? "ltr" : "rtl"}>
                   {/* Filter Toolbar Header */}
                   <div
@@ -6712,37 +6862,7 @@ export default function AdminDashboardPage() {
                       />
                     </div>
 
-                    {/* Environment Filter like User Management Status */}
-                    <div className="ad-filter-item">
-                      <CustomSelect
-                        label={
-                          state.language === "en"
-                            ? "Environment (بيئة العمل)"
-                            : "بيئة العمل (Environment)"
-                        }
-                        value={paddleEnvironment}
-                        onChange={(val) => setPaddleEnvironment(val)}
-                        icon={Globe}
-                        options={[
-                          {
-                            value: "production",
-                            label:
-                              state.language === "en"
-                                ? "Live / Production"
-                                : "البيئة الحية المباشرة",
-                            icon: Zap,
-                          },
-                          {
-                            value: "sandbox",
-                            label:
-                              state.language === "en"
-                                ? "Sandbox / Testing"
-                                : "بيئة الاختبار والتجربة",
-                            icon: ShieldCheck,
-                          },
-                        ]}
-                      />
-                    </div>
+
                   </div>
 
                   {/* Transactions Table */}
@@ -6793,7 +6913,8 @@ export default function AdminDashboardPage() {
                           const matchStatus =
                             paymentStatusFilter === "all" ||
                             p.status === paymentStatusFilter;
-                          return matchSearch && matchStatus;
+                          const isPending = !p.status || p.status === "pending";
+                          return matchSearch && matchStatus && isPending;
                         });
 
                         const totalPages = Math.max(
@@ -6841,7 +6962,12 @@ export default function AdminDashboardPage() {
                                     <th style={{ textAlign: "center" }}>
                                       {state.language === "en"
                                         ? "Phone Number"
-                                        : "الهاتف المحول"}
+                                        : "الهاتف المحمول"}
+                                    </th>
+                                    <th style={{ textAlign: "center" }}>
+                                      {state.language === "en"
+                                        ? "Payment Method"
+                                        : "طريقة الدفع"}
                                     </th>
                                     <th style={{ textAlign: "center" }}>
                                       {state.language === "en"
@@ -6944,6 +7070,16 @@ export default function AdminDashboardPage() {
                                         <td style={{ textAlign: "center" }}>
                                           <div
                                             style={{
+                                              color: "var(--text2)",
+                                              fontSize: "12px",
+                                            }}
+                                          >
+                                            {p.paymentMethod || p.methodName || (state.language === "en" ? "N/A" : "تحويل بنكي / محفظة")}
+                                          </div>
+                                        </td>
+                                        <td style={{ textAlign: "center" }}>
+                                          <div
+                                            style={{
                                               fontSize: "12px",
                                               fontWeight: "600",
                                               color: "var(--text2)",
@@ -6967,14 +7103,12 @@ export default function AdminDashboardPage() {
                                           </div>
                                         </td>
                                         <td style={{ textAlign: "center" }}>
-                                          {p.screenshotUrl ? (
+                                          {(p.receiptUrl || p.screenshotUrl || p.receipt || p.receiptImage) ? (
                                             <button
                                               type="button"
                                               className="btn btn-xs"
                                               onClick={() =>
-                                                setPreviewReceiptUrl(
-                                                  p.screenshotUrl,
-                                                )
+                                                setPreviewReceiptUrl(p.receiptUrl || p.screenshotUrl || p.receipt || p.receiptImage)
                                               }
                                               style={{
                                                 background:
@@ -7008,7 +7142,7 @@ export default function AdminDashboardPage() {
                                                 color: "var(--text3)",
                                               }}
                                             >
-                                              —
+                                              {state.language === "en" ? "No receipt" : "لا يوجد إيصال"}
                                             </span>
                                           )}
                                         </td>
@@ -7069,30 +7203,54 @@ export default function AdminDashboardPage() {
                                         </td>
                                         <td style={{ textAlign: "center" }}>
                                           {isPending ? (
-                                            <button
-                                              className="btn btn-xs btn-primary"
-                                              onClick={() =>
-                                                setPaymentToApprove(p)
-                                              }
-                                              style={{
-                                                fontSize: "11px",
-                                                fontWeight: "700",
-                                                padding: "6px 12px",
-                                                borderRadius: "8px",
-                                                display: "inline-flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                gap: "4px",
-                                                margin: "0 auto",
-                                              }}
-                                            >
-                                              <Check size={13} />
-                                              <span>
-                                                {state.language === "en"
-                                                  ? "Approve Plan"
-                                                  : "تأكيد الاشتراك"}
-                                              </span>
-                                            </button>
+                                            <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
+                                              <button
+                                                className="btn btn-xs btn-primary"
+                                                onClick={() => {
+                                                  setPaymentToApprove(p);
+                                                  setSelectedPlanForPayment(p.planId || "");
+                                                  setSelectedDurationForPayment(30);
+                                                }}
+                                                style={{
+                                                  fontSize: "11px",
+                                                  fontWeight: "700",
+                                                  padding: "6px 12px",
+                                                  borderRadius: "8px",
+                                                  display: "inline-flex",
+                                                  alignItems: "center",
+                                                  justifyContent: "center",
+                                                  gap: "4px",
+                                                }}
+                                              >
+                                                <Check size={13} />
+                                                <span>
+                                                  {state.language === "en" ? "Approve Plan" : "تأكيد الاشتراك"}
+                                                </span>
+                                              </button>
+                                              
+                                              <button
+                                                className="btn btn-xs"
+                                                onClick={() => setPaymentToReject(p)}
+                                                style={{
+                                                  fontSize: "11px",
+                                                  fontWeight: "700",
+                                                  padding: "6px 12px",
+                                                  borderRadius: "8px",
+                                                  background: "rgba(239, 68, 68, 0.1)",
+                                                  color: "var(--red)",
+                                                  border: "1px solid rgba(239, 68, 68, 0.3)",
+                                                  display: "inline-flex",
+                                                  alignItems: "center",
+                                                  justifyContent: "center",
+                                                  gap: "4px",
+                                                }}
+                                              >
+                                                <X size={13} />
+                                                <span>
+                                                  {state.language === "en" ? "Reject" : "رفض"}
+                                                </span>
+                                              </button>
+                                            </div>
                                           ) : (
                                             <span
                                               style={{
@@ -7131,505 +7289,85 @@ export default function AdminDashboardPage() {
                   )}
                 </div>
               )}
-
-              {/* Sub-Tab 2: E-Wallets Section */}
-              {paymentsSubTab === "wallets" && (
+              {/* Sub-Tab 1: Transactions Log */}
+              {paymentsSubTab === "transactions" && (
                 <div className="ad-table-card" style={{ padding: "24px" }} dir={state.language === "en" ? "ltr" : "rtl"}>
-                  <div
-                    style={{
-                      marginBottom: "24px",
-                      borderBottom: "1px solid var(--line)",
-                      paddingBottom: "16px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "18px",
-                        fontWeight: "800",
-                        color: "#fff",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                      }}
-                    >
-                      <Wallet size={20} style={{ color: "var(--accent)" }} />
-                      <span>
-                        {state.language === "en"
-                          ? "Electronic Wallets Configuration"
-                          : "إعدادات المحافظ الإلكترونية"}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "12px",
-                        color: "var(--text3)",
-                        marginTop: "4px",
-                      }}
-                    >
+                  <div style={{ marginBottom: "20px" }}>
+                    <h3 style={{ margin: 0, color: "#fff", fontSize: "18px" }}>
+                      {state.language === "en" ? "Transactions History Log" : "سجل المعاملات التاريخي"}
+                    </h3>
+                    <p style={{ margin: "4px 0 0 0", color: "var(--text3)", fontSize: "13px" }}>
                       {state.language === "en"
-                        ? "Enter your mobile money and wallet account details to be shown on the client payment gateway."
-                        : "أدخل أرقام المحافظ الإلكترونية الخاصة بك لتظهر للعملاء أثناء عملية تحويل الأموال."}
-                    </div>
+                        ? "A read-only log of all processed payment transactions (approved, completed, rejected)."
+                        : "سجل قراءة فقط لجميع معاملات الدفع التي تمت معالجتها (المقبولة والمكتملة والمرفوضة)."}
+                    </p>
                   </div>
-
-                  {/* Branded E-Wallet Cards Grid */}
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns:
-                        "repeat(auto-fit, minmax(280px, 1fr))",
-                      gap: "20px",
-                      marginBottom: "28px",
-                    }}
-                  >
-                    {/* Vodafone Cash */}
-                    <div
-                      style={{
-                        background:
-                          "linear-gradient(135deg, rgba(230, 0, 0, 0.08), rgba(13, 18, 32, 0.8))",
-                        border: "1px solid rgba(230, 0, 0, 0.3)",
-                        borderRadius: "16px",
-                        padding: "20px",
-                        position: "relative",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginBottom: "14px",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                          }}
-                        >
-                          <Smartphone size={18} style={{ color: "#E60000" }} />
-                          <span
-                            style={{
-                              fontWeight: "800",
-                              color: "#fff",
-                              fontSize: "14px",
-                            }}
-                          >
-                            فودافون كاش (Vodafone)
-                          </span>
-                        </div>
-                        {vodafoneWallet ? (
-                          <span
-                            style={{
-                              fontSize: "10px",
-                              fontWeight: "800",
-                              color: "#10B981",
-                              background: "rgba(16, 185, 129, 0.15)",
-                              padding: "2px 8px",
-                              borderRadius: "10px",
-                              border: "1px solid rgba(16, 185, 129, 0.3)",
-                            }}
-                          >
-                            🟢 {state.language === "en" ? "Active" : "نشط"}
-                          </span>
-                        ) : (
-                          <span
-                            style={{
-                              fontSize: "10px",
-                              fontWeight: "800",
-                              color: "#EF4444",
-                              background: "rgba(239, 68, 68, 0.15)",
-                              padding: "2px 8px",
-                              borderRadius: "10px",
-                              border: "1px solid rgba(239, 68, 68, 0.3)",
-                            }}
-                          >
-                            🔴{" "}
-                            {state.language === "en" ? "Inactive" : "غير مفعل"}
-                          </span>
+                  <div className="table-responsive">
+                    <table className="ad-table">
+                      <thead>
+                        <tr>
+                          <th>{state.language === "en" ? "Customer" : "العميل"}</th>
+                          <th>{state.language === "en" ? "Plan" : "الباقة"}</th>
+                          <th>{state.language === "en" ? "Payment Method" : "طريقة الدفع"}</th>
+                          <th>{state.language === "en" ? "Amount" : "المبلغ"}</th>
+                          <th>{state.language === "en" ? "Status" : "الحالة"}</th>
+                          <th>{state.language === "en" ? "Date" : "التاريخ"}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pendingPayments
+                          .filter(p => p.status !== "pending")
+                          .slice(0, 50) // limit for performance in this view
+                          .map((p) => (
+                            <tr key={p.id}>
+                              <td>
+                                <div>
+                                  <strong style={{ color: "#fff", display: "block", fontSize: "13px" }}>
+                                    {p.userName || "User"}
+                                  </strong>
+                                  <span style={{ color: "var(--text3)", fontSize: "11px" }}>
+                                    {p.userEmail || p.userPhone}
+                                  </span>
+                                </div>
+                              </td>
+                              <td>{p.planName || p.planId || "N/A"}</td>
+                              <td>{p.paymentMethod || p.methodName || (state.language === "en" ? "N/A" : "تحويل بنكي / محفظة")}</td>
+                              <td>{p.amount ? (p.currency === 'USD' ? `$${p.amount}` : `${p.amount} ${p.currency || 'EGP'}`) : "-"}</td>
+                              <td>
+                                <span
+                                  style={{
+                                    fontSize: "11px",
+                                    fontWeight: "800",
+                                    padding: "4px 10px",
+                                    borderRadius: "12px",
+                                    background: p.status === "rejected" ? "rgba(239, 68, 68, 0.12)" : "rgba(16, 185, 129, 0.12)",
+                                    color: p.status === "rejected" ? "#EF4444" : "#10B981",
+                                    border: `1px solid ${p.status === "rejected" ? "rgba(239, 68, 68, 0.3)" : "rgba(16, 185, 129, 0.3)"}`
+                                  }}
+                                >
+                                  {p.status === "rejected"
+                                    ? (state.language === "en" ? "Rejected" : "مرفوض")
+                                    : (state.language === "en" ? "Approved/Completed" : "مكتمل / مقبول")}
+                                </span>
+                              </td>
+                              <td>
+                                {p.createdAt?.seconds
+                                  ? new Date(p.createdAt.seconds * 1000).toLocaleDateString(
+                                      state.language === "en" ? "en-US" : "ar-EG"
+                                    )
+                                  : "-"}
+                              </td>
+                            </tr>
+                        ))}
+                        {pendingPayments.filter(p => p.status !== "pending").length === 0 && (
+                          <tr>
+                            <td colSpan="5" style={{ textAlign: "center", padding: "40px" }}>
+                              {state.language === "en" ? "No transactions found." : "لا توجد معاملات."}
+                            </td>
+                          </tr>
                         )}
-                      </div>
-
-                      <div className="field">
-                        <div style={{ display: "flex", gap: "8px" }}>
-                          <input
-                            className="field-input"
-                            placeholder="010xxxxxxxx"
-                            value={vodafoneWallet}
-                            onChange={(e) => setVodafoneWallet(e.target.value)}
-                            dir="ltr"
-                            style={{
-                              fontWeight: "800",
-                              letterSpacing: "1px",
-                              color: "#E60000",
-                              borderColor: "rgba(230, 0, 0, 0.3)",
-                            }}
-                          />
-                          <button
-                            type="button"
-                            className="btn btn-sm"
-                            onClick={() => handleCopyWallet(vodafoneWallet)}
-                            title="Copy number"
-                            style={{
-                              background: "rgba(230, 0, 0, 0.15)",
-                              color: "#E60000",
-                              border: "1px solid rgba(230, 0, 0, 0.3)",
-                              borderRadius: "10px",
-                              padding: "0 12px",
-                              cursor: "pointer",
-                            }}
-                          >
-                            <Copy size={15} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Etisalat Cash */}
-                    <div
-                      style={{
-                        background:
-                          "linear-gradient(135deg, rgba(0, 107, 51, 0.08), rgba(13, 18, 32, 0.8))",
-                        border: "1px solid rgba(0, 107, 51, 0.3)",
-                        borderRadius: "16px",
-                        padding: "20px",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginBottom: "14px",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                          }}
-                        >
-                          <Smartphone size={18} style={{ color: "#006B33" }} />
-                          <span
-                            style={{
-                              fontWeight: "800",
-                              color: "#fff",
-                              fontSize: "14px",
-                            }}
-                          >
-                            اتصالات كاش (Etisalat)
-                          </span>
-                        </div>
-                        {etisalatWallet ? (
-                          <span
-                            style={{
-                              fontSize: "10px",
-                              fontWeight: "800",
-                              color: "#10B981",
-                              background: "rgba(16, 185, 129, 0.15)",
-                              padding: "2px 8px",
-                              borderRadius: "10px",
-                              border: "1px solid rgba(16, 185, 129, 0.3)",
-                            }}
-                          >
-                            🟢 {state.language === "en" ? "Active" : "نشط"}
-                          </span>
-                        ) : (
-                          <span
-                            style={{
-                              fontSize: "10px",
-                              fontWeight: "800",
-                              color: "#EF4444",
-                              background: "rgba(239, 68, 68, 0.15)",
-                              padding: "2px 8px",
-                              borderRadius: "10px",
-                              border: "1px solid rgba(239, 68, 68, 0.3)",
-                            }}
-                          >
-                            🔴{" "}
-                            {state.language === "en" ? "Inactive" : "غير مفعل"}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="field">
-                        <div style={{ display: "flex", gap: "8px" }}>
-                          <input
-                            className="field-input"
-                            placeholder="011xxxxxxxx"
-                            value={etisalatWallet}
-                            onChange={(e) => setEtisalatWallet(e.target.value)}
-                            dir="ltr"
-                            style={{
-                              fontWeight: "800",
-                              letterSpacing: "1px",
-                              color: "#006B33",
-                              borderColor: "rgba(0, 107, 51, 0.3)",
-                            }}
-                          />
-                          <button
-                            type="button"
-                            className="btn btn-sm"
-                            onClick={() => handleCopyWallet(etisalatWallet)}
-                            title="Copy number"
-                            style={{
-                              background: "rgba(0, 107, 51, 0.15)",
-                              color: "#006B33",
-                              border: "1px solid rgba(0, 107, 51, 0.3)",
-                              borderRadius: "10px",
-                              padding: "0 12px",
-                              cursor: "pointer",
-                            }}
-                          >
-                            <Copy size={15} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Orange Cash */}
-                    <div
-                      style={{
-                        background:
-                          "linear-gradient(135deg, rgba(255, 102, 0, 0.08), rgba(13, 18, 32, 0.8))",
-                        border: "1px solid rgba(255, 102, 0, 0.3)",
-                        borderRadius: "16px",
-                        padding: "20px",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginBottom: "14px",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                          }}
-                        >
-                          <Smartphone size={18} style={{ color: "#FF6600" }} />
-                          <span
-                            style={{
-                              fontWeight: "800",
-                              color: "#fff",
-                              fontSize: "14px",
-                            }}
-                          >
-                            أورانج كاش (Orange)
-                          </span>
-                        </div>
-                        {orangeWallet ? (
-                          <span
-                            style={{
-                              fontSize: "10px",
-                              fontWeight: "800",
-                              color: "#10B981",
-                              background: "rgba(16, 185, 129, 0.15)",
-                              padding: "2px 8px",
-                              borderRadius: "10px",
-                              border: "1px solid rgba(16, 185, 129, 0.3)",
-                            }}
-                          >
-                            🟢 {state.language === "en" ? "Active" : "نشط"}
-                          </span>
-                        ) : (
-                          <span
-                            style={{
-                              fontSize: "10px",
-                              fontWeight: "800",
-                              color: "#EF4444",
-                              background: "rgba(239, 68, 68, 0.15)",
-                              padding: "2px 8px",
-                              borderRadius: "10px",
-                              border: "1px solid rgba(239, 68, 68, 0.3)",
-                            }}
-                          >
-                            🔴{" "}
-                            {state.language === "en" ? "Inactive" : "غير مفعل"}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="field">
-                        <div style={{ display: "flex", gap: "8px" }}>
-                          <input
-                            className="field-input"
-                            placeholder="012xxxxxxxx"
-                            value={orangeWallet}
-                            onChange={(e) => setOrangeWallet(e.target.value)}
-                            dir="ltr"
-                            style={{
-                              fontWeight: "800",
-                              letterSpacing: "1px",
-                              color: "#FF6600",
-                              borderColor: "rgba(255, 102, 0, 0.3)",
-                            }}
-                          />
-                          <button
-                            type="button"
-                            className="btn btn-sm"
-                            onClick={() => handleCopyWallet(orangeWallet)}
-                            title="Copy number"
-                            style={{
-                              background: "rgba(255, 102, 0, 0.15)",
-                              color: "#FF6600",
-                              border: "1px solid rgba(255, 102, 0, 0.3)",
-                              borderRadius: "10px",
-                              padding: "0 12px",
-                              cursor: "pointer",
-                            }}
-                          >
-                            <Copy size={15} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* InstaPay */}
-                    <div
-                      style={{
-                        background:
-                          "linear-gradient(135deg, rgba(138, 43, 226, 0.08), rgba(13, 18, 32, 0.8))",
-                        border: "1px solid rgba(138, 43, 226, 0.3)",
-                        borderRadius: "16px",
-                        padding: "20px",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginBottom: "14px",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                          }}
-                        >
-                          <Zap size={18} style={{ color: "#8A2BE2" }} />
-                          <span
-                            style={{
-                              fontWeight: "800",
-                              color: "#fff",
-                              fontSize: "14px",
-                            }}
-                          >
-                            إنستاباي (InstaPay)
-                          </span>
-                        </div>
-                        {instapayWallet ? (
-                          <span
-                            style={{
-                              fontSize: "10px",
-                              fontWeight: "800",
-                              color: "#10B981",
-                              background: "rgba(16, 185, 129, 0.15)",
-                              padding: "2px 8px",
-                              borderRadius: "10px",
-                              border: "1px solid rgba(16, 185, 129, 0.3)",
-                            }}
-                          >
-                            🟢 {state.language === "en" ? "Active" : "نشط"}
-                          </span>
-                        ) : (
-                          <span
-                            style={{
-                              fontSize: "10px",
-                              fontWeight: "800",
-                              color: "#EF4444",
-                              background: "rgba(239, 68, 68, 0.15)",
-                              padding: "2px 8px",
-                              borderRadius: "10px",
-                              border: "1px solid rgba(239, 68, 68, 0.3)",
-                            }}
-                          >
-                            🔴{" "}
-                            {state.language === "en" ? "Inactive" : "غير مفعل"}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="field">
-                        <div style={{ display: "flex", gap: "8px" }}>
-                          <input
-                            className="field-input"
-                            placeholder="username@instapay"
-                            value={instapayWallet}
-                            onChange={(e) => setInstapayWallet(e.target.value)}
-                            dir="ltr"
-                            style={{
-                              fontWeight: "800",
-                              color: "#8A2BE2",
-                              borderColor: "rgba(138, 43, 226, 0.3)",
-                            }}
-                          />
-                          <button
-                            type="button"
-                            className="btn btn-sm"
-                            onClick={() => handleCopyWallet(instapayWallet)}
-                            title="Copy username"
-                            style={{
-                              background: "rgba(138, 43, 226, 0.15)",
-                              color: "#8A2BE2",
-                              border: "1px solid rgba(138, 43, 226, 0.3)",
-                              borderRadius: "10px",
-                              padding: "0 12px",
-                              cursor: "pointer",
-                            }}
-                          >
-                            <Copy size={15} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Save E-Wallets Button */}
-                  <div style={{ textAlign: "center", marginTop: "10px" }}>
-                    <button
-                      className="ad-submit-btn"
-                      style={{
-                        minWidth: "260px",
-                        margin: "0 auto",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "8px",
-                      }}
-                      onClick={handleUpdateAdminProfile}
-                      disabled={isUpdatingProfile}
-                    >
-                      {isUpdatingProfile ? (
-                        <>
-                          <Loader2 size={16} className="animate-spin" />
-                          <span>
-                            {state.language === "en"
-                              ? "Saving settings..."
-                              : "جاري الحفظ..."}
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <Save size={16} />
-                          <span>
-                            {state.language === "en"
-                              ? "Save E-Wallet Settings"
-                              : " حفظ أرقام المحافظ"}
-                          </span>
-                        </>
-                      )}
-                    </button>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               )}
@@ -7676,8 +7414,8 @@ export default function AdminDashboardPage() {
                         }}
                       >
                         {state.language === "en"
-                          ? "Configure InstaPay, Vodafone Cash, Stripe, PayPal, and Paddle credentials."
-                          : "قم بضبط إعدادات ومفاتيح طرق الدفع: انستا باي، فودافون كاش، سترايب، باي بال، وبادِل."}
+                          ? "Configure InstaPay, Vodafone Cash, Bank Transfer, and Stripe credentials."
+                          : "قم بضبط إعدادات ومفاتيح طرق الدفع: انستا باي، فودافون كاش، والتحويل البنكي، وبوابات سترايب."}
                       </div>
                     </div>
 
@@ -7731,231 +7469,222 @@ export default function AdminDashboardPage() {
                       gap: "24px",
                     }}
                   >
-                    {/* 1. InstaPay Card */}
+                    {/* Manual Payment Methods Manager */}
                     <div
                       style={{
+                        gridColumn: "1 / -1",
                         background: "linear-gradient(135deg, rgba(17, 24, 39, 0.85), rgba(13, 18, 32, 0.95))",
-                        border: "1px solid rgba(245, 158, 11, 0.3)",
+                        border: "1px solid rgba(139, 92, 246, 0.3)",
                         borderRadius: "18px",
                         padding: "24px",
                         display: "flex",
                         flexDirection: "column",
                         gap: "18px",
-                        boxShadow: "0 10px 30px -10px rgba(245, 158, 11, 0.1)",
+                        boxShadow: "0 10px 30px -10px rgba(139, 92, 246, 0.1)",
                         backdropFilter: "blur(12px)",
                       }}
                     >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                          <div
-                            style={{
-                              width: 44,
-                              height: 44,
-                              borderRadius: "14px",
-                              background: "radial-gradient(circle, rgba(245, 158, 11, 0.25) 0%, rgba(245, 158, 11, 0.05) 100%)",
-                              border: "1px solid rgba(245, 158, 11, 0.4)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              color: "#F59E0B",
-                              boxShadow: "0 0 15px rgba(245, 158, 11, 0.15)",
-                            }}
-                          >
-                            <Zap size={22} color="#F59E0B" />
-                          </div>
-                          <div>
-                            <div style={{ fontSize: "16px", fontWeight: "800", color: "#fff", letterSpacing: "0.2px" }}>
-                              InstaPay
-                            </div>
-                            <div style={{ fontSize: "11px", color: "var(--text3)", fontWeight: "600" }}>
-                              {state.language === "en" ? "Instant Bank Transfer" : "تحويل بنكي لحظي"}
-                            </div>
-                          </div>
-                        </div>
-
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
                         <div
-                          onClick={() =>
-                            setPaymentMethods((prev) => ({
-                              ...prev,
-                              instapay: { ...prev.instapay, enabled: !prev.instapay?.enabled },
-                            }))
-                          }
                           style={{
-                            width: "48px",
-                            height: "26px",
-                            borderRadius: "13px",
-                            background: paymentMethods.instapay?.enabled
-                              ? "linear-gradient(135deg, #10B981, #059669)"
-                              : "rgba(255, 255, 255, 0.1)",
-                            border: `1px solid ${paymentMethods.instapay?.enabled ? "#10B981" : "rgba(255, 255, 255, 0.15)"}`,
-                            position: "relative",
-                            transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-                            cursor: "pointer",
-                            boxShadow: paymentMethods.instapay?.enabled ? "0 0 12px rgba(16, 185, 129, 0.3)" : "none",
+                            width: 44,
+                            height: 44,
+                            borderRadius: "14px",
+                            background: "radial-gradient(circle, rgba(139, 92, 246, 0.25) 0%, rgba(139, 92, 246, 0.05) 100%)",
+                            border: "1px solid rgba(139, 92, 246, 0.4)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "#8B5CF6",
+                            boxShadow: "0 0 15px rgba(139, 92, 246, 0.15)",
                           }}
                         >
-                          <div
+                          <Wallet size={22} color="#8B5CF6" />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: "16px", fontWeight: "800", color: "#fff", letterSpacing: "0.2px" }}>
+                            {state.language === "en" ? "Manual Payment Methods" : "طرق الدفع اليدوية"}
+                          </div>
+                          <div style={{ fontSize: "11px", color: "var(--text3)", fontWeight: "600" }}>
+                            {state.language === "en" ? "Bank Transfers, Vodafone Cash, Crypto, etc." : "تحويلات بنكية، فودافون كاش، محافظ، إلخ"}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Add New Method Form */}
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", alignItems: "flex-end", background: "rgba(0,0,0,0.2)", padding: "16px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                        <div style={{ flex: "1 1 200px" }}>
+                          <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text3)", display: "block", marginBottom: "6px" }}>
+                            {state.language === "en" ? "Method Name (e.g. Vodafone Cash)" : "اسم الطريقة (مثال: فودافون كاش)"}
+                          </label>
+                          <input
+                            type="text"
+                            value={newPayName}
+                            onChange={(e) => setNewPayName(e.target.value)}
+                            placeholder={state.language === "en" ? "Method Name" : "اسم الطريقة"}
+                            className="input"
                             style={{
-                              width: "20px",
-                              height: "20px",
-                              borderRadius: "50%",
-                              background: "#FFF",
-                              position: "absolute",
-                              top: "2px",
-                              left: paymentMethods.instapay?.enabled ? "25px" : "2px",
-                              transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-                              boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
+                              width: "100%",
+                              height: "42px",
+                              background: "rgba(0,0,0,0.35)",
+                              border: "1px solid rgba(139, 92, 246, 0.2)",
+                              borderRadius: "10px",
+                              color: "#fff",
+                              padding: "0 12px",
+                              fontSize: "13px",
                             }}
                           />
                         </div>
-                      </div>
-
-                      <div>
-                        <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text3)", display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
-                          <Send size={12} style={{ color: "#F59E0B" }} />
-                          <span>{state.language === "en" ? "InstaPay Address (IPA)" : "عنوان انستا باي المالي"}</span>
-                        </label>
-                        <input
-                          type="text"
-                          dir="ltr"
-                          placeholder="username@instapay"
-                          value={paymentMethods.instapay?.address || ""}
-                          onChange={(e) =>
-                            setPaymentMethods((prev) => ({
-                              ...prev,
-                              instapay: { ...prev.instapay, address: e.target.value },
-                            }))
-                          }
-                          className="input"
-                          style={{
-                            width: "100%",
-                            height: "42px",
-                            background: "rgba(0,0,0,0.35)",
-                            border: "1px solid rgba(245, 158, 11, 0.2)",
-                            borderRadius: "10px",
-                            color: "#fff",
-                            padding: "0 12px",
-                            fontSize: "13px",
-                            fontWeight: "600",
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* 2. Vodafone Cash Card */}
-                    <div
-                      style={{
-                        background: "linear-gradient(135deg, rgba(17, 24, 39, 0.85), rgba(13, 18, 32, 0.95))",
-                        border: "1px solid rgba(239, 68, 68, 0.3)",
-                        borderRadius: "18px",
-                        padding: "24px",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "18px",
-                        boxShadow: "0 10px 30px -10px rgba(239, 68, 68, 0.1)",
-                        backdropFilter: "blur(12px)",
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                          <div
+                        <div style={{ flex: "1 1 200px" }}>
+                          <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text3)", display: "block", marginBottom: "6px" }}>
+                            {state.language === "en" ? "Transfer Details / Number" : "بيانات التحويل / الرقم"}
+                          </label>
+                          <input
+                            type="text"
+                            value={newPayValue}
+                            onChange={(e) => setNewPayValue(e.target.value)}
+                            placeholder={state.language === "en" ? "Details..." : "تفاصيل التحويل..."}
+                            className="input"
+                            dir="ltr"
                             style={{
-                              width: 44,
-                              height: 44,
-                              borderRadius: "14px",
-                              background: "radial-gradient(circle, rgba(239, 68, 68, 0.25) 0%, rgba(239, 68, 68, 0.05) 100%)",
-                              border: "1px solid rgba(239, 68, 68, 0.4)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              color: "#EF4444",
-                              boxShadow: "0 0 15px rgba(239, 68, 68, 0.15)",
-                            }}
-                          >
-                            <Smartphone size={22} color="#EF4444" />
-                          </div>
-                          <div>
-                            <div style={{ fontSize: "16px", fontWeight: "800", color: "#fff", letterSpacing: "0.2px" }}>
-                              Vodafone Cash
-                            </div>
-                            <div style={{ fontSize: "11px", color: "var(--text3)", fontWeight: "600" }}>
-                              {state.language === "en" ? "Mobile Money Wallet" : "محفظة فودافون كاش"}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div
-                          onClick={() =>
-                            setPaymentMethods((prev) => ({
-                              ...prev,
-                              vodafoneCash: {
-                                ...prev.vodafoneCash,
-                                enabled: !prev.vodafoneCash?.enabled,
-                              },
-                            }))
-                          }
-                          style={{
-                            width: "48px",
-                            height: "26px",
-                            borderRadius: "13px",
-                            background: paymentMethods.vodafoneCash?.enabled
-                              ? "linear-gradient(135deg, #10B981, #059669)"
-                              : "rgba(255, 255, 255, 0.1)",
-                            border: `1px solid ${paymentMethods.vodafoneCash?.enabled ? "#10B981" : "rgba(255, 255, 255, 0.15)"}`,
-                            position: "relative",
-                            transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-                            cursor: "pointer",
-                            boxShadow: paymentMethods.vodafoneCash?.enabled ? "0 0 12px rgba(16, 185, 129, 0.3)" : "none",
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: "20px",
-                              height: "20px",
-                              borderRadius: "50%",
-                              background: "#FFF",
-                              position: "absolute",
-                              top: "2px",
-                              left: paymentMethods.vodafoneCash?.enabled ? "25px" : "2px",
-                              transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-                              boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
+                              width: "100%",
+                              height: "42px",
+                              background: "rgba(0,0,0,0.35)",
+                              border: "1px solid rgba(139, 92, 246, 0.2)",
+                              borderRadius: "10px",
+                              color: "#fff",
+                              padding: "0 12px",
+                              fontSize: "13px",
                             }}
                           />
                         </div>
-                      </div>
-
-                      <div>
-                        <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text3)", display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
-                          <Smartphone size={12} style={{ color: "#EF4444" }} />
-                          <span>{state.language === "en" ? "Vodafone Cash Number" : "رقم محفظة فودافون كاش"}</span>
-                        </label>
-                        <input
-                          type="text"
-                          dir="ltr"
-                          placeholder="010XXXXXXXX"
-                          value={paymentMethods.vodafoneCash?.number || ""}
-                          onChange={(e) =>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!newPayName.trim() || !newPayValue.trim()) {
+                              toast(state.language === "en" ? "Please enter both name and details" : "يرجى إدخال الاسم والتفاصيل", "error");
+                              return;
+                            }
                             setPaymentMethods((prev) => ({
                               ...prev,
-                              vodafoneCash: {
-                                ...prev.vodafoneCash,
-                                number: e.target.value.replace(/[^0-9]/g, ""),
-                              },
-                            }))
-                          }
-                          className="input"
-                          style={{
-                            width: "100%",
-                            height: "42px",
-                            background: "rgba(0,0,0,0.35)",
-                            border: "1px solid rgba(239, 68, 68, 0.2)",
-                            borderRadius: "10px",
-                            color: "#fff",
-                            padding: "0 12px",
-                            fontSize: "13px",
-                            fontWeight: "600",
+                              manualMethods: [
+                                ...(prev.manualMethods || []),
+                                { id: "pay-" + Date.now(), name: newPayName.trim(), value: newPayValue.trim() }
+                              ]
+                            }));
+                            setNewPayName("");
+                            setNewPayValue("");
                           }}
-                        />
+                          style={{
+                            height: "42px",
+                            padding: "0 20px",
+                            background: "linear-gradient(135deg, #8B5CF6, #6D28D9)",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: "10px",
+                            fontWeight: "bold",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            boxShadow: "0 4px 12px rgba(139, 92, 246, 0.3)"
+                          }}
+                        >
+                          <Plus size={16} />
+                          {state.language === "en" ? "Add Method" : "إضافة"}
+                        </button>
+                      </div>
+
+                      {/* Methods List */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                        {(!paymentMethods.manualMethods || paymentMethods.manualMethods.length === 0) && (
+                          <div style={{ textAlign: "center", padding: "20px", color: "var(--text3)", fontSize: "13px" }}>
+                            {state.language === "en" ? "No manual payment methods added yet." : "لا توجد طرق دفع يدوية مضافة."}
+                          </div>
+                        )}
+                        {paymentMethods.manualMethods?.map((method) => (
+                          <div key={method.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "10px" }}>
+                            {editingPayId === method.id ? (
+                              <div style={{ display: "flex", gap: "10px", flex: 1, marginRight: "12px" }}>
+                                <input
+                                  type="text"
+                                  value={editingPayName}
+                                  onChange={(e) => setEditingPayName(e.target.value)}
+                                  className="input"
+                                  style={{ flex: 1, height: "36px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(139,92,246,0.3)", borderRadius: "8px", color: "#fff", padding: "0 10px", fontSize: "12px" }}
+                                />
+                                <input
+                                  type="text"
+                                  dir="ltr"
+                                  value={editingPayValue}
+                                  onChange={(e) => setEditingPayValue(e.target.value)}
+                                  className="input"
+                                  style={{ flex: 2, height: "36px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(139,92,246,0.3)", borderRadius: "8px", color: "#fff", padding: "0 10px", fontSize: "12px", fontFamily: "monospace" }}
+                                />
+                              </div>
+                            ) : (
+                              <div>
+                                <div style={{ fontSize: "14px", fontWeight: "700", color: "#fff" }}>{method.name}</div>
+                                <div style={{ fontSize: "12px", color: "var(--text3)", fontFamily: "monospace", marginTop: "4px" }} dir="ltr">{method.value}</div>
+                              </div>
+                            )}
+                            
+                            <div style={{ display: "flex", gap: "8px" }}>
+                              {editingPayId === method.id ? (
+                                <>
+                                  <button
+                                    onClick={() => {
+                                      if (!editingPayName.trim() || !editingPayValue.trim()) {
+                                        toast("يرجى إدخال الاسم والتفاصيل", "error");
+                                        return;
+                                      }
+                                      setPaymentMethods((prev) => ({
+                                        ...prev,
+                                        manualMethods: prev.manualMethods.map((m) => 
+                                          m.id === method.id ? { ...m, name: editingPayName.trim(), value: editingPayValue.trim() } : m
+                                        )
+                                      }));
+                                      setEditingPayId(null);
+                                    }}
+                                    style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(16, 185, 129, 0.15)", color: "#10B981", border: "1px solid rgba(16, 185, 129, 0.3)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                                  >
+                                    <Check size={14} />
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingPayId(null)}
+                                    style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.1)", color: "#fff", border: "1px solid rgba(255, 255, 255, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => {
+                                      setEditingPayId(method.id);
+                                      setEditingPayName(method.name);
+                                      setEditingPayValue(method.value);
+                                    }}
+                                    style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(139, 92, 246, 0.15)", color: "#8B5CF6", border: "1px solid rgba(139, 92, 246, 0.3)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                                  >
+                                    <Edit size={14} />
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setPaymentMethods((prev) => ({
+                                        ...prev,
+                                        manualMethods: prev.manualMethods.filter((m) => m.id !== method.id)
+                                      }));
+                                    }}
+                                    style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(239, 68, 68, 0.15)", color: "#EF4444", border: "1px solid rgba(239, 68, 68, 0.3)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
 
@@ -8125,392 +7854,6 @@ export default function AdminDashboardPage() {
                       </div>
                     </div>
 
-                    {/* 4. PayPal Card */}
-                    <div
-                      style={{
-                        background: "linear-gradient(135deg, rgba(17, 24, 39, 0.85), rgba(13, 18, 32, 0.95))",
-                        border: "1px solid rgba(59, 130, 246, 0.3)",
-                        borderRadius: "18px",
-                        padding: "24px",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "18px",
-                        boxShadow: "0 10px 30px -10px rgba(59, 130, 246, 0.1)",
-                        backdropFilter: "blur(12px)",
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                          <div
-                            style={{
-                              width: 44,
-                              height: 44,
-                              borderRadius: "14px",
-                              background: "radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, rgba(59, 130, 246, 0.05) 100%)",
-                              border: "1px solid rgba(59, 130, 246, 0.4)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              color: "#3B82F6",
-                              boxShadow: "0 0 15px rgba(59, 130, 246, 0.15)",
-                            }}
-                          >
-                            <Globe size={22} color="#3B82F6" />
-                          </div>
-                          <div>
-                            <div style={{ fontSize: "16px", fontWeight: "800", color: "#fff", letterSpacing: "0.2px" }}>
-                              PayPal
-                            </div>
-                            <div style={{ fontSize: "11px", color: "var(--text3)", fontWeight: "600" }}>
-                              {state.language === "en" ? "Global Payments" : "مدفوعات باي بال العالمية"}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div
-                          onClick={() =>
-                            setPaymentMethods((prev) => ({
-                              ...prev,
-                              paypal: { ...prev.paypal, enabled: !prev.paypal?.enabled },
-                            }))
-                          }
-                          style={{
-                            width: "48px",
-                            height: "26px",
-                            borderRadius: "13px",
-                            background: paymentMethods.paypal?.enabled
-                              ? "linear-gradient(135deg, #10B981, #059669)"
-                              : "rgba(255, 255, 255, 0.1)",
-                            border: `1px solid ${paymentMethods.paypal?.enabled ? "#10B981" : "rgba(255, 255, 255, 0.15)"}`,
-                            position: "relative",
-                            transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-                            cursor: "pointer",
-                            boxShadow: paymentMethods.paypal?.enabled ? "0 0 12px rgba(16, 185, 129, 0.3)" : "none",
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: "20px",
-                              height: "20px",
-                              borderRadius: "50%",
-                              background: "#FFF",
-                              position: "absolute",
-                              top: "2px",
-                              left: paymentMethods.paypal?.enabled ? "25px" : "2px",
-                              transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-                              boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text3)", display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
-                          <Mail size={12} style={{ color: "#3B82F6" }} />
-                          <span>{state.language === "en" ? "PayPal Email Address" : "بريد باي بال الإلكتروني"}</span>
-                        </label>
-                        <input
-                          type="email"
-                          dir="ltr"
-                          placeholder="account@paypal.com"
-                          value={paymentMethods.paypal?.email || ""}
-                          onChange={(e) =>
-                            setPaymentMethods((prev) => ({
-                              ...prev,
-                              paypal: { ...prev.paypal, email: e.target.value },
-                            }))
-                          }
-                          className="input"
-                          style={{
-                            width: "100%",
-                            height: "42px",
-                            background: "rgba(0,0,0,0.35)",
-                            border: "1px solid rgba(59, 130, 246, 0.2)",
-                            borderRadius: "10px",
-                            color: "#fff",
-                            padding: "0 12px",
-                            fontSize: "13px",
-                            fontWeight: "600",
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* 5. Paddle Card */}
-                    <div
-                      style={{
-                        background: "linear-gradient(135deg, rgba(17, 24, 39, 0.85), rgba(13, 18, 32, 0.95))",
-                        border: "1px solid rgba(6, 182, 212, 0.3)",
-                        borderRadius: "18px",
-                        padding: "24px",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "18px",
-                        gridColumn: "1 / -1",
-                        boxShadow: "0 10px 30px -10px rgba(6, 182, 212, 0.1)",
-                        backdropFilter: "blur(12px)",
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                          <div
-                            style={{
-                              width: 44,
-                              height: 44,
-                              borderRadius: "14px",
-                              background: "radial-gradient(circle, rgba(6, 182, 212, 0.25) 0%, rgba(6, 182, 212, 0.05) 100%)",
-                              border: "1px solid rgba(6, 182, 212, 0.4)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              color: "#06B6D4",
-                              boxShadow: "0 0 15px rgba(6, 182, 212, 0.15)",
-                            }}
-                          >
-                            <Layers size={22} color="#06B6D4" />
-                          </div>
-                          <div>
-                            <div style={{ fontSize: "16px", fontWeight: "800", color: "#fff", letterSpacing: "0.2px" }}>
-                              Paddle Billing
-                            </div>
-                            <div style={{ fontSize: "11px", color: "var(--text3)", fontWeight: "600" }}>
-                              {state.language === "en" ? "Merchant of Record Integration" : "تكامل نظام بادِل للدفع الدولي"}
-                            </div>
-                          </div>
-                        </div>
-
-                        {(paymentMethods.paddle?.connected || showPaddleManual) && (
-                          <div
-                            onClick={() =>
-                              setPaymentMethods((prev) => ({
-                                ...prev,
-                                paddle: { ...prev.paddle, enabled: !prev.paddle?.enabled },
-                              }))
-                            }
-                            style={{
-                              width: "48px",
-                              height: "26px",
-                              borderRadius: "13px",
-                              background: paymentMethods.paddle?.enabled
-                                ? "linear-gradient(135deg, #10B981, #059669)"
-                                : "rgba(255, 255, 255, 0.1)",
-                              border: `1px solid ${paymentMethods.paddle?.enabled ? "#10B981" : "rgba(255, 255, 255, 0.15)"}`,
-                              position: "relative",
-                              transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-                              cursor: "pointer",
-                              boxShadow: paymentMethods.paddle?.enabled ? "0 0 12px rgba(16, 185, 129, 0.3)" : "none",
-                            }}
-                          >
-                            <div
-                              style={{
-                                width: "20px",
-                                height: "20px",
-                                borderRadius: "50%",
-                                background: "#FFF",
-                                position: "absolute",
-                                top: "2px",
-                                left: paymentMethods.paddle?.enabled ? "25px" : "2px",
-                                transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-                                boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
-                              }}
-                            />
-                          </div>
-                        )}
-                      </div>
-
-                      {!paymentMethods.paddle?.connected && !showPaddleManual ? (
-                        /* Unconnected State */
-                        <div style={{ display: "flex", flexDirection: "column", gap: "12px", background: "rgba(0,0,0,0.25)", padding: "18px", borderRadius: "14px", border: "1px solid rgba(255,255,255,0.06)" }}>
-                          <p style={{ margin: 0, fontSize: "13px", color: "var(--text3)", lineHeight: "1.6" }}>
-                            {state.language === "en"
-                              ? "Connect your Paddle account automatically via OAuth or enter configuration tokens manually."
-                              : "قم بربط حساب Paddle تلقائياً عبر OAuth أو إدخال رموز الإعداد يدوياً."}
-                          </p>
-                          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "4px" }}>
-                            <button
-                              type="button"
-                              className="btn btn-primary"
-                              onClick={handlePaddleConnect}
-                              style={{
-                                height: "40px",
-                                padding: "0 18px",
-                                background: "linear-gradient(135deg, #06B6D4, #0891B2)",
-                                color: "#fff",
-                                border: "none",
-                                borderRadius: "10px",
-                                fontWeight: "700",
-                                fontSize: "13px",
-                                cursor: "pointer",
-                                boxShadow: "0 4px 12px rgba(6, 182, 212, 0.3)",
-                              }}
-                            >
-                              {state.language === "en" ? "Connect with Paddle (OAuth)" : "ربط حساب Paddle تلقائياً"}
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-secondary"
-                              onClick={() => setShowPaddleManual(true)}
-                              style={{
-                                height: "40px",
-                                padding: "0 18px",
-                                background: "rgba(255,255,255,0.08)",
-                                color: "#fff",
-                                border: "1px solid var(--line)",
-                                borderRadius: "10px",
-                                fontWeight: "700",
-                                fontSize: "13px",
-                                cursor: "pointer",
-                              }}
-                            >
-                              {state.language === "en" ? "Enter Manually" : "إدخال المفاتيح يدوياً"}
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        /* Connected or Manual Configured State */
-                        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                          {paymentMethods.paddle?.connected && (
-                            <div
-                              style={{
-                                padding: "12px 16px",
-                                borderRadius: "12px",
-                                background: "rgba(16, 185, 129, 0.12)",
-                                border: "1px solid rgba(16, 185, 129, 0.3)",
-                                color: "#10B981",
-                                fontSize: "12px",
-                                fontWeight: "700",
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                              }}
-                            >
-                              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                <CheckCircle2 size={16} />
-                                <span>{state.language === "en" ? "Account Connected Successfully" : "تم ربط حساب Paddle بنجاح"}</span>
-                              </span>
-                              <button
-                                type="button"
-                                onClick={handlePaddleDisconnect}
-                                style={{
-                                  background: "rgba(239, 68, 68, 0.15)",
-                                  border: "1px solid rgba(239, 68, 68, 0.3)",
-                                  color: "#EF4444",
-                                  padding: "5px 12px",
-                                  borderRadius: "8px",
-                                  fontSize: "11px",
-                                  cursor: "pointer",
-                                  fontWeight: "700",
-                                }}
-                              >
-                                {state.language === "en" ? "Disconnect" : "إلغاء الربط"}
-                              </button>
-                            </div>
-                          )}
-
-                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px" }}>
-                            <div>
-                              <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text3)", display: "block", marginBottom: "4px" }}>
-                                Seller ID
-                              </label>
-                              <input
-                                type="text"
-                                dir="ltr"
-                                placeholder="Seller ID"
-                                value={paymentMethods.paddle?.sellerId || ""}
-                                onChange={(e) =>
-                                  setPaymentMethods((prev) => ({
-                                    ...prev,
-                                    paddle: { ...prev.paddle, sellerId: e.target.value },
-                                  }))
-                                }
-                                className="input"
-                                style={{ width: "100%", height: "38px", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(6, 182, 212, 0.2)", borderRadius: "8px", color: "#fff", padding: "0 10px", fontSize: "12px" }}
-                              />
-                            </div>
-
-                            <div>
-                              <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text3)", display: "block", marginBottom: "4px" }}>
-                                Vendor ID
-                              </label>
-                              <input
-                                type="text"
-                                dir="ltr"
-                                placeholder="Vendor ID"
-                                value={paymentMethods.paddle?.vendorId || ""}
-                                onChange={(e) =>
-                                  setPaymentMethods((prev) => ({
-                                    ...prev,
-                                    paddle: { ...prev.paddle, vendorId: e.target.value },
-                                  }))
-                                }
-                                className="input"
-                                style={{ width: "100%", height: "38px", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(6, 182, 212, 0.2)", borderRadius: "8px", color: "#fff", padding: "0 10px", fontSize: "12px" }}
-                              />
-                            </div>
-
-                            <div>
-                              <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text3)", display: "block", marginBottom: "4px" }}>
-                                Client Token
-                              </label>
-                              <input
-                                type="text"
-                                dir="ltr"
-                                placeholder="Client Token"
-                                value={paymentMethods.paddle?.clientToken || ""}
-                                onChange={(e) =>
-                                  setPaymentMethods((prev) => ({
-                                    ...prev,
-                                    paddle: { ...prev.paddle, clientToken: e.target.value },
-                                  }))
-                                }
-                                className="input"
-                                style={{ width: "100%", height: "38px", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(6, 182, 212, 0.2)", borderRadius: "8px", color: "#fff", padding: "0 10px", fontSize: "12px" }}
-                              />
-                            </div>
-
-                            <div>
-                              <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text3)", display: "block", marginBottom: "4px" }}>
-                                Price ID (Monthly)
-                              </label>
-                              <input
-                                type="text"
-                                dir="ltr"
-                                placeholder="pri_..."
-                                value={paymentMethods.paddle?.priceIdMonthly || ""}
-                                onChange={(e) =>
-                                  setPaymentMethods((prev) => ({
-                                    ...prev,
-                                    paddle: { ...prev.paddle, priceIdMonthly: e.target.value },
-                                  }))
-                                }
-                                className="input"
-                                style={{ width: "100%", height: "38px", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(6, 182, 212, 0.2)", borderRadius: "8px", color: "#fff", padding: "0 10px", fontSize: "12px" }}
-                              />
-                            </div>
-
-                            <div>
-                              <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text3)", display: "block", marginBottom: "4px" }}>
-                                Price ID (Annual)
-                              </label>
-                              <input
-                                type="text"
-                                dir="ltr"
-                                placeholder="pri_..."
-                                value={paymentMethods.paddle?.priceIdAnnual || ""}
-                                onChange={(e) =>
-                                  setPaymentMethods((prev) => ({
-                                    ...prev,
-                                    paddle: { ...prev.paddle, priceIdAnnual: e.target.value },
-                                  }))
-                                }
-                                className="input"
-                                style={{ width: "100%", height: "38px", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(6, 182, 212, 0.2)", borderRadius: "8px", color: "#fff", padding: "0 10px", fontSize: "12px" }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
                   </div>
                 </div>
               )}
@@ -8637,6 +7980,97 @@ export default function AdminDashboardPage() {
                 )}
               </AnimatePresence>
 
+              {/* Reject Payment Modal */}
+              {paymentToReject && (
+                <div
+                  className="ad-modal-overlay"
+                  style={{
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: "rgba(0,0,0,0.85)",
+                    zIndex: 99999,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backdropFilter: "blur(6px)",
+                    padding: "20px",
+                  }}
+                  onClick={() => setPaymentToReject(null)}
+                >
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    dir={state.language === "en" ? "ltr" : "rtl"}
+                    style={{
+                      background: "#111827",
+                      width: "90%",
+                      maxWidth: "500px",
+                      borderRadius: "16px",
+                      padding: "32px",
+                      position: "relative",
+                      border: "1px solid #EF4444",
+                      boxShadow: "0 25px 50px -12px rgba(239, 68, 68, 0.2)",
+                    }}
+                  >
+                    <button
+                      className="ad-modal-close"
+                      onClick={() => setPaymentToReject(null)}
+                      style={{
+                        position: "absolute",
+                        top: "16px",
+                        right: "16px",
+                        background: "transparent",
+                        border: "none",
+                        color: "#9CA3AF",
+                        fontSize: "20px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      ×
+                    </button>
+                    <h3 style={{ marginBottom: "20px", color: "#EF4444" }}>
+                      {state.language === "en" ? "Reject Payment Request" : "رفض طلب الدفع"}
+                    </h3>
+                    <p
+                      style={{
+                        fontSize: "14px",
+                        color: "var(--text2)",
+                        marginBottom: "16px",
+                      }}
+                    >
+                      {state.language === "en" ? "Customer: " : "العميل: "}
+                      <strong style={{ color: "#fff" }}>
+                        {paymentToReject.userName}
+                      </strong>
+                    </p>
+
+                    <div className="field" style={{ marginBottom: "24px" }}>
+                      <label className="field-label">
+                        {state.language === "en" ? "Reason for Rejection" : "سبب الرفض"}
+                      </label>
+                      <textarea
+                        className="field-input"
+                        value={rejectionReason}
+                        onChange={(e) => setRejectionReason(e.target.value)}
+                        placeholder={state.language === "en" ? "Enter the reason for rejecting the receipt..." : "أدخل سبب رفض الإيصال..."}
+                        rows={4}
+                        style={{ minHeight: "100px", padding: "12px", borderRadius: "10px", width: "100%" }}
+                      />
+                    </div>
+
+                    <button
+                      className="btn btn-primary"
+                      style={{ width: "100%", background: "#EF4444", color: "#fff", border: "none", padding: "12px", borderRadius: "10px", fontWeight: "700", cursor: "pointer" }}
+                      onClick={handleRejectPayment}
+                    >
+                      {state.language === "en" ? "Confirm Rejection" : "تأكيد الرفض"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Approval Modal */}
               {paymentToApprove && (
                 <div
@@ -8684,83 +8118,82 @@ export default function AdminDashboardPage() {
                     >
                       ✕
                     </button>
-                    <h3 style={{ marginBottom: "20px", color: "#fff" }}>
-                      {state.language === "en"
-                        ? "Confirm Customer Subscription"
-                        : "تأكيد اشتراك العميل"}
-                    </h3>
-                    <p
-                      style={{
-                        fontSize: "14px",
-                        color: "var(--text2)",
-                        marginBottom: "16px",
-                      }}
-                    >
-                      {state.language === "en" ? "Customer: " : "العميل: "}
-                      <strong style={{ color: "#fff" }}>
-                        {paymentToApprove.userName}
-                      </strong>
-                    </p>
-
-                    <div className="field" style={{ marginBottom: "16px" }}>
-                      <label className="field-label">
-                        {state.language === "en"
-                          ? "Select subscription plan to activate"
-                          : "اختر الباقة المراد تفعيلها للعميل"}
-                      </label>
-                      <select
-                        className="field-input"
-                        value={selectedPlanForPayment}
-                        onChange={(e) =>
-                          setSelectedPlanForPayment(e.target.value)
-                        }
-                      >
-                        <option value="">
-                          {state.language === "en"
-                            ? "-- Select Plan --"
-                            : "-- اختر الباقة --"}
-                        </option>
-                        {plans.map((pl) => (
-                          <option key={pl.id} value={pl.name_ar || pl.name}>
-                            {pl.name_ar || pl.name}
-                          </option>
-                        ))}
-                        <option value="lifetime">
-                          {state.language === "en"
-                            ? "Lifetime Plan"
-                            : "باقة مدى الحياة (دائم)"}
-                        </option>
-                      </select>
+                    <div style={{ textAlign: "center", marginBottom: "24px" }}>
+                      <div style={{ width: "64px", height: "64px", borderRadius: "50%", background: "rgba(16, 185, 129, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                        <CheckCircle2 size={32} style={{ color: "#10B981" }} />
+                      </div>
+                      <h3 style={{ margin: "0 0 8px 0", color: "#fff", fontSize: "20px", fontWeight: "800" }}>
+                        {state.language === "en" ? "Confirm Subscription Approval" : "تأكيد وتفعيل الاشتراك"}
+                      </h3>
+                      <p style={{ margin: 0, color: "var(--text3)", fontSize: "14px" }}>
+                        {state.language === "en" ? "Review the details before activating the plan." : "يرجى مراجعة تفاصيل الاشتراك قبل التفعيل."}
+                      </p>
                     </div>
 
-                    {selectedPlanForPayment !== "lifetime" && (
-                      <div className="field" style={{ marginBottom: "24px" }}>
-                        <label className="field-label">
-                          {state.language === "en"
-                            ? "Subscription Duration (Days)"
-                            : "مدة الاشتراك (بالأيام)"}
-                        </label>
-                        <input
-                          type="number"
-                          className="field-input"
-                          value={selectedDurationForPayment}
-                          onChange={(e) =>
-                            setSelectedDurationForPayment(e.target.value)
-                          }
-                          min="1"
-                        />
+                    <div style={{ background: "rgba(255, 255, 255, 0.03)", border: "1px solid var(--line)", borderRadius: "12px", padding: "20px", marginBottom: "24px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px", paddingBottom: "12px", borderBottom: "1px solid rgba(255, 255, 255, 0.05)" }}>
+                        <span style={{ color: "var(--text2)", fontSize: "14px" }}>{state.language === "en" ? "Customer" : "العميل"}</span>
+                        <strong style={{ color: "#fff", fontSize: "14px" }}>{paymentToApprove.userName || "—"}</strong>
                       </div>
-                    )}
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px", paddingBottom: "12px", borderBottom: "1px solid rgba(255, 255, 255, 0.05)" }}>
+                        <span style={{ color: "var(--text2)", fontSize: "14px" }}>{state.language === "en" ? "Requested Plan" : "الباقة المطلوبة"}</span>
+                        <strong style={{ color: "var(--accent)", fontSize: "14px" }}>{paymentToApprove.planName || paymentToApprove.planId || "—"}</strong>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px", paddingBottom: "12px", borderBottom: "1px solid rgba(255, 255, 255, 0.05)" }}>
+                        <span style={{ color: "var(--text2)", fontSize: "14px" }}>{state.language === "en" ? "Duration" : "مدة الاشتراك"}</span>
+                        <strong style={{ color: "#fff", fontSize: "14px" }}>{state.language === "en" ? "30 Days (Standard)" : "30 يوماً (تلقائياً)"}</strong>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px", paddingBottom: "12px", borderBottom: "1px solid rgba(255, 255, 255, 0.05)" }}>
+                        <span style={{ color: "var(--text2)", fontSize: "14px" }}>{state.language === "en" ? "Payment Method" : "طريقة الدفع"}</span>
+                        <strong style={{ color: "#fff", fontSize: "14px" }}>{paymentToApprove.paymentMethod || paymentToApprove.methodName || (state.language === "en" ? "N/A" : "تحويل بنكي / محفظة")}</strong>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ color: "var(--text2)", fontSize: "14px" }}>{state.language === "en" ? "Amount Paid" : "المبلغ المدفوع"}</span>
+                        <strong style={{ color: "#10B981", fontSize: "15px", fontWeight: "800" }}>{paymentToApprove.amount ? (paymentToApprove.currency === 'USD' ? `$${paymentToApprove.amount}` : `${paymentToApprove.amount} ${paymentToApprove.currency || 'EGP'}`) : "—"}</strong>
+                      </div>
+                    </div>
 
-                    <button
-                      className="ad-submit-btn"
-                      style={{ width: "100%" }}
-                      onClick={handleApprovePayment}
-                    >
-                      {state.language === "en"
-                        ? "Approve & Activate Plan ✅"
-                        : "موافقة وتفعيل الباقة ✅"}
-                    </button>
+                    <div style={{ display: "flex", gap: "12px" }}>
+                      <button
+                        type="button"
+                        onClick={() => setPaymentToApprove(null)}
+                        style={{
+                          flex: 1,
+                          background: "rgba(255, 255, 255, 0.05)",
+                          color: "#fff",
+                          border: "none",
+                          padding: "12px",
+                          borderRadius: "10px",
+                          fontWeight: "700",
+                          cursor: "pointer",
+                          transition: "all 0.2s ease"
+                        }}
+                        onMouseOver={(e) => e.target.style.background = "rgba(255, 255, 255, 0.1)"}
+                        onMouseOut={(e) => e.target.style.background = "rgba(255, 255, 255, 0.05)"}
+                      >
+                        {state.language === "en" ? "Cancel" : "إلغاء"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleApprovePayment}
+                        style={{
+                          flex: 2,
+                          background: "#10B981",
+                          color: "#fff",
+                          border: "none",
+                          padding: "12px",
+                          borderRadius: "10px",
+                          fontWeight: "700",
+                          cursor: "pointer",
+                          boxShadow: "0 4px 12px rgba(16, 185, 129, 0.2)",
+                          transition: "all 0.2s ease"
+                        }}
+                        onMouseOver={(e) => e.target.style.transform = "translateY(-1px)"}
+                        onMouseOut={(e) => e.target.style.transform = "none"}
+                      >
+                        {state.language === "en" ? "Confirm & Activate Plan" : "تأكيد وتفعيل الباقة"}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -9108,716 +8541,6 @@ export default function AdminDashboardPage() {
                 </div>
               )}
 
-              {/* Paddle Settings Modal */}
-              {isPaddleSettingsModalOpen && (
-                <div
-                  className="ad-modal-overlay"
-                  style={{
-                    position: "fixed",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: "rgba(0,0,0,0.85)",
-                    zIndex: 99999,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backdropFilter: "blur(6px)",
-                    padding: "20px",
-                  }}
-                  onClick={() => setIsPaddleSettingsModalOpen(false)}
-                >
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="ad-modal"
-                    dir={state.language === "en" ? "ltr" : "rtl"}
-                    style={{
-                      background: "#111827",
-                      width: "100%",
-                      maxWidth: "560px",
-                      borderRadius: "20px",
-                      padding: "28px",
-                      position: "relative",
-                      border: "1px solid rgba(0, 191, 255, 0.3)",
-                      boxShadow: "0 25px 50px -12px rgba(0,0,0,0.6)",
-                      maxHeight: "90vh",
-                      overflowY: "auto",
-                    }}
-                  >
-                    {/* Header with non-overlapping Close Button */}
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginBottom: "20px",
-                        paddingBottom: "14px",
-                        borderBottom: "1px solid var(--line)",
-                      }}
-                    >
-                      <h3
-                        style={{
-                          margin: 0,
-                          color: "#fff",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "10px",
-                          fontSize: "17px",
-                          fontWeight: "800",
-                        }}
-                      >
-                        <CreditCard size={22} style={{ color: "#00bfff" }} />
-                        <span>
-                          {state.language === "en"
-                            ? "Paddle Gateway Configuration"
-                            : "إعدادات الربط مع بوابة Paddle"}
-                        </span>
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={() => setIsPaddleSettingsModalOpen(false)}
-                        style={{
-                          background: "rgba(255,255,255,0.08)",
-                          border: "1px solid var(--line)",
-                          color: "#9CA3AF",
-                          width: "34px",
-                          height: "34px",
-                          borderRadius: "50%",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          transition: "all 0.2s",
-                          flexShrink: 0,
-                        }}
-                      >
-                        <X size={18} />
-                      </button>
-                    </div>
-
-                    {/* Enable Paddle Gateway Toggle Switch Card */}
-                    <div
-                      style={{
-                        background: paddleEnabled
-                          ? "rgba(0, 191, 255, 0.12)"
-                          : "rgba(255, 255, 255, 0.04)",
-                        border: paddleEnabled
-                          ? "1px solid rgba(0, 191, 255, 0.4)"
-                          : "1px solid var(--line)",
-                        borderRadius: "14px",
-                        padding: "16px 18px",
-                        marginBottom: "20px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        transition: "all 0.2s",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "12px",
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: "36px",
-                            height: "36px",
-                            borderRadius: "10px",
-                            background: paddleEnabled
-                              ? "rgba(0, 191, 255, 0.2)"
-                              : "rgba(255, 255, 255, 0.06)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: paddleEnabled ? "#00bfff" : "var(--text3)",
-                          }}
-                        >
-                          <Power size={20} />
-                        </div>
-                        <div>
-                          <div
-                            style={{
-                              fontSize: "14px",
-                              fontWeight: "800",
-                              color: "#fff",
-                            }}
-                          >
-                            {state.language === "en"
-                              ? "Enable Paddle Gateway"
-                              : "تفعيل بوابة الدفع Paddle"}
-                          </div>
-                          <div
-                            style={{
-                              fontSize: "11px",
-                              color: "var(--text3)",
-                              marginTop: "2px",
-                            }}
-                          >
-                            {paddleEnabled
-                              ? state.language === "en"
-                                ? "Paddle checkout is active on client portal"
-                                : "بوابة Paddle مفعّلة على بوابة دفع العملاء"
-                              : state.language === "en"
-                                ? "Paddle payment method is disabled"
-                                : "بوابة Paddle غير مفعلة حالياً"}
-                          </div>
-                        </div>
-                      </div>
-
-                      <label
-                        style={{
-                          position: "relative",
-                          display: "inline-block",
-                          width: "48px",
-                          height: "26px",
-                          cursor: "pointer",
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={paddleEnabled}
-                          onChange={(e) => {
-                            setPaddleEnabled(e.target.checked);
-                            if (e.target.checked && paddleApiKey) {
-                              setIsPaddleValidated(true);
-                            }
-                          }}
-                          style={{ opacity: 0, width: 0, height: 0 }}
-                        />
-                        <span
-                          style={{
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            backgroundColor: paddleEnabled
-                              ? "#00bfff"
-                              : "rgba(255,255,255,0.2)",
-                            borderRadius: "26px",
-                            transition: "0.3s",
-                          }}
-                        />
-                        <span
-                          style={{
-                            position: "absolute",
-                            content: '""',
-                            height: "20px",
-                            width: "20px",
-                            left: paddleEnabled ? "25px" : "3px",
-                            bottom: "3px",
-                            backgroundColor: "white",
-                            borderRadius: "50%",
-                            transition: "0.3s",
-                            boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
-                          }}
-                        />
-                      </label>
-                    </div>
-
-                    {/* Modal Sub Tabs */}
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "8px",
-                        marginBottom: "20px",
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => setPaddleModalTab("settings")}
-                        style={{
-                          flex: 1,
-                          padding: "10px",
-                          borderRadius: "10px",
-                          border: "none",
-                          background:
-                            paddleModalTab === "settings"
-                              ? "#00bfff"
-                              : "rgba(255,255,255,0.05)",
-                          color: "#fff",
-                          fontWeight: "700",
-                          fontSize: "12px",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "6px",
-                        }}
-                      >
-                        <Settings size={15} />
-                        <span>
-                          {state.language === "en"
-                            ? "Credentials"
-                            : "المفاتيح والإعدادات"}
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPaddleModalTab("test")}
-                        style={{
-                          flex: 1,
-                          padding: "10px",
-                          borderRadius: "10px",
-                          border: "none",
-                          background:
-                            paddleModalTab === "test"
-                              ? "#00bfff"
-                              : "rgba(255,255,255,0.05)",
-                          color: "#fff",
-                          fontWeight: "700",
-                          fontSize: "12px",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "6px",
-                        }}
-                      >
-                        <ShieldCheck size={15} />
-                        <span>
-                          {state.language === "en"
-                            ? "Validation Status"
-                            : "حالة التحقق والاختبار"}
-                        </span>
-                      </button>
-                    </div>
-
-                    {paddleModalTab === "settings" ? (
-                      <>
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: "8px",
-                            marginBottom: "16px",
-                          }}
-                        >
-                          <a
-                            href={
-                              paddleEnvironment === "production"
-                                ? "https://dashboard.paddle.com/developer/credentials"
-                                : "https://sandbox-dashboard.paddle.com/developer/credentials"
-                            }
-                            target="_blank"
-                            rel="noreferrer"
-                            className="btn btn-sm"
-                            style={{
-                              flex: 1,
-                              textAlign: "center",
-                              background: "rgba(0, 191, 255, 0.1)",
-                              color: "#00bfff",
-                              border: "1px solid rgba(0, 191, 255, 0.25)",
-                              textDecoration: "none",
-                              fontSize: "11px",
-                              padding: "9px",
-                              borderRadius: "10px",
-                              fontWeight: "bold",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              gap: "6px",
-                            }}
-                          >
-                            <Key size={14} />
-                            <span>
-                              {state.language === "en"
-                                ? "Paddle Credentials Page"
-                                : "صفحة المفاتيح في Paddle"}
-                            </span>
-                            <ExternalLink size={12} />
-                          </a>
-                          <a
-                            href={
-                              paddleEnvironment === "production"
-                                ? "https://dashboard.paddle.com/developer/webhooks"
-                                : "https://sandbox-dashboard.paddle.com/developer/webhooks"
-                            }
-                            target="_blank"
-                            rel="noreferrer"
-                            className="btn btn-sm"
-                            style={{
-                              flex: 1,
-                              textAlign: "center",
-                              background: "rgba(0, 191, 255, 0.1)",
-                              color: "#00bfff",
-                              border: "1px solid rgba(0, 191, 255, 0.25)",
-                              textDecoration: "none",
-                              fontSize: "11px",
-                              padding: "9px",
-                              borderRadius: "10px",
-                              fontWeight: "bold",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              gap: "6px",
-                            }}
-                          >
-                            <Zap size={14} />
-                            <span>
-                              {state.language === "en"
-                                ? "Webhooks Page"
-                                : "صفحة الـ Webhooks"}
-                            </span>
-                            <ExternalLink size={12} />
-                          </a>
-                        </div>
-
-                        {/* Paddle Vendor / Seller ID */}
-                        <div className="field" style={{ marginBottom: "14px" }}>
-                          <label
-                            className="field-label"
-                            style={{
-                              color: "#00bfff",
-                              fontWeight: "bold",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "6px",
-                              marginBottom: "6px",
-                            }}
-                          >
-                            <Building size={14} />
-                            <span>Paddle Vendor / Seller ID</span>
-                          </label>
-                          <input
-                            className="field-input"
-                            placeholder="e.g. 12345"
-                            value={paddleVendorId}
-                            onChange={(e) => setPaddleVendorId(e.target.value)}
-                            dir="ltr"
-                          />
-                        </div>
-
-                        {/* Paddle Client Key */}
-                        <div className="field" style={{ marginBottom: "14px" }}>
-                          <label
-                            className="field-label"
-                            style={{
-                              color: "#00bfff",
-                              fontWeight: "bold",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "6px",
-                              marginBottom: "6px",
-                            }}
-                          >
-                            <Key size={14} />
-                            <span>Paddle Client Key</span>
-                          </label>
-                          <input
-                            className="field-input"
-                            placeholder="live_... or test_..."
-                            value={paddleClientKey}
-                            onChange={(e) => setPaddleClientKey(e.target.value)}
-                            dir="ltr"
-                          />
-                        </div>
-
-                        {/* Paddle Secret API Key */}
-                        <div className="field" style={{ marginBottom: "14px" }}>
-                          <label
-                            className="field-label"
-                            style={{
-                              color: "#00bfff",
-                              fontWeight: "bold",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "6px",
-                              marginBottom: "6px",
-                            }}
-                          >
-                            <Lock size={14} />
-                            <span>Paddle Secret API Key</span>
-                          </label>
-                          <div style={{ position: "relative" }}>
-                            <input
-                              className="field-input"
-                              type={showPaddleKey ? "text" : "password"}
-                              placeholder="p_api_..."
-                              value={paddleApiKey}
-                              onChange={(e) => setPaddleApiKey(e.target.value)}
-                              dir="ltr"
-                              style={{ paddingRight: "40px" }}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowPaddleKey(!showPaddleKey)}
-                              style={{
-                                position: "absolute",
-                                right: "12px",
-                                top: "50%",
-                                transform: "translateY(-50%)",
-                                background: "transparent",
-                                border: "none",
-                                color: "var(--text2)",
-                                cursor: "pointer",
-                              }}
-                            >
-                              {showPaddleKey ? (
-                                <EyeOff size={16} />
-                              ) : (
-                                <Eye size={16} />
-                              )}
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Paddle Webhook Secret */}
-                        <div className="field" style={{ marginBottom: "14px" }}>
-                          <label
-                            className="field-label"
-                            style={{
-                              color: "#00bfff",
-                              fontWeight: "bold",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "6px",
-                              marginBottom: "6px",
-                            }}
-                          >
-                            <Zap size={14} />
-                            <span>Paddle Webhook Secret</span>
-                          </label>
-                          <input
-                            className="field-input"
-                            placeholder="p_whsec_..."
-                            value={paddleWebhookSecret}
-                            onChange={(e) =>
-                              setPaddleWebhookSecret(e.target.value)
-                            }
-                            dir="ltr"
-                          />
-                        </div>
-
-                        {/* Environment Selection with CustomSelect & Lucide Vector Icons */}
-                        <div className="field" style={{ marginBottom: "24px" }}>
-                          <CustomSelect
-                            label={
-                              state.language === "en"
-                                ? "Environment (بيئة العمل)"
-                                : "بيئة العمل (Environment)"
-                            }
-                            value={paddleEnvironment}
-                            onChange={(val) => setPaddleEnvironment(val)}
-                            icon={Globe}
-                            options={[
-                              {
-                                value: "production",
-                                label:
-                                  state.language === "en"
-                                    ? "Live / Production Environment"
-                                    : "البيئة الحية المباشرة (Production)",
-                                icon: Zap,
-                              },
-                              {
-                                value: "sandbox",
-                                label:
-                                  state.language === "en"
-                                    ? "Sandbox / Testing Environment"
-                                    : "بيئة الاختبار والتجربة (Sandbox)",
-                                icon: ShieldCheck,
-                              },
-                            ]}
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      /* Validation Status Tab */
-                      <div
-                        style={{
-                          background: "rgba(0,0,0,0.25)",
-                          borderRadius: "14px",
-                          padding: "20px",
-                          marginBottom: "20px",
-                          border: "1px solid rgba(255,255,255,0.06)",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            marginBottom: "14px",
-                            fontSize: "14px",
-                            fontWeight: "800",
-                            color: "#fff",
-                          }}
-                        >
-                          <ShieldCheck size={18} style={{ color: "#00bfff" }} />
-                          <span>
-                            {state.language === "en"
-                              ? "Validation Status (حالة التحقق):"
-                              : "حالة التحقق:"}
-                          </span>
-                        </div>
-
-                        {/* Validation Status Badge Card */}
-                        <div
-                          style={{
-                            padding: "14px 16px",
-                            borderRadius: "12px",
-                            marginBottom: "16px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            background: isPaddleValidating
-                              ? "rgba(0, 191, 255, 0.1)"
-                              : isPaddleValidated || paddleTestSuccess
-                                ? "rgba(16, 185, 129, 0.12)"
-                                : "rgba(245, 158, 11, 0.12)",
-                            border: isPaddleValidating
-                              ? "1px solid rgba(0, 191, 255, 0.3)"
-                              : isPaddleValidated || paddleTestSuccess
-                                ? "1px solid rgba(16, 185, 129, 0.3)"
-                                : "1px solid rgba(245, 158, 11, 0.3)",
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "10px",
-                            }}
-                          >
-                            {isPaddleValidating ? (
-                              <Loader2
-                                size={18}
-                                className="animate-spin"
-                                style={{ color: "#00bfff" }}
-                              />
-                            ) : isPaddleValidated || paddleTestSuccess ? (
-                              <CheckCircle2
-                                size={18}
-                                style={{ color: "var(--green)" }}
-                              />
-                            ) : (
-                              <AlertTriangle
-                                size={18}
-                                style={{ color: "#F59E0B" }}
-                              />
-                            )}
-
-                            <div>
-                              <div
-                                style={{
-                                  fontSize: "13px",
-                                  fontWeight: "800",
-                                  color: isPaddleValidating
-                                    ? "#00bfff"
-                                    : isPaddleValidated || paddleTestSuccess
-                                      ? "var(--green)"
-                                      : "#F59E0B",
-                                }}
-                              >
-                                {isPaddleValidating
-                                  ? state.language === "en"
-                                    ? "Validating API Credentials..."
-                                    : "جاري التحقق من صحة المفاتيح..."
-                                  : isPaddleValidated || paddleTestSuccess
-                                    ? state.language === "en"
-                                      ? "Credentials Verified & Ready ✅"
-                                      : "تم التحقق بنجاح من المفاتيح وربط الحساب! ✅"
-                                    : state.language === "en"
-                                      ? "Not Validated Yet"
-                                      : "لم يتم التحقق من المفاتيح بعد"}
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: "11px",
-                                  color: "var(--text3)",
-                                  marginTop: "2px",
-                                }}
-                              >
-                                {isPaddleValidated || paddleTestSuccess
-                                  ? state.language === "en"
-                                    ? "Paddle vendor ID and secret keys are active."
-                                    : "مفاتيح Paddle و Vendor ID سارية ومستعدة للمعاملات."
-                                  : state.language === "en"
-                                    ? "Click below to test key connectivity."
-                                    : "اضغط على زر الاختبار بالأسفل للتحقق من الاتصال."}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Test Button */}
-                        <button
-                          type="button"
-                          className="btn btn-sm"
-                          onClick={() => {
-                            setIsPaddleValidating(true);
-                            setTimeout(() => {
-                              setIsPaddleValidating(false);
-                              setIsPaddleValidated(true);
-                              setPaddleTestSuccess(true);
-                              toast(
-                                state.language === "en"
-                                  ? "Paddle keys successfully validated!"
-                                  :"تم التحقق من صحة مفاتيح Paddle بنجاح!",
-                                "success",
-                              );
-                            }, 1200);
-                          }}
-                          disabled={isPaddleValidating}
-                          style={{
-                            width: "100%",
-                            height: "42px",
-                            background: "#00bfff",
-                            color: "#fff",
-                            borderRadius: "10px",
-                            fontWeight: "800",
-                            fontSize: "13px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "8px",
-                          }}
-                        >
-                          {isPaddleValidating ? (
-                            <>
-                              <Loader2 size={16} className="animate-spin" />
-                              <span>
-                                {state.language === "en"
-                                  ? "Checking Credentials..."
-                                  : "جاري الفحص والتحقق..."}
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <Zap size={16} />
-                              <span>
-                                {state.language === "en"
-                                  ? "Test & Validate Paddle Credentials"
-                                  : "اختبار والتحقق من صحة المفاتيح"}
-                              </span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    )}
-
-                    <button
-                      className="ad-submit-btn"
-                      style={{ width: "100%", background: "#00bfff" }}
-                      onClick={() => {
-                        if (paddleApiKey) {
-                          setIsPaddleValidated(true);
-                        }
-                        setIsPaddleSettingsModalOpen(false);
-                      }}
-                    >
-                      {state.language === "en"
-                        ? "Save & Close Window"
-                        : "تأكيد وإغلاق النافذة"}
-                    </button>
-                  </motion.div>
-                </div>
-              )}
             </div>
           ) : activeTab === "tutorial" ? (
             <div className="ad-content animate-in" style={{ padding: 0 }}>
@@ -9829,6 +8552,10 @@ export default function AdminDashboardPage() {
             </div>
           ) : activeTab === "library" ? (
             <AdminLibrary userData={userData} />
+          ) : activeTab === "ai_settings" ? (
+            <div className="ad-content animate-in">
+              <AiSettingsPage />
+            </div>
           ) : activeTab === "templates" ? (
             <div className="ad-content animate-in">
               <AdminTemplateManager />
@@ -10453,103 +9180,7 @@ export default function AdminDashboardPage() {
                       />
                     </div>
 
-                    {/* Master OpenAI API Key */}
-                    <div className="field" style={{ gridColumn: "1 / -1", marginTop: "12px" }}>
-                      <label
-                        className="field-label"
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginBottom: "8px",
-                        }}
-                      >
-                        <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <Key size={15} style={{ color: "var(--accent)" }} />
-                          {state.language === "en" ? "Master OpenAI API Key" : "مفتاح OpenAI الرئيسي"}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: "10px",
-                            fontWeight: "800",
-                            color: masterApiKey.trim() ? "#10B981" : "#EF4444",
-                          }}
-                        >
-                          {masterApiKey.trim() ? "✔️ Configured" : "❌ Not Set"}
-                        </span>
-                      </label>
-                      
-                      <span style={{ fontSize: "11px", color: "var(--text3)", display: "block", marginBottom: "8px" }}>
-                        {state.language === "en" 
-                          ? "This key is used as a fallback for users who have run out of credits or are on the Free plan." 
-                          : "يتم استخدام هذا المفتاح كبديل للمستخدمين الذين نفد رصيدهم أو المشتركين في الخطة المجانية."}
-                      </span>
-                      
-                      <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                        <div style={{ position: "relative", flex: 1 }}>
-                          <input
-                            type={showMasterKey ? "text" : "password"}
-                            dir="ltr"
-                            className="field-input"
-                            value={masterApiKey}
-                            onChange={(e) => setMasterApiKey(e.target.value)}
-                            placeholder="sk-..."
-                            style={{ height: "46px", borderRadius: "12px", fontWeight: "700", width: "100%", paddingRight: "80px" }}
-                          />
-                          <div style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", display: "flex", gap: "6px" }}>
-                            <button
-                              type="button"
-                              onClick={() => setShowMasterKey(!showMasterKey)}
-                              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text3)", padding: "4px", display: "flex", alignItems: "center" }}
-                              title={showMasterKey ? "Hide" : "Show"}
-                            >
-                              {showMasterKey ? <EyeOff size={16} /> : <Eye size={16} />}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (masterApiKey) {
-                                  navigator.clipboard.writeText(masterApiKey);
-                                  toast(state.language === "en" ? "Copied!" : "تم النسخ!", "success");
-                                }
-                              }}
-                              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text3)", padding: "4px", display: "flex", alignItems: "center" }}
-                              title={state.language === "en" ? "Copy" : "نسخ"}
-                            >
-                              <Copy size={16} />
-                            </button>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          className="btn"
-                          onClick={async () => {
-                            const success = await saveAdminOpenAiKey(masterApiKey);
-                            toast(
-                              success 
-                                ? (state.language === "en" ? "Master API Key saved successfully!" : "تم حفظ المفتاح الرئيسي بنجاح!")
-                                : (state.language === "en" ? "Failed to save API Key" : "فشل في حفظ المفتاح"), 
-                              success ? "success" : "error"
-                            );
-                          }}
-                          style={{ 
-                            height: "46px", 
-                            borderRadius: "12px", 
-                            padding: "0 24px",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            fontWeight: "600",
-                            background: "var(--accent)",
-                            color: "#fff",
-                            border: "none"
-                          }}
-                        >
-                          <Save size={16} />
-                          {state.language === "en" ? "Save Key" : "حفظ المفتاح"}
-                        </button>
-                      </div>
-                    </div>
+
                   </div>
                 </motion.div>
               )}
@@ -12442,6 +11073,56 @@ export default function AdminDashboardPage() {
                   paddingRight: 4,
                 }}
               >
+                {/* Display on Website Toggle */}
+                <div
+                  style={{
+                    background: "rgba(255, 255, 255, 0.02)",
+                    padding: "16px",
+                    borderRadius: "12px",
+                    border: "1px solid var(--line)",
+                    marginBottom: "16px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <Globe size={18} style={{ color: "var(--accent)" }} />
+                    <div>
+                      <div style={{ fontSize: "14px", fontWeight: "800", color: "#fff" }}>
+                        {state.language === "en" ? "Display on Website" : "عرض الباقة في الموقع"}
+                      </div>
+                    </div>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setPlanDisplayOnWebsite(!planDisplayOnWebsite)}
+                    style={{
+                      width: 44,
+                      height: 22,
+                      borderRadius: 11,
+                      background: planDisplayOnWebsite ? "var(--green)" : "rgba(255, 255, 255, 0.1)",
+                      position: "relative",
+                      cursor: "pointer",
+                      border: "none",
+                    }}
+                  >
+                    <motion.div
+                      animate={{ left: planDisplayOnWebsite ? 24 : 2 }}
+                      style={{
+                        width: 18,
+                        height: 18,
+                        borderRadius: "50%",
+                        background: "#fff",
+                        position: "absolute",
+                        top: 2,
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                      }}
+                    />
+                  </motion.button>
+                </div>
+
                 {/* Plan Name (Arabic) */}
                 <div className="field">
                   <label
@@ -12607,6 +11288,67 @@ export default function AdminDashboardPage() {
                         },
                       ]}
                     />
+                  </div>
+                  <div className="field">
+                    <label
+                      className="field-label"
+                      style={{ display: "flex", alignItems: "center", gap: 6 }}
+                    >
+                      <Calendar size={14} style={{ color: "var(--accent)" }} />
+                      <span>
+                        {state.language === "en" ? "Billing Cycle" : "دورة الدفع"}
+                      </span>
+                    </label>
+                    <CustomSelect
+                      value={planBillingCycle}
+                      onChange={setPlanBillingCycle}
+                      options={[
+                        {
+                          value: "monthly",
+                          label: state.language === "en" ? "Monthly" : "شهرياً",
+                          icon: Calendar,
+                        },
+                        {
+                          value: "yearly",
+                          label: state.language === "en" ? "Yearly" : "سنوياً",
+                          icon: Calendar,
+                        },
+                      ]}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginTop: 12 }}>
+                  <div className="field">
+                    <label className="field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <Award size={14} style={{ color: "var(--accent)" }} />
+                      <span>{state.language === "en" ? "Badge Label (Arabic)" : "شارة التمييز (بالعربية)"}</span>
+                    </label>
+                    <input className="field-input" value={planBadgeAr} onChange={(e) => setPlanBadgeAr(e.target.value)} placeholder={state.language === "en" ? "e.g. Popular" : "مثال: الأكثر طلباً"} dir={state.language === "en" ? "ltr" : "rtl"} style={{ textAlign: state.language === "en" ? "left" : "right" }} />
+                  </div>
+                  <div className="field">
+                    <label className="field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <Award size={14} style={{ color: "var(--accent)" }} />
+                      <span>{state.language === "en" ? "Badge Label (English)" : "شارة التمييز (بالإنجليزية)"}</span>
+                    </label>
+                    <input className="field-input" value={planBadgeEn} onChange={(e) => setPlanBadgeEn(e.target.value)} placeholder="e.g. Popular" dir="ltr" style={{ textAlign: "left" }} />
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginTop: 12 }}>
+                  <div className="field">
+                    <label className="field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <Zap size={14} style={{ color: "var(--accent)" }} />
+                      <span>{state.language === "en" ? "CTA Button Text (Arabic)" : "نص زر الإجراء (بالعربية)"}</span>
+                    </label>
+                    <input className="field-input" value={planCtaAr} onChange={(e) => setPlanCtaAr(e.target.value)} placeholder={state.language === "en" ? "e.g. Subscribe Now" : "مثال: اشترك الآن"} dir={state.language === "en" ? "ltr" : "rtl"} style={{ textAlign: state.language === "en" ? "left" : "right" }} />
+                  </div>
+                  <div className="field">
+                    <label className="field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <Zap size={14} style={{ color: "var(--accent)" }} />
+                      <span>{state.language === "en" ? "CTA Button Text (English)" : "نص زر الإجراء (بالإنجليزية)"}</span>
+                    </label>
+                    <input className="field-input" value={planCtaEn} onChange={(e) => setPlanCtaEn(e.target.value)} placeholder="e.g. Subscribe Now" dir="ltr" style={{ textAlign: "left" }} />
                   </div>
                 </div>
 
@@ -12832,27 +11574,42 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
 
-                {/* Paddle Price ID (Optional) */}
-                <div className="field" style={{ marginTop: 12 }}>
-                  <label
-                    className="field-label"
-                    style={{ display: "flex", alignItems: "center", gap: 6 }}
-                  >
-                    <Globe size={14} style={{ color: "#00bfff" }} />
-                    <span>
-                      {state.language === "en"
-                        ? "Paddle Price ID (Optional)"
-                        : "معرّف السعر في Paddle (اختياري)"}
-                    </span>
-                  </label>
-                  <input
-                    className="field-input"
-                    value={planPaddlePriceId}
-                    onChange={(e) => setPlanPaddlePriceId(e.target.value)}
-                    placeholder="pri_01hxxxxxxxxxxxxxxxxxxxxx"
-                    style={{ textAlign: "left", direction: "ltr" }}
-                  />
+                {/* Tool Access Permissions */}
+                <div style={{ marginTop: 24, marginBottom: 12, padding: "16px", borderRadius: "12px", border: "1px solid var(--line)", background: "rgba(255, 255, 255, 0.01)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                    <div>
+                      <div style={{ fontSize: "14px", fontWeight: "800", color: "#fff", display: "flex", alignItems: "center", gap: 8 }}>
+                        <SlidersHorizontal size={16} style={{ color: "var(--accent)" }} />
+                        <span>{state.language === "en" ? "Tool Access Permissions" : "صلاحيات الوصول للأدوات"}</span>
+                        <span style={{ background: "rgba(59, 130, 246, 0.12)", color: "var(--accent)", border: "1px solid rgba(59, 130, 246, 0.25)", fontSize: "11px", fontWeight: "800", padding: "2px 8px", borderRadius: "8px" }}>
+                          {Array.from(new Set(planAllowedTools)).filter(id => CHECKLIST_ITEMS.some(i => i.id === id)).length} / {CHECKLIST_ITEMS.length}
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <motion.button type="button" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setPlanAllowedTools(() => { const next = Array.from(new Set(CHECKLIST_ITEMS.map((item) => item.id).filter(Boolean))); planAllowedToolsRef.current = next; return next; })} style={{ background: "rgba(59, 130, 246, 0.12)", color: "var(--accent)", border: "1px solid rgba(59, 130, 246, 0.3)", padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}>
+                        {state.language === "en" ? "Select All" : "تحديد الكل"}
+                      </motion.button>
+                      <motion.button type="button" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setPlanAllowedTools(() => { planAllowedToolsRef.current = []; return []; })} style={{ background: "rgba(239, 68, 68, 0.1)", color: "var(--red)", border: "1px solid rgba(239, 68, 68, 0.3)", padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}>
+                        {state.language === "en" ? "Deselect All" : "إلغاء الكل"}
+                      </motion.button>
+                    </div>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 8, maxHeight: "200px", overflowY: "auto", paddingRight: "4px" }}>
+                    {CHECKLIST_ITEMS.map((item) => {
+                      const isActive = planAllowedTools.includes(item.id);
+                      return (
+                        <div key={item.id} onClick={() => setPlanAllowedTools(prev => { const next = isActive ? prev.filter(id => id !== item.id) : [...prev, item.id]; planAllowedToolsRef.current = next; return next; })} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: "8px", background: isActive ? "rgba(16, 185, 129, 0.1)" : "rgba(255, 255, 255, 0.02)", border: isActive ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid rgba(255, 255, 255, 0.05)", cursor: "pointer", transition: "all 0.2s ease" }}>
+                          {isActive ? <CheckCircle2 size={14} style={{ color: "var(--green)" }} /> : <div style={{ width: 14, height: 14, borderRadius: "50%", border: "1px solid var(--text3)" }} />}
+                          <span style={{ fontSize: "11px", fontWeight: "700", color: isActive ? "#fff" : "#cbd5e1", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {state.language === "en" ? (item.label_en || item.title || item.name || item.id) : (item.label_ar || item.title || item.name || item.id)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
+
 
                 {/* Modal Buttons */}
                 <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
@@ -12896,16 +11653,23 @@ export default function AdminDashboardPage() {
                                 price: Number(planPrice),
                                 creditsPerMonth: Number(planCredits),
                                 currency: planCurrency,
-                                features: featArString,
+                              features: featArString,
                                 features_ar: featArString,
                                 features_en: featEnString,
-                                paddlePriceId: planPaddlePriceId,
                                 stripe_product_id:
                                   editingPlan.stripe_product_id || null,
                                 stripe_monthly_price_id:
                                   editingPlan.stripe_monthly_price_id || null,
                                 stripe_yearly_price_id:
                                   editingPlan.stripe_yearly_price_id || null,
+                                displayOnWebsite: planDisplayOnWebsite,
+                                billingCycle: planBillingCycle,
+                                badge_ar: planBadgeAr,
+                                badge_en: planBadgeEn,
+                                cta_ar: planCtaAr,
+                                cta_en: planCtaEn,
+                                // Use ref and filter to avoid async closure issues and clean data
+                                allowedTools: Array.from(new Set(planAllowedToolsRef.current || [])).filter(id => CHECKLIST_ITEMS.some(i => i.id === id)),
                               }
                             : p,
                         );
@@ -12930,7 +11694,14 @@ export default function AdminDashboardPage() {
                             features: featArString,
                             features_ar: featArString,
                             features_en: featEnString,
-                            paddlePriceId: planPaddlePriceId,
+                            displayOnWebsite: planDisplayOnWebsite,
+                            billingCycle: planBillingCycle,
+                            badge_ar: planBadgeAr,
+                            badge_en: planBadgeEn,
+                            cta_ar: planCtaAr,
+                            cta_en: planCtaEn,
+                            // Use ref and filter to avoid async closure issues and clean data
+                            allowedTools: Array.from(new Set(planAllowedToolsRef.current || [])).filter(id => CHECKLIST_ITEMS.some(i => i.id === id)),
                           },
                         ];
                         setPlans(newPlans);

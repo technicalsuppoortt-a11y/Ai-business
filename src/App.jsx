@@ -11,6 +11,7 @@ import ToolPage from './pages/Tools/ToolPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 import TutorialPage from './pages/Tutorial/TutorialPage';
 import TermsPage from './pages/Terms/TermsPage';
+import SubscriptionPlansPage from './pages/Subscription/SubscriptionPlansPage';
 
 import ResetPasswordPage from './pages/Auth/ResetPasswordPage';
 
@@ -123,6 +124,7 @@ export default function App() {
         <Route path="settings" element={<SettingsPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="tutorial" element={<TutorialPage />} />
+        <Route path="subscription" element={<SubscriptionPlansPage />} />
         <Route path="tool/:toolId" element={<ToolPage />} />
       </Route>
 

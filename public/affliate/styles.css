@@ -1,0 +1,640 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design system definition.
+ *
+ * The @theme inline block maps CSS custom properties to Tailwind utility
+ * classes (e.g. --color-primary -> bg-primary, text-primary).
+ *
+ * The :root and .dark blocks define the actual color values using oklch.
+ * All colors MUST use oklch format.
+ *
+ * To add a new semantic color:
+ * 1. Add the variable to :root (light value) and .dark (dark value)
+ * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ */
+
+@theme inline {
+  --font-sans:
+    "IBM Plex Sans Arabic", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  --font-mono:
+    "IBM Plex Sans Arabic", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-emerald-50: #f0fdf9;
+  --color-emerald-100: #ccfbf0;
+  --color-emerald-200: #99f6e0;
+  --color-emerald-300: #5eead4;
+  --color-emerald-400: #2dd4bf;
+  --color-emerald-500: #03c3a8;
+  --color-emerald-600: #028ec1;
+  --color-emerald-700: #0f766e;
+  --color-emerald-800: #115e59;
+  --color-emerald-900: #134e4a;
+  --color-emerald-950: #042f2e;
+
+  --color-green-50: #f0fdf9;
+  --color-green-100: #ccfbf0;
+  --color-green-200: #99f6e0;
+  --color-green-300: #5eead4;
+  --color-green-400: #2dd4bf;
+  --color-green-500: #03c3a8;
+  --color-green-600: #028ec1;
+  --color-green-700: #0f766e;
+  --color-green-800: #115e59;
+  --color-green-900: #134e4a;
+  --color-green-950: #042f2e;
+}
+
+:root,
+[data-theme="light"] {
+  --radius: 0.625rem;
+  color-scheme: light !important;
+
+  /* Core Backgrounds & Panels */
+  --bg: #ffffff;
+  --bg-2: #f9fafb;
+  --panel: rgba(0, 0, 0, 0.02);
+  --panel-b: rgba(0, 0, 0, 0.05);
+  --line: #e5e7eb;
+
+  /* Typography */
+  --txt: #111827;
+  --txt-dim: #4b5563;
+  --txt-dim2: #6b7280;
+
+  /* Accents & Brand Colors (Fully active teal/cyan-blue) */
+  --green: #03c3a8;
+  --green-2: #028ec1;
+  --blue: #3b82f6;
+
+  /* Premium Gradients & Glow Shadows */
+  --grad: linear-gradient(120deg, #05bd91 0%, #03c3a8 45%, #028ec1 100%);
+  --grad-soft: linear-gradient(180deg, rgba(5, 189, 145, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
+
+  /* UI Semantic Re-mappings Forced */
+  --background: var(--bg) !important;
+  --foreground: var(--txt) !important;
+  --card: var(--bg-2) !important;
+  --card-foreground: var(--txt) !important;
+  --popover: var(--bg-2) !important;
+  --popover-foreground: var(--txt) !important;
+  --primary: var(--green) !important;
+  --primary-foreground: #ffffff !important;
+  --secondary: var(--panel) !important;
+  --secondary-foreground: var(--txt) !important;
+  --muted: var(--panel) !important;
+  --muted-foreground: var(--txt-dim) !important;
+  --accent: var(--panel-b) !important;
+  --accent-foreground: var(--txt) !important;
+  --border: var(--line) !important;
+  --input: var(--line) !important;
+  --ring: var(--green) !important;
+  --sidebar: var(--bg-2) !important;
+  --sidebar-foreground: var(--txt) !important;
+  --sidebar-border: var(--line) !important;
+  --sidebar-primary: var(--green);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--panel-b);
+  --sidebar-accent-foreground: var(--txt);
+  --sidebar-ring: var(--green);
+
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --chart-1: var(--green);
+  --chart-2: var(--blue);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+}
+
+.dark,
+[data-theme="dark"] {
+  --radius: 0.625rem;
+  color-scheme: dark !important;
+
+  /* Core Backgrounds & Panels Always Dark */
+  --bg: #07090e;
+  --bg-2: #0f121a;
+  --panel: rgba(255, 255, 255, 0.02);
+  --panel-b: rgba(255, 255, 255, 0.05);
+  --line: rgba(255, 255, 255, 0.07);
+
+  /* Typography Always Light/Crisp */
+  --txt: #f3f4f6;
+  --txt-dim: #9ca3af;
+  --txt-dim2: #6b7280;
+
+  /* Accents & Brand Colors Always Active */
+  --green: #03c3a8;
+  --green-2: #028ec1;
+  --blue: #3b82f6;
+
+  /* Premium Gradients & Glow Shadows Always Active */
+  --grad: linear-gradient(120deg, #05bd91 0%, #03c3a8 45%, #028ec1 100%);
+  --grad-soft: linear-gradient(180deg, rgba(5, 189, 145, 0.1) 0%, rgba(7, 9, 14, 0) 100%);
+
+  /* UI Semantic Re-mappings Forced */
+  --background: var(--bg) !important;
+  --foreground: var(--txt) !important;
+  --card: var(--bg-2) !important;
+  --card-foreground: var(--txt) !important;
+  --popover: var(--bg-2) !important;
+  --popover-foreground: var(--txt) !important;
+  --primary: var(--green) !important;
+  --primary-foreground: var(--bg) !important;
+  --secondary: var(--panel) !important;
+  --secondary-foreground: var(--txt) !important;
+  --muted: var(--panel) !important;
+  --muted-foreground: var(--txt-dim) !important;
+  --accent: var(--panel-b) !important;
+  --accent-foreground: var(--txt) !important;
+  --border: var(--line) !important;
+  --input: var(--line) !important;
+  --ring: var(--green) !important;
+  --sidebar: var(--bg-2) !important;
+  --sidebar-foreground: var(--txt) !important;
+  --sidebar-border: var(--line) !important;
+  --sidebar-primary: var(--green);
+  --sidebar-primary-foreground: var(--bg);
+  --sidebar-accent: var(--panel-b);
+  --sidebar-accent-foreground: var(--txt);
+  --sidebar-ring: var(--green);
+
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --chart-1: var(--green);
+  --chart-2: var(--blue);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+}
+
+@layer base {
+  * {
+    border-color: var(--line);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--bg);
+    color: var(--txt);
+  }
+}
+
+/* Global scrollbar styling */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* WebKit (Chrome, Safari, Edge) */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 9999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.25s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Dark theme (default) */
+:root {
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.16);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.32);
+}
+
+/* Light theme – adjust based on your theme class */
+[data-theme="light"],
+.light {
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(15, 23, 42, 0.16);
+  --scrollbar-thumb-hover: rgba(15, 23, 42, 0.32);
+}
+
+/* For containers with overflow: auto / scroll – ensure they inherit */
+.overflow-auto,
+.overflow-y-auto,
+.overflow-x-auto,
+.overflow-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+html {
+  scroll-behavior: smooth;
+}
+
+.contact-table tr,
+.contact-table th {
+  text-align: center;
+}
+
+/* ==========================================
+   PREMIUM MOHAMED JOE BRAND STYLING OVERRIDES
+   ========================================== */
+
+/* 1. Global Button & CTA Overrides */
+button.bg-primary,
+button.bg-indigo-600,
+button.bg-indigo-700,
+button.bg-blue-600,
+button.bg-blue-700,
+button.bg-violet-600,
+button.bg-purple-600,
+a.bg-primary,
+a.bg-indigo-600,
+a.bg-indigo-700,
+a.bg-blue-600,
+a.bg-blue-700,
+a.bg-violet-600,
+a.bg-purple-600,
+[role="button"].bg-primary,
+[role="button"].bg-indigo-600,
+[role="button"].bg-indigo-700,
+[role="button"].bg-blue-600,
+[role="button"].bg-blue-700,
+[role="button"].bg-violet-600,
+[role="button"].bg-purple-600 {
+  background: var(--grad) !important;
+  color: #03110d !important;
+  font-weight: 600 !important;
+  border: none !important;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease !important;
+  box-shadow: 0 10px 30px -8px rgba(5, 189, 145, 0.55) !important;
+}
+
+button.bg-primary:hover,
+button.bg-primary:focus,
+button.bg-indigo-600:hover,
+button.bg-indigo-600:focus,
+button.bg-indigo-700:hover,
+button.bg-indigo-700:focus,
+button.bg-blue-600:hover,
+button.bg-blue-600:focus,
+button.bg-blue-700:hover,
+button.bg-blue-700:focus,
+button.bg-violet-600:hover,
+button.bg-violet-600:focus,
+button.bg-purple-600:hover,
+button.bg-purple-600:focus,
+a.bg-primary:hover,
+a.bg-primary:focus,
+a.bg-indigo-600:hover,
+a.bg-indigo-600:focus,
+a.bg-indigo-700:hover,
+a.bg-indigo-700:focus,
+a.bg-blue-600:hover,
+a.bg-blue-600:focus,
+a.bg-blue-700:hover,
+a.bg-blue-700:focus,
+a.bg-violet-600:hover,
+a.bg-violet-600:focus,
+a.bg-purple-600:hover,
+a.bg-purple-600:focus,
+[role="button"].bg-primary:hover,
+[role="button"].bg-primary:focus,
+[role="button"].bg-indigo-600:hover,
+[role="button"].bg-indigo-600:focus,
+[role="button"].bg-indigo-700:hover,
+[role="button"].bg-indigo-700:focus,
+[role="button"].bg-blue-600:hover,
+[role="button"].bg-blue-600:focus,
+[role="button"].bg-blue-700:hover,
+[role="button"].bg-blue-700:focus,
+[role="button"].bg-violet-600:hover,
+[role="button"].bg-violet-600:focus,
+[role="button"].bg-purple-600:hover,
+[role="button"].bg-purple-600:focus {
+  background: var(--green-2) !important;
+  color: #03110d !important;
+  box-shadow: 0 16px 40px -8px rgba(5, 189, 145, 0.75) !important;
+  transform: translateY(-3px) !important;
+}
+
+/* 2. Global Input, Textarea & Dropdown Element Visual Overrides */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+textarea,
+select {
+  background-color: var(--bg-2) !important;
+  border: 1px solid var(--line) !important;
+  color: var(--txt) !important;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+input[type="tel"]:focus,
+input[type="url"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+input[type="datetime-local"]:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--green) !important;
+  box-shadow: 0 0 0 2px rgba(5, 189, 145, 0.2) !important;
+  outline: none !important;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--green) !important;
+}
+
+/* 3. Panel, Card, Tables, and Container Overrides */
+.bg-white,
+.bg-slate-50,
+.bg-slate-100 {
+  background-color: var(--bg-2) !important;
+}
+
+.bg-slate-900,
+.bg-slate-950,
+.bg-zinc-900,
+.bg-zinc-950,
+.bg-black {
+  background-color: var(--bg) !important;
+}
+
+.border-slate-100,
+.border-slate-200,
+.border-slate-300,
+.border-slate-700,
+.border-slate-800,
+.border-gray-200,
+.border-gray-300,
+.border-gray-700,
+.border-gray-800,
+.border-white\/10,
+.border-white\/20,
+.border-border {
+  border-color: var(--line) !important;
+}
+
+/* 4. Text and Accent Overrides */
+.text-slate-900,
+.text-slate-800,
+.text-zinc-900,
+.text-zinc-800,
+.text-gray-900,
+.text-gray-800,
+.text-black {
+  color: var(--txt) !important;
+}
+
+.text-slate-500,
+.text-slate-600,
+.text-slate-400,
+.text-zinc-500,
+.text-zinc-600,
+.text-zinc-400,
+.text-gray-500,
+.text-gray-600,
+.text-gray-400 {
+  color: var(--txt-dim) !important;
+}
+
+.text-indigo-600,
+.text-indigo-500,
+.text-blue-600,
+.text-blue-500,
+.text-violet-600,
+.text-violet-500,
+.text-purple-600,
+.text-purple-500 {
+  color: var(--green) !important;
+}
+
+/* Scrollbar adjustment for Deep Dark identity */
+.dark,
+[data-theme="dark"] {
+  --scrollbar-track: transparent !important;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.16) !important;
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.32) !important;
+}
+
+[data-theme="light"],
+.light {
+  --scrollbar-track: transparent !important;
+  --scrollbar-thumb: rgba(15, 23, 42, 0.16) !important;
+  --scrollbar-thumb-hover: rgba(15, 23, 42, 0.32) !important;
+}
+
+/* 5. Purple and Indigo Specific Visual Mappings */
+.bg-gradient-to-r.from-purple-600.to-indigo-600,
+.bg-gradient-to-r.from-purple-500.to-indigo-500,
+.bg-gradient-to-r.from-purple-700.to-indigo-700,
+.from-purple-600.to-indigo-600,
+.from-purple-500.to-indigo-500,
+.bg-gradient-to-r.from-indigo-600.to-purple-600,
+.from-indigo-600.to-purple-600 {
+  background-image: var(--grad) !important;
+}
+
+.bg-purple-600,
+.bg-indigo-600,
+.bg-purple-500,
+.bg-indigo-500 {
+  background-color: var(--green) !important;
+}
+
+.bg-purple-100,
+.bg-indigo-100 {
+  background-color: rgba(3, 195, 168, 0.1) !important;
+}
+
+.bg-purple-900\/20,
+.bg-purple-900\/30,
+.bg-indigo-900\/20,
+.bg-indigo-900\/30 {
+  background-color: rgba(3, 195, 168, 0.15) !important;
+}
+
+.text-purple-600,
+.text-purple-500,
+.text-purple-400,
+.text-purple-300,
+.text-indigo-600,
+.text-indigo-500,
+.text-indigo-400,
+.text-indigo-300 {
+  color: var(--green) !important;
+}
+
+.border-purple-100,
+.border-purple-200,
+.border-purple-300,
+.border-purple-700,
+.border-purple-800,
+.border-indigo-100,
+.border-indigo-200,
+.border-indigo-300,
+.border-indigo-700,
+.border-indigo-800 {
+  border-color: var(--line) !important;
+}
+
+.focus\:ring-purple-500:focus,
+.focus-within\:ring-purple-500:focus-within,
+.focus\:ring-indigo-500:focus,
+.focus-within\:ring-indigo-500:focus-within {
+  --tw-ring-color: var(--green) !important;
+  border-color: var(--green) !important;
+}
+
+.shadow-purple-500\/20,
+.shadow-indigo-500\/20 {
+  --tw-shadow-color: rgba(5, 189, 145, 0.2) !important;
+  box-shadow:
+    0 10px 15px -3px var(--tw-shadow-color),
+    0 4px 6px -4px var(--tw-shadow-color) !important;
+}
+
+/* Apply the signature floating animation and green shadow effect globally to all hoverable buttons */
+button:hover,
+a.btn:hover,
+.btn:hover,
+[role="button"]:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 16px 40px -8px rgba(5, 189, 145, 0.75) !important;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+/* Ensure smooth transition reset when mouse leaves the button */
+button,
+a.btn,
+.btn,
+[role="button"] {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease !important;
+}
+
+/* Chat Component Styles */
+.chat-container {
+  background-color: var(--bg);
+  border: 1px solid var(--line);
+}
+
+.message-outgoing {
+  background: var(--grad); /* Elegant brand mint-to-emerald gradient */
+  color: #ffffff;
+  box-shadow: 0 4px 12px -2px rgba(5, 189, 145, 0.15);
+  border-radius: 12px 12px 0px 12px;
+}
+
+.message-incoming {
+  background-color: var(--bg-2); /* Clean, professional off-white/subtle grey */
+  color: var(--txt);
+  border: 1px solid var(--line);
+  border-radius: 12px 12px 12px 0px;
+}
+
+.chat-input {
+  background-color: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--txt);
+}
+.chat-input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px rgba(5, 189, 145, 0.15);
+}
+
+.support-chat-widget-isolated {
+  --green: #10b981 !important;
+  --green-2: #34d399 !important;
+  --grad: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  --grad-soft: linear-gradient(
+    180deg,
+    rgba(16, 185, 129, 0.05) 0%,
+    rgba(255, 255, 255, 0) 100%
+  ) !important;
+  --primary: var(--green) !important;
+  --ring: var(--green) !important;
+}
+
+.support-chat-widget-isolated.dark,
+.support-chat-widget-isolated [data-theme="dark"],
+.dark .support-chat-widget-isolated {
+  --green: #10b981 !important;
+  --green-2: #34d399 !important;
+  --grad: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  --grad-soft: linear-gradient(
+    180deg,
+    rgba(16, 185, 129, 0.1) 0%,
+    rgba(7, 9, 14, 0) 100%
+  ) !important;
+  --primary: var(--green) !important;
+  --ring: var(--green) !important;
+}

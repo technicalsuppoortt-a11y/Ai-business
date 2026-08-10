@@ -158,6 +158,19 @@
   color: #EF4444;
 }
 
+.nav-item.locked {
+  opacity: 0.45;
+  cursor: not-allowed !important;
+  background: rgba(239, 68, 68, 0.04) !important;
+  border-color: rgba(239, 68, 68, 0.15) !important;
+  pointer-events: auto !important;
+}
+
+.nav-item.locked:hover {
+  background: rgba(239, 68, 68, 0.07) !important;
+  color: #FDA4AF !important;
+}
+
 .nav-item-label {
   white-space: nowrap;
   overflow: hidden;

@@ -1,10 +1,70 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import PlatformExplanation from '../../components/common/PlatformExplanation';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 
 export default function TutorialPage() {
   const { state } = useApp();
+  const { userData, brandData } = useAuth();
+  const toast = useToast();
   const lang = state.language || 'ar';
+
+  // ── UNIVERSAL PERMISSION GUARD ──────────────────────────────────────────────
+  const resolveAllowedTools = () => {
+    const rootPlanId = userData?.planId;
+    const subPlanId = userData?.subscription?.planId;
+    
+    const isValidId = (id) => id && id !== "free_trial" && id !== "trial" && id !== "free";
+    
+    const hasValidPaidPlan = 
+      isValidId(rootPlanId) || 
+      isValidId(subPlanId) || 
+      (userData?.subscription?.status === 'active' && userData?.subscription?.type !== 'trial');
+    
+    const isTrial = !hasValidPaidPlan && (
+      userData?.subscription?.type === "trial" ||
+      !rootPlanId ||
+      rootPlanId === "free_trial" ||
+      rootPlanId === "trial" ||
+      rootPlanId === "free" ||
+      userData?.isTrial === true
+    );
+
+    const activePlanId = isValidId(rootPlanId) ? rootPlanId : (isValidId(subPlanId) ? subPlanId : null);
+
+    if (isTrial) {
+      // Read from LIVE brandData root first to avoid stale user cache
+      const trialTools = brandData?.freeTrialSettings?.allowedTools || userData?.freeTrialSettings?.allowedTools;
+      if (Array.isArray(trialTools)) return trialTools;
+    } else {
+      if (activePlanId && Array.isArray(brandData?.plans)) {
+        const matchedPlan = brandData.plans.find((p) => String(p.id) === String(activePlanId));
+        if (matchedPlan && Array.isArray(matchedPlan.allowedTools)) return matchedPlan.allowedTools;
+      }
+      if (Array.isArray(userData?.allowedTools)) return userData.allowedTools;
+      if (Array.isArray(userData?.subscription?.allowedTools)) return userData.subscription.allowedTools;
+    }
+    return null;
+  };
+
+  const resolvedAllowedTools = resolveAllowedTools();
+  
+  // Strict Lock Enforcement: If not explicitly allowed, it MUST be locked.
+  const isAllowed = Array.isArray(resolvedAllowedTools) && resolvedAllowedTools.includes('tutorial');
+  const isLocked = !isAllowed;
+
+  useEffect(() => {
+    if (isLocked) {
+      toast(lang === 'en' ? "🔒 Tutorial is not included in your current plan. Please upgrade!" : "🔒 فيديو الشرح غير متاح في باقتك الحالية. يرجى ترقية الباقة!", "error");
+    }
+  }, [isLocked, lang, toast]);
+
+  if (isLocked) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  // ─────────────────────────────────────────────────────────────────────────
   
   return (
     <div className="animate-in" style={{ padding: '0', maxWidth: '100%', overflowX: 'hidden' }}>

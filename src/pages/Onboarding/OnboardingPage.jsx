@@ -257,7 +257,7 @@ export default function OnboardingPage() {
             <span>{lang === 'en' ? 'Step 1 of 7' : 'الخطوة 1 من 7'}</span>
           </div>
           <h1 className="onboarding-hero-title">
-            {lang === 'en' ? `Welcome to ${adminBrandName || 'AI Brand Vision'}` : `مرحباً بك في منصة ${adminBrandName || 'AI Brand Vision'}`}
+            {lang === 'en' ? `Welcome to ${adminBrandName || 'AI Business'}` : `مرحباً بك في منصة ${adminBrandName || 'AI Business'}`}
           </h1>
           <p className="onboarding-hero-subtitle">
             {lang === 'en'

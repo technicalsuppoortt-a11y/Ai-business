@@ -79,7 +79,7 @@ export default function SuperAdminBranding() {
                 type="text" 
                 value={nameInput}
                 onChange={(e) => setNameInput(e.target.value)}
-                placeholder="e.g. AI Brand Vision"
+                placeholder="e.g. AI Business"
                 style={{
                   width: '100%',
                   padding: '12px 16px',

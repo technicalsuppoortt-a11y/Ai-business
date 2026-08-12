@@ -1428,8 +1428,8 @@ export default function LandingPage() {
                 }}
               />
               {t.problem.arrow.replace(
-                "AI Brand Vision",
-                brandData?.brandName || "AI Brand Vision",
+                "AI Business",
+                brandData?.brandName || "AI Business",
               )}
             </div>
             <div className="lp-arrow-line" />

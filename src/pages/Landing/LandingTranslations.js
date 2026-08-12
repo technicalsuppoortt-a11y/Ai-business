@@ -1,7 +1,7 @@
 export const landingTranslations = {
   ar: {
     nav: {
-      brand: "AI Brand Vision",
+      brand: "AI Business",
       vision: "Vision",
       login: "تسجيل الدخول",
       startFree: "ابدأ مجاناً ←"
@@ -31,7 +31,7 @@ export const landingTranslations = {
         { icon: '', title: 'محتوى بلا استراتيجية', desc: 'ينشرون كل يوم بدون هدف — ما فيه نتائج ولا نمو حقيقي' },
         { icon: '', title: 'عروض ضعيفة', desc: 'أسعار عشوائية، عروض مش مقنعة — العميل يشوف ويمشي' }
       ],
-      arrow: "AI Brand Vision بيحل كل ده"
+      arrow: "AI Business بيحل كل ده"
     },
     section1: {
       tag: "01 · التحليل والهوية",
@@ -155,7 +155,7 @@ export const landingTranslations = {
       bullets: "✓ مجاني · ✓ بدون بطاقة · ✓ عربي كامل"
     },
     footer: {
-      copyright: "© 2026 AI Brand Vision. جميع الحقوق محفوظة.",
+      copyright: "© 2026 AI Business. جميع الحقوق محفوظة.",
       login: "تسجيل الدخول ←",
       privacy: "سياسة الخصوصية",
       security: "سياسة الأمان"
@@ -166,7 +166,7 @@ export const landingTranslations = {
   },
   en: {
     nav: {
-      brand: "AI Brand Vision",
+      brand: "AI Business",
       vision: "Vision",
       login: "Login",
       startFree: "Start Free ←"
@@ -196,7 +196,7 @@ export const landingTranslations = {
         { icon: '', title: "Content Without Strategy", desc: "Publishing every day without a goal — resulting in no impact or real growth" },
         { icon: '', title: "Weak Offers", desc: "Random pricing, unconvincing offers — the customer looks and leaves" }
       ],
-      arrow: "AI Brand Vision Solves All This"
+      arrow: "AI Business Solves All This"
     },
     section1: {
       tag: "01 · Analysis & Identity",
@@ -320,7 +320,7 @@ export const landingTranslations = {
       bullets: "✓ Free · ✓ No Card Required · ✓ Bilingual Support"
     },
     footer: {
-      copyright: "© 2026 AI Brand Vision. All rights reserved.",
+      copyright: "© 2026 AI Business. All rights reserved.",
       login: "Login ←",
       privacy: "Privacy Policy",
       security: "Security Policy"

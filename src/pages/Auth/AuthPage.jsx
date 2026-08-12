@@ -39,7 +39,7 @@ const authTranslations = {
   ar: {
     portals: {
       user: {
-        title: "AI Brand Vision",
+        title: "AI Business",
         subtitle: "صفحة الأدوات",
         badgeText: "تسجيل دخول — أدوات",
       },
@@ -101,7 +101,7 @@ const authTranslations = {
   en: {
     portals: {
       user: {
-        title: "AI Brand Vision",
+        title: "AI Business",
         subtitle: "Tools Portal",
         badgeText: "Login — Tools",
       },

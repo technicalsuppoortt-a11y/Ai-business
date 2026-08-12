@@ -1190,7 +1190,7 @@ export default function LandingPage() {
                 </div>
                 <div className="preview-title">
                   <Bot size={14} style={{ color: "var(--accent)" }} />
-                  <span>AI Brand Vision OS</span>
+                  <span>AI Business OS</span>
                 </div>
                 <div className="preview-status-pill">
                   <Activity size={12} className="pulse-icon" />

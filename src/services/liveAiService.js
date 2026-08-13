@@ -297,10 +297,21 @@ export async function dispatchLiveAiAnalysis({
     costKey = defaultCostKeyMap[toolId] || null;
   }
 
-  const isArabic = lang === 'ar';
-  const languageInstruction = isArabic
-    ? 'Produce the entire response in Modern Standard Arabic (العربية الفصحى البسيطة والاحترافية).'
-    : 'Produce the entire response in English.';
+  const isArabic = lang?.startsWith('ar') || lang?.startsWith('ar-');
+  
+  let languageName = 'English';
+  let languageInstruction = 'Produce the entire response in English.';
+
+  if (lang === 'ar-EG') {
+    languageName = 'Egyptian Arabic Dialect (عامية مصرية)';
+    languageInstruction = 'You MUST write the ENTIRE output using natural, 100% Egyptian conversational dialect (باللهجة المصرية العامية الدارجة تماماً). Do not use any Standard Arabic (الفصحى) sentences. Replace formal words with common Egyptian business phrasing (e.g., use: ظبط، عشان، كدة، دلوقتي، هيخليك، اللينك، الزبون، التارجت، عايز، أوي). Make it sound like an expert Egyptian marketer talking directly to a client.\n\nCRITICAL DIALECT RULE: For ANY structured data, tables, or JSON fields (like titles, captions, ideas, steps), the text MUST still be completely in the Egyptian colloquial dialect, NOT Standard Arabic.';
+  } else if (lang === 'ar-GCC' || lang === 'ar-KW') {
+    languageName = 'Khaleeji Gulf Arabic Dialect (عامية خليجية)';
+    languageInstruction = 'You MUST write the ENTIRE output using natural, 100% Khaleeji Gulf dialect (باللهجة الخليجية العامية الدارجة تماماً). Do not use any Standard Arabic (الفصحى) sentences. Replace formal words with common Gulf business phrasing (e.g., use: عدل، عشان، تبي، هالخطوة، وايد، الحين، حق، شلون، كذا، الزبائن). Make it sound like an expert Gulf marketer talking directly to a client.\n\nCRITICAL DIALECT RULE: For ANY structured data, tables, or JSON fields (like titles, captions, ideas, steps), the text MUST still be completely in the Khaleeji colloquial dialect, NOT Standard Arabic.';
+  } else if (isArabic) {
+    languageName = 'Arabic';
+    languageInstruction = 'Produce the entire response in Modern Standard Arabic (العربية الفصحى البسيطة والاحترافية).';
+  }
 
   const nicheStr = context.niche || 'E-commerce & Digital Business';
   const brandNameStr = context.brandName || 'Business Brand';
@@ -453,7 +464,7 @@ ${languageInstruction}
 Your task is to generate a highly actionable, structured, and comprehensive Marketing Strategy Plan based on the user's inputs.
 
 OUTPUT FORMAT REQUIREMENTS (STRICT):
-You MUST follow this exact Markdown structure and style. Do not change section titles. Translate section titles and content appropriately to the user's language (${lang === 'en' ? 'English' : 'Arabic'}), maintaining the exact same layout, tables, and emojis.
+You MUST follow this exact Markdown structure and style. Do not change section titles. Translate section titles and content appropriately to the user's language (${languageName}), maintaining the exact same layout, tables, and emojis.
 
 # 🗺️ ${lang === 'en' ? 'Master Advertising & Marketing Plan' : 'خطة التسويق والإعلانات الشاملة'}
 

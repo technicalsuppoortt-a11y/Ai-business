@@ -95,7 +95,7 @@ export default function EmailSetup({ stepNumber }) {
   const isLoadedFromCloud = !isLoadingCache;
   const toast = useToast();
   const lang = state.language || "ar";
-  const isRtl = lang === "ar";
+  const isRtl = lang?.startsWith('ar');
 
   // Navigation tabs: 'crm' (Zoho-style Email Marketing & CRM) vs 'dns' (Cryptographic Transmission Pipeline Matrix)
   const [mainTab, setMainTab] = useState(cached?.mainTab ?? "crm");

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../../context/AppContext';
+import { useToast } from '../../../context/ToastContext';
 import { getHeyGenScriptTemplate } from '../../../services/contentDbService';
 import { parseTemplate } from '../../../utils/templateParser';
 import ToolDashboardLayout from './ToolDashboardLayout';
@@ -8,6 +9,8 @@ export default function HeyGenGuide({ stepNumber }) {
   const toast = useToast();
   const { state } = useApp();
   const lang = state.language || 'ar';
+  const baseLang = lang?.startsWith('en') ? 'en' : 'ar';
+  const isRtl = lang?.startsWith('ar');
   
   const [videoGoal, setVideoGoal] = useState('welcome'); // welcome, explainer, sales
   const [videoDuration, setVideoDuration] = useState('short'); // short, long
@@ -37,8 +40,8 @@ export default function HeyGenGuide({ stepNumber }) {
       const niche = state.subNiche || state.niche || (lang === 'en' ? 'our services' : 'خدماتنا');
 
       const templateData = await getHeyGenScriptTemplate(videoGoal, videoDuration);
-      if (templateData && templateData[lang]) {
-        const text = parseTemplate(templateData[lang], { brandName, niche });
+      if (templateData && templateData[baseLang]) {
+        const text = parseTemplate(templateData[baseLang], { brandName, niche });
         setResult(text);
       } else {
         setResult(lang === 'en' ? 'Template not found.' : 'لم يتم العثور على القالب.');

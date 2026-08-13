@@ -15,6 +15,8 @@ import {
   deleteDoc,
   updateDoc,
   serverTimestamp,
+  onSnapshot,
+  orderBy,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db } from "../../firebase";
@@ -26,11 +28,15 @@ import { useConfirm } from "../../context/ConfirmContext";
 import { saveAdminOpenAiKey, getAdminOpenAiKey } from "../../services/creditsService";
 import AdminSales from "./AdminSales";
 import AdminLibrary from "./AdminLibrary";
+import SupportSection from "../SupportSection";
 import MarketingTrackingSection from "../../components/Marketing/MarketingTrackingSection";
 import AiSettingsPage from "./components/AiSettingsPage";
 import Pagination from "../../components/common/Pagination";
 import PhoneInput from "../../components/PhoneInput";
 import PlatformExplanation from "../../components/common/PlatformExplanation";
+import { DEFAULT_LEGAL_CONTENT, DEFAULT_FAQS } from "../../utils/defaultLegalContent";
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
@@ -98,10 +104,9 @@ import {
   BookOpen,
   Rocket,
   FileText,
-  Scale,
+  MessageCircle,
   Share2,
   Calculator,
-  MessageCircle,
   Image,
   Compass,
   Video,
@@ -112,6 +117,7 @@ import {
   Crosshair,
   Award,
   Mic,
+  Bell,
   Copy,
   Laptop,
   Tablet,
@@ -119,9 +125,53 @@ import {
   Layout,
   Database,
   LayoutTemplate,
+  MessageSquare,
+  Scale,
+  ChevronUp,
 } from "lucide-react";
 import "./Admin.css";
 import AdminTemplateManager from './components/AdminTemplateManager';
+
+const quillModules = {
+  toolbar: [
+    [{ 'header': [1, 2, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    ['clean']
+  ],
+};
+
+const formatForQuill = (text) => {
+  if (!text) return "";
+  // Check if it already has basic HTML tags (from Quill)
+  if (/<[a-z][\s\S]*>/i.test(text)) return text;
+  // Otherwise, it's raw text, split by \n and wrap in <p>
+  return text.split('\n').map(line => {
+    // Preserve empty lines as Quill empty paragraphs
+    return line ? `<p>${line}</p>` : `<p><br></p>`;
+  }).join('');
+};
+
+const getLegalValue = (dbValue, defaultValue, englishDefault = null) => {
+  if (!dbValue) return formatForQuill(defaultValue);
+  
+  // Strip HTML tags and common HTML spaces to reliably detect if the editor is actually empty
+  const textOnly = dbValue.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim();
+  
+  if (textOnly === "") {
+    return formatForQuill(defaultValue);
+  }
+  
+  // Fix for corrupted DB state: If the saved Arabic field accidentally contains the English default text, revert to Arabic default
+  if (englishDefault) {
+    const englishTextOnly = englishDefault.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim();
+    if (textOnly === englishTextOnly) {
+      return formatForQuill(defaultValue);
+    }
+  }
+
+  return formatForQuill(dbValue);
+};
 
 // Counter Component that displays actual value directly without count animation
 function AnimatedCounter({ value }) {
@@ -357,6 +407,27 @@ export default function AdminDashboardPage() {
     () => localStorage.getItem("admin-sidebar-collapsed") === "true",
   );
 
+  const [unreadSupportMsgs, setUnreadSupportMsgs] = useState([]);
+  const [isSupportDropdownOpen, setIsSupportDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    // Listen to unread support messages for admin
+    const q = collection(db, "support_chats");
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const msgs = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        if (!data.read && data.authorId !== (userData?.uid || "999")) {
+          msgs.push({ id: doc.id, ...data });
+        }
+      });
+      // Sort by newest first
+      msgs.sort((a, b) => b.createdAt - a.createdAt);
+      setUnreadSupportMsgs(msgs);
+    });
+    return () => unsubscribe();
+  }, [userData]);
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
@@ -392,6 +463,17 @@ export default function AdminDashboardPage() {
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [profileImage, setProfileImage] = useState(null); // For creating/editing users
   const [photoPreview, setPhotoPreview] = useState(null);
+
+  // Legal & FAQs State
+  const [legalTabLang, setLegalTabLang] = useState("ar"); // "ar" or "en"
+  const [legalActiveTab, setLegalActiveTab] = useState("terms"); // "terms", "privacy", "security", "faqs"
+  const [termsAr, setTermsAr] = useState("");
+  const [termsEn, setTermsEn] = useState("");
+  const [privacyAr, setPrivacyAr] = useState("");
+  const [privacyEn, setPrivacyEn] = useState("");
+  const [securityAr, setSecurityAr] = useState("");
+  const [securityEn, setSecurityEn] = useState("");
+  const [faqs, setFaqs] = useState([]); // [{ id, q_ar, q_en, a_ar, a_en }]
 
   useEffect(() => {
     if (profileImage) {
@@ -994,7 +1076,7 @@ export default function AdminDashboardPage() {
       setOwnerNameForm(userData.ownerName || "");
       setBrandNameForm(userData.brandName || "");
       setBrandUrlForm(userData.brandUrl || "");
-      setDefaultLanguage(userData.defaultLanguage || "ar");
+      setDefaultLanguage(state.language || userData.defaultLanguage || "ar");
       setLogoDisplayMode(userData.logoDisplayMode || "both");
       setShowWhatsappLoginBtn(userData.showWhatsappLoginBtn !== false);
 
@@ -1031,6 +1113,16 @@ export default function AdminDashboardPage() {
           tiktok: "",
         },
       );
+
+      // Populate Legal & FAQs
+      setTermsAr(getLegalValue(userData.legal?.terms_ar, DEFAULT_LEGAL_CONTENT.terms_ar, DEFAULT_LEGAL_CONTENT.terms_en));
+      setTermsEn(getLegalValue(userData.legal?.terms_en, DEFAULT_LEGAL_CONTENT.terms_en));
+      setPrivacyAr(getLegalValue(userData.legal?.privacy_ar, DEFAULT_LEGAL_CONTENT.privacy_ar, DEFAULT_LEGAL_CONTENT.privacy_en));
+      setPrivacyEn(getLegalValue(userData.legal?.privacy_en, DEFAULT_LEGAL_CONTENT.privacy_en));
+      setSecurityAr(getLegalValue(userData.legal?.security_ar, DEFAULT_LEGAL_CONTENT.security_ar, DEFAULT_LEGAL_CONTENT.security_en));
+      setSecurityEn(getLegalValue(userData.legal?.security_en, DEFAULT_LEGAL_CONTENT.security_en));
+      setFaqs(userData.faqs?.length > 0 ? userData.faqs : DEFAULT_FAQS);
+
       const pData = userData.plans;
       setPlans(
         Array.isArray(pData)
@@ -1284,6 +1376,15 @@ export default function AdminDashboardPage() {
         },
         defaultLanguage: defaultLanguage,
         landingTemplate: landingTemplate,
+        legal: {
+          terms_ar: termsAr,
+          terms_en: termsEn,
+          privacy_ar: privacyAr,
+          privacy_en: privacyEn,
+          security_ar: securityAr,
+          security_en: securityEn,
+        },
+        faqs: faqs,
         logoDisplayMode: logoDisplayMode,
         showWhatsappLoginBtn: showWhatsappLoginBtn,
       };
@@ -1331,6 +1432,16 @@ export default function AdminDashboardPage() {
         {
           plans: updateData.plans,
           freeTrialSettings: updateData.freeTrialSettings,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      // 4. Update Global Settings for language
+      await setDoc(
+        doc(db, "tenants", "global"),
+        {
+          systemLanguage: updateData.defaultLanguage,
           updatedAt: serverTimestamp(),
         },
         { merge: true }
@@ -2199,6 +2310,12 @@ export default function AdminDashboardPage() {
                 icon: Settings,
               },
               {
+                id: "support",
+                label: "الدعم الفني",
+                label_en: "Technical Support",
+                icon: MessageCircle,
+              },
+              {
                 id: "tutorial",
                 label: "فيديو الشرح",
                 label_en: "Tutorial Video",
@@ -2340,7 +2457,7 @@ export default function AdminDashboardPage() {
         {/* Main Content */}
         <div className="ad-main">
           {/* Topbar */}
-          <div className="ad-topbar">
+          <div className="ad-topbar" style={{ zIndex: 50, position: "relative" }}>
             <div
               className="ad-topbar-left"
               style={{ display: "flex", alignItems: "center", gap: "12px" }}
@@ -2490,6 +2607,149 @@ export default function AdminDashboardPage() {
               className="ad-topbar-right"
               style={{ display: "flex", alignItems: "center", gap: "12px" }}
             >
+              {/* Support Notifications Dropdown */}
+              <div style={{ position: "relative" }}>
+                <button
+                  className="btn btn-sm"
+                  onClick={() => setIsSupportDropdownOpen(!isSupportDropdownOpen)}
+                  style={{
+                    background: "var(--bg2)",
+                    border: "1px solid var(--line)",
+                    padding: "6px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "10px",
+                    position: "relative",
+                  }}
+                  title={state.language === "en" ? "Support Notifications" : "إشعارات الدعم"}
+                >
+                  <Bell size={18} style={{ color: "var(--text)" }} />
+                  {unreadSupportMsgs.length > 0 && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: "-4px",
+                        right: "-4px",
+                        background: "#ef4444",
+                        color: "white",
+                        fontSize: "10px",
+                        fontWeight: "bold",
+                        width: "16px",
+                        height: "16px",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                      }}
+                    >
+                      {unreadSupportMsgs.length}
+                    </span>
+                  )}
+                </button>
+
+                <AnimatePresence>
+                  {isSupportDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      style={{
+                        position: "absolute",
+                        top: "calc(100% + 10px)",
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        background: "var(--bg2)",
+                        border: "1px solid var(--line)",
+                        borderRadius: "16px",
+                        width: "320px",
+                        boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+                        zIndex: 9999,
+                        overflow: "hidden",
+                      }}
+                      dir={state.language === "en" ? "ltr" : "rtl"}
+                    >
+                      <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--line)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ fontWeight: "bold", fontSize: "14px" }}>
+                          {state.language === "en" ? "Support Notifications" : "إشعارات الدعم"}
+                        </span>
+                        {unreadSupportMsgs.length > 0 && (
+                          <span style={{ fontSize: "12px", background: "rgba(239, 68, 68, 0.1)", color: "#ef4444", padding: "2px 8px", borderRadius: "8px", fontWeight: "bold" }}>
+                            {unreadSupportMsgs.length} {state.language === "en" ? "New" : "جديد"}
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div style={{ maxHeight: "300px", overflowY: "auto" }}>
+                        {unreadSupportMsgs.length === 0 ? (
+                          <div style={{ padding: "30px", textAlign: "center", color: "var(--text2)", fontSize: "13px" }}>
+                            {state.language === "en" ? "No new support messages." : "لا توجد رسائل دعم جديدة."}
+                          </div>
+                        ) : (
+                          unreadSupportMsgs.slice(0, 5).map((msg, i) => (
+                            <div
+                              key={i}
+                              style={{
+                                padding: "12px 16px",
+                                borderBottom: "1px solid var(--line)",
+                                display: "flex",
+                                gap: "12px",
+                                cursor: "pointer",
+                                transition: "background 0.2s",
+                              }}
+                              onClick={() => {
+                                setIsSupportDropdownOpen(false);
+                                handleSelectTab("support");
+                              }}
+                            >
+                              <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "rgba(139, 92, 246, 0.15)", color: "#8b5cf6", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "14px", flexShrink: 0 }}>
+                                {msg.authorName?.charAt(0)?.toUpperCase()}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
+                                  <span style={{ fontWeight: "bold", fontSize: "13px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: "var(--text)" }}>
+                                    {msg.authorName}
+                                  </span>
+                                  <span style={{ fontSize: "10px", color: "var(--text2)" }}>
+                                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                </div>
+                                <div style={{ fontSize: "12px", color: "var(--text2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                  {msg.text || (msg.files?.length ? "Attachment 📎" : "Voice Message 🎤")}
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      
+                      <div style={{ padding: "12px" }}>
+                        <button
+                          onClick={() => {
+                            setIsSupportDropdownOpen(false);
+                            handleSelectTab("support");
+                          }}
+                          style={{
+                            width: "100%",
+                            padding: "10px",
+                            background: "var(--accent)",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "10px",
+                            fontWeight: "bold",
+                            fontSize: "13px",
+                            cursor: "pointer",
+                            boxSizing: "border-box",
+                          }}
+                        >
+                          {state.language === "en" ? "View All Support Messages" : "الانتقال إلى الدعم"}
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
               <button
                 className="btn btn-sm"
                 onClick={() =>
@@ -6850,7 +7110,7 @@ export default function AdminDashboardPage() {
                           style={{
                             position: "absolute",
                             left: state.language === "en" ? "14px" : "auto",
-                            right: state.language === "ar" ? "14px" : "auto",
+                            right: state.language?.startsWith('ar') ? "14px" : "auto",
                             top: "50%",
                             transform: "translateY(-50%)",
                             color: "var(--accent)",
@@ -6868,7 +7128,7 @@ export default function AdminDashboardPage() {
                           onChange={(e) => setPaymentSearchQuery(e.target.value)}
                           style={{
                             paddingLeft: state.language === "en" ? "40px" : "14px",
-                            paddingRight: state.language === "ar" ? "40px" : "14px",
+                            paddingRight: state.language?.startsWith('ar') ? "40px" : "14px",
                             fontSize: "13px",
                             height: "44px",
                             background: "rgba(0, 0, 0, 0.3)",
@@ -8646,6 +8906,8 @@ export default function AdminDashboardPage() {
                 lang={state.language || "ar"}
               />
             </div>
+          ) : activeTab === "support" ? (
+            <SupportSection />
           ) : activeTab === "library" ? (
             <AdminLibrary userData={userData} />
           ) : activeTab === "ai_settings" ? (
@@ -8661,8 +8923,8 @@ export default function AdminDashboardPage() {
               <MarketingTrackingSection 
                 isAdmin={true} 
                 userId={userData?.uid} 
-                isRtl={state.language === 'ar'} 
-                t={(ar, en) => state.language === 'ar' ? ar : en} 
+                isRtl={state.language?.startsWith('ar')} 
+                t={(ar, en) => state.language?.startsWith('ar') ? ar : en} 
               />
             </div>
           ) : (
@@ -8876,6 +9138,12 @@ export default function AdminDashboardPage() {
                       label_en: "Social Media Links",
                       label_ar: "منصات التواصل الاجتماعي",
                       icon: Share2,
+                    },
+                    {
+                      id: "legal",
+                      label_en: "Legal & FAQs",
+                      label_ar: "الشروط والسياسات / FAQs",
+                      icon: FileText,
                     },
                     {
                       id: "templates",
@@ -9202,6 +9470,16 @@ export default function AdminDashboardPage() {
                           {
                             value: "ar",
                             label: state.language === "en" ? "العربية (Arabic)" : "العربية (Arabic)",
+                            icon: Globe,
+                          },
+                          {
+                            value: "ar-EG",
+                            label: state.language === "en" ? "المصرية (Egyptian)" : "المصرية (Egyptian)",
+                            icon: Globe,
+                          },
+                          {
+                            value: "ar-GCC",
+                            label: state.language === "en" ? "الخليجية (Khaleeji)" : "الخليجية (Khaleeji)",
                             icon: Globe,
                           },
                           {
@@ -9881,6 +10159,356 @@ export default function AdminDashboardPage() {
                       );
                     })}
                   </div>
+                </motion.div>
+              )}
+
+              {/* Sub-Tab Legal: Legal & FAQs */}
+              {brandSubTab === "legal" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="ad-table-card"
+                  style={{ padding: "32px", display: "flex", flexDirection: "column", gap: "32px" }}
+                  dir={state.language === "en" ? "ltr" : "rtl"}
+                >
+                  {/* Header & Segmented Control */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "20px" }}>
+                    <div>
+                      <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#fff", display: "flex", alignItems: "center", gap: "10px", margin: 0 }}>
+                        <FileText size={20} style={{ color: "var(--accent)" }} />
+                        {state.language === "en" ? "Legal Policies & FAQs" : "الشروط والسياسات والأسئلة الشائعة"}
+                      </h3>
+                      <p style={{ color: "var(--text3)", fontSize: "14px", marginTop: "8px", maxWidth: "500px", lineHeight: "1.6" }}>
+                        {state.language === "en" 
+                          ? "Manage your landing page terms, privacy, security, and FAQs dynamically. Changes are reflected instantly on your public page." 
+                          : "إدارة شروط الاستخدام، سياسة الخصوصية، سياسة الأمان والأسئلة الشائعة لصفحة الهبوط بشكل ديناميكي. تنعكس التغييرات فوراً."}
+                      </p>
+                    </div>
+
+                    {/* Premium Language Segmented Control */}
+                    <div style={{ display: "flex", background: "rgba(0,0,0,0.4)", borderRadius: "12px", padding: "4px", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.2)" }}>
+                      <button
+                        type="button"
+                        onClick={() => setLegalTabLang("ar")}
+                        style={{
+                          padding: "8px 24px",
+                          borderRadius: "10px",
+                          background: legalTabLang === "ar" ? "linear-gradient(135deg, var(--accent), var(--accent-hover, #2563EB))" : "transparent",
+                          color: legalTabLang === "ar" ? "#fff" : "var(--text3)",
+                          fontSize: "13px",
+                          fontWeight: legalTabLang === "ar" ? "700" : "500",
+                          border: "none",
+                          cursor: "pointer",
+                          transition: "all 0.3s ease",
+                          boxShadow: legalTabLang === "ar" ? "0 4px 12px rgba(59, 130, 246, 0.3)" : "none",
+                        }}
+                      >
+                        العربية
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setLegalTabLang("en")}
+                        style={{
+                          padding: "8px 24px",
+                          borderRadius: "10px",
+                          background: legalTabLang === "en" ? "linear-gradient(135deg, var(--accent), var(--accent-hover, #2563EB))" : "transparent",
+                          color: legalTabLang === "en" ? "#fff" : "var(--text3)",
+                          fontSize: "13px",
+                          fontWeight: legalTabLang === "en" ? "700" : "500",
+                          border: "none",
+                          cursor: "pointer",
+                          transition: "all 0.3s ease",
+                          boxShadow: legalTabLang === "en" ? "0 4px 12px rgba(59, 130, 246, 0.3)" : "none",
+                        }}
+                      >
+                        English
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Horizontal Tabs Menu */}
+                  <div style={{ display: "flex", gap: "12px", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "16px", overflowX: "auto", margin: "16px 0" }}>
+                    {[
+                      { id: "terms", labelEn: "Terms & Conditions", labelAr: "الشروط والأحكام", icon: <FileText size={16} /> },
+                      { id: "privacy", labelEn: "Privacy Policy", labelAr: "سياسة الخصوصية", icon: <Lock size={16} /> },
+                      { id: "security", labelEn: "Security Policy", labelAr: "سياسة الأمان", icon: <Shield size={16} /> },
+                      { id: "faqs", labelEn: "FAQs", labelAr: "الأسئلة الشائعة", icon: <MessageSquare size={16} /> }
+                    ].map(tab => (
+                      <button
+                        type="button"
+                        key={tab.id}
+                        onClick={() => setLegalActiveTab(tab.id)}
+                        style={{
+                          display: "flex", alignItems: "center", gap: "8px", padding: "10px 20px",
+                          background: legalActiveTab === tab.id ? "rgba(59,130,246,0.1)" : "transparent",
+                          color: legalActiveTab === tab.id ? "#3B82F6" : "var(--text3)",
+                          border: "1px solid",
+                          borderColor: legalActiveTab === tab.id ? "rgba(59,130,246,0.2)" : "transparent",
+                          borderRadius: "12px", fontSize: "14px", fontWeight: "600", cursor: "pointer",
+                          transition: "all 0.2s", whiteSpace: "nowrap"
+                        }}
+                      >
+                        {tab.icon}
+                        {state.language === "en" ? tab.labelEn : tab.labelAr}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Tab Content Panels */}
+                  <div style={{ minHeight: "400px", background: "rgba(255,255,255,0.01)", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.03)", padding: "24px" }}>
+                    
+                    {/* Custom Styles for React Quill Dark Mode and Scrolling */}
+                    <style>{`
+                      .quill-editor-container .ql-toolbar {
+                        background: rgba(255, 255, 255, 0.05);
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        border-top-left-radius: 12px;
+                        border-top-right-radius: 12px;
+                      }
+                      .quill-editor-container .ql-toolbar button, .quill-editor-container .ql-toolbar span.ql-picker-label {
+                        filter: invert(0.8) hue-rotate(180deg);
+                      }
+                      /* Dark mode dropdown menu fixes */
+                      .quill-editor-container .ql-picker-options {
+                        background: var(--bg2) !important;
+                        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+                      }
+                      .quill-editor-container .ql-picker-options .ql-picker-item {
+                        color: var(--text1) !important;
+                      }
+                      .quill-editor-container .ql-picker-options .ql-picker-item:hover,
+                      .quill-editor-container .ql-picker-options .ql-picker-item.ql-selected {
+                        color: var(--accent) !important;
+                      }
+                      /* RTL label & arrow alignment fix */
+                      .quill-editor-container [dir="rtl"] .ql-picker-label {
+                        padding-left: 16px !important;
+                        padding-right: 8px !important;
+                      }
+                      .quill-editor-container [dir="rtl"] .ql-picker-label svg {
+                        right: auto !important;
+                        left: 0 !important;
+                      }
+                      .quill-editor-container .ql-container {
+                        background: rgba(0, 0, 0, 0.2);
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        border-bottom-left-radius: 12px;
+                        border-bottom-right-radius: 12px;
+                        min-height: 350px;
+                        font-size: 15px;
+                        color: #fff;
+                      }
+                      .quill-editor-container .ql-editor {
+                        min-height: 350px;
+                        max-height: 600px;
+                        overflow-y: auto;
+                        padding: 20px;
+                        line-height: 1.8;
+                        white-space: pre-wrap;
+                      }
+                      .quill-editor-container .ql-editor p {
+                        margin-bottom: 1rem;
+                      }
+                      .quill-editor-container .ql-editor.ql-blank::before {
+                        color: rgba(255, 255, 255, 0.4);
+                        font-style: normal;
+                      }
+                    `}</style>
+
+                    <AnimatePresence mode="wait">
+                      
+                      {/* Terms Panel */}
+                      {legalActiveTab === "terms" && (
+                        <motion.div key="terms" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} style={{ display: "flex", flexDirection: "column", gap: "16px" }} className="quill-editor-container">
+                          <ReactQuill
+                            theme="snow"
+                            modules={quillModules}
+                            value={legalTabLang === "ar" ? termsAr : termsEn}
+                            onChange={(content) => legalTabLang === "ar" ? setTermsAr(content) : setTermsEn(content)}
+                            placeholder={state.language === "en" ? "Enter Terms & Conditions..." : "أدخل الشروط والأحكام..."}
+                            dir={legalTabLang === "ar" ? "rtl" : "ltr"}
+                          />
+                        </motion.div>
+                      )}
+
+                      {/* Privacy Panel */}
+                      {legalActiveTab === "privacy" && (
+                        <motion.div key="privacy" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} style={{ display: "flex", flexDirection: "column", gap: "16px" }} className="quill-editor-container">
+                          <ReactQuill
+                            theme="snow"
+                            modules={quillModules}
+                            value={legalTabLang === "ar" ? privacyAr : privacyEn}
+                            onChange={(content) => legalTabLang === "ar" ? setPrivacyAr(content) : setPrivacyEn(content)}
+                            placeholder={state.language === "en" ? "Enter Privacy Policy..." : "أدخل سياسة الخصوصية..."}
+                            dir={legalTabLang === "ar" ? "rtl" : "ltr"}
+                          />
+                        </motion.div>
+                      )}
+
+                      {/* Security Panel */}
+                      {legalActiveTab === "security" && (
+                        <motion.div key="security" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} style={{ display: "flex", flexDirection: "column", gap: "16px" }} className="quill-editor-container">
+                          <ReactQuill
+                            theme="snow"
+                            modules={quillModules}
+                            value={legalTabLang === "ar" ? securityAr : securityEn}
+                            onChange={(content) => legalTabLang === "ar" ? setSecurityAr(content) : setSecurityEn(content)}
+                            placeholder={state.language === "en" ? "Enter Security Policy..." : "أدخل سياسة الأمان..."}
+                            dir={legalTabLang === "ar" ? "rtl" : "ltr"}
+                          />
+                        </motion.div>
+                      )}
+
+                      {/* FAQs Panel */}
+                      {legalActiveTab === "faqs" && (
+                        <motion.div key="faqs" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
+                            <div>
+                              <h3 style={{ fontSize: "16px", fontWeight: "700", color: "#fff", display: "flex", alignItems: "center", gap: "10px", margin: 0 }}>
+                                <MessageSquare size={18} style={{ color: "var(--accent)" }} />
+                                {state.language === "en" ? "Frequently Asked Questions" : "الأسئلة الشائعة (FAQs)"}
+                              </h3>
+                              <p style={{ color: "var(--text3)", fontSize: "13px", marginTop: "4px" }}>
+                                {state.language === "en" ? "Add questions to help your users understand your product." : "أضف أسئلة لمساعدة المستخدمين على فهم منتجك."}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFaqs([...faqs, { id: Date.now().toString(), q_ar: "", q_en: "", a_ar: "", a_en: "" }]);
+                                setTimeout(() => {
+                                  const faqElements = document.querySelectorAll('.faq-item-container');
+                                  if (faqElements.length > 0) {
+                                    faqElements[faqElements.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                  }
+                                }, 100);
+                              }}
+                              style={{ 
+                                padding: "10px 20px", borderRadius: "10px", background: "var(--accent)", color: "#fff",
+                                fontSize: "13px", fontWeight: "600", display: "flex", alignItems: "center", gap: "8px",
+                                border: "none", cursor: "pointer", boxShadow: "0 4px 12px rgba(59, 130, 246, 0.2)",
+                                transition: "transform 0.2s, background 0.2s"
+                              }}
+                              onMouseOver={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.background = "var(--accent-hover, #2563EB)"; }}
+                              onMouseOut={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.background = "var(--accent)"; }}
+                            >
+                              <Plus size={16} />
+                              {state.language === "en" ? "Add FAQ" : "إضافة سؤال"}
+                            </button>
+                          </div>
+
+                          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                            <AnimatePresence>
+                              {faqs.length === 0 ? (
+                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ textAlign: "center", padding: "60px 20px", background: "rgba(0,0,0,0.2)", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: "16px" }}>
+                                  <MessageSquare size={32} style={{ color: "var(--text3)", opacity: 0.5, marginBottom: "16px" }} />
+                                  <p style={{ color: "var(--text2)", fontSize: "14px", margin: 0 }}>
+                                    {state.language === "en" ? "No FAQs added yet. Click the button above to create one." : "لم يتم إضافة أسئلة شائعة بعد. انقر على الزر أعلاه لإضافة سؤال."}
+                                  </p>
+                                </motion.div>
+                              ) : (
+                                faqs.map((faq, index) => (
+                                  <motion.div 
+                                    key={faq.id} 
+                                    className="faq-item-container"
+                                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.2 }}
+                                    style={{ 
+                                      padding: "20px", background: "rgba(0,0,0,0.2)", borderRadius: "16px", 
+                                      border: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column", gap: "16px",
+                                      position: "relative", overflow: "hidden"
+                                    }}
+                                  >
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                      <span style={{ fontSize: "12px", fontWeight: "700", color: "rgba(255,255,255,0.4)", letterSpacing: "0.5px" }}>FAQ #{index + 1}</span>
+                                      <div style={{ display: "flex", gap: "6px" }}>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            if (index > 0) {
+                                              const newFaqs = [...faqs];
+                                              [newFaqs[index - 1], newFaqs[index]] = [newFaqs[index], newFaqs[index - 1]];
+                                              setFaqs(newFaqs);
+                                            }
+                                          }}
+                                          disabled={index === 0}
+                                          style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(255,255,255,0.05)", color: index === 0 ? "rgba(255,255,255,0.1)" : "var(--text2)", border: "none", cursor: index === 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                                        >
+                                          ↑
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            if (index < faqs.length - 1) {
+                                              const newFaqs = [...faqs];
+                                              [newFaqs[index], newFaqs[index + 1]] = [newFaqs[index + 1], newFaqs[index]];
+                                              setFaqs(newFaqs);
+                                            }
+                                          }}
+                                          disabled={index === faqs.length - 1}
+                                          style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(255,255,255,0.05)", color: index === faqs.length - 1 ? "rgba(255,255,255,0.1)" : "var(--text2)", border: "none", cursor: index === faqs.length - 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                                        >
+                                          ↓
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => setFaqs(faqs.filter(f => f.id !== faq.id))}
+                                          style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(239,68,68,0.1)", color: "var(--error)", border: "none", marginLeft: "12px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s" }}
+                                          onMouseOver={(e) => e.currentTarget.style.background = "rgba(239,68,68,0.2)"}
+                                          onMouseOut={(e) => e.currentTarget.style.background = "rgba(239,68,68,0.1)"}
+                                        >
+                                          <Trash2 size={16} />
+                                        </button>
+                                      </div>
+                                    </div>
+                                    <input
+                                      type="text"
+                                      value={legalTabLang === "ar" ? faq.q_ar : faq.q_en}
+                                      onChange={(e) => {
+                                        const newFaqs = [...faqs];
+                                        if (legalTabLang === "ar") newFaqs[index].q_ar = e.target.value;
+                                        else newFaqs[index].q_en = e.target.value;
+                                        setFaqs(newFaqs);
+                                      }}
+                                      placeholder={state.language === "en" ? "Question..." : "السؤال..."}
+                                      style={{ 
+                                        width: "100%", padding: "14px 16px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.05)", 
+                                        borderRadius: "10px", color: "#fff", fontSize: "14px", fontWeight: "600", outline: "none", transition: "border-color 0.2s" 
+                                      }}
+                                      onFocus={(e) => e.target.style.borderColor = "var(--accent)"}
+                                      onBlur={(e) => e.target.style.borderColor = "rgba(255,255,255,0.05)"}
+                                      dir={legalTabLang === "ar" ? "rtl" : "ltr"}
+                                    />
+                                    <textarea
+                                      value={legalTabLang === "ar" ? faq.a_ar : faq.a_en}
+                                      onChange={(e) => {
+                                        const newFaqs = [...faqs];
+                                        if (legalTabLang === "ar") newFaqs[index].a_ar = e.target.value;
+                                        else newFaqs[index].a_en = e.target.value;
+                                        setFaqs(newFaqs);
+                                      }}
+                                      onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
+                                      placeholder={state.language === "en" ? "Answer..." : "الإجابة..."}
+                                      style={{ 
+                                        width: "100%", minHeight: "90px", resize: "none", padding: "14px 16px", background: "rgba(0,0,0,0.3)", 
+                                        border: "1px solid rgba(255,255,255,0.05)", borderRadius: "10px", color: "var(--text2)", fontSize: "14px", 
+                                        lineHeight: "1.6", outline: "none", transition: "border-color 0.2s", overflow: "hidden"
+                                      }}
+                                      onFocus={(e) => e.target.style.borderColor = "var(--accent)"}
+                                      onBlur={(e) => e.target.style.borderColor = "rgba(255,255,255,0.05)"}
+                                      dir={legalTabLang === "ar" ? "rtl" : "ltr"}
+                                    />
+                                  </motion.div>
+                                ))
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
                 </motion.div>
               )}
 

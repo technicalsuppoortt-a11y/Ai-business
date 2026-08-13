@@ -49,7 +49,7 @@ export default function AdCreative({ stepNumber }) {
   const { userData } = useAuth();
   const toast = useToast();
   const lang = state.language || "ar";
-  const isRtl = lang === "ar";
+  const isRtl = lang?.startsWith('ar');
 
   const [analysisMode, setAnalysisMode] = useState("fast"); // 'fast' | 'live'
 

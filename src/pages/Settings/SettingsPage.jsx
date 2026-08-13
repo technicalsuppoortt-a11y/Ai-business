@@ -4,7 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 import Topbar from '../../components/layout/Topbar';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -84,7 +84,7 @@ export default function SettingsPage() {
   const location = useLocation();
 
   const lang = state.language || 'ar';
-  const isRtl = lang === 'ar';
+  const isRtl = lang?.startsWith('ar');
 
   // ── UNIVERSAL PERMISSION GUARD ──────────────────────────────────────────────
   const resolveAllowedTools = () => {
@@ -163,7 +163,7 @@ export default function SettingsPage() {
       setOwnerName(userData.ownerName || '');
       setBrandName(userData.brandName || '');
       setEmail(userData.email || '');
-      setDefaultLanguage(userData.defaultLanguage || 'ar');
+      setDefaultLanguage(state.language || 'ar');
       setLogoDisplayMode(userData.logoDisplayMode || 'both');
       setShowWhatsappLoginBtn(userData.showWhatsappLoginBtn !== false);
     }
@@ -185,9 +185,16 @@ export default function SettingsPage() {
         logoDisplayMode,
         showWhatsappLoginBtn
       });
+      // Save global language to tenants/global
+      try {
+        await setDoc(doc(db, 'tenants', 'global'), { systemLanguage: defaultLanguage }, { merge: true });
+      } catch (e) {
+        console.error('Error saving global language:', e);
+      }
+      
       // Immediately set application language context
       dispatch({ type: 'SET_LANGUAGE', payload: defaultLanguage });
-      toast(lang ==='en' ?'Profile & settings updated!' :'تم تحديث البيانات والإعدادات بنجاح!','success');
+      toast(lang?.startsWith('en') ?'Profile & settings updated!' :'تم تحديث البيانات والإعدادات بنجاح!','success');
     } catch (error) {
       console.error('Error updating profile:', error);
       toast(lang === 'en' ? 'Error updating profile data' : 'حدث خطأ أثناء تحديث البيانات', 'error');
@@ -210,6 +217,8 @@ export default function SettingsPage() {
   // Dropdown Options
   const languageOptions = [
     { value: 'ar', label: 'العربية (Arabic)' },
+    { value: 'ar-EG', label: 'المصرية (Egyptian)' },
+    { value: 'ar-GCC', label: 'الخليجية (Khaleeji)' },
     { value: 'en', label: 'English (الإنجليزية)' }
   ];
 

@@ -81,7 +81,7 @@ export default function ToolDashboardLayout({
   };
 
   const lang = state.language || 'ar';
-  const isRtl = lang === 'ar';
+  const isRtl = lang?.startsWith('ar');
 
   const guide = TOOL_GUIDES[id];
   const guideData = guide ? guide[lang] || guide['ar'] : null;

@@ -110,15 +110,15 @@ export default function PaymentModal({
     setError('');
 
     if (!screenshot) {
-      setError(lang === 'ar' ? 'يرجى إرفاق صورة التحويل' : 'Please upload transfer screenshot');
+      setError(lang?.startsWith('ar') ? 'يرجى إرفاق صورة التحويل' : 'Please upload transfer screenshot');
       return;
     }
     if (!acceptedTerms) {
-      setError(lang === 'ar' ? 'يجب الموافقة على الشروط والأحكام وسياسة الخصوصية للمتابعة' : 'You must accept the Terms & Conditions and Privacy Policy to continue');
+      setError(lang?.startsWith('ar') ? 'يجب الموافقة على الشروط والأحكام وسياسة الخصوصية للمتابعة' : 'You must accept the Terms & Conditions and Privacy Policy to continue');
       return;
     }
     if (!phoneInput) {
-      setError(lang === 'ar' ? 'يرجى إدخال رقم الهاتف' : 'Please enter your phone number');
+      setError(lang?.startsWith('ar') ? 'يرجى إدخال رقم الهاتف' : 'Please enter your phone number');
       return;
     }
 
@@ -158,11 +158,11 @@ export default function PaymentModal({
 
   const handleStripeCheckout = async () => {
     if (!selectedPlanId) {
-      setError(lang === 'ar' ? 'يرجى اختيار الباقة أولاً' : 'Please select a plan first');
+      setError(lang?.startsWith('ar') ? 'يرجى اختيار الباقة أولاً' : 'Please select a plan first');
       return;
     }
     if (!acceptedTerms) {
-      setError(lang === 'ar' ? 'يجب الموافقة على الشروط والأحكام وسياسة الخصوصية للمتابعة' : 'You must accept the Terms & Conditions and Privacy Policy to continue');
+      setError(lang?.startsWith('ar') ? 'يجب الموافقة على الشروط والأحكام وسياسة الخصوصية للمتابعة' : 'You must accept the Terms & Conditions and Privacy Policy to continue');
       return;
     }
 
@@ -208,24 +208,24 @@ export default function PaymentModal({
 
   const handlePaddleCheckout = async () => {
     if (!selectedPlanId) {
-      setError(lang === 'ar' ? 'يرجى اختيار الباقة أولاً' : 'Please select a plan first');
+      setError(lang?.startsWith('ar') ? 'يرجى اختيار الباقة أولاً' : 'Please select a plan first');
       return;
     }
     if (!acceptedTerms) {
-      setError(lang === 'ar' ? 'يجب الموافقة على الشروط والأحكام وسياسة الخصوصية للمتابعة' : 'You must accept the Terms & Conditions and Privacy Policy to continue');
+      setError(lang?.startsWith('ar') ? 'يجب الموافقة على الشروط والأحكام وسياسة الخصوصية للمتابعة' : 'You must accept the Terms & Conditions and Privacy Policy to continue');
       return;
     }
 
     const selectedPlan = plans?.find(p => p.id === Number(selectedPlanId) || p.name === selectedPlanId);
     if (!selectedPlan?.paddlePriceId) {
-      setError(lang === 'ar' 
+      setError(lang?.startsWith('ar') 
         ? 'بوابة Paddle غير مهيأة لهذه الباقة. يرجى اختيار وسيلة دفع أخرى أو مراجعة المشرف.' 
         : 'Paddle is not configured for this plan. Please select another payment method or contact support.');
       return;
     }
 
     if (!window.Paddle) {
-      setError(lang === 'ar' ? 'فشل تحميل مكتبة دفع Paddle' : 'Failed to load Paddle SDK');
+      setError(lang?.startsWith('ar') ? 'فشل تحميل مكتبة دفع Paddle' : 'Failed to load Paddle SDK');
       return;
     }
 
@@ -263,7 +263,7 @@ export default function PaymentModal({
 
   return (
     <div className="payment-modal-overlay" style={overlayStyle}>
-      <div className="payment-modal-card" style={cardStyle} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <div className="payment-modal-card" style={cardStyle} dir={lang?.startsWith('ar') ? 'rtl' : 'ltr'}>
         <button onClick={onClose} style={closeBtnStyle}>✕</button>
         
         {checkingPending ? (
@@ -274,17 +274,17 @@ export default function PaymentModal({
               animation: 'spin 0.8s linear infinite', margin: '0 auto 16px'
             }} />
             <p style={{ color: 'var(--text2)', fontSize: '14px' }}>
-              {lang === 'ar' ? 'جاري التحقق...' : 'Checking...'}
+              {lang?.startsWith('ar') ? 'جاري التحقق...' : 'Checking...'}
             </p>
           </div>
         ) : hasPendingRequest && !success ? (
           <div style={{ textAlign: 'center', padding: '20px' }}>
             <div style={{ fontSize: '56px', marginBottom: '16px' }}>⏳</div>
             <h3 style={{ color: '#F59E0B', marginBottom: '12px', fontSize: '18px' }}>
-              {lang === 'ar' ? 'طلبك قيد المراجعة حالياً' : 'Your Request is Under Review'}
+              {lang?.startsWith('ar') ? 'طلبك قيد المراجعة حالياً' : 'Your Request is Under Review'}
             </h3>
             <p style={{ color: 'var(--text2)', fontSize: '14px', lineHeight: '1.7', marginBottom: '20px' }}>
-              {lang === 'ar'
+              {lang?.startsWith('ar')
                 ? 'لقد قمت بإرسال طلب اشتراك مسبقاً وهو الآن قيد المراجعة من قِبَل الفريق. سيتم تفعيل اشتراكك فور التحقق من التحويل.'
                 : 'You have already submitted a subscription request and it is currently under review by our team. Your subscription will be activated once the transfer is verified.'}
             </p>
@@ -297,36 +297,36 @@ export default function PaymentModal({
               fontSize: '13px',
               color: '#F59E0B'
             }}>
-              {lang === 'ar'
+              {lang?.startsWith('ar')
                 ? '✅ تم استلام طلبك. يُرجى الانتظار حتى يتم مراجعته والرد عليك.'
                 : '✅ Your request has been received. Please wait while it is reviewed.'}
             </div>
             <button onClick={onClose} className="btn btn-primary" style={{ width: '100%', padding: '12px' }}>
-              {lang === 'ar' ? 'حسناً، سأنتظر' : 'OK, I will wait'}
+              {lang?.startsWith('ar') ? 'حسناً، سأنتظر' : 'OK, I will wait'}
             </button>
           </div>
         ) : success ? (
           <div style={{ textAlign: 'center', padding: '20px' }}>
             <div style={{ fontSize: '48px', marginBottom: '10px' }}>✅</div>
             <h3 style={{ color: 'var(--green)', marginBottom: '10px' }}>
-              {lang === 'ar' ? 'تم إرسال طلبك بنجاح' : 'Request Submitted Successfully'}
+              {lang?.startsWith('ar') ? 'تم إرسال طلبك بنجاح' : 'Request Submitted Successfully'}
             </h3>
             <p style={{ color: 'var(--text2)' }}>
-              {lang === 'ar' 
+              {lang?.startsWith('ar') 
                 ? 'الطلب الآن قيد المراجعة، سيتم تفعيل اشتراكك بمجرد التأكد من التحويل.' 
                 : 'Your request is under review. Your subscription will be activated once the transfer is verified.'}
             </p>
             <button onClick={onClose} className="btn btn-primary" style={{ marginTop: '20px', width: '100%' }}>
-              {lang === 'ar' ? 'حسناً' : 'OK'}
+              {lang?.startsWith('ar') ? 'حسناً' : 'OK'}
             </button>
           </div>
         ) : (
           <>
             <h2 style={{ marginBottom: '16px', color: '#fff' }}>
-              {lang === 'ar' ? 'الدفع والاشتراك' : 'Pay and Subscribe'}
+              {lang?.startsWith('ar') ? 'الدفع والاشتراك' : 'Pay and Subscribe'}
             </h2>
             <p style={{ color: 'var(--text2)', fontSize: '14px', marginBottom: '24px' }}>
-              {lang === 'ar' 
+              {lang?.startsWith('ar') 
                 ? 'يرجى اختيار الباقة المناسبة، ثم الدفع عبر البطاقة البنكية أو التحويل لإحدى المحافظ.' 
                 : 'Please select a plan, then pay via Credit Card or transfer to one of the wallets.'}
             </p>
@@ -334,15 +334,15 @@ export default function PaymentModal({
             {plans && plans.length > 0 && (
               <div style={{ marginBottom: '24px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text2)', fontSize: '14px' }}>
-                  {lang === 'ar' ? 'اختر الباقة:' : 'Select Plan:'}
+                  {lang?.startsWith('ar') ? 'اختر الباقة:' : 'Select Plan:'}
                 </label>
                 <select 
                   value={selectedPlanId}
                   onChange={(e) => setSelectedPlanId(e.target.value)}
                   style={inputStyle}
-                  dir={lang === 'ar' ? 'rtl' : 'ltr'}
+                  dir={lang?.startsWith('ar') ? 'rtl' : 'ltr'}
                 >
-                  <option value="">{lang === 'ar' ? '-- اختر الباقة --' : '-- Select a Plan --'}</option>
+                  <option value="">{lang?.startsWith('ar') ? '-- اختر الباقة --' : '-- Select a Plan --'}</option>
                   {plans.map(p => (
                     <option key={p.id} value={p.id}>
                       {p.name_ar || p.name} - {p.price} {p.currency || 'EGP'}
@@ -354,7 +354,7 @@ export default function PaymentModal({
 
             <div style={{ background: 'var(--bg2)', padding: '16px', borderRadius: '12px', marginBottom: '24px' }}>
               <h4 style={{ marginBottom: '12px', color: '#fff' }}>
-                {lang === 'ar' ? 'المحافظ المتاحة:' : 'Available Wallets:'}
+                {lang?.startsWith('ar') ? 'المحافظ المتاحة:' : 'Available Wallets:'}
               </h4>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: 'var(--text)' }}>
                 {paymentMethods?.vodafone && (
@@ -383,7 +383,7 @@ export default function PaymentModal({
                 )}
                 {!paymentMethods?.vodafone && !paymentMethods?.etisalat && !paymentMethods?.orange && !paymentMethods?.instapay && (
                   <li style={{ color: 'var(--text3)' }}>
-                    {lang === 'ar' ? 'لا توجد محافظ متاحة حالياً' : 'No wallets available currently'}
+                    {lang?.startsWith('ar') ? 'لا توجد محافظ متاحة حالياً' : 'No wallets available currently'}
                   </li>
                 )}
               </ul>
@@ -413,22 +413,22 @@ export default function PaymentModal({
                     {acceptedTerms && <Check size={14} color="#fff" />}
                   </div>
                   <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: '1.5' }}>
-                    {lang === 'ar' ? 'أوافق على ' : 'I agree to the '}
+                    {lang?.startsWith('ar') ? 'أوافق على ' : 'I agree to the '}
                     <span 
                       onClick={() => setShowTermsModal(true)}
                       style={{ color: 'var(--accent, #3B82F6)', cursor: 'pointer', textDecoration: 'underline' }}
                     >
-                      {lang === 'ar' ? 'الشروط والأحكام وسياسة الخصوصية' : 'Terms & Conditions and Privacy Policy'}
+                      {lang?.startsWith('ar') ? 'الشروط والأحكام وسياسة الخصوصية' : 'Terms & Conditions and Privacy Policy'}
                     </span>
                   </span>
                 </div>
 
                 <p style={{ fontSize: '11px', color: 'var(--text3)', marginBottom: '12px', marginTop: '-8px' }}>
-                  {lang === 'ar' ? 'بإتمام عملية الشراء، فإنك توافق على الشروط والأحكام وسياسة الاسترجاع.' : 'By completing the purchase, you agree to the Terms and Conditions and Refund Policy.'}
+                  {lang?.startsWith('ar') ? 'بإتمام عملية الشراء، فإنك توافق على الشروط والأحكام وسياسة الاسترجاع.' : 'By completing the purchase, you agree to the Terms and Conditions and Refund Policy.'}
                 </p>
 
                 <h4 style={{ marginBottom: '12px', color: '#fff' }}>
-                  {lang === 'ar' ? 'أو الدفع الإلكتروني السريع:' : 'Or Fast Electronic Payment:'}
+                  {lang?.startsWith('ar') ? 'أو الدفع الإلكتروني السريع:' : 'Or Fast Electronic Payment:'}
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center', justifyContent: 'center' }}>
                   {paymentMethods?.stripeKeys?.publishableKey && (
@@ -449,7 +449,7 @@ export default function PaymentModal({
                         opacity: isStripeLoading ? 0.7 : 1
                       }}
                     >
-                      {isStripeLoading ? '⏳ ...' : '💳 ' + (lang === 'ar' ? 'الدفع الآمن عبر Stripe' : 'Secure Payment via Stripe')}
+                      {isStripeLoading ? '⏳ ...' : '💳 ' + (lang?.startsWith('ar') ? 'الدفع الآمن عبر Stripe' : 'Secure Payment via Stripe')}
                     </button>
                   )}
                   {paymentMethods?.paddleKeys?.enabled && paymentMethods?.paddleKeys?.clientKey && (
@@ -470,7 +470,7 @@ export default function PaymentModal({
                         opacity: isPaddleLoading ? 0.7 : 1
                       }}
                     >
-                      {isPaddleLoading ? '⏳ ...' : '💳 ' + (lang === 'ar' ? 'الدفع الآمن عبر Paddle' : 'Secure Payment via Paddle')}
+                      {isPaddleLoading ? '⏳ ...' : '💳 ' + (lang?.startsWith('ar') ? 'الدفع الآمن عبر Paddle' : 'Secure Payment via Paddle')}
                     </button>
                   )}
                 </div>
@@ -480,7 +480,7 @@ export default function PaymentModal({
             <form onSubmit={handleSubmit}>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text2)', fontSize: '14px' }}>
-                  {lang === 'ar' ? 'رقم الهاتف (الذي تم التحويل منه):' : 'Phone Number (transferred from):'}
+                  {lang?.startsWith('ar') ? 'رقم الهاتف (الذي تم التحويل منه):' : 'Phone Number (transferred from):'}
                 </label>
                 <input 
                   type="text" 
@@ -494,7 +494,7 @@ export default function PaymentModal({
 
               <div style={{ marginBottom: '24px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text2)', fontSize: '14px' }}>
-                  {lang === 'ar' ? 'إرفاق صورة التحويل:' : 'Attach Transfer Screenshot:'}
+                  {lang?.startsWith('ar') ? 'إرفاق صورة التحويل:' : 'Attach Transfer Screenshot:'}
                 </label>
                 <input 
                   type="file" 
@@ -525,12 +525,12 @@ export default function PaymentModal({
                   {acceptedTerms && <Check size={14} color="#fff" />}
                 </div>
                 <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: '1.5' }}>
-                  {lang === 'ar' ? 'أوافق على ' : 'I agree to the '}
+                  {lang?.startsWith('ar') ? 'أوافق على ' : 'I agree to the '}
                   <span 
                     onClick={() => setShowTermsModal(true)}
                     style={{ color: 'var(--accent, #3B82F6)', cursor: 'pointer', textDecoration: 'underline' }}
                   >
-                    {lang === 'ar' ? 'الشروط والأحكام وسياسة الخصوصية' : 'Terms & Conditions and Privacy Policy'}
+                    {lang?.startsWith('ar') ? 'الشروط والأحكام وسياسة الخصوصية' : 'Terms & Conditions and Privacy Policy'}
                   </span>
                 </span>
               </div>
@@ -543,7 +543,7 @@ export default function PaymentModal({
                 style={{ width: '100%', padding: '12px' }}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? (lang === 'ar' ? 'جاري الإرسال...' : 'Submitting...') : (lang === 'ar' ? 'تأكيد الدفع' : 'Confirm Payment')}
+                {isSubmitting ? (lang?.startsWith('ar') ? 'جاري الإرسال...' : 'Submitting...') : (lang?.startsWith('ar') ? 'تأكيد الدفع' : 'Confirm Payment')}
               </button>
             </form>
           </>
@@ -599,7 +599,7 @@ export default function PaymentModal({
               }}>
                 <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: 'var(--text, #fff)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <ShieldCheck size={20} color="var(--accent, #3B82F6)" />
-                  {lang === 'ar' ? 'الشروط والأحكام وسياسة الخصوصية' : 'Terms & Conditions'}
+                  {lang?.startsWith('ar') ? 'الشروط والأحكام وسياسة الخصوصية' : 'Terms & Conditions'}
                 </h3>
                 <button
                   onClick={() => setShowTermsModal(false)}
@@ -629,7 +629,7 @@ export default function PaymentModal({
                 maxHeight: '75vh',
                 overflowY: 'auto'
               }}>
-                <TermsContent isRtl={lang === 'ar'} />
+                <TermsContent isRtl={lang?.startsWith('ar')} />
               </div>
               
               {/* Modal Footer */}
@@ -660,7 +660,7 @@ export default function PaymentModal({
                   }}
                 >
                   <Check size={16} />
-                  {lang === 'ar' ? 'موافق' : 'I Agree'}
+                  {lang?.startsWith('ar') ? 'موافق' : 'I Agree'}
                 </button>
               </div>
             </motion.div>

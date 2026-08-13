@@ -32,7 +32,7 @@ const faqs = [
 
 export default function MadgicxTemplate({ brandData, plans, goAuth }) {
   const { state, dispatch } = useApp();
-  const isArabic = state.language === 'ar';
+  const isArabic = state.language?.startsWith('ar');
   const toggleLanguage = () => {
     dispatch({ type: 'SET_LANGUAGE', payload: isArabic ? 'en' : 'ar' });
   };

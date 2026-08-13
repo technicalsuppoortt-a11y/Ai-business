@@ -174,7 +174,7 @@ export default function BrandNaming({ stepNumber }) {
       <div 
         key={item.name} 
         className="td-result-card"
-        style={{ borderLeftColor: lang === 'en' ? badgeColor : 'transparent', borderRightColor: lang === 'ar' ? badgeColor : 'transparent', background: 'rgba(13, 18, 32, 0.8)' }}
+        style={{ borderLeftColor: lang === 'en' ? badgeColor : 'transparent', borderRightColor: lang?.startsWith('ar') ? badgeColor : 'transparent', background: 'rgba(13, 18, 32, 0.8)' }}
         onClick={() => handleNameChange(item.name)}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>

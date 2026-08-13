@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../../context/AppContext';
+import { useToast } from '../../../context/ToastContext';
 import { getChatbotScriptTemplate } from '../../../services/contentDbService';
 import { parseTemplate } from '../../../utils/templateParser';
 import ToolDashboardLayout from './ToolDashboardLayout';
@@ -8,6 +9,8 @@ export default function ChatbotSetup({ stepNumber }) {
   const toast = useToast();
   const { state } = useApp();
   const lang = state.language || 'ar';
+  const baseLang = lang?.startsWith('en') ? 'en' : 'ar';
+  const isRtl = lang?.startsWith('ar');
   
   // Inputs
   const [tone, setTone] = useState('friendly'); // friendly, professional, humorous
@@ -33,8 +36,8 @@ export default function ChatbotSetup({ stepNumber }) {
       const offer = mainOffer || (lang === 'en' ? 'our services' : 'خدماتنا');
 
       const templateData = await getChatbotScriptTemplate(tone);
-      if (templateData && templateData[lang]) {
-        const text = parseTemplate(templateData[lang], { brandName, offer });
+      if (templateData && templateData[baseLang]) {
+        const text = parseTemplate(templateData[baseLang], { brandName, offer });
         setResult(text);
       } else {
         setResult(lang === 'en' ? 'Template not found.' : 'لم يتم العثور على القالب.');

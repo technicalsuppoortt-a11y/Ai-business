@@ -69,7 +69,7 @@ export default function SubscriptionPlansPage() {
   const { userData, brandData } = useAuth();
   const { state } = useApp();
   const toast = useToast();
-  const isRtl = state?.language === "ar";
+  const isRtl = state?.language?.startsWith('ar');
   const t = (ar, en) => (isRtl ? ar : en);
 
   const [selectedPlan, setSelectedPlan] = useState(null);

@@ -40,7 +40,7 @@ export default function ContentFactory({ stepNumber }) {
   const { userData } = useAuth();
   const toast = useToast();
   const lang = state.language || 'ar';
-  const isRtl = lang === 'ar';
+  const isRtl = lang?.startsWith('ar');
   
   const savedState = state.toolResults['content-factory'] || {};
 

@@ -87,7 +87,8 @@ export default function ProfitCalculator({ stepNumber }) {
   const { userData } = useAuth();
   const toast = useToast();
   const lang = state.language || "ar";
-  const isRtl = lang === "ar";
+  const baseLang = lang?.startsWith("en") ? "en" : "ar";
+  const isRtl = lang?.startsWith('ar');
   const currencySymbol =
     (CURRENCY_SYMBOLS[lang] && CURRENCY_SYMBOLS[lang][state.currency]) ||
     CURRENCY_SYMBOLS["ar"][state.currency] ||
@@ -283,8 +284,8 @@ export default function ProfitCalculator({ stepNumber }) {
         }
 
         const templateData = await getProfitScenarioTemplate(scenarioId);
-        if (templateData && templateData[lang]) {
-          const text = parseTemplate(templateData[lang], {
+        if (templateData && templateData[baseLang]) {
+          const text = parseTemplate(templateData[baseLang], {
             margin: profitMargin.toFixed(1),
             roas: roas.toFixed(2),
             cvr: cvr.toFixed(1),

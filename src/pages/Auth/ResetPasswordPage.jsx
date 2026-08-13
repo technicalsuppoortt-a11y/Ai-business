@@ -26,7 +26,7 @@ export default function ResetPasswordPage({ portal = 'user' }) {
   const location = useLocation();
 
   const lang = state.language || 'ar';
-  const isRtl = lang === 'ar';
+  const isRtl = lang?.startsWith('ar');
 
   const [oobCode, setOobCode] = useState('');
   const [email, setEmail] = useState('');

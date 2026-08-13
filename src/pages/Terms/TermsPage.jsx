@@ -8,7 +8,7 @@ export default function TermsPage() {
   const navigate = useNavigate();
   const { state } = useApp();
   const lang = state.language || 'ar';
-  const isRtl = lang === 'ar';
+  const isRtl = lang?.startsWith('ar');
 
   useEffect(() => {
     window.scrollTo(0, 0);

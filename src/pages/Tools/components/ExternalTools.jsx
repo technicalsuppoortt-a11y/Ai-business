@@ -501,6 +501,8 @@ export default function ExternalTools() {
   const { state } = useApp();
   const { userData } = useAuth();
   const lang = state.language || "ar";
+  const baseLang = lang?.startsWith("en") ? "en" : "ar";
+  const isRtl = lang?.startsWith("ar");
 
   const [selectedTool, setSelectedTool] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -684,7 +686,7 @@ export default function ExternalTools() {
                   onClick={() => setSelectedCategory(catKey)}
                   className={`et-cat-tab ${isActive ? "active" : ""}`}
                 >
-                  {meta[lang]}
+                  {meta[baseLang]}
                 </button>
               );
             })}
@@ -721,7 +723,7 @@ export default function ExternalTools() {
               >
                 <div className="et-card-top-bar">
                   <span className="et-cat-badge">
-                    {CATEGORIES_META[tool.category]?.[lang] || tool.category}
+                    {CATEGORIES_META[tool.category]?.[baseLang] || tool.category}
                   </span>
                   {/* {tool.id === "upklick" && (
                     <span className="et-featured-badge">
@@ -843,7 +845,7 @@ export default function ExternalTools() {
                 <div className="et-popup-title-group">
                   <div className="et-popup-meta-row">
                     <span className="et-cat-badge">
-                      {CATEGORIES_META[selectedTool.category]?.[lang]}
+                      {CATEGORIES_META[selectedTool.category]?.[baseLang]}
                     </span>
                     {selectedTool.id === "upklick" && (
                       <span className="et-featured-badge">

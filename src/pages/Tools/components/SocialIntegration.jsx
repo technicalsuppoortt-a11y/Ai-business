@@ -32,7 +32,7 @@ export default function SocialIntegration({ stepNumber }) {
   const toast = useToast();
   const navigate = useNavigate();
   const lang = state.language || 'ar';
-  const isRtl = lang === 'ar';
+  const isRtl = lang?.startsWith('ar');
 
   const [activePlatform, setActivePlatform] = useState('meta');
   const [inspectorOpen, setInspectorOpen] = useState(false);

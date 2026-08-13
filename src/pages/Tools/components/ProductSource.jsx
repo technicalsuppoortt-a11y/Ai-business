@@ -141,7 +141,7 @@ export default function ProductSource({ stepNumber }) {
   const { userData } = useAuth();
   const toast = useToast();
   const lang = state.language || 'ar';
-  const isRtl = lang === 'ar';
+  const isRtl = lang?.startsWith('ar');
 
   const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
   const [structure, setStructure] = useState(null);
@@ -232,7 +232,7 @@ export default function ProductSource({ stepNumber }) {
     setExpandedToolIndex(0);
 
     try {
-      const isArabic = lang === 'ar';
+      const isArabic = lang?.startsWith('ar');
       const systemPrompt = `You are an expert AI Digital Product Architect.
 Return a JSON object containing an array "tools" with 3 specific tailored creation tools, their roles, descriptions, step-by-step instructions, and export formats to build the user's digital product.
 

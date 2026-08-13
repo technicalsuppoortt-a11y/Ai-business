@@ -30,7 +30,7 @@ export default function BrandLibrary({ isMobile }) {
   const { state } = useApp();
   const { userData } = useAuth();
   const lang = state.language || 'ar';
-  const isRtl = lang === 'ar';
+  const isRtl = lang?.startsWith('ar');
 
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);

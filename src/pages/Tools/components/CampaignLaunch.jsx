@@ -41,7 +41,7 @@ export default function CampaignLaunch({ stepNumber }) {
   const { userData } = useAuth();
   const toast = useToast();
   const lang = state.language || 'ar';
-  const isRtl = lang === 'ar';
+  const isRtl = lang?.startsWith('ar');
   
   // Inputs & Hooks
   const [url, setUrl] = useState(state.websiteUrl || '');

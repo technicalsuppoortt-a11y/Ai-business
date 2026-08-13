@@ -6,7 +6,7 @@ import { useApp } from '../../context/AppContext';
 export default function MarketingTrackingPage() {
   const { userData } = useAuth();
   const { state } = useApp();
-  const isRtl = state.language === 'ar';
+  const isRtl = state.language?.startsWith('ar');
   
   return (
     <div style={{ padding: '24px' }}>

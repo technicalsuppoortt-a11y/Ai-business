@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 export default function DashboardLayout() {
   const { state } = useApp();
   const lang = state.language || 'ar';
-  const isRtl = lang === 'ar';
+  const isRtl = lang?.startsWith('ar');
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

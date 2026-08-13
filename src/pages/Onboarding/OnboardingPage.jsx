@@ -92,7 +92,7 @@ export default function OnboardingPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const lang = state.language || 'ar';
-  const isRtl = lang === 'ar';
+  const isRtl = lang?.startsWith('ar');
 
   const [adminPhone, setAdminPhone] = useState('');
   const [adminBrandName, setAdminBrandName] = useState('');
@@ -278,15 +278,15 @@ export default function OnboardingPage() {
               <div className="trial-badge-row">
                 <div className="trial-active-tag">
                   <Gift size={13} />
-                  <span>{lang === 'ar' ? 'فترة تجريبية نشطة' : 'Active Free Trial'}</span>
+                  <span>{lang?.startsWith('ar') ? 'فترة تجريبية نشطة' : 'Active Free Trial'}</span>
                 </div>
                 <div className="trial-days-tag">
                   <Clock size={13} color="#F59E0B" />
-                  <span>({getDaysRemaining()} {lang === 'ar' ? 'أيام متبقية' : 'days remaining'})</span>
+                  <span>({getDaysRemaining()} {lang?.startsWith('ar') ? 'أيام متبقية' : 'days remaining'})</span>
                 </div>
               </div>
               <p className="trial-card-text">
-                {lang === 'ar' 
+                {lang?.startsWith('ar') 
                   ? `أنت الآن تستخدم الفترة المجانية (ينتهي اشتراكك التجريبي خلال ${getDaysRemaining()} يوم بتاريخ ${expiry ? expiry.toLocaleDateString('ar-EG') : '—'}). لتفعيل الاشتراك الكامل، يمكنك الدفع المباشر أو التواصل معنا عبر الواتساب!`
                   : `You are currently using the Free Trial (your trial expires in ${getDaysRemaining()} day(s) on ${expiry ? expiry.toLocaleDateString('en-US') : '—'}). To activate full access, pay directly or contact us via WhatsApp!`}
               </p>
@@ -296,7 +296,7 @@ export default function OnboardingPage() {
               {adminPhone && (
                 <a 
                   href={`https://wa.me/${adminPhone.replace(/\+/g, '').trim()}?text=${encodeURIComponent(
-                    lang === 'ar' 
+                    lang?.startsWith('ar') 
                       ? `مرحباً، أريد تفعيل اشتراكي بالكامل في منصة ${adminBrandName}`
                       : `Hello, I want to activate my full subscription in ${adminBrandName} platform`
                   )}`}
@@ -306,7 +306,7 @@ export default function OnboardingPage() {
                   style={{ textDecoration: 'none', padding: '12px 20px', borderRadius: 12 }}
                 >
                   <MessageSquare size={16} />
-                  <span>{lang === 'ar' ? 'عبر الواتساب' : 'Via WhatsApp'}</span>
+                  <span>{lang?.startsWith('ar') ? 'عبر الواتساب' : 'Via WhatsApp'}</span>
                 </a>
               )}
 
@@ -316,7 +316,7 @@ export default function OnboardingPage() {
                 style={{ padding: '12px 20px', borderRadius: 12 }}
               >
                 <CreditCard size={16} />
-                <span>{lang === 'ar' ? 'الدفع المباشر' : 'Pay Directly'}</span>
+                <span>{lang?.startsWith('ar') ? 'الدفع المباشر' : 'Pay Directly'}</span>
               </button>
             </div>
           </motion.div>

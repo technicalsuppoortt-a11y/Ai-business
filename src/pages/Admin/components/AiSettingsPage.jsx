@@ -96,7 +96,7 @@ const AiSettingsPage = () => {
   const { state } = useApp();
   const { currentUser } = useAuth();
   const toast = useToast();
-  const isRTL = state.language === 'ar';
+  const isRTL = state.language?.startsWith('ar');
 
   const [activeSubTab, setActiveSubTab] = useState('config'); // 'config' | 'logs' | 'analytics'
   const [activeCategoryTab, setActiveCategoryTab] = useState('');

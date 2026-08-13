@@ -330,3 +330,8 @@ export const landingTranslations = {
     }
   }
 };
+
+landingTranslations['ar-EG'] = landingTranslations.ar;
+landingTranslations['ar-GCC'] = landingTranslations.ar;
+landingTranslations['ar-KW'] = landingTranslations.ar;
+

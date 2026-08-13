@@ -193,7 +193,7 @@ export default function LegalPages({ stepNumber }) {
   const toast = useToast();
 
   const lang = state.language || 'ar';
-  const isRtl = lang === 'ar';
+  const isRtl = lang?.startsWith('ar');
 
   // Configurator Drawer Overlay State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);

@@ -401,7 +401,7 @@ function TargetMarketDropdown({ value, onChange, options, lang, isLoading }) {
               </span>
             )}
           </div>
-          <div style={{ textAlign: lang === 'ar' ? 'right' : 'left' }}>
+          <div style={{ textAlign: lang?.startsWith('ar') ? 'right' : 'left' }}>
             <div className="ns-heading-title" style={{ fontSize: '13px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span>{lang === 'en' ? selectedOption.name_en : selectedOption.name_ar}</span>
               {isLoading && (
@@ -669,7 +669,7 @@ function TopLeadersTab({ data, loading, error, onRetry, lang }) {
     <div style={{ overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
         <thead>
-          <tr className="ns-table-head-row" style={{ textAlign: lang === 'ar' ? 'right' : 'left' }}>
+          <tr className="ns-table-head-row" style={{ textAlign: lang?.startsWith('ar') ? 'right' : 'left' }}>
             <th style={{ padding: '10px', width: '32px' }}>#</th>
             <th style={{ padding: '10px' }}>{lang === 'en' ? 'Company / Brand' : 'ط§ظ„ط´ط±ظƒط© / ط§ظ„ط¹ظ„ط§ظ…ط© ط§ظ„طھط¬ط§ط±ظٹط©'}</th>
             <th style={{ padding: '10px' }}>{lang === 'en' ? 'Core Differentiator & Strategy' : 'ط§ط³طھط±ط§طھظٹط¬ظٹط© ط§ظ„طھظ…ظٹط²'}</th>
@@ -1509,7 +1509,7 @@ export default function NicheSelection({ stepNumber }) {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
                     {/* Search Input Filter */}
                     <div style={{ position: 'relative', flex: '1 1 200px', minWidth: '180px' }}>
-                      <Search size={13} color={themeColor} style={{ position: 'absolute', top: '9px', [lang === 'ar' ? 'right' : 'left']: '10px' }} />
+                      <Search size={13} color={themeColor} style={{ position: 'absolute', top: '9px', [lang?.startsWith('ar') ? 'right' : 'left']: '10px' }} />
                       <input
                         type="text"
                         value={microSearchQuery}
@@ -1520,7 +1520,7 @@ export default function NicheSelection({ stepNumber }) {
                           background: 'rgba(0, 0, 0, 0.3)',
                           border: `1px solid ${themeColor}40`,
                           borderRadius: '8px',
-                          padding: lang === 'ar' ? '6px 28px 6px 28px' : '6px 28px 6px 28px',
+                          padding: lang?.startsWith('ar') ? '6px 28px 6px 28px' : '6px 28px 6px 28px',
                           color: '#fff',
                           fontSize: '11px',
                           outline: 'none',
@@ -1530,7 +1530,7 @@ export default function NicheSelection({ stepNumber }) {
                         <button
                           type="button"
                           onClick={() => setMicroSearchQuery('')}
-                          style={{ position: 'absolute', top: '7px', [lang === 'ar' ? 'left' : 'right']: '8px', background: 'transparent', border: 'none', color: '#94A3B8', cursor: 'pointer' }}
+                          style={{ position: 'absolute', top: '7px', [lang?.startsWith('ar') ? 'left' : 'right']: '8px', background: 'transparent', border: 'none', color: '#94A3B8', cursor: 'pointer' }}
                         >
                           <X size={12} />
                         </button>
@@ -1610,7 +1610,7 @@ export default function NicheSelection({ stepNumber }) {
                     >
                       <Sparkles size={14} />
                       <span>{lang === 'en' ? 'Analyze Custom Idea' : 'طھط­ظ„ظٹظ„ ط§ظ„ظپظƒط±ط© ط§ظ„ظ…ط®طµطµط©'}</span>
-                      {lang === 'ar' ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
+                      {lang?.startsWith('ar') ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
                     </button>
                   </div>
                 </div>

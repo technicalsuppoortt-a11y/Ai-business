@@ -151,7 +151,7 @@ export default function SmartAIAssistant({ stepNumber }) {
   const toast = toastContext?.toast || ((msg) => console.log(msg));
 
   const lang = state.language || 'ar';
-  const isRtl = lang === 'ar';
+  const isRtl = lang?.startsWith('ar');
   const [analysisMode, setAnalysisMode] = useState('fast'); // 'fast' | 'live'
 
   // Selection states
@@ -756,7 +756,7 @@ const handleResetSession = () => {
                     transition={{ duration: 0.25 }}
                   >
                     <Sparkles size={14} className="sparkle-revolve" />
-                    <span>{REVOLVING_STATUS_BADGES[lang][loadingStatusIndex]}</span>
+                    <span>{REVOLVING_STATUS_BADGES[lang?.startsWith('en') ? 'en' : 'ar'][loadingStatusIndex]}</span>
                   </motion.div>
                 </AnimatePresence>
 

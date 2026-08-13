@@ -16,7 +16,7 @@ export default function AnalysisModeSelector({
   accentColor = "#10B981",
   style = {},
 }) {
-  const isArabic = lang === "ar";
+  const isArabic = lang?.startsWith('ar');
   const activeEmail = getCurrentUserEmail();
   const isAllowedUser = activeEmail.toLowerCase() === 'admin@brand.com';
   const hasKey = true; // Always allow attempting Live AI; backend handles credit verification

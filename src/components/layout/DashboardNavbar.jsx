@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '../../firebase';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
@@ -21,7 +23,9 @@ import {
   Settings, 
   Sparkles,
   ChevronDown,
-  Lock
+  Lock,
+  Headphones,
+  Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './DashboardNavbar.css';
@@ -39,7 +43,7 @@ export default function DashboardNavbar({
   const { brandName: globalBrandName } = useSystemBranding();
 
   const lang = state.language || 'ar';
-  const isRtl = lang === 'ar';
+  const isRtl = lang?.startsWith('ar');
 
   const [theme, setTheme] = useState(() => {
     return document.documentElement.classList.contains('light-mode') ? 'light' : 'dark';
@@ -48,6 +52,39 @@ export default function DashboardNavbar({
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [currencyDropdownOpen, setCurrencyDropdownOpen] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+
+  useEffect(() => {
+    // Check if app is installed / running in standalone mode
+    const checkStandalone = () => {
+      const isDisplayStandalone = window.matchMedia('(display-mode: standalone)').matches;
+      const isNavigatorStandalone = window.navigator.standalone === true;
+      setIsStandalone(isDisplayStandalone || isNavigatorStandalone);
+    };
+    checkStandalone();
+    window.matchMedia('(display-mode: standalone)').addEventListener('change', checkStandalone);
+    return () => window.matchMedia('(display-mode: standalone)').removeEventListener('change', checkStandalone);
+  }, []);
+
+  const getLanguageLabel = (l) => {
+    switch (l) {
+      case 'en': return 'English 🇬🇧';
+      case 'ar': return 'العربية 🇸🇦';
+      case 'ar-EG': return 'المصرية 🇪🇬';
+      case 'ar-GCC': return 'الخليجية 🇦🇪/🇸🇦';
+      default: return 'English 🇬🇧';
+    }
+  };
+
+  const handleLanguageChange = async (newLang) => {
+    dispatch({ type: 'SET_LANGUAGE', payload: newLang });
+    setLangDropdownOpen(false);
+    try {
+      await setDoc(doc(db, 'tenants', 'global'), { systemLanguage: newLang }, { merge: true });
+    } catch (e) {
+      console.error('Failed to sync global language', e);
+    }
+  };
 
   const toggleTheme = () => {
     const nextTheme = theme === 'light' ? 'dark' : 'light';
@@ -232,7 +269,17 @@ export default function DashboardNavbar({
           </span>
         </div>
 
-{/* Smart Notebook Quick Access */}
+        {/* Support Quick Access */}
+        <button
+          className="db-nav-chip-btn notebook-btn desktop-only"
+          onClick={() => navigate('/dashboard/support')}
+          title={lang === 'en' ? 'Support' : 'الدعم'}
+        >
+          <Headphones size={14} />
+          <span className="btn-label">{lang === 'en' ? 'Support' : 'الدعم'}</span>
+        </button>
+
+        {/* Smart Notebook Quick Access */}
         <button
           className={`db-nav-chip-btn notebook-btn ${isNotebookLocked ? 'locked' : ''}`}
           onClick={() => {
@@ -309,7 +356,7 @@ export default function DashboardNavbar({
             title={lang === 'en' ? 'Switch Language' : 'تغيير اللغة'}
           >
             <Globe size={14} />
-            <span className="btn-label">{lang === 'ar' ? 'العربية' : 'English'}</span>
+            <span className="btn-label">{getLanguageLabel(lang)}</span>
             <ChevronDown size={12} className={`chevron ${langDropdownOpen ? 'open' : ''}`} />
           </button>
 
@@ -323,29 +370,61 @@ export default function DashboardNavbar({
                 transition={{ duration: 0.15 }}
               >
                 <button
+                  className={`dropdown-item ${lang === 'en' ? 'active' : ''}`}
+                  onClick={() => handleLanguageChange('en')}
+                >
+                  <span>🇬🇧</span>
+                  <span>English (LTR)</span>
+                </button>
+                <button
                   className={`dropdown-item ${lang === 'ar' ? 'active' : ''}`}
-                  onClick={() => {
-                    dispatch({ type: 'SET_LANGUAGE', payload: 'ar' });
-                    setLangDropdownOpen(false);
-                  }}
+                  onClick={() => handleLanguageChange('ar')}
                 >
                   <span>🇸🇦</span>
                   <span>العربية (RTL)</span>
                 </button>
                 <button
-                  className={`dropdown-item ${lang === 'en' ? 'active' : ''}`}
-                  onClick={() => {
-                    dispatch({ type: 'SET_LANGUAGE', payload: 'en' });
-                    setLangDropdownOpen(false);
-                  }}
+                  className={`dropdown-item ${lang === 'ar-EG' ? 'active' : ''}`}
+                  onClick={() => handleLanguageChange('ar-EG')}
                 >
-                  <span>🇺🇸</span>
-                  <span>English (LTR)</span>
+                  <span>🇪🇬</span>
+                  <span>المصرية (RTL)</span>
+                </button>
+                <button
+                  className={`dropdown-item ${lang === 'ar-GCC' ? 'active' : ''}`}
+                  onClick={() => handleLanguageChange('ar-GCC')}
+                >
+                  <span>🇦🇪</span>
+                  <span>الخليجية (RTL)</span>
                 </button>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
+
+        {/* Get App PWA Button */}
+        {!isStandalone && (
+          <button
+            onClick={() => dispatch({ type: 'SET_PWA_MODAL', payload: true })}
+            className="db-nav-icon-btn get-app-btn"
+            style={{
+              background: "linear-gradient(135deg, rgba(59,130,246,0.15), rgba(16,185,129,0.15))",
+              color: "var(--accent, #3B82F6)",
+              border: "1px solid rgba(59,130,246,0.2)",
+              padding: "0 12px",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              fontWeight: "600",
+              fontSize: "13px",
+              borderRadius: "10px"
+            }}
+            title={lang === 'en' ? 'Install App' : 'تثبيت التطبيق'}
+          >
+            <Download size={16} />
+            <span className="desktop-only">{lang === 'en' ? 'Get App' : 'تثبيت التطبيق'}</span>
+          </button>
+        )}
 
         {/* Dark / Light Theme Mode Toggle */}
         <button 

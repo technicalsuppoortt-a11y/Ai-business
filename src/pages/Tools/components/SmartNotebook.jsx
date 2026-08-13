@@ -197,7 +197,7 @@ export default function SmartNotebook() {
   const { state } = useApp();
   const { userData } = useAuth();
   const lang = state.language || 'ar';
-  const isRtl = lang === 'ar';
+  const isRtl = lang?.startsWith('ar');
   
   // Data State
   const [items, setItems] = useState(cached?.items ?? []);

@@ -38,6 +38,13 @@ const receiptsApp = !getApps().some(a => a.name === "receiptsApp")
 
 export const receiptsStorage = getStorage(receiptsApp);
 
+// Media Storage Instance (Images, Voice, Files)
+const storageApp = getApps().find(app => app.name === "StorageApp") 
+  || initializeApp(receiptsFirebaseConfig, "StorageApp");
+
+export const mediaStorage = getStorage(storageApp);
+
+
 // Independent Auth instances
 export const auth = getAuth(app);
 export const adminAuth = getAuth(adminApp);

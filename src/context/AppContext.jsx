@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from './AuthContext';
 
@@ -38,6 +38,8 @@ const initialState = {
   isLoadedFromCloud: false,
   toolResults: {},
   credits: 20,
+  pwaPrompt: null,
+  pwaModalOpen: false,
 };
 
 /* =============================================
@@ -81,6 +83,10 @@ function appReducer(state, action) {
       return { ...state, credits: action.payload };
     case 'DEDUCT_CREDIT':
       return { ...state, credits: Math.max(0, state.credits - 1) };
+    case 'SET_PWA_PROMPT':
+      return { ...state, pwaPrompt: action.payload };
+    case 'SET_PWA_MODAL':
+      return { ...state, pwaModalOpen: action.payload };
     default:
       return state;
   }
@@ -164,6 +170,19 @@ export function AppProvider({ children }) {
 
     loadFromFirestore();
   }, [userData?.uid, loadingUser]);
+
+  // ═══════════════ GLOBAL SYSTEM LANGUAGE SYNC ═══════════════
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'tenants', 'global'), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.systemLanguage) {
+          dispatch({ type: 'SET_LANGUAGE', payload: data.systemLanguage });
+        }
+      }
+    });
+    return () => unsub();
+  }, []);
 
   // Save to Firestore on every state change
   useEffect(() => {

@@ -135,7 +135,7 @@ export default function LandingPageContent({ stepNumber }) {
       : toastContext?.toast || ((msg) => console.log(msg));
 
   const lang = state.language || "ar";
-  const isRtl = lang === "ar";
+  const isRtl = lang?.startsWith('ar');
 
   const [analysisMode, setAnalysisMode] = useState("fast"); // 'fast' | 'live'
   const [activeSectionIndex, setActiveSectionIndex] = useState(0); // 0: config, 1: hero, 2: problem, 3: offer, 4: proof, 5: cta

@@ -312,7 +312,7 @@ export default function SocialMedia({ stepNumber }) {
   const { toolId } = useParams();
 
   const lang = state.language || "ar";
-  const isRtl = lang === "ar";
+  const isRtl = lang?.startsWith('ar');
 
   // ═══════════════ MAIN TAB STATE ('architect' | 'factory') ═══════════════
   const [activeTab, setActiveTab] = useState("architect");

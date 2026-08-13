@@ -37,7 +37,7 @@ export default function SocialPresence({ stepNumber }) {
   const { userData } = useAuth();
   const toast = useToast();
   const lang = state.language || 'ar';
-  const isRtl = lang === 'ar';
+  const isRtl = lang?.startsWith('ar');
   const [analysisMode, setAnalysisMode] = useState(savedState.mode || 'fast'); // 'fast' | 'live'
   
   // Inputs

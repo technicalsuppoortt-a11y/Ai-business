@@ -82,7 +82,7 @@ export default function ProfilePage() {
   const navigate = useNavigate();
 
   const lang = state.language || 'ar';
-  const isRtl = lang === 'ar';
+  const isRtl = lang?.startsWith('ar');
 
   const [uploading, setUploading] = useState(false);
   const [filterMode, setFilterMode] = useState('all'); // 'all' | 'completed' | 'pending'

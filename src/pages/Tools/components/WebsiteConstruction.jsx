@@ -221,7 +221,7 @@ export default function WebsiteConstruction({ stepNumber }) {
       : toastContext?.toast || ((msg) => console.log(msg));
 
   const lang = state.language || "ar";
-  const isRtl = lang === "ar";
+  const isRtl = lang?.startsWith('ar');
 
   // -- URL Search Params for Tab State Persistence --
   const navigate = useNavigate();

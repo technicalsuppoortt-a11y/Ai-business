@@ -354,7 +354,7 @@ function TargetMarketDropdown({ value, onChange, options, lang, isLoading }) {
               </span>
             )}
           </div>
-          <div style={{ textAlign: lang === 'ar' ? 'right' : 'left' }}>
+          <div style={{ textAlign: lang?.startsWith('ar') ? 'right' : 'left' }}>
             <div className="ns-heading-title" style={{ fontSize: '13px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span>{lang === 'en' ? selectedOption.name_en : selectedOption.name_ar}</span>
               {isLoading && (
@@ -419,7 +419,7 @@ function TargetMarketDropdown({ value, onChange, options, lang, isLoading }) {
             }}
           >
             <div style={{ position: 'relative', width: '100%' }}>
-              <Search size={14} color="#64748B" style={{ position: 'absolute', top: '11px', left: lang === 'ar' ? 'auto' : '10px', right: lang === 'ar' ? '10px' : 'auto' }} />
+              <Search size={14} color="#64748B" style={{ position: 'absolute', top: '11px', left: lang?.startsWith('ar') ? 'auto' : '10px', right: lang?.startsWith('ar') ? '10px' : 'auto' }} />
               <input
                 type="text"
                 value={searchQuery}
@@ -428,7 +428,7 @@ function TargetMarketDropdown({ value, onChange, options, lang, isLoading }) {
                 className="ns-dropdown-search-input"
                 style={{
                   width: '100%',
-                  padding: lang === 'ar' ? '8px 32px 8px 12px' : '8px 12px 8px 32px',
+                  padding: lang?.startsWith('ar') ? '8px 32px 8px 12px' : '8px 12px 8px 32px',
                   borderRadius: '10px',
                   fontSize: '12px',
                   outline: 'none',
@@ -573,7 +573,7 @@ export default function AnalysisIdentity() {
   const toast = useToast();
 
   const lang = state.language || "ar";
-  const isRtl = lang === "ar";
+  const isRtl = lang?.startsWith('ar');
   const userLevel = state.user?.level || "beginner";
   const userCountry = state.user?.country || "EG";
 
@@ -4102,7 +4102,7 @@ export default function AnalysisIdentity() {
             {/* SECTION 1 (TOP): ALL INPUT CONTROLS GRID */}
             <div className="identity-input-grid" style={{ position: "relative" }}>
                             {/* Quick Preview Trigger */}
-              <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: lang === "ar" ? "flex-start" : "flex-end", marginBottom: "4px" }}>
+              <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: lang?.startsWith('ar') ? "flex-start" : "flex-end", marginBottom: "4px" }}>
                 <button 
                   type="button"
                   onClick={() => setIsPreviewDrawerOpen(true)}
@@ -4702,7 +4702,7 @@ export default function AnalysisIdentity() {
             {/* Slide-Over Drawer for Preview */}
             <div className={`identity-preview-drawer ${isPreviewDrawerOpen ? 'open' : ''}`}>
               <div className="identity-preview-drawer-overlay" onClick={() => setIsPreviewDrawerOpen(false)} />
-              <div className={`identity-preview-drawer-content ${lang === 'ar' ? 'rtl' : 'ltr'}`}>
+              <div className={`identity-preview-drawer-content ${lang?.startsWith('ar') ? 'rtl' : 'ltr'}`}>
                 <button 
                   className="identity-preview-drawer-close"
                   onClick={() => setIsPreviewDrawerOpen(false)}

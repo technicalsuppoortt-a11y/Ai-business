@@ -44,6 +44,7 @@ import {
   UserCheck,
   ExternalLink,
   Crown,
+  Download
 } from "lucide-react";
 import "./Sidebar.css";
 
@@ -72,18 +73,32 @@ const STEP_ICON_MAP = {
   settings: Settings,
   tracking: Radar,
   tutorial: PlayCircle,
+  support: MessageSquare,
   subscription: Crown,
 };
 
 export default function Sidebar({ isCollapsed, setIsCollapsed }) {
-  const { state } = useApp();
+  const { state, dispatch } = useApp();
   const { userData, logout, brandData } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [isStandalone, setIsStandalone] = useState(false);
+
+  useEffect(() => {
+    const checkStandalone = () => {
+      const isDisplayStandalone = window.matchMedia('(display-mode: standalone)').matches;
+      const isNavigatorStandalone = window.navigator.standalone === true;
+      setIsStandalone(isDisplayStandalone || isNavigatorStandalone);
+    };
+    checkStandalone();
+    window.matchMedia('(display-mode: standalone)').addEventListener('change', checkStandalone);
+    return () => window.matchMedia('(display-mode: standalone)').removeEventListener('change', checkStandalone);
+  }, []);
+
   const lang = state.language || "ar";
-  const isRtl = lang === "ar";
+  const isRtl = lang?.startsWith('ar');
 
   const [hoveredStep, setHoveredStep] = useState(null);
 
@@ -189,7 +204,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
   console.log("[Sidebar] resolved allowedTools:", currentAllowedTools);
 
   const isStepLocked = (stepId) => {
-    if (stepId === "onboarding") return false;
+    if (["onboarding", "support", "tutorial", "settings", "subscription"].includes(stepId)) return false;
     
     // Strict Lock Enforcement: If not explicitly allowed, it MUST be locked.
     const isAllowed = Array.isArray(currentAllowedTools) && (() => {
@@ -238,7 +253,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
       lang === "en" && step.label_en
         ? step.label_en
         : step.label_ar || step.label;
-    const isLocked = step.id === "subscription" ? false : isStepLocked(step.id);
+    const isLocked = isStepLocked(step.id);
     console.log(`[Sidebar] item "${step.id}" → isLocked:`, isLocked);
 
     const IconComponent = STEP_ICON_MAP[step.id] || Sparkles;
@@ -482,6 +497,13 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
           })}
 
           {renderNavItem({
+            id: "support",
+            label_ar: "الدعم",
+            label_en: "Support",
+            section: "",
+          })}
+
+          {renderNavItem({
             id: "subscription",
             label_ar: "ترقية الباقة",
             label_en: "Upgrade Plan",
@@ -506,6 +528,36 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
 
       {/* Footer / Collapse Toggle / Profile Pill & Logout */}
       <div className="sidebar-bottom-bar">
+        
+        {/* Get App Mobile Button */}
+        {!isStandalone && (
+          <div style={{ padding: '0 16px', marginBottom: '16px' }}>
+            <button
+              onClick={() => dispatch({ type: 'SET_PWA_MODAL', payload: true })}
+              style={{
+                width: '100%',
+                background: "linear-gradient(135deg, rgba(59,130,246,0.15), rgba(16,185,129,0.15))",
+                color: "var(--accent, #3B82F6)",
+                border: "1px solid rgba(59,130,246,0.2)",
+                padding: "12px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: isCollapsed ? "center" : "flex-start",
+                gap: "10px",
+                fontWeight: "600",
+                fontSize: "14px",
+                borderRadius: "12px",
+                cursor: "pointer",
+                transition: "all 0.2s"
+              }}
+              title={lang === 'en' ? 'Install App' : 'تثبيت التطبيق'}
+            >
+              <Download size={18} />
+              {!isCollapsed && <span>{lang === 'en' ? 'Get App' : 'تثبيت التطبيق'}</span>}
+            </button>
+          </div>
+        )}
+
         {/* User Card & Logout Button Controls */}
         <div className="sidebar-bottom-controls">
           <div
@@ -560,7 +612,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
               onMouseEnter={(e) => e.target.style.opacity = 1}
               onMouseLeave={(e) => e.target.style.opacity = 0.6}
             >
-              {lang === "ar" ? "الشروط والأحكام وسياسة الخصوصية" : "Terms & Privacy Policy"}
+              {lang?.startsWith('ar') ? "الشروط والأحكام وسياسة الخصوصية" : "Terms & Privacy Policy"}
             </Link>
           </div>
         )}

@@ -20,6 +20,8 @@ import { useAuth } from './context/AuthContext';
 import { useApp } from './context/AppContext';
 import { useEffect } from 'react';
 import { useTrackingScripts } from './hooks/useTrackingScripts';
+import React from 'react';
+import PwaInstallModal from './components/common/PwaInstallModal';
 
 export default function App() {
   const { brandData, userData, adminUserData, superAdminUserData } = useAuth();
@@ -36,6 +38,20 @@ export default function App() {
       document.documentElement.classList.remove('light-mode');
     }
   }, []);
+
+  // PWA Install Prompt Capture
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      window.deferredPWAInstallPrompt = e;
+      dispatch({ type: 'SET_PWA_PROMPT', payload: e });
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, [dispatch]);
 
   // Apply Default Language based on Auth data
   useEffect(() => {
@@ -94,9 +110,10 @@ export default function App() {
   }, [brandData?.themeConfig, adminUserData?.themeConfig, superAdminUserData?.themeConfig, userData?.themeConfig]);
 
   return (
-    <Routes>
-      {/* Public */}
-      <Route path="/" element={<LandingPage />} />
+    <React.Fragment>
+      <Routes>
+        {/* Public */}
+        <Route path="/" element={<LandingPage />} />
       <Route path="/terms" element={<TermsPage />} />
 
       {/* === LOGIN PAGES (independent) === */}
@@ -138,5 +155,12 @@ export default function App() {
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+
+      {/* Global PWA Install Modal */}
+      <PwaInstallModal 
+        isOpen={state.pwaModalOpen} 
+        onClose={() => dispatch({ type: 'SET_PWA_MODAL', payload: false })} 
+      />
+    </React.Fragment>
   );
 }

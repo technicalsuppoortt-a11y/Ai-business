@@ -575,7 +575,7 @@ export default function AuthPage({
       return toast(activeTrans.weakPassword, "error");
     }
     if (!acceptedTerms) {
-      return toast(lang === "ar" ? "يجب الموافقة على الشروط والأحكام وسياسة الخصوصية للمتابعة" : "You must accept the Terms & Conditions and Privacy Policy to continue", "error");
+      return toast(lang?.startsWith('ar') ? "يجب الموافقة على الشروط والأحكام وسياسة الخصوصية للمتابعة" : "You must accept the Terms & Conditions and Privacy Policy to continue", "error");
     }
     if (!resolvedBrand) {
       return toast(activeTrans.cannotResolveBrand, "error");
@@ -673,7 +673,7 @@ export default function AuthPage({
         "--theme-accent": themeColors.accent,
         "--accent": themeColors.accent,
       }}
-      dir={lang === "ar" ? "rtl" : "ltr"}
+      dir={lang?.startsWith('ar') ? "rtl" : "ltr"}
     >
       <style>{`
         @keyframes float {
@@ -1018,8 +1018,8 @@ export default function AuthPage({
         style={{
           position: "absolute",
           top: 24,
-          right: lang === "ar" ? "auto" : 24,
-          left: lang === "ar" ? 24 : "auto",
+          right: lang?.startsWith('ar') ? "auto" : 24,
+          left: lang?.startsWith('ar') ? 24 : "auto",
           zIndex: 20,
         }}
       >
@@ -1030,7 +1030,7 @@ export default function AuthPage({
           }}
           whileTap={{ scale: 0.95 }}
           onClick={() => {
-            const nextLang = lang === "ar" ? "en" : "ar";
+            const nextLang = lang?.startsWith('ar') ? "en" : "ar";
             dispatch({ type: "SET_LANGUAGE", payload: nextLang });
           }}
           style={{
@@ -1052,10 +1052,10 @@ export default function AuthPage({
         >
           <Globe size={16} style={{ color: "var(--theme-accent)" }} />
           <span style={{ letterSpacing: "0.5px" }}>
-            {lang === "ar" ? "English" : "العربية"}
+            {lang?.startsWith('ar') ? "English" : "العربية"}
           </span>
           <motion.div
-            animate={{ rotate: lang === "ar" ? 0 : 180 }}
+            animate={{ rotate: lang?.startsWith('ar') ? 0 : 180 }}
             transition={{ duration: 0.3 }}
             style={{ display: "flex" }}
           >
@@ -1425,7 +1425,7 @@ export default function AuthPage({
                       size={18}
                       style={{
                         position: "absolute",
-                        [lang === "ar" ? "right" : "left"]: "14px",
+                        [lang?.startsWith('ar') ? "right" : "left"]: "14px",
                         color: "rgba(255, 255, 255, 0.3)",
                         transition: "color 0.3s ease",
                       }}
@@ -1441,7 +1441,7 @@ export default function AuthPage({
                       disabled={isLoading}
                       style={{
                         textAlign: "left",
-                        [lang === "ar" ? "paddingRight" : "paddingLeft"]:
+                        [lang?.startsWith('ar') ? "paddingRight" : "paddingLeft"]:
                           "46px",
                         height: "50px",
                         borderRadius: "14px",
@@ -1488,7 +1488,7 @@ export default function AuthPage({
                         textDecoration: "underline",
                       }}
                     >
-                      {lang === "ar" ? "نسيت كلمة المرور؟" : "Forgot Password?"}
+                      {lang?.startsWith('ar') ? "نسيت كلمة المرور؟" : "Forgot Password?"}
                     </button>
                   </div>
                   <motion.div
@@ -1503,7 +1503,7 @@ export default function AuthPage({
                       size={18}
                       style={{
                         position: "absolute",
-                        [lang === "ar" ? "right" : "left"]: "14px",
+                        [lang?.startsWith('ar') ? "right" : "left"]: "14px",
                         color: "rgba(255, 255, 255, 0.3)",
                         transition: "color 0.3s ease",
                       }}
@@ -1519,9 +1519,9 @@ export default function AuthPage({
                       disabled={isLoading}
                       style={{
                         textAlign: "left",
-                        [lang === "ar" ? "paddingRight" : "paddingLeft"]:
+                        [lang?.startsWith('ar') ? "paddingRight" : "paddingLeft"]:
                           "46px",
-                        [lang === "ar" ? "paddingLeft" : "paddingRight"]:
+                        [lang?.startsWith('ar') ? "paddingLeft" : "paddingRight"]:
                           "46px",
                         height: "50px",
                         borderRadius: "14px",
@@ -1536,7 +1536,7 @@ export default function AuthPage({
                       onClick={() => setShowPassword(!showPassword)}
                       style={{
                         position: "absolute",
-                        [lang === "ar" ? "left" : "right"]: "14px",
+                        [lang?.startsWith('ar') ? "left" : "right"]: "14px",
                         background: "none",
                         border: "none",
                         cursor: "pointer",
@@ -1741,7 +1741,7 @@ export default function AuthPage({
                       size={18}
                       style={{
                         position: "absolute",
-                        [lang === "ar" ? "right" : "left"]: "14px",
+                        [lang?.startsWith('ar') ? "right" : "left"]: "14px",
                         color: "rgba(255, 255, 255, 0.3)",
                       }}
                     />
@@ -1753,7 +1753,7 @@ export default function AuthPage({
                       placeholder={activeTrans.namePlaceholder}
                       disabled={isLoading}
                       style={{
-                        [lang === "ar" ? "paddingRight" : "paddingLeft"]:
+                        [lang?.startsWith('ar') ? "paddingRight" : "paddingLeft"]:
                           "46px",
                         height: "50px",
                         borderRadius: "14px",
@@ -1789,7 +1789,7 @@ export default function AuthPage({
                       size={18}
                       style={{
                         position: "absolute",
-                        [lang === "ar" ? "right" : "left"]: "14px",
+                        [lang?.startsWith('ar') ? "right" : "left"]: "14px",
                         color: "rgba(255, 255, 255, 0.3)",
                       }}
                     />
@@ -1804,7 +1804,7 @@ export default function AuthPage({
                       disabled={isLoading}
                       style={{
                         textAlign: "left",
-                        [lang === "ar" ? "paddingRight" : "paddingLeft"]:
+                        [lang?.startsWith('ar') ? "paddingRight" : "paddingLeft"]:
                           "46px",
                         height: "50px",
                         borderRadius: "14px",
@@ -1863,7 +1863,7 @@ export default function AuthPage({
                       size={18}
                       style={{
                         position: "absolute",
-                        [lang === "ar" ? "right" : "left"]: "14px",
+                        [lang?.startsWith('ar') ? "right" : "left"]: "14px",
                         color: "rgba(255, 255, 255, 0.3)",
                       }}
                     />
@@ -1878,9 +1878,9 @@ export default function AuthPage({
                       disabled={isLoading}
                       style={{
                         textAlign: "left",
-                        [lang === "ar" ? "paddingRight" : "paddingLeft"]:
+                        [lang?.startsWith('ar') ? "paddingRight" : "paddingLeft"]:
                           "46px",
-                        [lang === "ar" ? "paddingLeft" : "paddingRight"]:
+                        [lang?.startsWith('ar') ? "paddingLeft" : "paddingRight"]:
                           "46px",
                         height: "50px",
                         borderRadius: "14px",
@@ -1895,7 +1895,7 @@ export default function AuthPage({
                       onClick={() => setShowPassword(!showPassword)}
                       style={{
                         position: "absolute",
-                        [lang === "ar" ? "left" : "right"]: "14px",
+                        [lang?.startsWith('ar') ? "left" : "right"]: "14px",
                         background: "none",
                         border: "none",
                         cursor: "pointer",
@@ -1931,12 +1931,12 @@ export default function AuthPage({
                     {acceptedTerms && <Check size={14} color="#fff" />}
                   </div>
                   <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: '1.5' }}>
-                    {lang === 'ar' ? 'أوافق على ' : 'I agree to the '}
+                    {lang?.startsWith('ar') ? 'أوافق على ' : 'I agree to the '}
                     <span 
                       onClick={() => setShowTermsModal(true)}
                       style={{ color: 'var(--accent, #3B82F6)', cursor: 'pointer', textDecoration: 'underline' }}
                     >
-                      {lang === 'ar' ? 'الشروط والأحكام وسياسة الخصوصية' : 'Terms & Conditions and Privacy Policy'}
+                      {lang?.startsWith('ar') ? 'الشروط والأحكام وسياسة الخصوصية' : 'Terms & Conditions and Privacy Policy'}
                     </span>
                   </span>
                 </div>
@@ -2112,7 +2112,7 @@ export default function AuthPage({
       {isForgotPasswordOpen && (
         <div
           className="es-confirm-backdrop"
-          dir={lang === "ar" ? "rtl" : "ltr"}
+          dir={lang?.startsWith('ar') ? "rtl" : "ltr"}
           onClick={() => setIsForgotPasswordOpen(false)}
         >
           <div
@@ -2158,7 +2158,7 @@ export default function AuthPage({
                       fontWeight: "800",
                     }}
                   >
-                    {lang === "ar"
+                    {lang?.startsWith('ar')
                       ? "استعادة كلمة المرور"
                       : "Reset Account Password"}
                   </h3>
@@ -2204,7 +2204,7 @@ export default function AuthPage({
                     display: "block",
                   }}
                 >
-                  {lang === "ar"
+                  {lang?.startsWith('ar')
                     ? "البريد الإلكتروني المسجل:"
                     : "Registered Email Address:"}
                 </label>
@@ -2220,7 +2220,7 @@ export default function AuthPage({
                     color="#64748B"
                     style={{
                       position: "absolute",
-                      [lang === "ar" ? "right" : "left"]: "12px",
+                      [lang?.startsWith('ar') ? "right" : "left"]: "12px",
                     }}
                   />
                   <input
@@ -2236,7 +2236,7 @@ export default function AuthPage({
                       height: "46px",
                       borderRadius: "12px",
                       fontSize: "13px",
-                      [lang === "ar" ? "paddingRight" : "paddingLeft"]: "38px",
+                      [lang?.startsWith('ar') ? "paddingRight" : "paddingLeft"]: "38px",
                     }}
                   />
                 </div>
@@ -2253,7 +2253,7 @@ export default function AuthPage({
                   lineHeight: 1.5,
                 }}
               >
-                {lang === "ar"
+                {lang?.startsWith('ar')
                   ? "سيتم فحص صلاحيات البريد مع نوع الحساب، ثم إرسال رابط الاستعادة الرسمي مباشرة إلى بريدك ."
                   : "Role authorization will be verified, then a secure password reset link will be dispatched "}
               </div>
@@ -2274,7 +2274,7 @@ export default function AuthPage({
                     cursor: "pointer",
                   }}
                 >
-                  {lang === "ar" ? "إلغاء" : "Cancel"}
+                  {lang?.startsWith('ar') ? "إلغاء" : "Cancel"}
                 </button>
 
                 <button
@@ -2299,10 +2299,10 @@ export default function AuthPage({
                   <Send size={14} />
                   <span>
                     {isSendingReset
-                      ? lang === "ar"
+                      ? lang?.startsWith('ar')
                         ? "جاري الإرسال..."
                         : "Sending..."
-                      : lang === "ar"
+                      : lang?.startsWith('ar')
                         ? "إرسال رابط الاستعادة"
                         : "Send Reset Link"}
                   </span>
@@ -2361,7 +2361,7 @@ export default function AuthPage({
               }}>
                 <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: 'var(--text, #fff)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <ShieldCheck size={20} color="var(--accent, #3B82F6)" />
-                  {lang === 'ar' ? 'الشروط والأحكام وسياسة الخصوصية' : 'Terms & Conditions'}
+                  {lang?.startsWith('ar') ? 'الشروط والأحكام وسياسة الخصوصية' : 'Terms & Conditions'}
                 </h3>
                 <button
                   onClick={() => setShowTermsModal(false)}
@@ -2391,7 +2391,7 @@ export default function AuthPage({
                 maxHeight: '75vh',
                 overflowY: 'auto'
               }}>
-                <TermsContent isRtl={lang === 'ar'} />
+                <TermsContent isRtl={lang?.startsWith('ar')} />
               </div>
               
               {/* Modal Footer */}
@@ -2422,7 +2422,7 @@ export default function AuthPage({
                   }}
                 >
                   <Check size={16} />
-                  {lang === 'ar' ? 'موافق' : 'I Agree'}
+                  {lang?.startsWith('ar') ? 'موافق' : 'I Agree'}
                 </button>
               </div>
             </motion.div>

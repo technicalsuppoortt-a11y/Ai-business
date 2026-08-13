@@ -63,16 +63,26 @@ export async function analyzeJobAndGenerateProposal(jobDescription, { tone, lang
     : 'expert execution and high-quality delivery';
   
   const tones = {
-    expert: language === 'ar' ? 'خبير محترف' : 'Professional Expert',
-    friendly: language === 'ar' ? 'ودودة مباشرة' : 'Friendly and Direct',
-    corporate: language === 'ar' ? 'رسمي واحترافي' : 'Formal and Corporate',
-    creative: language === 'ar' ? 'مبدع وخارج الصندوق' : 'Creative and Out-of-the-box',
+    expert: language?.startsWith('ar') ? 'خبير محترف' : 'Professional Expert',
+    friendly: language?.startsWith('ar') ? 'ودودة مباشرة' : 'Friendly and Direct',
+    corporate: language?.startsWith('ar') ? 'رسمي واحترافي' : 'Formal and Corporate',
+    creative: language?.startsWith('ar') ? 'مبدع وخارج الصندوق' : 'Creative and Out-of-the-box',
   };
+
+  let langInstruction = 'in English';
+  if (language === 'ar-EG') {
+    langInstruction = 'You MUST write the ENTIRE output using natural, 100% Egyptian conversational dialect (باللهجة المصرية العامية الدارجة تماماً). Do not use any Standard Arabic (الفصحى) sentences. Replace formal words with common Egyptian business phrasing (e.g., use: ظبط، عشان، كدة، دلوقتي، هيخليك، اللينك، الزبون، التارجت، عايز، أوي). Make it sound like an expert Egyptian marketer talking directly to a client.';
+  } else if (language === 'ar-GCC' || language === 'ar-KW') {
+    langInstruction = 'You MUST write the ENTIRE output using natural, 100% Khaleeji Gulf dialect (باللهجة الخليجية العامية الدارجة تماماً). Do not use any Standard Arabic (الفصحى) sentences. Replace formal words with common Gulf business phrasing (e.g., use: عدل، عشان، تبي، هالخطوة، وايد، الحين، حق، شلون، كذا، الزبائن). Make it sound like an expert Gulf marketer talking directly to a client.';
+  } else if (language?.startsWith('ar')) {
+    langInstruction = 'in Modern Standard Arabic (العربية الفصحى البسيطة والاحترافية)';
+  }
 
   const prompt = `
     You are an expert freelancer specializing in ${title}. 
-    Write a job proposal (bid) ${language === 'ar' ? 'in Modern Standard Arabic' : 'in English'} 
-    with a ${tones[tone] || tones.expert} tone for the following job description:
+    Write a job proposal (bid) with a ${tones[tone] || tones.expert} tone for the following job description:
+    
+    ${langInstruction}
     
     ---
     ${jobDescription}

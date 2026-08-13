@@ -12,6 +12,7 @@ import MadgicxTemplate from "./MadgicxTemplate";
 import VideoShowcaseSection from "../../components/common/VideoShowcaseSection";
 import Logo from "../../components/common/Logo";
 import BrandedLoader from "../../components/common/BrandedLoader";
+import { DEFAULT_LEGAL_CONTENT } from "../../utils/defaultLegalContent";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
@@ -62,6 +63,7 @@ import {
   Compass,
   Palette,
   Type,
+  Download,
 } from "lucide-react";
 import "./Landing.css";
 
@@ -93,7 +95,7 @@ function TypewriterText({ text, speed = 70 }) {
 
 // Full Headline Letter-by-Letter Typewriter Component
 function FullHeroTypewriter({ lang }) {
-  const isAr = lang === "ar";
+  const isAr = lang?.startsWith('ar');
   const line1 = isAr ? "من فكرة إلى" : "From Idea to";
   const line2 = isAr ? "براند ناجح" : "Successful Brand";
   const line3 = isAr ? "بخطوات ذكية" : "with Smart Steps";
@@ -333,7 +335,7 @@ const testimonials = [
   }
 ];
 
-const faqs = [
+const defaultFaqs = [
   {
     q: "How does the AI content generation work?",
     q_ar: "كيف يعمل توليد المحتوى بالذكاء الاصطناعي؟",
@@ -371,7 +373,7 @@ export default function LandingPage() {
   const t = landingTranslations[state.language || "ar"] || landingTranslations.ar;
 
   useEffect(() => {
-    const isArabic = state.language === "ar";
+    const isArabic = state.language?.startsWith('ar');
     document.documentElement.dir = isArabic ? "rtl" : "ltr";
     document.documentElement.lang = isArabic ? "ar" : "en";
   }, [state.language]);
@@ -398,35 +400,35 @@ export default function LandingPage() {
   const brandPresets = [
     {
       name: "Glamour Deco",
-      slogan: state.language === "ar" ? "الفخامة والتصميم العصري" : "Luxury & Modern Design",
+      slogan: state.language?.startsWith('ar') ? "الفخامة والتصميم العصري" : "Luxury & Modern Design",
       colors: ["#F43F5E", "#8B5CF6", "#3B82F6", "#F59E0B"],
-      colorRoles: state.language === "ar" ? ["الرئيسي", "التألق", "السطح", "التمييز"] : ["Primary", "Glow", "Surface", "Accent"],
+      colorRoles: state.language?.startsWith('ar') ? ["الرئيسي", "التألق", "السطح", "التمييز"] : ["Primary", "Glow", "Surface", "Accent"],
       font: "Outfit / Inter",
-      vibe: state.language === "ar" ? "فاخر · أملس" : "Luxury · Sleek"
+      vibe: state.language?.startsWith('ar') ? "فاخر · أملس" : "Luxury · Sleek"
     },
     {
       name: "FitPulse AI",
-      slogan: state.language === "ar" ? "طاقتك وأداؤك بدون حدود" : "Limitless Energy & Performance",
+      slogan: state.language?.startsWith('ar') ? "طاقتك وأداؤك بدون حدود" : "Limitless Energy & Performance",
       colors: ["#10B981", "#06B6D4", "#6366F1", "#F59E0B"],
-      colorRoles: state.language === "ar" ? ["النشاط", "المنعش", "العمق", "التحفيز"] : ["Energy", "Fresh", "Depth", "Boost"],
+      colorRoles: state.language?.startsWith('ar') ? ["النشاط", "المنعش", "العمق", "التحفيز"] : ["Energy", "Fresh", "Depth", "Boost"],
       font: "Plus Jakarta Sans",
-      vibe: state.language === "ar" ? "رياضي · ديناميكي" : "Sporty · Dynamic"
+      vibe: state.language?.startsWith('ar') ? "رياضي · ديناميكي" : "Sporty · Dynamic"
     },
     {
       name: "LearnSphere",
-      slogan: state.language === "ar" ? "مستقبل التعليم الرقمي التفاعلي" : "The Future of E-Learning",
+      slogan: state.language?.startsWith('ar') ? "مستقبل التعليم الرقمي التفاعلي" : "The Future of E-Learning",
       colors: ["#8B5CF6", "#EC4899", "#3B82F6", "#10B981"],
-      colorRoles: state.language === "ar" ? ["الإبداع", "الحيوية", "الثقة", "النجاح"] : ["Creative", "Vibrant", "Trust", "Success"],
+      colorRoles: state.language?.startsWith('ar') ? ["الإبداع", "الحيوية", "الثقة", "النجاح"] : ["Creative", "Vibrant", "Trust", "Success"],
       font: "Inter / Roboto",
-      vibe: state.language === "ar" ? "تعليمي · موثوق" : "Educational · Trusted"
+      vibe: state.language?.startsWith('ar') ? "تعليمي · موثوق" : "Educational · Trusted"
     },
     {
       name: "Aroma Arabia",
-      slogan: state.language === "ar" ? "أصالة العطور الشرقية بروح حديثة" : "Authentic Eastern Perfumes",
+      slogan: state.language?.startsWith('ar') ? "أصالة العطور الشرقية بروح حديثة" : "Authentic Eastern Perfumes",
       colors: ["#F59E0B", "#EF4444", "#EC4899", "#8B5CF6"],
-      colorRoles: state.language === "ar" ? ["الأصالة", "الملكي", "الجاذبية", "الفخامة"] : ["Heritage", "Royal", "Allure", "Luxury"],
+      colorRoles: state.language?.startsWith('ar') ? ["الأصالة", "الملكي", "الجاذبية", "الفخامة"] : ["Heritage", "Royal", "Allure", "Luxury"],
       font: "Amiri / Outfit",
-      vibe: state.language === "ar" ? "عربي · راقي" : "Oriental · Premium"
+      vibe: state.language?.startsWith('ar') ? "عربي · راقي" : "Oriental · Premium"
     }
   ];
 
@@ -448,6 +450,18 @@ export default function LandingPage() {
   const [calcPrice, setCalcPrice] = useState(49); // Price per product
   const [calcAdSpend, setCalcAdSpend] = useState(15); // Ad Spend per purchase
   const [calcSalesCount, setCalcSalesCount] = useState(120); // Monthly Sales
+
+  const [isStandalone, setIsStandalone] = useState(false);
+  useEffect(() => {
+    const checkStandalone = () => {
+      const isDisplayStandalone = window.matchMedia('(display-mode: standalone)').matches;
+      const isNavigatorStandalone = window.navigator.standalone === true;
+      setIsStandalone(isDisplayStandalone || isNavigatorStandalone);
+    };
+    checkStandalone();
+    window.matchMedia('(display-mode: standalone)').addEventListener('change', checkStandalone);
+    return () => window.matchMedia('(display-mode: standalone)').removeEventListener('change', checkStandalone);
+  }, []);
 
   // Computed values
   const calcTotalRevenue = calcPrice * calcSalesCount;
@@ -929,7 +943,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="landing-page" dir={state.language === "ar" ? "rtl" : "ltr"}>
+    <div className="landing-page" dir={state.language?.startsWith('ar') ? "rtl" : "ltr"}>
       {/* Loading Overlay */}
       {loading && (
         <BrandedLoader
@@ -1017,15 +1031,30 @@ export default function LandingPage() {
             })()}
           </div>
           <div className="lp-nav-actions">
+            {!isStandalone && (
+              <button
+                className="lp-lang-btn"
+                onClick={() => dispatch({ type: 'SET_PWA_MODAL', payload: true })}
+                style={{
+                  background: "linear-gradient(135deg, rgba(59,130,246,0.15), rgba(16,185,129,0.15))",
+                  color: "var(--accent, #3B82F6)",
+                  border: "1px solid rgba(59,130,246,0.2)",
+                  fontWeight: "600",
+                }}
+              >
+                <Download size={16} />
+                <span className="desktop-only">{state.language?.startsWith('ar') ? "تثبيت التطبيق" : "Get App"}</span>
+              </button>
+            )}
             <button
               className="lp-lang-btn"
               onClick={() => {
-                const nextLang = state.language === "ar" ? "en" : "ar";
+                const nextLang = state.language?.startsWith('ar') ? "en" : "ar";
                 dispatch({ type: "SET_LANGUAGE", payload: nextLang });
               }}
             >
               <Globe size={16} />
-              <span>{state.language === "ar" ? "English" : "العربية"}</span>
+              <span>{state.language?.startsWith('ar') ? "English" : "العربية"}</span>
             </button>
             <button className="btn" onClick={goAuth}>
               {t.nav.login}
@@ -1050,8 +1079,8 @@ export default function LandingPage() {
           <div
             className="lp-hero-content"
             style={{
-              textAlign: state.language === "ar" ? "right" : "left",
-              direction: state.language === "ar" ? "rtl" : "ltr",
+              textAlign: state.language?.startsWith('ar') ? "right" : "left",
+              direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
             }}
           >
             <motion.div
@@ -1087,7 +1116,7 @@ export default function LandingPage() {
               className="lp-hero-actions"
               style={{
                 justifyContent:
-                  state.language === "ar" ? "flex-start" : "flex-start",
+                  state.language?.startsWith('ar') ? "flex-start" : "flex-start",
               }}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1100,7 +1129,7 @@ export default function LandingPage() {
                 whileTap={{ scale: 0.95 }}
               >
                 <span>{t.hero.cta}</span>
-                {state.language === "ar" ? (
+                {state.language?.startsWith('ar') ? (
                   <ArrowLeft size={18} />
                 ) : (
                   <ArrowRight size={18} />
@@ -1208,7 +1237,7 @@ export default function LandingPage() {
                     <div>
                       <div className="metric-val">+125%</div>
                       <div className="metric-lbl">
-                        {state.language === "ar" ? "معدل النمو" : "Growth Rate"}
+                        {state.language?.startsWith('ar') ? "معدل النمو" : "Growth Rate"}
                       </div>
                     </div>
                   </div>
@@ -1219,7 +1248,7 @@ export default function LandingPage() {
                     <div>
                       <div className="metric-val">99.8%</div>
                       <div className="metric-lbl">
-                        {state.language === "ar"
+                        {state.language?.startsWith('ar')
                           ? "دقة الذكاء الاصطناعي"
                           : "AI Precision"}
                       </div>
@@ -1232,7 +1261,7 @@ export default function LandingPage() {
                     <div>
                       <div className="metric-val">3.2s</div>
                       <div className="metric-lbl">
-                        {state.language === "ar" ? "سرعة التجهيز" : "Gen Speed"}
+                        {state.language?.startsWith('ar') ? "سرعة التجهيز" : "Gen Speed"}
                       </div>
                     </div>
                   </div>
@@ -1242,21 +1271,21 @@ export default function LandingPage() {
                 <div
                   className="preview-prompt-box"
                   style={{
-                    direction: state.language === "ar" ? "rtl" : "ltr",
-                    textAlign: state.language === "ar" ? "right" : "left",
+                    direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
+                    textAlign: state.language?.startsWith('ar') ? "right" : "left",
                   }}
                 >
                   <div className="prompt-header">
                     <Sparkles size={14} style={{ color: "var(--accent)" }} />
                     <span>
-                      {state.language === "ar"
+                      {state.language?.startsWith('ar')
                         ? "مساعد التخطيط الاستراتيجي"
                         : "Strategic AI Co-Pilot"}
                     </span>
                   </div>
                   <div className="prompt-text">
                     "
-                    {state.language === "ar"
+                    {state.language?.startsWith('ar')
                       ? "إنشاء هوية بصرية كاملة + حملة إعلانية مميزة لمشروعي الجديد..."
                       : "Generate full visual identity + high ROAS ad campaign for my brand..."}
                     "
@@ -1291,12 +1320,12 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <div className="float-card-title">
-                    {state.language === "ar"
+                    {state.language?.startsWith('ar')
                       ? "تم معالجة الهوية ✅"
                       : "AI Processing Complete ✅"}
                   </div>
                   <div className="float-card-sub">
-                    {state.language === "ar"
+                    {state.language?.startsWith('ar')
                       ? "جاهز للتنزيل بنقرة"
                       : "100% Ready to Deploy"}
                   </div>
@@ -1318,12 +1347,12 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <div className="float-card-title">
-                    {state.language === "ar"
+                    {state.language?.startsWith('ar')
                       ? "الأرباح +125% 📈"
                       : "Revenue +125% 📈"}
                   </div>
                   <div className="float-card-sub">
-                    {state.language === "ar"
+                    {state.language?.startsWith('ar')
                       ? "نمو أسبوعي مستمر"
                       : "Consistent Weekly Growth"}
                   </div>
@@ -1345,12 +1374,12 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <div className="float-card-title">
-                    {state.language === "ar"
+                    {state.language?.startsWith('ar')
                       ? "أتمتة ذكية متفاعلة ⚡"
                       : "Live AI Automation ⚡"}
                   </div>
                   <div className="float-card-sub">
-                    {state.language === "ar"
+                    {state.language?.startsWith('ar')
                       ? "تشغيل تلقائي 24/7"
                       : "Running 24/7 Autopilot"}
                   </div>
@@ -1438,7 +1467,7 @@ export default function LandingPage() {
       </motion.section>
 
       {/* ─── VIDEO SHOWCASE DEMO SECTION ─────────────────────────────────── */}
-      <VideoShowcaseSection isArabic={state.language === "ar"} />
+      <VideoShowcaseSection isArabic={state.language?.startsWith('ar')} />
 
       {/* ─── 9 PREMIUM INTERACTIVE SHOWCASE SECTIONS ────────────────────────── */}
 
@@ -1455,8 +1484,8 @@ export default function LandingPage() {
             <div
               className="tool-showcase-info"
               style={{
-                textAlign: state.language === "ar" ? "right" : "left",
-                direction: state.language === "ar" ? "rtl" : "ltr",
+                textAlign: state.language?.startsWith('ar') ? "right" : "left",
+                direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
               }}
             >
               <div className="lp-section-tag">{t.section1.tag}</div>
@@ -1508,7 +1537,7 @@ export default function LandingPage() {
                   fontWeight: 700,
                   marginBottom: 16,
                   color: "#fff",
-                  textAlign: state.language === "ar" ? "right" : "left",
+                  textAlign: state.language?.startsWith('ar') ? "right" : "left",
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
@@ -1543,14 +1572,14 @@ export default function LandingPage() {
                     key={n.id}
                     onClick={() => setActiveNiche(n.id)}
                     style={{
-                      direction: state.language === "ar" ? "rtl" : "ltr",
+                      direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
                     }}
                   >
                     <div
                       className="niche-radar-badge"
                       style={{
-                        marginRight: state.language === "ar" ? "auto" : "0",
-                        marginLeft: state.language === "ar" ? "0" : "auto",
+                        marginRight: state.language?.startsWith('ar') ? "auto" : "0",
+                        marginLeft: state.language?.startsWith('ar') ? "0" : "auto",
                       }}
                     >
                       {n.score} {t.section1.success}
@@ -1609,8 +1638,8 @@ export default function LandingPage() {
             <div
               className="tool-showcase-info"
               style={{
-                textAlign: state.language === "ar" ? "right" : "left",
-                direction: state.language === "ar" ? "rtl" : "ltr",
+                textAlign: state.language?.startsWith('ar') ? "right" : "left",
+                direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
               }}
             >
               <div className="lp-section-tag">
@@ -1638,7 +1667,7 @@ export default function LandingPage() {
                     style={{ color: "var(--accent)", flexShrink: 0 }}
                   />
                   <span>
-                    {state.language === "ar"
+                    {state.language?.startsWith('ar')
                       ? "توليد أسماء تجارية مبتكرة في ثوانٍ بالذكاء الاصطناعي"
                       : "AI-Powered Unique Brand Name Generator"}
                   </span>
@@ -1658,7 +1687,7 @@ export default function LandingPage() {
                     style={{ color: "#8B5CF6", flexShrink: 0 }}
                   />
                   <span>
-                    {state.language === "ar"
+                    {state.language?.startsWith('ar')
                       ? "تناسق ألوان سيكولوجي متوافق مع الفئة المستهدفة"
                       : "Harmonious Visual Identity & Psychological Palettes"}
                   </span>
@@ -1678,7 +1707,7 @@ export default function LandingPage() {
                     style={{ color: "#10B981", flexShrink: 0 }}
                   />
                   <span>
-                    {state.language === "ar"
+                    {state.language?.startsWith('ar')
                       ? "توصيات الخطوط والطابع البصري لترسيخ علاماتك التجارية"
                       : "Typography & Brand Personality Guidelines"}
                   </span>
@@ -1815,8 +1844,8 @@ export default function LandingPage() {
             <div
               className="tool-showcase-info"
               style={{
-                textAlign: state.language === "ar" ? "right" : "left",
-                direction: state.language === "ar" ? "rtl" : "ltr",
+                textAlign: state.language?.startsWith('ar') ? "right" : "left",
+                direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
               }}
             >
               <div className="lp-section-tag">{t.section3.tag}</div>
@@ -1837,7 +1866,7 @@ export default function LandingPage() {
                   fontWeight: 700,
                   marginBottom: 16,
                   color: "#fff",
-                  textAlign: state.language === "ar" ? "right" : "left",
+                  textAlign: state.language?.startsWith('ar') ? "right" : "left",
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
@@ -1856,7 +1885,7 @@ export default function LandingPage() {
                     className={`setup-step-row ${setupStep === step.idx ? "active" : ""}`}
                     key={step.idx}
                     style={{
-                      direction: state.language === "ar" ? "rtl" : "ltr",
+                      direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
                     }}
                   >
                     <div className="setup-step-num">{step.idx + 1}</div>
@@ -1866,7 +1895,7 @@ export default function LandingPage() {
                 <div
                   className="setup-live-preview"
                   style={{
-                    textAlign: state.language === "ar" ? "right" : "left",
+                    textAlign: state.language?.startsWith('ar') ? "right" : "left",
                   }}
                 >
                   <div
@@ -1910,8 +1939,8 @@ export default function LandingPage() {
             <div
               className="tool-showcase-info"
               style={{
-                textAlign: state.language === "ar" ? "right" : "left",
-                direction: state.language === "ar" ? "rtl" : "ltr",
+                textAlign: state.language?.startsWith('ar') ? "right" : "left",
+                direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
               }}
             >
               <div className="lp-section-tag">{t.section4.tag}</div>
@@ -1958,7 +1987,7 @@ export default function LandingPage() {
                     <div
                       className="calc-slider-header"
                       style={{
-                        direction: state.language === "ar" ? "rtl" : "ltr",
+                        direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
                       }}
                     >
                       <span className="calc-slider-val">${calcPrice}</span>
@@ -1977,7 +2006,7 @@ export default function LandingPage() {
                     <div
                       className="calc-slider-header"
                       style={{
-                        direction: state.language === "ar" ? "rtl" : "ltr",
+                        direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
                       }}
                     >
                       <span className="calc-slider-val">${calcAdSpend}</span>
@@ -1996,7 +2025,7 @@ export default function LandingPage() {
                     <div
                       className="calc-slider-header"
                       style={{
-                        direction: state.language === "ar" ? "rtl" : "ltr",
+                        direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
                       }}
                     >
                       <span className="calc-slider-val">
@@ -2025,7 +2054,7 @@ export default function LandingPage() {
                     borderTop: "1px solid var(--line)",
                     paddingTop: 14,
                     flexDirection:
-                      state.language === "ar" ? "row" : "row-reverse",
+                      state.language?.startsWith('ar') ? "row" : "row-reverse",
                   }}
                 >
                   <div>
@@ -2035,8 +2064,8 @@ export default function LandingPage() {
                     <span
                       style={{
                         color: "var(--text3)",
-                        marginRight: state.language === "ar" ? 6 : 0,
-                        marginLeft: state.language === "ar" ? 0 : 6,
+                        marginRight: state.language?.startsWith('ar') ? 6 : 0,
+                        marginLeft: state.language?.startsWith('ar') ? 0 : 6,
                       }}
                     >
                       {t.section4.roas}
@@ -2049,8 +2078,8 @@ export default function LandingPage() {
                     <span
                       style={{
                         color: "var(--text3)",
-                        marginRight: state.language === "ar" ? 6 : 0,
-                        marginLeft: state.language === "ar" ? 0 : 6,
+                        marginRight: state.language?.startsWith('ar') ? 6 : 0,
+                        marginLeft: state.language?.startsWith('ar') ? 0 : 6,
                       }}
                     >
                       {t.section4.totalRevenue}
@@ -2076,8 +2105,8 @@ export default function LandingPage() {
             <div
               className="tool-showcase-info"
               style={{
-                textAlign: state.language === "ar" ? "right" : "left",
-                direction: state.language === "ar" ? "rtl" : "ltr",
+                textAlign: state.language?.startsWith('ar') ? "right" : "left",
+                direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
               }}
             >
               <div className="lp-section-tag">
@@ -2126,7 +2155,7 @@ export default function LandingPage() {
                   fontStyle: "normal",
                   marginBottom: 16,
                   color: "#fff",
-                  textAlign: state.language === "ar" ? "right" : "left",
+                  textAlign: state.language?.startsWith('ar') ? "right" : "left",
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
@@ -2141,15 +2170,15 @@ export default function LandingPage() {
                     <div
                       className="factory-mock-card"
                       style={{
-                        textAlign: state.language === "ar" ? "right" : "left",
-                        direction: state.language === "ar" ? "rtl" : "ltr",
+                        textAlign: state.language?.startsWith('ar') ? "right" : "left",
+                        direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
                       }}
                     >
                       <span
                         className="factory-mock-tag"
                         style={{
                           alignSelf:
-                            state.language === "ar" ? "flex-start" : "flex-end",
+                            state.language?.startsWith('ar') ? "flex-start" : "flex-end",
                         }}
                       >
                         POST TEMPLATE
@@ -2174,8 +2203,8 @@ export default function LandingPage() {
                     <div
                       className="factory-mock-card"
                       style={{
-                        textAlign: state.language === "ar" ? "right" : "left",
-                        direction: state.language === "ar" ? "rtl" : "ltr",
+                        textAlign: state.language?.startsWith('ar') ? "right" : "left",
+                        direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
                       }}
                     >
                       <span
@@ -2184,7 +2213,7 @@ export default function LandingPage() {
                           background: "rgba(16,185,129,0.1)",
                           color: "var(--green)",
                           alignSelf:
-                            state.language === "ar" ? "flex-start" : "flex-end",
+                            state.language?.startsWith('ar') ? "flex-start" : "flex-end",
                         }}
                       >
                         STORY
@@ -2212,8 +2241,8 @@ export default function LandingPage() {
                     <div
                       className="factory-mock-card"
                       style={{
-                        textAlign: state.language === "ar" ? "right" : "left",
-                        direction: state.language === "ar" ? "rtl" : "ltr",
+                        textAlign: state.language?.startsWith('ar') ? "right" : "left",
+                        direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
                       }}
                     >
                       <span
@@ -2222,7 +2251,7 @@ export default function LandingPage() {
                           background: "rgba(245,158,11,0.1)",
                           color: "var(--accent2)",
                           alignSelf:
-                            state.language === "ar" ? "flex-start" : "flex-end",
+                            state.language?.startsWith('ar') ? "flex-start" : "flex-end",
                         }}
                       >
                         Tiktok/Reels Hook
@@ -2247,8 +2276,8 @@ export default function LandingPage() {
                     <div
                       className="factory-mock-card"
                       style={{
-                        textAlign: state.language === "ar" ? "right" : "left",
-                        direction: state.language === "ar" ? "rtl" : "ltr",
+                        textAlign: state.language?.startsWith('ar') ? "right" : "left",
+                        direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
                       }}
                     >
                       <span
@@ -2257,7 +2286,7 @@ export default function LandingPage() {
                           background: "rgba(239,68,68,0.1)",
                           color: "var(--red)",
                           alignSelf:
-                            state.language === "ar" ? "flex-start" : "flex-end",
+                            state.language?.startsWith('ar') ? "flex-start" : "flex-end",
                         }}
                       >
                         UGC Concept
@@ -2285,15 +2314,15 @@ export default function LandingPage() {
                     <div
                       className="factory-mock-card"
                       style={{
-                        textAlign: state.language === "ar" ? "right" : "left",
-                        direction: state.language === "ar" ? "rtl" : "ltr",
+                        textAlign: state.language?.startsWith('ar') ? "right" : "left",
+                        direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
                       }}
                     >
                       <span
                         className="factory-mock-tag"
                         style={{
                           alignSelf:
-                            state.language === "ar" ? "flex-start" : "flex-end",
+                            state.language?.startsWith('ar') ? "flex-start" : "flex-end",
                         }}
                       >
                         Ad Copy
@@ -2318,15 +2347,15 @@ export default function LandingPage() {
                     <div
                       className="factory-mock-card"
                       style={{
-                        textAlign: state.language === "ar" ? "right" : "left",
-                        direction: state.language === "ar" ? "rtl" : "ltr",
+                        textAlign: state.language?.startsWith('ar') ? "right" : "left",
+                        direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
                       }}
                     >
                       <span
                         className="factory-mock-tag"
                         style={{
                           alignSelf:
-                            state.language === "ar" ? "flex-start" : "flex-end",
+                            state.language?.startsWith('ar') ? "flex-start" : "flex-end",
                         }}
                       >
                         E-mail newsletter
@@ -2370,8 +2399,8 @@ export default function LandingPage() {
             <div
               className="tool-showcase-info"
               style={{
-                textAlign: state.language === "ar" ? "right" : "left",
-                direction: state.language === "ar" ? "rtl" : "ltr",
+                textAlign: state.language?.startsWith('ar') ? "right" : "left",
+                direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
               }}
             >
               <div className="lp-section-tag">{t.section6.tag}</div>
@@ -2397,7 +2426,7 @@ export default function LandingPage() {
                   className="proposal-console-header"
                   style={{
                     flexDirection:
-                      state.language === "ar" ? "row" : "row-reverse",
+                      state.language?.startsWith('ar') ? "row" : "row-reverse",
                   }}
                 >
                   <div
@@ -2414,8 +2443,8 @@ export default function LandingPage() {
                   />
                   <span
                     style={{
-                      marginRight: state.language === "ar" ? "auto" : "0",
-                      marginLeft: state.language === "ar" ? "0" : "auto",
+                      marginRight: state.language?.startsWith('ar') ? "auto" : "0",
+                      marginLeft: state.language?.startsWith('ar') ? "0" : "auto",
                       color: "var(--text3)",
                       fontSize: 10,
                     }}
@@ -2426,8 +2455,8 @@ export default function LandingPage() {
                 <div
                   className="proposal-console-body"
                   style={{
-                    textAlign: state.language === "ar" ? "right" : "left",
-                    direction: state.language === "ar" ? "rtl" : "ltr",
+                    textAlign: state.language?.startsWith('ar') ? "right" : "left",
+                    direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
                   }}
                 >
                   {proposalTexts[proposalStep]}
@@ -2463,8 +2492,8 @@ export default function LandingPage() {
             <div
               className="tool-showcase-info"
               style={{
-                textAlign: state.language === "ar" ? "right" : "left",
-                direction: state.language === "ar" ? "rtl" : "ltr",
+                textAlign: state.language?.startsWith('ar') ? "right" : "left",
+                direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
               }}
             >
               <div className="lp-section-tag">{t.section7.tag}</div>
@@ -2516,7 +2545,7 @@ export default function LandingPage() {
                   fontWeight: 700,
                   marginBottom: 16,
                   color: "#fff",
-                  textAlign: state.language === "ar" ? "right" : "left",
+                  textAlign: state.language?.startsWith('ar') ? "right" : "left",
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
@@ -2563,7 +2592,7 @@ export default function LandingPage() {
                     className="radar-platform-card"
                     key={plat.name}
                     style={{
-                      direction: state.language === "ar" ? "rtl" : "ltr",
+                      direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
                     }}
                   >
                     <div
@@ -2608,8 +2637,8 @@ export default function LandingPage() {
             <div
               className="tool-showcase-info"
               style={{
-                textAlign: state.language === "ar" ? "right" : "left",
-                direction: state.language === "ar" ? "rtl" : "ltr",
+                textAlign: state.language?.startsWith('ar') ? "right" : "left",
+                direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
               }}
             >
               <div className="lp-section-tag">
@@ -2659,7 +2688,7 @@ export default function LandingPage() {
                       className="flow-diagram-node"
                       key={i}
                       style={{
-                        direction: state.language === "ar" ? "rtl" : "ltr",
+                        direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
                       }}
                     >
                       <div
@@ -2680,7 +2709,7 @@ export default function LandingPage() {
                       </div>
                       <div
                         style={{
-                          textAlign: state.language === "ar" ? "right" : "left",
+                          textAlign: state.language?.startsWith('ar') ? "right" : "left",
                         }}
                       >
                         <div
@@ -2724,8 +2753,8 @@ export default function LandingPage() {
             <div
               className="tool-showcase-info"
               style={{
-                textAlign: state.language === "ar" ? "right" : "left",
-                direction: state.language === "ar" ? "rtl" : "ltr",
+                textAlign: state.language?.startsWith('ar') ? "right" : "left",
+                direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
               }}
             >
               <div className="lp-section-tag">
@@ -2766,7 +2795,7 @@ export default function LandingPage() {
                   fontWeight: 700,
                   marginBottom: 14,
                   color: "#fff",
-                  textAlign: state.language === "ar" ? "right" : "left",
+                  textAlign: state.language?.startsWith('ar') ? "right" : "left",
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
@@ -2774,7 +2803,7 @@ export default function LandingPage() {
               >
                 <BrainCircuit size={18} style={{ color: "var(--accent)" }} />
                 <span>
-                  {state.language === "ar"
+                  {state.language?.startsWith('ar')
                     ? "المساعد الشخصي الذكي"
                     : "Instant AI Assistant"}
                 </span>
@@ -2788,33 +2817,33 @@ export default function LandingPage() {
                       style={{
                         alignSelf:
                           msg.sender === "user"
-                            ? state.language === "ar"
+                            ? state.language?.startsWith('ar')
                               ? "flex-start"
                               : "flex-end"
-                            : state.language === "ar"
+                            : state.language?.startsWith('ar')
                               ? "flex-end"
                               : "flex-start",
                         borderBottomLeftRadius:
                           msg.sender === "user"
-                            ? state.language === "ar"
+                            ? state.language?.startsWith('ar')
                               ? "2px"
                               : "12px"
                             : "12px",
                         borderBottomRightRadius:
                           msg.sender === "assistant"
-                            ? state.language === "ar"
+                            ? state.language?.startsWith('ar')
                               ? "2px"
                               : "12px"
                             : "12px",
                         textAlign:
                           msg.sender === "user"
-                            ? state.language === "ar"
+                            ? state.language?.startsWith('ar')
                               ? "left"
                               : "right"
-                            : state.language === "ar"
+                            : state.language?.startsWith('ar')
                               ? "right"
                               : "left",
-                        direction: state.language === "ar" ? "rtl" : "ltr",
+                        direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
                       }}
                     >
                       {msg.text}
@@ -2827,9 +2856,9 @@ export default function LandingPage() {
                         fontStyle: "italic",
                         color: "var(--text3)",
                         alignSelf:
-                          state.language === "ar" ? "flex-end" : "flex-start",
-                        textAlign: state.language === "ar" ? "right" : "left",
-                        direction: state.language === "ar" ? "rtl" : "ltr",
+                          state.language?.startsWith('ar') ? "flex-end" : "flex-start",
+                        textAlign: state.language?.startsWith('ar') ? "right" : "left",
+                        direction: state.language?.startsWith('ar') ? "rtl" : "ltr",
                       }}
                     >
                       {t.section9.typingMsg}
@@ -2937,7 +2966,7 @@ export default function LandingPage() {
                                     : state.language === "en"
                                       ? "EGP"
                                       : "ج.م") +
-                            (state.language === "ar" ? " / شهر" : " / month")
+                            (state.language?.startsWith('ar') ? " / شهر" : " / month")
                           : t.pricing.currency}
                       </span>
                     </div>
@@ -2953,7 +2982,7 @@ export default function LandingPage() {
                         listStyle: "none",
                         padding: 0,
                         margin: "0 0 32px 0",
-                        textAlign: state.language === "ar" ? "right" : "left",
+                        textAlign: state.language?.startsWith('ar') ? "right" : "left",
                       }}
                     >
                       {(() => {
@@ -3063,7 +3092,7 @@ export default function LandingPage() {
                                   cursor: "pointer",
                                   padding: "4px 0",
                                   margin:
-                                    state.language === "ar"
+                                    state.language?.startsWith('ar')
                                       ? "8px 0 0 auto"
                                       : "8px auto 0 0",
                                   display: "flex",
@@ -3160,10 +3189,10 @@ export default function LandingPage() {
         <div className="lp-container" style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div className="lp-section-header" style={{ textAlign: "center", marginBottom: 40 }}>
             <h2 style={{ fontSize: "clamp(28px, 4vw, 42px)", fontWeight: 800, marginBottom: 16 }}>
-              {state.language === "ar" ? "آراء وريفيوهات العملاء" : "What Our Customers Say"}
+              {state.language?.startsWith('ar') ? "آراء وريفيوهات العملاء" : "What Our Customers Say"}
             </h2>
             <p style={{ color: "var(--text2)", fontSize: 16, maxWidth: 600, margin: "0 auto" }}>
-              {state.language === "ar" ? "تعرف على كيفية مساعدة منصتنا في تغيير طريقة عمل الشركات وإطلاق حملاتها التسويقية." : "Discover how our platform is changing the way businesses launch and scale their marketing."}
+              {state.language?.startsWith('ar') ? "تعرف على كيفية مساعدة منصتنا في تغيير طريقة عمل الشركات وإطلاق حملاتها التسويقية." : "Discover how our platform is changing the way businesses launch and scale their marketing."}
             </p>
           </div>
           <div className="lp-testimonials-grid">
@@ -3173,13 +3202,13 @@ export default function LandingPage() {
                   {[...Array(tItem.rating)].map((_, i) => <Star key={i} size={16} fill="currentColor" />)}
                 </div>
                 <p style={{ fontSize: 16, lineHeight: 1.6, color: "var(--text1)", flex: 1, margin: 0 }}>
-                  "{state.language === "ar" ? tItem.feedback_ar : tItem.feedback}"
+                  "{state.language?.startsWith('ar') ? tItem.feedback_ar : tItem.feedback}"
                 </p>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 24 }}>
                   <img src={tItem.avatar} alt={tItem.name} style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover" }} />
                   <div>
                     <div style={{ fontWeight: 600, fontSize: 15, color: "var(--text1)" }}>{tItem.name}</div>
-                    <div style={{ fontSize: 13, color: "var(--text3)", marginTop: 2 }}>{state.language === "ar" ? tItem.title_ar : tItem.title}</div>
+                    <div style={{ fontSize: 13, color: "var(--text3)", marginTop: 2 }}>{state.language?.startsWith('ar') ? tItem.title_ar : tItem.title}</div>
                   </div>
                 </div>
               </div>
@@ -3193,11 +3222,11 @@ export default function LandingPage() {
         <div className="lp-container" style={{ maxWidth: 800, margin: "0 auto" }}>
           <div className="lp-section-header" style={{ textAlign: "center", marginBottom: 40 }}>
             <h2 style={{ fontSize: "clamp(28px, 4vw, 42px)", fontWeight: 800, marginBottom: 16 }}>
-              {state.language === "ar" ? "الأسئلة الشائعة" : "Frequently Asked Questions"}
+              {state.language?.startsWith('ar') ? "الأسئلة الشائعة" : "Frequently Asked Questions"}
             </h2>
           </div>
           <div className="lp-faq-list" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {faqs.map((faq, idx) => (
+            {(brandData?.faqs?.length > 0 ? brandData.faqs : defaultFaqs).map((faq, idx) => (
               <div 
                 key={idx} 
                 className="lp-faq-item" 
@@ -3222,10 +3251,10 @@ export default function LandingPage() {
                     fontSize: 16, 
                     fontWeight: 600, 
                     cursor: "pointer",
-                    textAlign: state.language === "ar" ? "right" : "left"
+                    textAlign: state.language?.startsWith('ar') ? "right" : "left"
                   }}
                 >
-                  <span>{state.language === "ar" ? faq.q_ar : faq.q}</span>
+                  <span>{state.language?.startsWith('ar') ? faq.q_ar : (faq.q_en || faq.q)}</span>
                   <ChevronDown 
                     size={20} 
                     style={{ 
@@ -3247,7 +3276,7 @@ export default function LandingPage() {
                     lineHeight: 1.6
                   }}
                 >
-                  {state.language === "ar" ? faq.a_ar : faq.a}
+                  {state.language?.startsWith('ar') ? faq.a_ar : (faq.a_en || faq.a)}
                 </div>
               </div>
             ))}
@@ -3273,7 +3302,7 @@ export default function LandingPage() {
               text={brandData?.brandName || brandName || "Ai Business"}
             />
             <span className="lp-footer-copyright-text" style={{ fontSize: 13, opacity: 0.7 }}>
-              {state.language === 'ar' ? (
+              {state.language?.startsWith('ar') ? (
                 <>جميع الحقوق محفوظة © {new Date().getFullYear()} <span dir="ltr" style={{ display: "inline-block", margin: "0 4px" }}>{brandData?.brandName || brandName || "Ai Business"}</span></>
               ) : (
                 <>© {new Date().getFullYear()} {brandData?.brandName || brandName || "Ai Business"}. All rights reserved.</>
@@ -3301,15 +3330,15 @@ export default function LandingPage() {
 
           <div className="lp-footer-policies-wrap" style={{ display: "flex", gap: "24px", alignItems: "center" }}>
             <button onClick={() => setShowTerms(true)} style={{ background: "none", border: "none", color: "var(--text2)", fontSize: "14px", cursor: "pointer", padding: 0, fontWeight: 500, transition: "color 0.2s" }} onMouseOver={(e) => e.target.style.color = "var(--text1)"} onMouseOut={(e) => e.target.style.color = "var(--text2)"}>
-              {state.language === "ar" ? "الشروط والأحكام" : "Terms & Conditions"}
+              {state.language?.startsWith('ar') ? "الشروط والأحكام" : "Terms & Conditions"}
             </button>
             <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--border1)" }} />
             <button onClick={() => setShowPrivacy(true)} style={{ background: "none", border: "none", color: "var(--text2)", fontSize: "14px", cursor: "pointer", padding: 0, fontWeight: 500, transition: "color 0.2s" }} onMouseOver={(e) => e.target.style.color = "var(--text1)"} onMouseOut={(e) => e.target.style.color = "var(--text2)"}>
-              {t.footer.privacy || (state.language === "ar" ? "سياسة الخصوصية" : "Privacy Policy")}
+              {t.footer.privacy || (state.language?.startsWith('ar') ? "سياسة الخصوصية" : "Privacy Policy")}
             </button>
             <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--border1)" }} />
             <button onClick={() => setShowSecurity(true)} style={{ background: "none", border: "none", color: "var(--text2)", fontSize: "14px", cursor: "pointer", padding: 0, fontWeight: 500, transition: "color 0.2s" }} onMouseOver={(e) => e.target.style.color = "var(--text1)"} onMouseOut={(e) => e.target.style.color = "var(--text2)"}>
-              {t.footer.security || (state.language === "ar" ? "سياسة الأمان" : "Security Policy")}
+              {t.footer.security || (state.language?.startsWith('ar') ? "سياسة الأمان" : "Security Policy")}
             </button>
           </div>
 
@@ -3317,12 +3346,12 @@ export default function LandingPage() {
             <button
               className="lp-lang-btn"
               onClick={() => {
-                const nextLang = state.language === "ar" ? "en" : "ar";
+                const nextLang = state.language?.startsWith('ar') ? "en" : "ar";
                 dispatch({ type: "SET_LANGUAGE", payload: nextLang });
               }}
             >
               <Globe size={15} />
-              <span>{state.language === "ar" ? "English" : "العربية"}</span>
+              <span>{state.language?.startsWith('ar') ? "English" : "العربية"}</span>
             </button>
             <button className="btn btn-sm" onClick={goAuth} style={{ borderRadius: 8 }}>
               {t.nav.login}
@@ -3341,7 +3370,7 @@ export default function LandingPage() {
                   <div style={{ width: 40, height: 40, borderRadius: 12, background: "linear-gradient(135deg, rgba(59,130,246,0.1), rgba(147,51,234,0.1))", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(255,255,255,0.05)" }}>
                     <FileText size={20} color="#3B82F6" />
                   </div>
-                  <h3 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: "var(--text1)", letterSpacing: "-0.5px" }}>{t.footer.privacy || (state.language === "ar" ? "سياسة الخصوصية" : "Privacy Policy")}</h3>
+                  <h3 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: "var(--text1)", letterSpacing: "-0.5px" }}>{t.footer.privacy || (state.language?.startsWith('ar') ? "سياسة الخصوصية" : "Privacy Policy")}</h3>
                 </div>
                 <button onClick={() => setShowPrivacy(false)} style={{ background: "var(--bg2)", border: "1px solid var(--border1)", borderRadius: "50%", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text2)", cursor: "pointer", transition: "all 0.2s" }} onMouseOver={(e) => { e.currentTarget.style.background = "var(--bg3)"; e.currentTarget.style.color = "var(--text1)"; }} onMouseOut={(e) => { e.currentTarget.style.background = "var(--bg2)"; e.currentTarget.style.color = "var(--text2)"; }}><XCircle size={20} /></button>
               </div>
@@ -3360,23 +3389,19 @@ export default function LandingPage() {
                   </div>
                 </div>
                 
-                {state.language === "ar" ? (
+                {state.language?.startsWith('ar') ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-                    <p style={{ fontSize: 17, color: "var(--text1)", marginBottom: 20 }}>في {brandData?.brandName || brandName || "Ai Business"}، نأخذ خصوصيتك بجدية تامة. توضح هذه السياسة كيف نقوم بجمع واستخدام وحماية معلوماتك الشخصية.</p>
-                    
-                    <div style={{ background: "rgba(59,130,246,0.05)", border: "1px solid rgba(59,130,246,0.1)", borderRadius: 16, padding: 20 }}>
-                      <h4 style={{ color: "var(--text1)", marginTop: 0, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#3B82F6" }}/> 1. جمع المعلومات</h4>
-                      <p style={{ margin: 0 }}>نقوم بجمع المعلومات التي تقدمها عند التسجيل أو استخدام خدماتنا، مثل الاسم، البريد الإلكتروني، ومعلومات نشاطك.</p>
-                    </div>
+                    <div 
+                      style={{ whiteSpace: "pre-wrap", color: "var(--text1)", fontSize: 16, lineHeight: 1.8 }}
+                      dangerouslySetInnerHTML={{ __html: brandData?.legal?.privacy_ar || DEFAULT_LEGAL_CONTENT.privacy_ar }}
+                    />
                   </div>
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-                    <p style={{ fontSize: 17, color: "var(--text1)", marginBottom: 20 }}>At {brandData?.brandName || brandName || "Ai Business"}, we take your privacy seriously. This policy explains how we collect, use, and protect your personal information.</p>
-                    
-                    <div style={{ background: "rgba(59,130,246,0.05)", border: "1px solid rgba(59,130,246,0.1)", borderRadius: 16, padding: 20 }}>
-                      <h4 style={{ color: "var(--text1)", marginTop: 0, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#3B82F6" }}/> 1. Information Collection</h4>
-                      <p style={{ margin: 0 }}>We collect information you provide when registering or using our services, such as name, email, and activity data.</p>
-                    </div>
+                    <div 
+                      style={{ whiteSpace: "pre-wrap", color: "var(--text1)", fontSize: 16, lineHeight: 1.8 }}
+                      dangerouslySetInnerHTML={{ __html: brandData?.legal?.privacy_en || DEFAULT_LEGAL_CONTENT.privacy_en }}
+                    />
                   </div>
                 )}
               </div>
@@ -3392,27 +3417,21 @@ export default function LandingPage() {
                   <div style={{ width: 40, height: 40, borderRadius: 12, background: "linear-gradient(135deg, rgba(16,185,129,0.1), rgba(59,130,246,0.1))", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(255,255,255,0.05)" }}>
                     <ShieldCheck size={20} color="#10B981" />
                   </div>
-                  <h3 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: "var(--text1)", letterSpacing: "-0.5px" }}>{t.footer.security || (state.language === "ar" ? "سياسة الأمان" : "Security Policy")}</h3>
+                  <h3 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: "var(--text1)", letterSpacing: "-0.5px" }}>{t.footer.security || (state.language?.startsWith('ar') ? "سياسة الأمان" : "Security Policy")}</h3>
                 </div>
                 <button onClick={() => setShowSecurity(false)} style={{ background: "var(--bg2)", border: "1px solid var(--border1)", borderRadius: "50%", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text2)", cursor: "pointer", transition: "all 0.2s" }} onMouseOver={(e) => { e.currentTarget.style.background = "var(--bg3)"; e.currentTarget.style.color = "var(--text1)"; }} onMouseOut={(e) => { e.currentTarget.style.background = "var(--bg2)"; e.currentTarget.style.color = "var(--text2)"; }}><XCircle size={20} /></button>
               </div>
-              <div style={{ padding: "30px 40px", color: "var(--text2)", fontSize: 16, lineHeight: 1.8, direction: state.language === "ar" ? "rtl" : "ltr", textAlign: state.language === "ar" ? "right" : "left" }}>
-                {state.language === "ar" ? (
-                  <>
-                    <p style={{ fontSize: 17, color: "var(--text1)", marginBottom: 20 }}>أمانك هو أولويتنا القصوى. صُممت أنظمتنا لحماية بياناتك من الوصول غير المصرح به.</p>
-                    <div style={{ background: "rgba(255,255,255,0.02)", padding: 20, borderRadius: 16, marginBottom: 20, border: "1px solid rgba(255,255,255,0.03)" }}>
-                      <h4 style={{ color: "var(--text1)", marginTop: 0, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }}/> 1. تشفير البيانات</h4>
-                      <p style={{ margin: 0 }}>جميع البيانات المنقولة بين جهازك وخوادمنا مشفرة باستخدام بروتوكولات الأمان القياسية (SSL/TLS).</p>
-                    </div>
-                  </>
+              <div style={{ padding: "30px 40px", color: "var(--text2)", fontSize: 16, lineHeight: 1.8, direction: state.language?.startsWith('ar') ? "rtl" : "ltr", textAlign: state.language?.startsWith('ar') ? "right" : "left" }}>
+                {state.language?.startsWith('ar') ? (
+                  <div 
+                    style={{ whiteSpace: "pre-wrap", color: "var(--text1)", fontSize: 16, lineHeight: 1.8 }}
+                    dangerouslySetInnerHTML={{ __html: brandData?.legal?.security_ar || DEFAULT_LEGAL_CONTENT.security_ar }}
+                  />
                 ) : (
-                  <>
-                    <p style={{ fontSize: 17, color: "var(--text1)", marginBottom: 20 }}>Your security is our top priority. Our systems are designed to protect your data from unauthorized access.</p>
-                    <div style={{ background: "rgba(255,255,255,0.02)", padding: 20, borderRadius: 16, marginBottom: 20, border: "1px solid rgba(255,255,255,0.03)" }}>
-                      <h4 style={{ color: "var(--text1)", marginTop: 0, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }}/> 1. Data Encryption</h4>
-                      <p style={{ margin: 0 }}>All data transmitted between your device and our servers is encrypted using standard security protocols (SSL/TLS).</p>
-                    </div>
-                  </>
+                  <div 
+                    style={{ whiteSpace: "pre-wrap", color: "var(--text1)", fontSize: 16, lineHeight: 1.8 }}
+                    dangerouslySetInnerHTML={{ __html: brandData?.legal?.security_en || DEFAULT_LEGAL_CONTENT.security_en }}
+                  />
                 )}
               </div>
             </motion.div>
@@ -3427,13 +3446,23 @@ export default function LandingPage() {
                   <div style={{ width: 40, height: 40, borderRadius: 12, background: "linear-gradient(135deg, rgba(59,130,246,0.1), rgba(147,51,234,0.1))", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(255,255,255,0.05)" }}>
                     <Shield size={20} color="#3B82F6" />
                   </div>
-                  <h3 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: "var(--text1)", letterSpacing: "-0.5px" }}>{state.language === "ar" ? "الشروط والأحكام" : "Terms & Conditions"}</h3>
+                  <h3 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: "var(--text1)", letterSpacing: "-0.5px" }}>{state.language?.startsWith('ar') ? "الشروط والأحكام" : "Terms & Conditions"}</h3>
                 </div>
                 <button onClick={() => setShowTerms(false)} style={{ background: "var(--bg2)", border: "1px solid var(--border1)", borderRadius: "50%", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text2)", cursor: "pointer", transition: "all 0.2s" }} onMouseOver={(e) => { e.currentTarget.style.background = "var(--bg3)"; e.currentTarget.style.color = "var(--text1)"; }} onMouseOut={(e) => { e.currentTarget.style.background = "var(--bg2)"; e.currentTarget.style.color = "var(--text2)"; }}><XCircle size={20} /></button>
               </div>
               
               <div style={{ padding: "30px", fontSize: "15px", lineHeight: "1.7", color: "var(--text2)" }}>
-                <TermsContent isRtl={state.language === 'ar'} />
+                {state.language?.startsWith('ar') ? (
+                  <div 
+                    style={{ whiteSpace: "pre-wrap", color: "var(--text1)", fontSize: 16, lineHeight: 1.8 }}
+                    dangerouslySetInnerHTML={{ __html: brandData?.legal?.terms_ar || DEFAULT_LEGAL_CONTENT.terms_ar }}
+                  />
+                ) : (
+                  <div 
+                    style={{ whiteSpace: "pre-wrap", color: "var(--text1)", fontSize: 16, lineHeight: 1.8 }}
+                    dangerouslySetInnerHTML={{ __html: brandData?.legal?.terms_en || DEFAULT_LEGAL_CONTENT.terms_en }}
+                  />
+                )}
               </div>
             </motion.div>
           </div>

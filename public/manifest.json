@@ -1,23 +1,31 @@
 {
+  "id": "/",
   "name": "AI Brand Vision",
   "short_name": "AI Brand",
   "description": "منصة AI متكاملة لبناء وإدارة وتنمية عملك من الصفر — برانديج، محتوى، عروض، إعلانات، ونمو.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#080C14",
   "theme_color": "#3B82F6",
   "icons": [
     {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
       "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ]
 }

@@ -9,18 +9,18 @@ import { useToast } from '../../context/ToastContext';
 import { useSystemBranding } from '../../context/SystemBrandingContext';
 import { CURRENCY_SYMBOLS } from '../../data/database';
 import { TOOLS_24H } from '../../data/toolsData';
-import { 
-  Globe, 
-  Sun, 
-  Moon, 
-  Coins, 
-  BookOpen, 
-  Menu, 
-  PanelLeftClose, 
-  PanelLeftOpen, 
-  User, 
-  LogOut, 
-  Settings, 
+import {
+  Globe,
+  Sun,
+  Moon,
+  Coins,
+  FileText,
+  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
+  User,
+  LogOut,
+  Settings,
   Sparkles,
   ChevronDown,
   Lock,
@@ -30,10 +30,10 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import './DashboardNavbar.css';
 
-export default function DashboardNavbar({ 
-  isCollapsed, 
-  onToggleCollapse, 
-  onOpenMobileMenu 
+export default function DashboardNavbar({
+  isCollapsed,
+  onToggleCollapse,
+  onOpenMobileMenu
 }) {
   const { state, dispatch } = useApp();
   const { userData, brandData, logout } = useAuth();
@@ -68,11 +68,11 @@ export default function DashboardNavbar({
 
   const getLanguageLabel = (l) => {
     switch (l) {
-      case 'en': return 'English 🇬🇧';
-      case 'ar': return 'العربية 🇸🇦';
-      case 'ar-EG': return 'المصرية 🇪🇬';
-      case 'ar-GCC': return 'الخليجية 🇦🇪/🇸🇦';
-      default: return 'English 🇬🇧';
+      case 'en': return 'EN';
+      case 'ar': return 'AR';
+      case 'ar-EG': return 'EG';
+      case 'ar-GCC': return 'GCC';
+      default: return 'EN';
     }
   };
 
@@ -108,19 +108,19 @@ export default function DashboardNavbar({
 
   // Extract current page title
   const currentPath = location.pathname.replace('/dashboard/', '').replace('/dashboard', '') || 'onboarding';
-  
+
   const currentTool = TOOLS_24H.find(t => t.id === currentPath || `tool/${t.id}` === currentPath);
-  const pageTitle = currentTool 
+  const pageTitle = currentTool
     ? (lang === 'en' ? (currentTool.label_en || currentTool.label) : (currentTool.label_ar || currentTool.label))
-    : (currentPath === 'settings' 
-        ? (lang === 'en' ? 'Settings' : 'الإعدادات') 
-        : (currentPath === 'profile' 
-            ? (lang === 'en' ? 'Profile' : 'الملف الشخصي')
-            : (currentPath === 'brand-library' 
-                ? (lang === 'en' ? 'Product Library' : 'مكتبة المنتجات')
-                : (currentPath === 'tutorial'
-                    ? (lang === 'en' ? 'Tutorial' : 'فيديو الشرح')
-                    : (lang === 'en' ? 'Dashboard' : 'لوحة التحكم')))));
+    : (currentPath === 'settings'
+      ? (lang === 'en' ? 'Settings' : 'الإعدادات')
+      : (currentPath === 'profile'
+        ? (lang === 'en' ? 'Profile' : 'الملف الشخصي')
+        : (currentPath === 'brand-library'
+          ? (lang === 'en' ? 'Product Library' : 'مكتبة المنتجات')
+          : (currentPath === 'tutorial'
+            ? (lang === 'en' ? 'Tutorial' : 'فيديو الشرح')
+            : (lang === 'en' ? 'Dashboard' : 'لوحة التحكم')))));
 
   const displayName = userData?.ownerName || userData?.brandName || state.user.name || (lang === 'en' ? 'User' : 'مستخدم');
   const displayEmail = userData?.email || '';
@@ -129,14 +129,14 @@ export default function DashboardNavbar({
   const resolveAllowedTools = () => {
     const rootPlanId = userData?.planId;
     const subPlanId = userData?.subscription?.planId;
-    
+
     const isValidId = (id) => id && id !== "free_trial" && id !== "trial" && id !== "free";
-    
-    const hasValidPaidPlan = 
-      isValidId(rootPlanId) || 
-      isValidId(subPlanId) || 
+
+    const hasValidPaidPlan =
+      isValidId(rootPlanId) ||
+      isValidId(subPlanId) ||
       (userData?.subscription?.status === 'active' && userData?.subscription?.type !== 'trial');
-    
+
     const isTrial = !hasValidPaidPlan && (
       userData?.subscription?.type === "trial" ||
       !rootPlanId ||
@@ -164,7 +164,7 @@ export default function DashboardNavbar({
   };
 
   const resolvedAllowedTools = resolveAllowedTools();
-  
+
   // Strict Lock Enforcement: If not explicitly allowed, it MUST be locked.
   const isAllowed = Array.isArray(resolvedAllowedTools) && resolvedAllowedTools.includes('smart-notebook');
   const isNotebookLocked = !isAllowed;
@@ -186,7 +186,7 @@ export default function DashboardNavbar({
       {/* LEFT / START: MOBILE MENU + COLLAPSE TOGGLE + TITLE */}
       <div className="db-navbar-start">
         {/* Mobile Hamburger Toggle */}
-        <button 
+        <button
           className="db-nav-icon-btn mobile-only"
           onClick={onOpenMobileMenu}
           title={lang === 'en' ? 'Open Menu' : 'فتح القائمة'}
@@ -195,11 +195,11 @@ export default function DashboardNavbar({
         </button>
 
         {/* Desktop Sidebar Collapse Toggle */}
-        <button 
+        <button
           className="db-nav-icon-btn desktop-only"
           onClick={onToggleCollapse}
-          title={isCollapsed 
-            ? (lang === 'en' ? 'Expand Sidebar' : 'توسيع القائمة') 
+          title={isCollapsed
+            ? (lang === 'en' ? 'Expand Sidebar' : 'توسيع القائمة')
             : (lang === 'en' ? 'Collapse Sidebar' : 'طي القائمة')}
         >
           {isCollapsed ? (
@@ -211,7 +211,7 @@ export default function DashboardNavbar({
 
         {/* Page Context Indicator / Breadcrumb */}
         <div className="db-navbar-title-wrap">
-          <span className="db-navbar-badge">
+          <span className="db-navbar-badge desktop-only">
             <Sparkles size={13} className="sparkle-icon" />
             <span>{brandData?.brandName || globalBrandName}</span>
           </span>
@@ -221,10 +221,10 @@ export default function DashboardNavbar({
 
       {/* RIGHT / END: CONTROLS & DROPDOWNS */}
       <div className="db-navbar-end">
-        
+
         {/* Key Status Indicator */}
-        <div 
-          className="db-nav-chip-btn desktop-only"
+        <div
+          className="db-nav-pill desktop-only"
           title={lang === 'en' ? 'API Key Status' : 'حالة مفتاح API'}
           style={{ cursor: 'default' }}
         >
@@ -240,10 +240,10 @@ export default function DashboardNavbar({
         </div>
 
         {/* Credits Badge */}
-        <div 
-          className="db-nav-chip-btn desktop-only"
+        <div
+          className="db-nav-pill desktop-only"
           title={lang === 'en' ? 'Remaining AI Credits / Total' : 'رصيد الذكاء الاصطناعي المتبقي / الإجمالي'}
-          style={{ cursor: 'default', border: '1px solid var(--accent)', background: 'rgba(59, 130, 246, 0.1)' }}
+          style={{ cursor: 'default', border: '1px solid rgba(59, 130, 246, 0.25)', background: 'rgba(59, 130, 246, 0.1)' }}
         >
           <Sparkles size={14} color="#3B82F6" />
           <span className="btn-label" style={{ color: 'var(--accent)' }}>
@@ -259,8 +259,8 @@ export default function DashboardNavbar({
         </div>
 
         {/* Plan Badge */}
-        <div 
-          className="db-nav-chip-btn desktop-only"
+        <div
+          className="db-nav-pill desktop-only"
           title={lang === 'en' ? 'Current Plan' : 'الخطة الحالية'}
           style={{ cursor: 'default' }}
         >
@@ -271,22 +271,21 @@ export default function DashboardNavbar({
 
         {/* Support Quick Access */}
         <button
-          className="db-nav-chip-btn notebook-btn desktop-only"
+          className="db-nav-icon-btn desktop-only"
           onClick={() => navigate('/dashboard/support')}
           title={lang === 'en' ? 'Support' : 'الدعم'}
         >
-          <Headphones size={14} />
-          <span className="btn-label">{lang === 'en' ? 'Support' : 'الدعم'}</span>
+          <Headphones size={18} />
         </button>
 
         {/* Smart Notebook Quick Access */}
         <button
-          className={`db-nav-chip-btn notebook-btn ${isNotebookLocked ? 'locked' : ''}`}
+          className={`db-nav-icon-btn ${isNotebookLocked ? 'locked' : ''} desktop-only`}
           onClick={() => {
             if (isNotebookLocked) {
               toast(
-                lang === 'en' 
-                  ? 'Smart Notebook is not included in your current plan. Please upgrade!' 
+                lang === 'en'
+                  ? 'Smart Notebook is not included in your current plan. Please upgrade!'
                   : 'دفتر الملاحظات غير متاح في باقتك الحالية. يرجى ترقية الباقة!',
                 'error'
               );
@@ -295,14 +294,31 @@ export default function DashboardNavbar({
             navigate('/dashboard/tool/smart-notebook');
           }}
           title={lang === 'en' ? 'Smart Notebook' : 'دفتر الملاحظات الذكي'}
+          style={{ position: 'relative' }}
         >
-          {isNotebookLocked ? <Lock size={14} /> : <BookOpen size={14} />}
-          <span className="btn-label">{lang === 'en' ? 'Notes' : 'الملاحظات'}</span>
+          <FileText size={18} />
+          {isNotebookLocked && (
+            <div style={{
+              position: 'absolute',
+              bottom: '4px',
+              right: '4px',
+              background: '#EF4444',
+              borderRadius: '50%',
+              width: '12px',
+              height: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid rgba(15, 23, 42, 0.8)'
+            }}>
+              <Lock size={8} color="#FFFFFF" />
+            </div>
+          )}
         </button>
 
         {/* Currency Dropdown */}
         <div className="db-nav-dropdown-wrap">
-          <button 
+          <button
             className="db-nav-chip-btn"
             onClick={() => {
               setCurrencyDropdownOpen(!currencyDropdownOpen);
@@ -318,7 +334,7 @@ export default function DashboardNavbar({
 
           <AnimatePresence>
             {currencyDropdownOpen && (
-              <motion.div 
+              <motion.div
                 className="db-nav-dropdown-menu"
                 initial={{ opacity: 0, y: 8, scale: 0.96 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -346,7 +362,7 @@ export default function DashboardNavbar({
 
         {/* Language Dropdown */}
         <div className="db-nav-dropdown-wrap">
-          <button 
+          <button
             className="db-nav-chip-btn"
             onClick={() => {
               setLangDropdownOpen(!langDropdownOpen);
@@ -362,7 +378,7 @@ export default function DashboardNavbar({
 
           <AnimatePresence>
             {langDropdownOpen && (
-              <motion.div 
+              <motion.div
                 className="db-nav-dropdown-menu"
                 initial={{ opacity: 0, y: 8, scale: 0.96 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -409,25 +425,17 @@ export default function DashboardNavbar({
             className="db-nav-icon-btn get-app-btn"
             style={{
               background: "linear-gradient(135deg, rgba(59,130,246,0.15), rgba(16,185,129,0.15))",
-              color: "var(--accent, #3B82F6)",
-              border: "1px solid rgba(59,130,246,0.2)",
-              padding: "0 12px",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              fontWeight: "600",
-              fontSize: "13px",
-              borderRadius: "10px"
+              color: "#3B82F6",
+              borderColor: "rgba(59,130,246,0.25)"
             }}
             title={lang === 'en' ? 'Install App' : 'تثبيت التطبيق'}
           >
-            <Download size={16} />
-            <span className="desktop-only">{lang === 'en' ? 'Get App' : 'تثبيت التطبيق'}</span>
+            <Download size={18} />
           </button>
         )}
 
         {/* Dark / Light Theme Mode Toggle */}
-        <button 
+        <button
           className="db-nav-icon-btn"
           onClick={toggleTheme}
           title={lang === 'en' ? (theme === 'light' ? 'Dark Mode' : 'Light Mode') : (theme === 'light' ? 'الوضع الداكن' : 'الوضع المضيء')}
@@ -437,7 +445,7 @@ export default function DashboardNavbar({
 
         {/* User Profile Pill & Dropdown */}
         <div className="db-nav-dropdown-wrap">
-          <button 
+          <button
             className="db-nav-profile-btn"
             onClick={() => {
               setUserDropdownOpen(!userDropdownOpen);
@@ -454,7 +462,7 @@ export default function DashboardNavbar({
 
           <AnimatePresence>
             {userDropdownOpen && (
-              <motion.div 
+              <motion.div
                 className="db-nav-dropdown-menu profile-menu"
                 initial={{ opacity: 0, y: 8, scale: 0.96 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -468,7 +476,7 @@ export default function DashboardNavbar({
 
                 <div className="dropdown-divider" />
 
-                <button 
+                <button
                   className="dropdown-item"
                   onClick={() => {
                     navigate('/dashboard/profile');
@@ -479,7 +487,7 @@ export default function DashboardNavbar({
                   <span>{lang === 'en' ? 'My Profile' : 'حسابي الشخصي'}</span>
                 </button>
 
-                <button 
+                <button
                   className="dropdown-item"
                   onClick={() => {
                     navigate('/dashboard/settings');
@@ -492,7 +500,7 @@ export default function DashboardNavbar({
 
                 <div className="dropdown-divider" />
 
-                <button 
+                <button
                   className="dropdown-item danger"
                   onClick={() => {
                     setUserDropdownOpen(false);

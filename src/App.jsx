@@ -41,6 +41,11 @@ export default function App() {
 
   // PWA Install Prompt Capture
   useEffect(() => {
+    // Catch if it was already stored globally early in index.html
+    if (window.deferredPWAInstallPrompt) {
+      dispatch({ type: 'SET_PWA_PROMPT', payload: window.deferredPWAInstallPrompt });
+    }
+
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       window.deferredPWAInstallPrompt = e;
@@ -52,6 +57,80 @@ export default function App() {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, [dispatch]);
+
+  // Dynamic Brand Title and Manifest for PWA
+  useEffect(() => {
+    const dynamicBrandName = brandData?.name || brandData?.brandName || "AI Brand Vision";
+    
+    // 1. Update Document Title & Apple Meta Tag
+    if (dynamicBrandName && dynamicBrandName !== "AI Brand Vision") {
+      document.title = dynamicBrandName;
+      let metaTag = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+      if (!metaTag) {
+        metaTag = document.createElement('meta');
+        metaTag.name = 'apple-mobile-web-app-title';
+        document.head.appendChild(metaTag);
+      }
+      metaTag.content = dynamicBrandName;
+      
+      // 2. Generate Data URI Manifest to update native prompt dynamically
+      let currentFavicon = "/favicon.svg";
+      const iconTag = document.querySelector("link[rel~='icon']");
+      if (iconTag && iconTag.href) {
+        currentFavicon = iconTag.href;
+      }
+      const rawLogo = brandData?.logoUrl || brandData?.logo || currentFavicon;
+      
+      // CRITICAL: Relative URLs in a data: URI manifest fail to resolve. Must make them absolute.
+      const getAbsoluteUrl = (url) => {
+        if (!url) return '';
+        if (url.startsWith('http') || url.startsWith('data:')) return url;
+        return window.location.origin + (url.startsWith('/') ? '' : '/') + url;
+      };
+      
+      const dynamicBrandLogo = getAbsoluteUrl(rawLogo);
+
+      const dynamicManifest = {
+        id: "/",
+        name: dynamicBrandName,
+        short_name: dynamicBrandName,
+        description: `${dynamicBrandName} Platform`,
+        start_url: window.location.origin + "/",
+        scope: window.location.origin + "/",
+        display: "standalone",
+        background_color: "#080C14",
+        theme_color: "#3B82F6",
+        icons: [
+          {
+            src: dynamicBrandLogo,
+            sizes: "any",
+            type: "image/svg+xml",
+            purpose: "any"
+          },
+          {
+            src: dynamicBrandLogo,
+            sizes: "192x192",
+            purpose: "any maskable"
+          },
+          {
+            src: dynamicBrandLogo,
+            sizes: "512x512",
+            purpose: "any maskable"
+          }
+        ]
+      };
+
+      const manifestString = JSON.stringify(dynamicManifest);
+      // Use Data URI instead of Blob (which is blocked)
+      const dataUri = `data:application/manifest+json;charset=utf-8,${encodeURIComponent(manifestString)}`;
+      
+      let manifestTag = document.querySelector('link[rel="manifest"]');
+      if (manifestTag) {
+        manifestTag.href = dataUri;
+      }
+    }
+  }, [brandData]);
+
 
   // Apply Default Language based on Auth data
   useEffect(() => {

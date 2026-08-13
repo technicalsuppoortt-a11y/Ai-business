@@ -26,21 +26,29 @@ export default function PwaInstallModal({ isOpen, onClose }) {
     
     setInstalling(true);
     
+    // Safety timeout in case the native prompt hangs or is blocked silently
+    const safetyTimeout = setTimeout(() => {
+      setInstalling(false);
+    }, 5000);
+    
     try {
       // Must be synchronous relative to the user interaction
       promptEvent.prompt();
       
       const { outcome } = await promptEvent.userChoice;
+      clearTimeout(safetyTimeout);
       
       if (outcome === 'accepted') {
         // Clear the saved prompt since it can't be used again
         window.deferredPWAInstallPrompt = null;
         dispatch({ type: 'SET_PWA_PROMPT', payload: null });
         onClose();
+      } else {
+        setInstalling(false);
       }
     } catch (error) {
+      clearTimeout(safetyTimeout);
       console.error("PWA Install Error:", error);
-    } finally {
       setInstalling(false);
     }
   };
@@ -73,7 +81,7 @@ export default function PwaInstallModal({ isOpen, onClose }) {
             {/* App Icon overlapping */}
             <div style={{ display: "flex", justifyContent: "center", marginTop: "-40px", position: "relative" }}>
               <div style={{ width: "80px", height: "80px", background: "var(--bg2, #0D1220)", borderRadius: "20px", padding: "12px", border: "2px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 16px rgba(0,0,0,0.3)" }}>
-                <Smartphone size={40} color="var(--accent, #3B82F6)" />
+                <img src="/favicon.svg" alt="App Logo" style={{ width: "48px", height: "48px", borderRadius: "12px", objectFit: "contain" }} />
               </div>
             </div>
 

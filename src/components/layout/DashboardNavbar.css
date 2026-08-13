@@ -1,11 +1,11 @@
 /* Dashboard Top Navbar Styling */
 .db-navbar {
-  height: 56px;
-  background: rgba(11, 15, 23, 0.8);
+  height: 60px; /* py-2.5 */
+  background: rgba(15, 23, 42, 0.8); /* bg-slate-900/80 */
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--line);
-  padding: 0 16px;
+  border-bottom: 1px solid rgba(30, 41, 59, 0.6); /* border-slate-800/60 */
+  padding: 0 16px; /* px-4 */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -19,16 +19,16 @@
 .db-navbar-start {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px; /* gap-3 */
 }
 
 .db-nav-icon-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--line);
-  color: var(--text);
+  width: 36px; /* h-9 */
+  height: 36px;
+  border-radius: 8px; /* rounded-lg */
+  background: rgba(30, 41, 59, 0.4); /* bg-slate-800/40 */
+  border: 1px solid rgba(51, 65, 85, 0.5); /* border-slate-700/50 */
+  color: #cbd5e1; /* text-slate-300 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -38,10 +38,8 @@
 }
 
 .db-nav-icon-btn:hover {
-  background: rgba(99, 102, 241, 0.08);
-  border-color: rgba(99, 102, 241, 0.3);
-  color: var(--accent);
-  transform: translateY(-1px);
+  background: rgba(51, 65, 85, 0.5); /* hover:bg-slate-700/50 */
+  color: #ffffff;
 }
 
 .db-navbar-title-wrap {
@@ -86,47 +84,62 @@
 .db-navbar-end {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 8px; /* gap-2 */
 }
 
-/* Chip Buttons & Dropdowns */
+/* Chip Buttons (Action buttons like Support, Notes) */
 .db-nav-chip-btn {
-  height: 32px;
-  padding: 0 10px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--line);
-  color: var(--text);
-  font-size: 11px;
-  font-weight: 600;
+  height: 36px; /* h-9 */
+  padding: 0 12px; /* px-3 */
+  border-radius: 8px; /* rounded-lg */
+  background: rgba(30, 41, 59, 0.4); /* bg-slate-800/40 */
+  border: 1px solid rgba(51, 65, 85, 0.5); /* border-slate-700/50 */
+  color: #cbd5e1; /* text-slate-300 */
+  font-size: 12px; /* text-xs */
+  font-weight: 500; /* font-medium */
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px; /* gap-2 */
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+/* Micro-pills (Status Badges like Credits, Plan) */
+.db-nav-pill {
+  height: 24px; /* py-1 equivalent */
+  padding: 0 10px; /* px-2.5 */
+  border-radius: 9999px; /* rounded-full */
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px; /* gap-1.5 */
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .db-nav-chip-btn:hover {
-  background: rgba(99, 102, 241, 0.08);
-  border-color: rgba(99, 102, 241, 0.3);
+  background: rgba(51, 65, 85, 0.5);
+  color: #ffffff;
 }
 
 .notebook-btn {
-  background: rgba(99, 102, 241, 0.12);
-  border-color: rgba(99, 102, 241, 0.25);
-  color: #818CF8;
+  background: rgba(30, 41, 59, 0.4);
+  color: #cbd5e1;
 }
 
 .notebook-btn:hover {
-  background: rgba(99, 102, 241, 0.2);
-  border-color: var(--accent);
+  background: rgba(51, 65, 85, 0.5);
+  color: #ffffff;
 }
 
 .notebook-btn.locked {
   opacity: 0.6;
-  background: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.25);
-  color: #EF4444;
+  color: #64748b; /* text-slate-500 */
 }
 
 .chevron {
@@ -228,44 +241,46 @@
   text-overflow: ellipsis;
 }
 
-/* User Profile Button */
+/* User/* Profile Pill Container */
 .db-nav-profile-btn {
   height: 36px;
-  padding: 0 10px 0 4px;
-  border-radius: 20px;
-  background: var(--bg3);
-  border: 1px solid var(--line);
-  color: var(--text);
+  padding: 4px 12px 4px 4px; /* pl-1 pr-3 py-1 */
+  border-radius: 12px; /* rounded-xl */
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  color: #e2e8f0; /* text-slate-200 */
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 8px; /* gap-2 */
   cursor: pointer;
   transition: all 0.2s ease;
+  margin-inline-start: 8px;
+  border-inline-start: 1px solid rgba(51, 65, 85, 0.5); /* neat visual separation */
+  flex-shrink: 0;
 }
 
 .db-nav-profile-btn:hover {
-  background: var(--bg4);
-  border-color: var(--accent);
+  background: rgba(51, 65, 85, 0.5);
 }
 
 .db-nav-profile-btn .avatar {
   width: 28px;
   height: 28px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--purple));
-  color: #fff;
-  font-size: 12px;
-  font-weight: 800;
+  border-radius: 8px; /* rounded-lg to match gap/height proportion or use 50% */
+  background: #334155;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
   background-size: cover;
   background-position: center;
 }
 
 .db-nav-profile-btn .user-name {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 14px; /* text-sm */
+  font-weight: 500;
   max-width: 110px;
   white-space: nowrap;
   overflow: hidden;

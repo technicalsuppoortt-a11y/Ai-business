@@ -142,7 +142,8 @@ export function AppProvider({ children }) {
         if (docSnap.exists()) {
           const cloudData = docSnap.data();
           if (cloudData.appState) {
-            dispatch({ type: 'LOAD_SAVED', payload: cloudData.appState });
+            const safeAppState = { ...cloudData.appState, pwaModalOpen: false, pwaPrompt: null };
+            dispatch({ type: 'LOAD_SAVED', payload: safeAppState });
           } else {
             // Document exists but no state yet (first login)
             dispatch({ type: 'SET_FIELD', field: 'isLoadedFromCloud', value: true });
@@ -190,8 +191,8 @@ export function AppProvider({ children }) {
 
     const saveToFirestore = async () => {
       try {
-        // We save the entire state (excluding the user object and meta flags)
-        const { user, isLoadedFromCloud, ...stateToSave } = state;
+        // We save the entire state (excluding the user object, meta flags, and UI modal states)
+        const { user, isLoadedFromCloud, pwaModalOpen, pwaPrompt, ...stateToSave } = state;
         const docRef = doc(db, 'users', userData.uid);
         await setDoc(docRef, { 
           appState: stateToSave,

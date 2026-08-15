@@ -13,6 +13,7 @@ import TutorialPage from './pages/Tutorial/TutorialPage';
 import TermsPage from './pages/Terms/TermsPage';
 import SubscriptionPlansPage from './pages/Subscription/SubscriptionPlansPage';
 import MarketingTrackingPage from './pages/Tracking/MarketingTrackingPage';
+import SupportSection from './pages/SupportSection';
 
 import ResetPasswordPage from './pages/Auth/ResetPasswordPage';
 
@@ -226,6 +227,7 @@ export default function App() {
         <Route path="tracking" element={<MarketingTrackingPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="tutorial" element={<TutorialPage />} />
+        <Route path="support" element={<SupportSection />} />
         <Route path="subscription" element={<SubscriptionPlansPage />} />
         <Route path="tool/:toolId" element={<ToolPage />} />
       </Route>

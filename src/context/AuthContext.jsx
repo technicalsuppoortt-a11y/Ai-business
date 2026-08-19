@@ -205,14 +205,14 @@ export function AuthProvider({ children }) {
       }
     }
 
-    // Role-based dynamic Action URL Settings
-    const redirectPath = (role === 'admin' || role === 'superadmin') ? '/admin/resetpassword' : '/auth/resetpassword';
-    const currentOrigin = typeof window !== 'undefined' && window.location.origin 
-      ? window.location.origin 
-      : 'https://digital-product-3a97c.web.app';
+    // Ensure the continueUrl points cleanly to the base origin
+    const baseOrigin = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+      ? 'https://digital-product-3a97c.web.app'
+      : window.location.origin;
 
     const actionCodeSettings = {
-      url: `${currentOrigin}${redirectPath}`,
+      // Use root base origin directly to prevent route mismatch errors in Firebase
+      url: `${baseOrigin}`, 
       handleCodeInApp: true,
     };
 

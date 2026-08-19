@@ -205,14 +205,8 @@ export function AuthProvider({ children }) {
       }
     }
 
-    // Ensure the continueUrl points cleanly to the base origin
-    const baseOrigin = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-      ? 'https://digital-product-3a97c.web.app'
-      : window.location.origin;
-
     const actionCodeSettings = {
-      // Use root base origin directly to prevent route mismatch errors in Firebase
-      url: `${baseOrigin}`, 
+      url: `${window.location.origin}${redirectPath}`, 
       handleCodeInApp: true,
     };
 

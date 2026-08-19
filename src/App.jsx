@@ -198,7 +198,9 @@ export default function App() {
 
       {/* === LOGIN PAGES (independent) === */}
       <Route path="/auth" element={<AuthPage portal="user" redirectTo="/dashboard/onboarding" />} />
+      <Route path="/auth/resetpassword" element={<ResetPasswordPage portal="user" />} />
       <Route path="/admin/login" element={<AuthPage portal="admin" redirectTo="/admin" />} />
+      <Route path="/admin/resetpassword" element={<ResetPasswordPage portal="admin" />} />
       <Route path="/superadmin/login" element={<AuthPage portal="superadmin" redirectTo="/superadmin" />} />
 
       {/* === PROTECTED: Super Admin === */}

@@ -89,6 +89,10 @@ export default function ResetPasswordPage({ portal = 'user' }) {
           :'تم تحديث كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول.',
         'success'
       );
+      
+      // Redirect immediately to prevent the used oobCode from triggering expired state
+      navigate(loginPath, { replace: true });
+
     } catch (err) {
       console.error('Confirm password reset error:', err);
       toast(

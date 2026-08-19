@@ -210,8 +210,10 @@ export function AuthProvider({ children }) {
       ? '/admin' 
       : '/auth';
 
+    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+
     const actionCodeSettings = {
-      url: `${window.location.origin}${redirectPath}`, 
+      url: `${currentOrigin}${redirectPath}`,
       handleCodeInApp: true,
     };
 

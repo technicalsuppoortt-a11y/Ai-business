@@ -207,8 +207,12 @@ export function AuthProvider({ children }) {
 
     // Role-based dynamic Action URL Settings
     const redirectPath = (role === 'admin' || role === 'superadmin') ? '/admin/resetpassword' : '/auth/resetpassword';
+    const currentOrigin = typeof window !== 'undefined' && window.location.origin 
+      ? window.location.origin 
+      : 'https://digital-product-3a97c.web.app';
+
     const actionCodeSettings = {
-      url: `${window.location.origin}${redirectPath}`,
+      url: `${currentOrigin}${redirectPath}`,
       handleCodeInApp: true,
     };
 

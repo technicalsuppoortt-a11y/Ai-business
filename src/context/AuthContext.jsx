@@ -205,8 +205,10 @@ export function AuthProvider({ children }) {
       }
     }
 
-    // Role-based dynamic Action URL Settings
-    const redirectPath = (role === 'admin' || role === 'superadmin') ? '/admin/resetpassword' : '/auth/resetpassword';
+    // Set target redirect path directly to the login route
+    const redirectPath = (role === 'admin' || role === 'superadmin') 
+      ? '/admin' 
+      : '/auth';
 
     const actionCodeSettings = {
       url: `${window.location.origin}${redirectPath}`, 

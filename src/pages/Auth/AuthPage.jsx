@@ -498,13 +498,8 @@ export default function AuthPage({
           "error",
         );
       } else {
-        toast(
-          state.language === "en"
-            ?"Password reset instructions sent successfully"
-            :"تم إرسال تعليمات إعادة التعيين بنجاح",
-          "success",
-        );
-        setIsForgotPasswordOpen(false);
+        const errorMsg = err.code ? getFirebaseErrorMessage(err.code) : (err.message || (state.language === "en" ? "An error occurred" : "حدث خطأ أثناء إرسال الرابط"));
+        toast(errorMsg, "error");
       }
     } finally {
       setIsSendingReset(false);
